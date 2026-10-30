@@ -366,10 +366,10 @@ export function createDetail(root, ctx) {
 
   function facts(p) {
     const rows = [
-      ['Captured', capturedValue(p)],
-      ['Position', positionValue(p)],
+      ['Taken', capturedValue(p)],
+      ['Where', positionValue(p)],
       ['Camera', [cameraLong(p.camera), sub(`${p.width} × ${p.height} pixels`)]],
-      ['Downlinked', downlinkValue(p)],
+      ['Came down', downlinkValue(p)],
       ['File', fileValue(p)],
       ['Status', statusValue(p)],
     ];

@@ -24,11 +24,11 @@
 
   --pad: 24px;
   --gap: 6px;
-  --nav-h: 60px;
+  --nav-h: var(--nav-bar); /* assets/nav.css */
 }
 
 @media (max-width: 599px) {
-  :root { --pad: 16px; --gap: 4px; --nav-h: 52px; }
+  :root { --pad: 16px; --gap: 4px; }
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -147,47 +147,7 @@ h1, h2, h3 { font-weight: 600; }
   border-bottom: 1px solid var(--hair);
 }
 
-.nav {
-  position: relative;
-  z-index: 3;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  min-height: var(--nav-h);
-  padding: 0 var(--pad);
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.nav-side { display: flex; align-items: center; gap: 24px; min-width: 0; }
-.nav-right { justify-content: flex-end; }
-
-/* 44px tall to tap, whatever the size of the words. */
-.nav-side a,
-.nav-btn {
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-  border: 0;
-  padding: 0;
-  background: none;
-  color: var(--label);
-  font: inherit;
-  cursor: pointer;
-}
-.nav-side a:hover,
-.nav-btn:hover,
-.nav-btn[aria-expanded="true"],
-.nav-side a[aria-current="page"] { color: var(--fg); }
-.nav-side a[aria-current="page"] {
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 6px;
-  text-decoration-color: var(--accent);
-}
-
-/* Explore, the landing globe: the nav lies over the stage, and the page
+/* Explore, the landing globe: the nav (assets/nav.css) lies over the stage, and the page
    ends with the story, so there is no footer under it. */
 body[data-view="explore"] { --jy-nav: var(--nav-h); }
 body[data-view="explore"] .site-head {
@@ -200,27 +160,9 @@ body[data-view="explore"] .site-head {
   border-bottom: 0;
   pointer-events: none;
 }
-body[data-view="explore"] .brand,
-body[data-view="explore"] .nav-side > * { pointer-events: auto; } /* the gaps between them still drag the globe */
-body[data-view="explore"] .nav-side a,
-body[data-view="explore"] .nav-btn { color: var(--fg); }
 body[data-view="explore"] .wordmark,
 body[data-view="explore"] .site-foot,
 body[data-view="explore"] .name-ctl { display: none; }
-
-.brand { display: flex; align-items: center; gap: 14px; min-width: 0; min-height: 44px; }
-.brand-logo { width: auto; height: 34px; }
-
-.wordmark {
-  padding-left: 14px;
-  border-left: 1px solid var(--rule);
-  font-family: var(--display);
-  font-weight: 700;
-  font-size: 15px;
-  line-height: 1;
-  letter-spacing: 0.04em;
-  white-space: nowrap;
-}
 
 .name-ctl { position: relative; }
 
@@ -251,7 +193,7 @@ body[data-view="explore"] .name-ctl { display: none; }
   color: var(--fg);
   font-size: 13px;
 }
-.name-form label { display: block; margin-bottom: 6px; color: var(--label); font-size: 12.5px; }
+.name-form label { display: block; margin-bottom: 6px; color: var(--label); font-size: 13px; }
 .name-form input {
   width: 100%;
   border: 1px solid var(--field);
@@ -731,17 +673,6 @@ body[data-view="explore"] .name-ctl { display: none; }
   .stage { padding: 40px 68px; }
 }
 
-/* Six links, the logo and the name button on one line: below 900px the
-   wordmark goes (the page title says it) and the gaps close up. */
-@media (max-width: 899px) {
-  .wordmark { display: none; }
-  .nav-side { gap: 16px; }
-}
-@media (max-width: 699px) {
-  .nav-side { gap: 14px; }
-  .brand-logo { height: 28px; }
-}
-
 /* Phones and narrow tablets */
 
 @media (max-width: 799px) {
@@ -779,12 +710,6 @@ body[data-view="explore"] .name-ctl { display: none; }
 }
 
 @media (max-width: 599px) {
-  .nav { gap: 10px; font-size: 13px; }
-  /* six links and the logo share a phone's width */
-  .nav-side { gap: 10px; }
-  .brand { gap: 10px; }
-  .brand-logo { height: 22px; }
-  .wordmark { display: none; }
   /* the edit form on a picture asks for the name itself */
   .name-ctl { display: none; }
   .name-btn { max-width: 6.5em; }
@@ -812,23 +737,6 @@ body[data-view="explore"] .name-ctl { display: none; }
   .site-foot { grid-template-columns: minmax(0, 1fr); gap: 16px; }
   .about-list { grid-template-columns: minmax(0, 1fr); }
   .about-list dt { padding-bottom: 0; border-bottom: 0; }
-}
-
-/* six links and the logo share the narrowest phones' width */
-@media (max-width: 430px) {
-  .nav { gap: 8px; }
-  .nav-side { gap: 8px; }
-  .brand-logo { height: 18px; }
-}
-
-@media (max-width: 389px) {
-  .nav { font-size: 12px; }
-}
-
-/* The six links alone fill the narrowest phones; Explore goes to the same place as the logo. */
-@media (max-width: 359px) {
-  .nav { justify-content: flex-end; }
-  .brand { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {

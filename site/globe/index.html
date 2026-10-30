@@ -13,17 +13,10 @@
   <link rel="modulepreload" href="globe.js">
   <link rel="modulepreload" href="vendor/three.module.min.js">
   <link rel="modulepreload" href="vendor/satellite.es.js">
+  <link rel="stylesheet" href="../assets/nav.css">
   <style>
     :root {
-      --nav-h: 60px;
-      --nav-pad: 24px;
-    }
-
-    @media (max-width: 599px) {
-      :root {
-        --nav-h: 52px;
-        --nav-pad: 16px;
-      }
+      --nav-h: var(--nav-bar);
     }
 
     html,
@@ -43,137 +36,13 @@
       padding: 0 env(safe-area-inset-right, 0px) 0 env(safe-area-inset-left, 0px);
     }
 
-    /* The site's nav, as on the front page's globe: laid over the stage with
-       no bar behind it, and only its links take the pointer, so the globe
-       still drags right up to them. */
+    /* The site's nav (assets/nav.css), laid over the stage with no bar behind it. */
     .site-nav {
       position: fixed;
       top: 0;
       right: 0;
       left: 0;
       z-index: 10;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      height: var(--nav-h);
-      padding: 0 calc(var(--nav-pad) + env(safe-area-inset-right, 0px)) 0 calc(var(--nav-pad) + env(safe-area-inset-left, 0px));
-      font: 500 14px/1 "Jost", system-ui, -apple-system, "Segoe UI", sans-serif;
-      pointer-events: none;
-    }
-
-    .site-nav .brand,
-    .site-nav .nav-links a,
-    .site-nav .nav-btn {
-      pointer-events: auto;
-    }
-
-    .site-nav .brand {
-      display: flex;
-      flex: none;
-      align-items: center;
-    }
-
-    .site-nav .brand-logo {
-      display: block;
-      width: auto;
-      height: 34px;
-    }
-
-    .nav-links {
-      display: flex;
-      align-items: center;
-      gap: 24px;
-      min-width: 0;
-    }
-
-    /* 44px tall to tap, whatever the size of the words */
-    .nav-links a,
-    .nav-btn {
-      display: inline-flex;
-      align-items: center;
-      min-height: 44px;
-      padding: 0;
-      color: #E6EBF0;
-      text-decoration: none;
-      white-space: nowrap;
-    }
-
-    /* Credits opens a pop-up, so it's a button that looks like the links */
-    .nav-btn {
-      border: 0;
-      background: none;
-      font: inherit;
-      cursor: pointer;
-    }
-
-    .nav-links a:hover,
-    .nav-btn:hover,
-    .nav-btn[aria-expanded="true"] {
-      text-decoration: underline;
-      text-decoration-thickness: 1px;
-      text-underline-offset: 6px;
-      text-decoration-color: rgba(230, 235, 240, 0.4);
-    }
-
-    .nav-links a[aria-current="page"] {
-      text-decoration: underline;
-      text-decoration-thickness: 1px;
-      text-underline-offset: 6px;
-      text-decoration-color: #3C9DF5;
-    }
-
-    .site-nav a:focus-visible,
-    .site-nav .nav-btn:focus-visible {
-      outline: 2px solid #3C9DF5;
-      outline-offset: 2px;
-    }
-
-    /* six links and the logo on one line across a phone */
-    @media (max-width: 599px) {
-      .site-nav {
-        gap: 10px;
-        font-size: 13px;
-      }
-
-      .nav-links {
-        gap: 10px;
-      }
-
-      .site-nav .brand-logo {
-        height: 22px;
-      }
-    }
-
-    @media (max-width: 430px) {
-      .site-nav {
-        gap: 8px;
-      }
-
-      .nav-links {
-        gap: 8px;
-      }
-
-      .site-nav .brand-logo {
-        height: 18px;
-      }
-    }
-
-    @media (max-width: 389px) {
-      .site-nav {
-        font-size: 12px;
-      }
-    }
-
-    /* The six links alone fill the narrowest phones; Explore goes to the same place as the logo. */
-    @media (max-width: 359px) {
-      .site-nav {
-        justify-content: flex-end;
-      }
-
-      .site-nav .brand {
-        display: none;
-      }
     }
 
     .skip-link {
@@ -221,7 +90,7 @@
 <body>
   <!-- by script, so the page's own #t=... state stays in the address -->
   <a class="skip-link" href="#globe" onclick="event.preventDefault();document.getElementById('globe').focus();">Skip to the globe</a>
-  <nav class="site-nav" aria-label="Main">
+  <nav class="site-nav is-over" aria-label="Main">
     <a class="brand" href="../index.html#/" aria-label="CTS-SAT-1, explore: where the satellite is now">
       <img class="brand-logo" src="../assets/calgarytospace-logo.png" width="640" height="204" alt="">
     </a>
