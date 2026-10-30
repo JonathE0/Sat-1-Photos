@@ -398,14 +398,19 @@ html.jy-dragging { cursor: grabbing; }
 }
 .jy-all { min-height: var(--jy-ctl); }
 /* a quiet secondary control on a flat Panel block, readable over bright cloud */
-.jy-again {
+.jy-again,
+.jy-details {
   min-height: var(--jy-ctl);
   padding: 0 16px;
   background: var(--jy-panel);
   text-decoration: none;
   transition: background-color 180ms var(--jy-ease-out);
 }
-.jy-again:hover { background: var(--jy-raised); }
+.jy-again:hover,
+.jy-details:hover { background: var(--jy-raised); }
+/* phones only: everywhere else the summary bar does this */
+.jy-details { display: none; }
+.jy-root[data-mode="still"] .jy-details { display: none !important; }
 .jy-zoom { display: flex; gap: 4px; }
 .jy-root[data-mode="still"] .jy-zoom { display: none; }
 
@@ -416,32 +421,95 @@ html.jy-dragging { cursor: grabbing; }
   width: min(34em, calc(100% - 2 * var(--jy-m)));
 }
 .jy-facts-slot:empty { display: none; }
-.jy-panel-open .jy-facts-slot { opacity: 0; visibility: hidden; }
+/* below this the banner and the details would meet; above it the banner stays put */
+@media (max-width: 1099px) { .jy-panel-open .jy-facts-slot { opacity: 0; visibility: hidden; } }
+.jy-narrow.jy-panel-open .jy-facts-slot { opacity: 0; visibility: hidden; }
 
-/* The picture viewfinder (viewfinder.js): big screens only, in the sky at the top
-   right, at the end only. Its box is set here, whatever the picture and before the
-   module loads, because the framing keeps the Earth's limb under it from the start
-   (computeFrame). The picture is 4:3 and never larger than its own 640 x 480: it
-   gives way to the height, and on narrower screens to the headline.
+/* The dock, top right, at the end only: the summary bar, and under it the details
+   (.jy-panel, dropped down from the bar) or, on big screens, the viewfinder in the
+   same place. Below the bar the box only passes the pointer through. */
+.jy-dock {
+  position: absolute;
+  z-index: 4;
+  top: var(--jy-nav);
+  right: var(--jy-m);
+  /* down to just above the bottom-right controls */
+  bottom: calc(var(--jy-bottom) + var(--jy-ctl) + 24px);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  width: clamp(380px, 18vw, 420px);
+  max-width: calc(100% - 2 * var(--jy-m));
+  pointer-events: none;
+}
+.jy-root[data-mode="still"] .jy-dock { display: none; }
+
+.jy-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: var(--jy-ctl);
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  padding: 0 12px;
+  background: var(--jy-panel);
+  color: var(--jy-ink);
+  font: 400 var(--jy-small) / 1.2 var(--jy-font);
+  letter-spacing: 0.01em;
+  font-variant-numeric: tabular-nums;
+  text-align: left;
+  cursor: pointer;
+  pointer-events: auto;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 150ms var(--jy-ease-exit), visibility 0s linear 150ms;
+}
+.jy-ui-on .jy-summary {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 240ms var(--jy-ease-out), visibility 0s, background-color 180ms var(--jy-ease-out);
+}
+/* the credits open in the same corner: the dock steps aside but stays laid out, so the
+   framing doesn't move (and the same below for the viewfinder) */
+.jy-credits-open .jy-summary { opacity: 0; visibility: hidden; }
+.jy-summary:hover { background: var(--jy-raised); }
+.jy-summary-text { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.jy-summary-name { margin-right: 0.25em; font-size: var(--jy-body); font-weight: 500; letter-spacing: 0; }
+/* The chevron turns even when the system prefers reduced motion (the site's choice,
+   as the facts banner and the viewfinder); only ?motion=reduced (.jy-calm) stops it. */
+.jy-summary svg { flex: none; transition: transform 240ms var(--jy-ease-out) !important; }
+.jy-summary[aria-expanded="true"] svg { transform: rotate(180deg); }
+.jy-calm .jy-summary svg { transition: none !important; }
+
+/* The picture viewfinder (viewfinder.js): big screens only, at the end only. The
+   dock's box is set here, whatever the picture and before the module loads, because
+   the framing keeps the Earth's limb under it from the start (computeFrame). The
+   picture is 4:3 and never larger than its own 640 x 480: it gives way to the height,
+   and on narrower screens to the headline. The bar needs its 380px, so on the shortest
+   of these the picture sits centred in a wider frame.
    The media query is VIEWFINDER_MEDIA in journey.js. */
 .jy-vf-slot { display: none; }
 @media (min-width: 1360px) and (min-height: 760px) and (min-aspect-ratio: 4/5) {
-  .jy-vf-slot {
-    --vf-top: calc(var(--jy-nav) + 8px);
-    --vf-inset: 8px;
+  .jy-dock {
+    --vf-inset: 12px;
+    --vf-gap: 4px;
     --vf-band-top: 44px;
     --vf-band-bottom: 28px;
     --vf-caption: 84px;
     --vf-pic-h: min(480px,
-      calc(66vh - var(--vf-top) - var(--vf-band-top) - var(--vf-band-bottom) - var(--vf-caption)),
+      calc(68.6vh - var(--jy-nav) - var(--jy-ctl) - var(--vf-gap) - var(--vf-band-top) - var(--vf-band-bottom) - var(--vf-caption)),
       calc((50vw - 112px) * 3 / 4));
-    position: absolute;
-    z-index: 2;
-    top: var(--vf-top);
-    right: var(--jy-m);
+    bottom: auto;
+    width: max(380px, calc(var(--vf-pic-h) * 4 / 3 + 2 * var(--vf-inset)));
+    height: calc(var(--jy-ctl) + var(--vf-gap) + var(--vf-band-top) + var(--vf-pic-h) + var(--vf-band-bottom) + var(--vf-caption));
+  }
+  .jy-vf-slot {
+    grid-area: 2 / 1;
     display: block;
-    width: calc(var(--vf-pic-h) * 4 / 3 + 2 * var(--vf-inset));
-    height: calc(var(--vf-band-top) + var(--vf-pic-h) + var(--vf-band-bottom) + var(--vf-caption));
+    min-height: 0;
+    margin-top: var(--vf-gap);
     pointer-events: none;
     opacity: 0;
     visibility: hidden;
@@ -453,20 +521,24 @@ html.jy-dragging { cursor: grabbing; }
     transition: opacity 240ms var(--jy-ease-out), visibility 0s;
   }
   .jy-vf-slot > * { pointer-events: auto; }
-  /* a panel in the same corner: it steps aside until the panel closes */
+  /* the details take its place; it keeps its picture until they close */
   .jy-panel-open .jy-vf-slot,
-  .jy-credits-open .jy-vf-slot { opacity: 0; visibility: hidden; }
+  .jy-credits-open .jy-vf-slot {
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 120ms var(--jy-ease-exit), visibility 0s linear 120ms;
+  }
 }
 /* on the shortest of these the frame is narrow and the caption's lines may wrap */
 @media (min-width: 1360px) and (max-height: 859px) and (min-height: 760px) and (min-aspect-ratio: 4/5) {
-  .jy-vf-slot { --vf-caption: 124px; }
+  .jy-dock { --vf-caption: 124px; }
 }
-.jy-root[data-mode="still"] .jy-vf-slot { display: none; }
 
 @media (max-width: 1099px) and (min-width: 700px) {
   /* the corner row goes above the time row so the two never meet */
   .jy-root:not(.jy-narrow) .jy-corner { bottom: calc(var(--jy-bottom) + var(--jy-ctl) + 12px); }
   .jy-root:not(.jy-narrow) .jy-facts-slot { bottom: calc(var(--jy-bottom) + 2 * var(--jy-ctl) + 28px); }
+  .jy-root:not(.jy-narrow) .jy-dock { bottom: calc(var(--jy-bottom) + 2 * var(--jy-ctl) + 28px); }
 }
 
 /* ---- marks over the canvas: pins and the satellite -------------------------------- */
@@ -578,44 +650,84 @@ html.jy-dragging { cursor: grabbing; }
 .jy-card.is-list .jy-card-item img.is-square { width: 48px; }
 .jy-card.is-list .jy-card-place { margin-top: 0; }
 
-/* ---- the status panel and the credits panel: top right ------------------------------- */
+/* ---- the satellite's details and the credits panel: top right ------------------------ */
 
 .jy-panel,
+.jy-credits {
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--jy-raised) transparent;
+  background: var(--jy-panel);
+  opacity: 0;
+}
 .jy-credits {
   position: absolute;
   top: max(96px, calc(var(--jy-nav) + 32px));
   right: var(--jy-m);
-  z-index: 4;
+  z-index: 5;
   display: flex;
   flex-direction: column;
   width: clamp(360px, 18vw, 420px);
   max-width: calc(100% - 2 * var(--jy-m));
   /* down to just above the bottom-right controls */
   max-height: calc(100% - max(96px, calc(var(--jy-nav) + 32px)) - var(--jy-bottom) - var(--jy-ctl) - 24px);
-  overflow: auto;
-  overscroll-behavior: contain;
-  scrollbar-width: thin;
-  scrollbar-color: var(--jy-raised) transparent;
   padding: 24px;
-  background: var(--jy-panel);
-  opacity: 0;
   transform: translateX(16px);
   transition: opacity 150ms var(--jy-ease-exit), transform 150ms var(--jy-ease-exit);
 }
-.jy-panel.is-on,
 .jy-credits.is-on {
   opacity: 1;
   transform: none;
   transition: opacity 240ms var(--jy-ease-out), transform 240ms var(--jy-ease-out);
 }
-.jy-credits { z-index: 5; }
+/* In the dock, under the bar, as one flat block with it. It drops down even when the
+   system prefers reduced motion (the site's choice, as the facts banner and the
+   viewfinder); only ?motion=reduced (.jy-calm) keeps it to a fade. */
+.jy-panel {
+  grid-area: 2 / 1;
+  align-self: start;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 16px;
+  align-items: center;
+  max-height: 100%;
+  padding: 0 12px 16px;
+  pointer-events: auto;
+  transform: translateY(-8px);
+}
+.jy-root .jy-panel { transition: opacity 150ms var(--jy-ease-exit), transform 150ms var(--jy-ease-exit) !important; }
+.jy-root .jy-panel.is-on {
+  opacity: 1;
+  transform: none;
+  transition: opacity 240ms var(--jy-ease-out), transform 240ms var(--jy-ease-out) !important;
+}
+.jy-root.jy-calm .jy-panel,
+.jy-root.jy-calm .jy-panel.is-on { transform: none; transition: opacity 150ms linear !important; }
 .jy-panel p,
 .jy-credits p { margin: 0; }
-/* an open status panel waits out the story: shown again when the visitor comes back down */
+/* open details wait out the story: shown again when the visitor comes back down */
 .jy-root:not(.jy-ui-on) .jy-panel { visibility: hidden; opacity: 0; }
 
 .jy-grab { display: none; }
 .jy-more { display: none; }
+
+/* The bar above names the satellite, says where it is and folds the details up, so the
+   dock's details keep the title for screen readers only and show no Close. */
+.jy-root:not(.jy-narrow) .jy-panel .jy-panel-head { grid-area: 1 / 2; margin: 0; }
+.jy-root:not(.jy-narrow) .jy-panel .jy-panel-title {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.jy-root:not(.jy-narrow) [data-ref="close"],
+.jy-root:not(.jy-narrow) .jy-panel .jy-over { display: none; }
+.jy-root:not(.jy-narrow) .jy-panel [data-ref="aka"] { grid-area: 1 / 1; }
+.jy-root:not(.jy-narrow) .jy-panel-body { grid-column: 1 / -1; }
 
 .jy-panel-head {
   display: flex;
@@ -664,9 +776,12 @@ html.jy-dragging { cursor: grabbing; }
   display: block;
   width: 100%;
   aspect-ratio: 4 / 3;
+  overflow: hidden;
   background: var(--jy-space);
 }
-.jy-latest-frame img { display: block; width: 100%; height: 100%; object-fit: contain; }
+/* a picture that never fully came down: the frame is shorter (rowsWithData), and only
+   the rows with data show, from the top */
+.jy-latest-frame img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: top; }
 .jy-latest-failed {
   display: flex;
   flex-direction: column;
@@ -709,31 +824,37 @@ html.jy-dragging { cursor: grabbing; }
 .jy-narrow .jy-speed span { min-width: 44px; padding: 0 4px; }
 .jy-narrow .jy-now { padding: 0 10px; }
 
-/* above the time row: [Play the intro again] / [See all n pictures] [- +] */
+/* above the time row: [Play the intro again] [Satellite details] / [See all n pictures] [- +] */
 .jy-narrow .jy-corner {
   left: var(--jy-m);
   bottom: calc(var(--jy-bottom) + var(--jy-ctl) + 8px);
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  grid-template-areas: "again again" "all zoom";
+  grid-template-areas: "again details" "all zoom";
   gap: 4px 8px;
   align-items: center;
 }
-.jy-narrow .jy-again { grid-area: again; justify-self: start; }
+.jy-narrow .jy-again { grid-area: again; justify-self: start; padding: 0 12px; }
+.jy-narrow .jy-details { grid-area: details; display: inline-flex; padding: 0 12px; }
 .jy-narrow .jy-all { grid-area: all; justify-self: start; }
-.jy-narrow .jy-zoom { grid-area: zoom; }
+.jy-narrow .jy-zoom { grid-area: zoom; justify-self: end; }
+/* no bar on a phone, and the details are a bottom sheet over the whole stage */
+.jy-narrow .jy-dock { position: static; display: block; width: auto; max-width: none; }
+.jy-narrow .jy-summary { display: none; }
 .jy-narrow .jy-facts-slot { bottom: calc(var(--jy-bottom) + 3 * var(--jy-ctl) + 32px); }
 .jy-narrow.jy-panel-open .jy-time,
 .jy-narrow.jy-panel-open .jy-corner,
 .jy-narrow.jy-credits-open .jy-facts-slot { opacity: 0; visibility: hidden; }
 
 .jy-narrow .jy-panel {
-  top: auto;
+  position: absolute;
+  z-index: 4;
   left: 0;
   right: 0;
   bottom: 0;
-  width: auto;
-  max-width: none;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
   max-height: 120px;
   overflow: hidden;
   padding: 0 16px calc(16px + env(safe-area-inset-bottom));
@@ -800,8 +921,6 @@ html.jy-dragging { cursor: grabbing; }
     transition: opacity 200ms linear, visibility 0s linear 200ms !important;
   }
   .jy-root .jy-beat.is-on { transform: none !important; transition: opacity 200ms linear !important; }
-  .jy-root .jy-panel,
-  .jy-root .jy-panel.is-on,
   .jy-root .jy-credits,
   .jy-root .jy-credits.is-on { transform: none !important; transition: opacity 150ms linear !important; }
   .jy-root .jy-canvas,
@@ -810,6 +929,7 @@ html.jy-dragging { cursor: grabbing; }
   .jy-root .jy-corner,
   .jy-root .jy-facts-slot,
   .jy-root .jy-vf-slot,
+  .jy-root .jy-summary,
   .jy-root .jy-marks,
   .jy-root .jy-card,
   .jy-root .jy-cue,
