@@ -6,6 +6,7 @@ import {
   latLon, parseUtcInput, percent, plural, shortHash, statusWord, toDate, utcLong,
 } from './format.js';
 import { memberValues, saveAnnotation } from './data.js';
+import { headline, whenShort } from './catalogue.js';
 
 export const NAME_KEY = 'cts1-gallery:name';
 const KEY_KEY = 'cts1-gallery:edit-key';
@@ -212,7 +213,7 @@ export function createDetail(root, ctx) {
   function stage(p, prev, next, globe) {
     const note = shotNote(p);
     return h('div', { class: 'stage-wrap' },
-      h('div', { class: 'stage' },
+      h('div', { class: 'stage', style: `--pic-w: ${p.width}px` }, // the arrows stay beside the picture
         h('figure', { class: 'shot' },
           h('img', {
             src: p.src,
@@ -236,12 +237,12 @@ export function createDetail(root, ctx) {
     const raw = p.raw;
     const d = toDate(p.capturedAt);
     if (d) {
-      const out = [mono(utcLong(d, true))];
+      const out = [utcLong(d, true)];
       if (p.edited.captured_at) {
         out.push(sub(`edited by ${p.edited.captured_at}`, 'edited'));
         const original = toDate(raw.captured_at);
         out.push(sub(original
-          ? ['Computed: ', mono(utcLong(original, true)), raw.capture_basis ? `, ${basisText(raw.capture_basis)}` : '']
+          ? ['Computed: ', utcLong(original, true), raw.capture_basis ? `, ${basisText(raw.capture_basis)}` : '']
           : 'There was no computed time.', 'small'));
       } else {
         const basis = basisText(raw.capture_basis);
@@ -250,11 +251,11 @@ export function createDetail(root, ctx) {
         if (clockNote) out.push(sub(clockNote, 'small'));
       }
       const local = calgary(d);
-      if (local) out.push(sub([mono(local), ' in Calgary'], 'small'));
+      if (local) out.push(sub(`${local} in Calgary`, 'small'));
       return out;
     }
     if (p.captureDate) {
-      return [mono(dayMonthYear(toDate(p.captureDate))), sub('Date only; the time of day is unknown.')];
+      return [dayMonthYear(toDate(p.captureDate)), sub('Date only; the time of day is unknown.')];
     }
     return ['Unknown', sub('Neither the file name nor the logs give a capture time.')];
   }
@@ -269,7 +270,7 @@ export function createDetail(root, ctx) {
         ? ['Not computed', sub('No orbit data covers this time.')]
         : ['Unknown', sub('A position needs a capture time.')];
     }
-    const out = [mono(`≈ ${latLon(pos.lat, pos.lon)}`)];
+    const out = [`≈ ${latLon(pos.lat, pos.lon)}`];
     if (p.edited.position) out.push(sub(`edited by ${p.edited.position}`, 'edited'));
     if (p.computedPlace) out.push(h('span', { class: 'line' }, p.computedPlace));
     if (Number.isFinite(pos.alt_km)) out.push(sub(`Altitude ${Math.round(pos.alt_km)} km`));
@@ -307,11 +308,11 @@ export function createDetail(root, ctx) {
     const last = toDate(dl.last);
     const out = [];
     if (first && last && isoDay(first) === isoDay(last)) {
-      out.push(mono(`${dayMonthYear(first)}, ${clock(first)}–${clock(last)} UTC`));
+      out.push(`${dayMonthYear(first)}, ${clock(first)}–${clock(last)} UTC`);
     } else if (first && last) {
-      out.push(mono([`${dayMonthYear(first)}, ${clock(first)} –`, h('br'), `${dayMonthYear(last)}, ${clock(last)} UTC`]));
+      out.push(`${dayMonthYear(first)}, ${clock(first)} –`, h('br'), `${dayMonthYear(last)}, ${clock(last)} UTC`);
     } else if (first || last) {
-      out.push(mono(utcLong(first || last, false)));
+      out.push(utcLong(first || last, false));
     } else {
       out.push('Unknown');
     }
@@ -455,7 +456,6 @@ export function createDetail(root, ctx) {
     const original = toDate(raw.captured_at);
     const time = h('input', {
       id: 'edit-time',
-      class: 'mono-input',
       value: values.captured_at ? inputTime(toDate(values.captured_at)) : '',
       placeholder: original ? inputTime(original) : 'YYYY-MM-DD HH:MM:SS',
       autocomplete: 'off',
@@ -463,11 +463,11 @@ export function createDetail(root, ctx) {
     });
     const computedPos = isObject(raw.position) && Number.isFinite(raw.position.lat) ? raw.position : null;
     const lat = h('input', {
-      id: 'edit-lat', class: 'mono-input', inputmode: 'decimal', autocomplete: 'off',
+      id: 'edit-lat', inputmode: 'decimal', autocomplete: 'off',
       value: values.lat ?? '', placeholder: computedPos ? computedPos.lat.toFixed(2) : '51.05',
     });
     const lon = h('input', {
-      id: 'edit-lon', class: 'mono-input', inputmode: 'decimal', autocomplete: 'off',
+      id: 'edit-lon', inputmode: 'decimal', autocomplete: 'off',
       value: values.lon ?? '', placeholder: computedPos ? computedPos.lon.toFixed(2) : '-114.07',
     });
 
@@ -492,13 +492,13 @@ export function createDetail(root, ctx) {
     listHint(tags, fTags.hint, 'Separate tags with commas.', 'tag');
 
     const timeHint = original
-      ? ['Computed: ', mono(utcLong(original, true)), '. Leave empty to keep it.']
+      ? ['Computed: ', utcLong(original, true), '. Leave empty to keep it.']
       : 'No computed time. Write it as YYYY-MM-DD HH:MM:SS.';
     const fTime = field('edit-time', 'Capture time, UTC', time, timeHint);
     const fLat = field('edit-lat', 'Latitude', lat);
     const fLon = field('edit-lon', 'Longitude', lon);
     const posHint = h('span', { class: 'hint', id: 'edit-pos-hint' },
-      computedPos ? ['Computed: ', mono(`≈ ${latLon(computedPos.lat, computedPos.lon)}`), '. Decimal degrees; south and west are negative. Leave both empty to keep it.']
+      computedPos ? ['Computed: ', `≈ ${latLon(computedPos.lat, computedPos.lon)}`, '. Decimal degrees; south and west are negative. Leave both empty to keep it.']
         : 'Decimal degrees; south and west are negative.');
     lat.setAttribute('aria-describedby', 'edit-pos-hint');
     lon.setAttribute('aria-describedby', 'edit-pos-hint');
@@ -762,7 +762,7 @@ export function createDetail(root, ctx) {
     const { list, index } = ctx.getList(id);
     const prev = index > 0 ? list[index - 1] : null;
     const next = index >= 0 && index < list.length - 1 ? list[index + 1] : null;
-    document.title = `${p.title} · CTS-SAT-1`;
+    document.title = `${headline(p)} · CTS-SAT-1`;
     const globe = globeHref();
 
     const scrollY = window.scrollY;
@@ -778,8 +778,9 @@ export function createDetail(root, ctx) {
               ctx.close();
             },
           }, globe ? 'All pictures' : '← All pictures')),
-        index >= 0 && h('span', { class: 'mono' }, `${index + 1} of ${list.length}`)),
-      h('h1', { class: 'detail-title', id: 'detail-title', tabindex: '-1' }, p.title),
+        index >= 0 && h('span', { class: 'panel-count' }, `${index + 1} of ${list.length}`)),
+      h('h1', { class: 'detail-title', id: 'detail-title', tabindex: '-1' }, headline(p)),
+      h('p', { class: 'title-when' }, whenShort(p)),
       p.edited.title && h('p', { class: 'title-note' }, `Title edited by ${p.edited.title}`),
       facts(p),
       linksRow(p),

@@ -23,11 +23,15 @@
   /* Pictures are never shown larger than their own size (640 x 480, or
      512 x 512 for the attitude camera): grainy when enlarged. The stage is
      one Panel area, as tall as fits above the dock (up to 720px), the same
-     in One, Two and Four so the dock never moves, with the pictures centred
-     on it at 1x or smaller. The whole catalogue is capped at a width where
-     two pictures side by side still fit at 1x. */
+     in One, Two and Four so the dock doesn't move, with the pictures centred
+     on it at 1x or smaller. On a short window Two and Four outgrow that, for
+     pictures worth comparing, and the page scrolls to the dock. The whole
+     catalogue is capped at a width where two pictures side by side still fit
+     at 1x. */
   --view-max: 720px;
-  --view-h: clamp(240px, calc(100svh - var(--nav-h, 60px) - var(--back-h) - var(--dock-h) - 48px), var(--view-max));
+  --view-fit: clamp(240px, calc(100svh - var(--nav-h, 60px) - var(--back-h) - var(--dock-h) - 48px), var(--view-max));
+  --view-h: var(--view-fit);
+  --cap-h: 80px;      /* a compare caption: place; time and Remove; the status when not whole */
   --content-max: 1720px;
 
   /* The catalogue's ground reaches the bottom of the screen. */
@@ -42,11 +46,15 @@
 
 .cat.has-back { --back-h: 56px; }
 
+/* the stage for a 240px tall picture in Two, and 165px tall pictures in Four */
+.cat[data-size="2"] { --view-h: max(var(--view-fit), calc(240px + var(--cap-h) + 49px)); }
+.cat[data-size="4"] { --view-h: max(var(--view-fit), calc(2 * (165px + var(--cap-h) + 1px) + 64px)); }
+
 .cat-nobr { white-space: nowrap; }
 
 @media (max-width: 1099px) { .cat { --m: 24px; } }
 @media (max-width: 599px) { .cat { --m: 16px; --gutter: 16px; --thumb-h: 56px; } }
-@media (pointer: coarse) { .cat { --ctl-h: 44px; } }
+@media (pointer: coarse) { .cat { --ctl-h: 44px; --cap-h: 106px; } }
 
 .cat-in {
   max-width: calc(var(--content-max) + 2 * var(--m));
@@ -229,8 +237,8 @@
   --pad-s: 24px;
   --col-gap: 24px;
   --cols: 2;
-  --cap-h: 80px;      /* place; time and Remove; the status when not whole */
   --cell-h: calc(var(--view-h) - 2 * var(--pad-s) - var(--cap-h) - 1px);
+  --cell-w: calc((var(--stage-w, 640px) - 2 * var(--pad-s) - (var(--cols) - 1) * var(--col-gap)) / var(--cols));
   display: grid;
   grid-template-columns: repeat(var(--cols), auto);
   align-content: safe center;
@@ -251,7 +259,6 @@
 }
 
 .cat-cell-pick {
-  --cell-w: calc((var(--stage-w, 640px) - 2 * var(--pad-s) - (var(--cols) - 1) * var(--col-gap)) / var(--cols));
   position: relative;
   display: block;
   width: min(var(--nat-w, 640px), var(--cell-w), var(--cell-h) * var(--ratio, 1.3333));
@@ -332,6 +339,27 @@
 
 @media (pointer: coarse) {
   .cat-cell-remove { min-height: 44px; }
+}
+
+/* Beside the facts the stage's height is shared out on the caption being
+   --cap-h tall, so it keeps to its lines; the whole text is in the facts. A
+   narrow picture's caption may be wider than the picture. */
+@media (min-width: 900px) {
+  .cat-cell-cap {
+    display: grid;
+    grid-template-columns: minmax(0, auto) auto;
+    justify-content: start;
+  }
+  .cat-compare[data-size="4"] .cat-cell-cap { min-width: max(100%, min(220px, var(--cell-w))); }
+  .cat-cell-place,
+  .cat-cell-status { grid-column: 1 / -1; }
+  .cat-cell-place,
+  .cat-cell-time,
+  .cat-cell-status {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
 }
 
 /* Dock: a row of controls, then the filmstrip */

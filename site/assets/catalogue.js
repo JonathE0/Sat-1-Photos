@@ -94,13 +94,13 @@ function dateText(p) {
 
 // The largest line: a member's title, else the place, else the date, else
 // the build's own title ("Attitude camera, frame 1c89").
-function headline(p) {
+export function headline(p) {
   if (p.title !== p.defaultTitle) return p.title;
   return placeName(p) || (dayOf(p) ? dateText(p) : p.defaultTitle || p.id);
 }
 
 // "25 Oct 2026, 00:54 UTC", "24 Oct 2026, time unknown" or "Time unknown".
-function whenShort(p) {
+export function whenShort(p) {
   const d = toDate(p.capturedAt);
   if (d) return `${dayMonthYear(d)}, ${clock(d)} UTC`;
   const day = dayOf(p);
@@ -1049,6 +1049,7 @@ export function createCatalogue(root, {
       cell.image.alt = altText(p);
       cell.pick.setAttribute('aria-label', `Cell ${i + 1}: ${headline(p)}, ${whenShort(p)}`);
       cell.place.textContent = headline(p);
+      cell.place.title = headline(p);
       cell.time.textContent = whenShort(p);
       const word = p.status === 'verified' ? '' : capitalize(statusShort(p));
       cell.status.textContent = word;
