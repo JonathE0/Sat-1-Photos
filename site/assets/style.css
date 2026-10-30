@@ -621,8 +621,10 @@ body[data-view="gallery"] .wordmark { display: none; }
 .notice code { font-family: var(--mono); font-size: 0.9em; }
 .notice .linkish { margin-left: 0.3em; }
 
-.dark-note { max-width: 48em; margin: 20px 0 0; color: var(--label); font-size: 13px; }
-.dark-note .linkish { margin-left: 0.4em; color: var(--fg); }
+.hidden-note { max-width: 48em; margin: 20px 0 0; color: var(--label); font-size: 13px; }
+.hidden-line { display: block; }
+.hidden-line + .hidden-line { margin-top: 6px; }
+.hidden-note .linkish { margin-left: 0.4em; color: var(--fg); }
 
 /* Detail */
 

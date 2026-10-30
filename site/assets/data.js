@@ -215,6 +215,7 @@ export function mergePhoto(img, ann) {
     camera: img.camera,
     status: img.status,
     dark: img.dark === true, // nothing to see: black, noise, or the Sun as a lone dot
+    mostlyMissing: Number.isFinite(img.completeness) && img.completeness < 0.2, // under a fifth can be shown
     src: img.src || img.thumb,
     thumb: img.thumb || img.src,
     width,
@@ -253,10 +254,11 @@ export function mergeAll(images, annotations) {
 }
 
 /* Filters. They live in the URL, e.g. #/?camera=picam&month=2026-09&q=clouds
-   Dark frames are left out unless dark=1; that switch is not counted as a filter. */
+   Dark frames are left out unless dark=1, and mostly missing pictures unless
+   missing=1; those two switches are not counted as filters. */
 
-export const FILTER_KEYS = ['camera', 'status', 'month', 'member', 'tag', 'q', 'dark'];
-const NARROWING_KEYS = FILTER_KEYS.filter((key) => key !== 'dark');
+export const FILTER_KEYS = ['camera', 'status', 'month', 'member', 'tag', 'q', 'dark', 'missing'];
+const NARROWING_KEYS = FILTER_KEYS.filter((key) => key !== 'dark' && key !== 'missing');
 
 export function readFilters(params) {
   const f = {};
@@ -279,6 +281,7 @@ export function applyFilters(photos, f) {
   const member = fold(f.member);
   const tag = fold(f.tag);
   return photos.filter((p) => (f.dark || !p.dark)
+    && (f.missing || !p.mostlyMissing)
     && (!f.camera || p.camera === f.camera)
     && (!f.status || p.status === f.status)
     && (!f.month || p.month === f.month)
