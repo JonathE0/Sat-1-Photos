@@ -22,19 +22,25 @@ const MIN_MS = 60_000;
 const LOCAL_ZONE = 'America/Edmonton';
 const PASS_COUNT = 4;
 const PASS_MASK_DEG = 10;
+const PANELS_KEY = 'cts-globe-panels';
 
 const pad = (n) => String(n).padStart(2, '0');
 const MINUS = '−';
-const signed = (x, digits = 0) => (x < 0 ? MINUS : '') + Math.abs(x).toFixed(digits);
 
-function utcDate(ms) {
+// Short months as the picture titles write them (adapter.js timeTitle), not Intl's "Sept".
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+/** "24 Oct 2026", or "24 Oct" without the year. */
+function utcDay(ms, year = true) {
   const d = new Date(ms);
-  return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`;
+  return `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]}${year ? ` ${d.getUTCFullYear()}` : ''}`;
 }
-function utcTime(ms) {
+function utcTime(ms, seconds = true) {
   const d = new Date(ms);
-  return `${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}`;
+  return `${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}${seconds ? `:${pad(d.getUTCSeconds())}` : ''}`;
 }
+/** "24 Oct 2026, 17:37 UTC" */
+const utcWhen = (ms) => `${utcDay(ms)}, ${utcTime(ms, false)} UTC`;
 function isoUtc(ms) {
   return new Date(Math.round(ms / 1000) * 1000).toISOString().replace('.000Z', 'Z');
 }
@@ -52,27 +58,47 @@ function localTime(ms, seconds = true) {
   for (const p of localFormat.formatToParts(ms)) parts[p.type] = p.value;
   return { time: `${parts.hour}:${parts.minute}${seconds ? `:${parts.second}` : ''}`, zone: parts.timeZoneName };
 }
-const localDay = new Intl.DateTimeFormat('en-GB', { timeZone: LOCAL_ZONE, weekday: 'short', day: 'numeric', month: 'short' });
-const shortDate = new Intl.DateTimeFormat('en-GB', { timeZone: 'UTC', day: 'numeric', month: 'short' });
+const localDay = new Intl.DateTimeFormat('en-GB', { timeZone: LOCAL_ZONE, weekday: 'long', day: 'numeric', month: 'long' });
 
 const fmtLat = (lat) => `${Math.abs(lat).toFixed(2)}° ${lat >= 0 ? 'N' : 'S'}`;
 const fmtLon = (lon) => `${Math.abs(lon).toFixed(2)}° ${lon >= 0 ? 'E' : 'W'}`;
 
+/** "Daylight, sun 43° up", "Night, sun 12° below the horizon" (with `below`: "Daylight below, …"). */
+function fmtGround(sunEl, below = '') {
+  const light = astro.groundLight(sunEl);
+  const word = light === 'day' ? 'Daylight' : light === 'twilight' ? 'Twilight' : 'Night';
+  const sun = Math.round(Math.abs(sunEl));
+  return `${word}${below}, sun ${sun}° ${sunEl >= 0 ? 'up' : 'below the horizon'}`;
+}
+
 function fmtDuration(ms) {
   const min = Math.max(0, Math.round(ms / MIN_MS));
   if (min < 60) return `${min} min`;
-  const h = Math.floor(min / 60);
-  return `${h} h ${pad(min % 60)} min`;
+  return `${Math.floor(min / 60)} h ${min % 60} min`;
 }
 
 function fmtOffset(ms) {
   const min = Math.round(Math.abs(ms) / MIN_MS);
   const sign = ms < 0 && min > 0 ? MINUS : '+';
-  return `${sign}${Math.floor(min / 60)} h ${pad(min % 60)} m`;
+  return `${sign}${min < 60 ? '' : `${Math.floor(min / 60)} h `}${min % 60} min`;
+}
+
+/** How far the orbital elements are from the time shown: "2 days old", "3 hours later". */
+function fmtAge(ms) {
+  const hours = Math.abs(ms) / 3_600_000;
+  const n = hours < 24 ? Math.max(1, Math.round(hours)) : Math.round(hours / 24);
+  return `${n} ${hours < 24 ? 'hour' : 'day'}${n === 1 ? '' : 's'} ${ms < 0 ? 'later' : 'old'}`;
 }
 
 function safeHref(url) {
   return typeof url === 'string' && /^https?:\/\//i.test(url) ? url : null;
+}
+
+/** view=<lat>,<lon>,<distance> from a link: the camera's ground point and distance. */
+function parseView(text) {
+  const [lat, lon, distance] = String(text || '').split(',').map(Number);
+  if (![lat, lon, distance].every(Number.isFinite) || Math.abs(lat) > 90 || Math.abs(lon) > 180) return null;
+  return { lat, lon, distance };
 }
 
 const ICONS = {
@@ -81,94 +107,103 @@ const ICONS = {
     '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.6 1.8h2.4v8.4H2.6zM7 1.8h2.4v8.4H7z" fill="currentColor"/></svg>',
   close:
     '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 2.5l7 7M9.5 2.5l-7 7" stroke="currentColor" stroke-width="1.3"/></svg>',
+  chevron:
+    '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.25L6 7.75l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>',
 };
 
 const TEMPLATE = `
   <div class="cg-stage">
     <canvas class="cg-canvas" tabindex="0" role="img"
-      aria-label="Globe showing CTS-SAT-1, its orbit, the ground station and photo locations"></canvas>
+      aria-label="Globe showing CTS-SAT-1, its orbit, the ground station and where the pictures were taken"></canvas>
     <div class="cg-labels" aria-hidden="true"></div>
     <div class="cg-tip" hidden></div>
   </div>
 
   <div class="cg-col cg-col-left">
     <header class="cg-head">
-      <a class="cg-back" data-ref="back" hidden>← Gallery</a>
-      <h1 class="cg-title">CTS-SAT-1 <span>FrontierSat</span></h1>
-      <p class="cg-sub mono">NORAD 69015</p>
-      <p class="cg-fine cg-credit">Earth: NASA Earth Observatory · Orbits: Space-Track.org · Places © <a
-        href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a></p>
-      <p class="cg-note" data-ref="note" hidden></p>
+      <a class="cg-back" data-ref="back" hidden>All pictures</a>
+      <h1 class="cg-title">CTS-SAT-1</h1>
+      <p class="cg-fine cg-sub">Also called FrontierSat. NORAD 69015.</p>
+      <p class="cg-fine cg-credit">Earth imagery: NASA. Orbits: Space-Track.org. Places © <a
+        href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>.</p>
+      <p class="cg-fine cg-note" data-ref="note" hidden></p>
     </header>
-    <section class="cg-panel" data-panel="sat" aria-label="Satellite">
+    <section class="cg-panel" data-panel="sat" data-ref="satPanel" aria-label="Right now">
       <div class="cg-panel-head">
-        <h2>Satellite</h2>
-        <button type="button" class="cg-btn cg-btn-small" data-ref="follow" aria-pressed="false"
+        <h2><button type="button" class="cg-fold" data-ref="fold" aria-expanded="true">Right now${ICONS.chevron}</button></h2>
+        <button type="button" class="cg-btn" data-ref="follow" aria-pressed="false"
           title="Keep the camera on the satellite (F)">Follow</button>
       </div>
+      <div class="cg-fold-body">
       <dl class="cg-readouts">
-        <div><dt>Latitude</dt><dd class="mono" data-ref="lat">—</dd></div>
-        <div><dt>Longitude</dt><dd class="mono" data-ref="lon">—</dd></div>
-        <div><dt>Altitude</dt><dd class="mono" data-ref="alt">—</dd></div>
-        <div><dt>Speed</dt><dd class="mono" data-ref="speed">—</dd></div>
-        <div><dt>Satellite</dt><dd data-ref="illum">—</dd></div>
-        <div><dt>Ground below</dt><dd data-ref="ground">—</dd></div>
-        <div><dt>Orbit</dt><dd class="mono" data-ref="orbit"
-          title="Revolution number: ascending-node crossings since launch">—</dd></div>
+        <div><dt>Latitude</dt><dd data-ref="lat">—</dd></div>
+        <div><dt>Longitude</dt><dd data-ref="lon">—</dd></div>
+        <div><dt>Altitude</dt><dd data-ref="alt">—</dd></div>
+        <div><dt>Speed</dt><dd data-ref="speed">—</dd></div>
+        <div class="cg-wide"><dt>Sunlight</dt><dd data-ref="illum">—</dd></div>
+        <div class="cg-wide"><dt>Below</dt><dd data-ref="ground">—</dd></div>
+        <div class="cg-wide"><dt>Orbits so far</dt><dd data-ref="orbit"
+          title="Times it has crossed the equator northbound since launch">—</dd></div>
       </dl>
-      <p class="cg-fine" data-ref="tle"></p>
+      <p class="cg-fine cg-tle" data-ref="tle"></p>
+      </div>
     </section>
-    <p class="cg-fine cg-keys">Space play/pause · N now · ← → 1 min, with Shift 1 h · F follow</p>
+    <details class="cg-keys">
+      <summary>Keys</summary>
+      <dl>
+        <div><dt><kbd>Space</kbd></dt><dd>Pause or play</dd></div>
+        <div><dt><kbd>N</kbd></dt><dd>Back to now</dd></div>
+        <div><dt><kbd>←</kbd> <kbd>→</kbd></dt><dd>One minute (with Shift, one hour)</dd></div>
+        <div><dt><kbd>F</kbd></dt><dd>Follow the satellite</dd></div>
+        <div><dt><kbd>P</kbd></dt><dd>Show or hide the panels</dd></div>
+      </dl>
+    </details>
   </div>
 
   <div class="cg-col cg-col-right">
     <section class="cg-panel" data-panel="passes" aria-label="Passes over Calgary">
       <div class="cg-panel-head">
         <h2>Passes over Calgary</h2>
-        <span class="cg-fine">above ${PASS_MASK_DEG}°, UTC</span>
       </div>
+      <p class="cg-fine cg-passes-note">Times in Calgary, for passes higher than ${PASS_MASK_DEG}°.</p>
       <p class="cg-status" data-ref="gs"></p>
-      <div class="cg-pass-cols cg-fine" aria-hidden="true"><span>Rise</span><span>Max</span><span>Set</span><span>Max el</span></div>
       <ol class="cg-list cg-passes" data-ref="passes"></ol>
     </section>
-    <section class="cg-panel cg-panel-photos" data-panel="photos" aria-label="Photos">
+    <section class="cg-panel cg-panel-photos" data-panel="photos" aria-label="Pictures">
       <div class="cg-panel-head">
-        <h2>Photos</h2>
+        <h2>Pictures</h2>
         <span class="cg-fine" data-ref="photoCount"></span>
       </div>
       <ul class="cg-list cg-photos" data-ref="photos"></ul>
     </section>
   </div>
 
-  <section class="cg-card" data-ref="card" hidden aria-live="polite" aria-label="Selected photo">
+  <section class="cg-card" data-ref="card" hidden aria-live="polite" aria-label="Selected picture">
     <a class="cg-card-thumb" data-ref="cardThumbLink"><img data-ref="cardImg" alt="" decoding="async"><span>No preview</span></a>
     <div class="cg-card-head">
       <h3 class="cg-card-title" data-ref="cardTitle"></h3>
-      <p class="mono" data-ref="cardTime"></p>
+      <p data-ref="cardTime"></p>
     </div>
     <div class="cg-card-body">
-      <p class="mono" data-ref="cardPos"></p>
-      <p data-ref="cardPlace"></p>
-      <div class="cg-card-foot">
-        <p data-ref="cardLight"></p>
-        <a class="cg-card-link" data-ref="cardLink">Open photo</a>
-      </div>
+      <p class="cg-card-pos" data-ref="cardPos"></p>
+      <p data-ref="cardLight"></p>
+      <a class="cg-card-link" data-ref="cardLink">Open in the catalogue</a>
     </div>
     <button type="button" class="cg-icon-btn cg-card-close" data-ref="cardClose" aria-label="Close">${ICONS.close}</button>
   </section>
 
   <div class="cg-dock" data-ref="dock">
   <nav class="cg-tabs" aria-label="Panels">
-    <button type="button" data-tab="sat" aria-pressed="false">Satellite</button>
+    <button type="button" data-tab="sat" aria-pressed="false">Right now</button>
     <button type="button" data-tab="passes" aria-pressed="false">Passes</button>
-    <button type="button" data-tab="photos" aria-pressed="false">Photos</button>
+    <button type="button" data-tab="photos" aria-pressed="false">Pictures</button>
     <button type="button" data-ref="share2" class="cg-share">Copy link</button>
   </nav>
 
   <div class="cg-clock" role="group" aria-label="Clock">
     <div class="cg-time">
-      <div class="cg-utc mono" aria-live="off"><span data-ref="date">—</span> <span data-ref="hms"></span> <span class="cg-unit">UTC</span></div>
-      <div class="cg-local cg-fine mono" data-ref="local"></div>
+      <div class="cg-utc" data-ref="utc" aria-live="off">—</div>
+      <div class="cg-fine" data-ref="local"></div>
     </div>
     <div class="cg-transport">
       <button type="button" class="cg-btn cg-icon-btn" data-ref="play" aria-label="Pause">${ICONS.pause}</button>
@@ -176,16 +211,18 @@ const TEMPLATE = `
         ${SPEEDS.map((s) => `<button type="button" class="cg-btn" data-speed="${s}" aria-pressed="false">${s}×</button>`).join('')}
       </div>
       <button type="button" class="cg-btn cg-speed-cycle" data-ref="speedCycle" aria-label="Speed">1×</button>
-      <button type="button" class="cg-btn" data-ref="now" aria-pressed="false" title="Live: now at 1× (N)">Now</button>
+      <button type="button" class="cg-btn" data-ref="now" aria-pressed="false" title="Back to now, at 1× (N)">Now</button>
     </div>
     <div class="cg-scrub">
       <div class="cg-ticks" data-ref="ticks" aria-hidden="true"></div>
       <input type="range" data-ref="scrub" min="-1440" max="1440" step="1" value="0"
         aria-label="Time, up to a day either side of the focus time">
-      <div class="cg-scrub-labels cg-fine mono" aria-hidden="true">
-        <span>${MINUS}1 d</span><span data-ref="offset">+0 h 00 m</span><span>+1 d</span>
+      <div class="cg-scrub-labels cg-fine" aria-hidden="true">
+        <span>A day earlier</span><span data-ref="offset">Now</span><span>A day later</span>
       </div>
     </div>
+    <button type="button" class="cg-btn cg-panels-btn" data-ref="panels" aria-expanded="true"
+      title="Show or hide the side panels (P)">Hide panels</button>
     <button type="button" class="cg-btn cg-share" data-ref="share">Copy link</button>
   </div>
   </div>
@@ -207,6 +244,7 @@ function noScene() {
     setHover: nothing,
     flyToGround: nothing,
     flyToSatellite: nothing,
+    viewPoint: () => null,
     follow: nothing,
     pick: () => null,
     resize: nothing,
@@ -286,6 +324,7 @@ export function mountGlobe(container, options = {}) {
     selectedId: null,
     follow: false,
     tab: null,
+    panels: true,
     userMovedCamera: false,
   };
   let orbit = null;
@@ -328,25 +367,63 @@ export function mountGlobe(container, options = {}) {
   scene.setStation(astro.CALGARY.latDeg, astro.CALGARY.lonDeg);
 
   const head = root.querySelector('.cg-head');
+  let uiScale = 1;
+  // "Right now" folds to its heading where a selected picture's card needs
+  // the room; its heading opens it again (until the card changes).
+  let satFull = 0; // its height unfolded
+  let satFoldedByUser = null;
+  function setSatFold(folded) {
+    el.satPanel.toggleAttribute('data-folded', folded);
+    el.fold.setAttribute('aria-expanded', String(!folded));
+  }
+  listen(el.fold, 'click', () => {
+    satFoldedByUser = el.fold.getAttribute('aria-expanded') === 'true';
+    setSatFold(satFoldedByUser);
+  });
+
   const layout = () => {
-    // Side panels need width and height: a phone in landscape is wide but
-    // too short for them, so it gets the bottom bar too.
-    root.classList.toggle('cg-narrow', root.clientWidth < 760 || root.clientHeight < 560);
+    const w = root.clientWidth;
+    const h = root.clientHeight;
+    // A big monitor keeps narrow corner panels and a dominant globe. Type and
+    // spacing grow only gently with the width (values 16 to 18px, reached at
+    // about 1800px wide), and the columns hold about 11% of the width, never
+    // less than their 1440 × 900 widths at that type size, so rows don't wrap
+    // more than they do there. Where the side panels would crowd the globe
+    // (narrow, short or a phone in landscape), they fold into the bottom
+    // bar's tabs instead of shrinking.
+    uiScale = Math.min(1.125, Math.max(1, (0.0055 * w + 8) / 16));
+    const narrow = w < 1180 || h < 680;
+    root.style.setProperty('--cg-s', uiScale.toFixed(3));
+    root.style.setProperty('--cg-left-w', `${Math.max(280 * uiScale, 0.11 * w).toFixed(1)}px`);
+    root.style.setProperty('--cg-right-w', `${Math.max(300 * uiScale, 0.117 * w).toFixed(1)}px`);
+    root.classList.toggle('cg-narrow', narrow);
     root.style.setProperty('--cg-head-h', `${head.offsetHeight}px`);
     root.style.setProperty('--cg-dock-h', `${el.dock.offsetHeight}px`);
-    root.style.setProperty('--cg-card-space', el.card.hidden ? '0px' : `${el.card.offsetHeight + 12}px`);
+    const cardSpace = el.card.hidden ? 0 : el.card.offsetHeight + 12 * uiScale;
+    root.style.setProperty('--cg-card-space', `${cardSpace}px`);
+    el.fold.disabled = narrow; // a tab's sheet shows it whole
+    if (narrow) {
+      setSatFold(false);
+      return;
+    }
+    if (!el.satPanel.hasAttribute('data-folded')) satFull = el.satPanel.offsetHeight;
+    // the left column's room (globe.css .cg-col-left max-height) against what it holds
+    const room = h - 112 * uiScale - cardSpace;
+    const need = head.offsetHeight + 12 * uiScale + satFull;
+    setSatFold(satFoldedByUser ?? (!el.card.hidden && need > room));
   };
   const resizeObserver = new ResizeObserver(() => {
     layout();
-    scene.resize(root.clientWidth, root.clientHeight);
+    scene.resize(root.clientWidth, root.clientHeight, uiScale);
     paintTicks();
   });
   resizeObserver.observe(root);
   resizeObserver.observe(el.dock);
   resizeObserver.observe(el.card);
   resizeObserver.observe(head);
+  resizeObserver.observe(el.satPanel);
   layout();
-  scene.resize(root.clientWidth || 800, root.clientHeight || 600);
+  scene.resize(root.clientWidth || 800, root.clientHeight || 600, uiScale);
 
   if (opts.backHref) {
     el.back.href = opts.backHref;
@@ -516,38 +593,39 @@ export function mountGlobe(container, options = {}) {
       const li = document.createElement('li');
       li.className = 'cg-empty';
       li.textContent = orbit
-        ? 'No passes above 10° in the next few days.'
+        ? 'No passes that high in the next few days.'
         : loaded
           ? 'Orbit data unavailable.'
           : 'Loading…';
       ol.appendChild(li);
       return;
     }
+    let day = '';
     for (const p of list) {
+      // grouped by Calgary day: "Friday 30 October"
+      if (localDay.format(p.riseMs) !== day) {
+        day = localDay.format(p.riseMs);
+        const h = document.createElement('li');
+        h.className = 'cg-pass-day cg-fine';
+        h.textContent = day;
+        ol.appendChild(h);
+      }
       const li = document.createElement('li');
       const b = document.createElement('button');
       b.type = 'button';
       b.className = 'cg-pass';
-      const rise = localTime(p.riseMs, false);
-      const set = localTime(p.setMs, false);
       const row = document.createElement('span');
-      row.className = 'cg-pass-row mono';
-      for (const text of [utcTime(p.riseMs), utcTime(p.maxMs), utcTime(p.setMs)]) {
-        const s = document.createElement('span');
-        s.textContent = text;
-        row.appendChild(s);
-      }
-      const elv = document.createElement('span');
-      elv.className = 'cg-pass-el';
-      elv.textContent = `${Math.round(p.maxElevationDeg)}°`;
-      row.appendChild(elv);
+      row.className = 'cg-pass-row';
+      const when = document.createElement('span');
+      when.textContent = `${localTime(p.riseMs, false).time}–${localTime(p.setMs, false).time}`;
+      const high = document.createElement('span');
+      high.textContent = `${Math.round(p.maxElevationDeg)}° high`;
+      row.append(when, high);
       const sub = document.createElement('span');
-      sub.className = 'cg-pass-sub cg-fine';
-      sub.textContent =
-        `${localDay.format(p.riseMs)} · ${rise.time}–${set.time} ${set.zone} · ` +
-        `${astro.compassPoint(p.riseAzimuthDeg)} → ${astro.compassPoint(p.setAzimuthDeg)}`;
+      sub.className = 'cg-fine';
+      sub.textContent = `From ${astro.compassPoint(p.riseAzimuthDeg)} to ${astro.compassPoint(p.setAzimuthDeg)}`;
       b.append(row, sub);
-      b.title = `Show this pass (rises ${utcDate(p.riseMs)} ${utcTime(p.riseMs)} UTC)`;
+      b.title = `Show this pass. Rises ${utcTime(p.riseMs, false)} UTC, ${utcDay(p.riseMs, false)}`;
       b.addEventListener('click', () => {
         closeSheet();
         jumpTo(p.maxMs);
@@ -584,14 +662,22 @@ export function mountGlobe(container, options = {}) {
     paintTicks();
   }
 
+  /** A picture's name for the list and card: its place, else its title,
+   * else (when the title is just the time) the day it was taken. */
+  function photoName(p) {
+    if (p.placed && p.place) return String(p.place);
+    return p.ms !== null && p.title === utcWhen(p.ms) ? utcDay(p.ms) : p.title;
+  }
+
   function paintPhotoList() {
     const ul = el.photos;
     ul.replaceChildren();
-    el.photoCount.textContent = photos.length ? String(photos.length) : '';
+    const placed = photos.filter((p) => p.placed).length;
+    el.photoCount.textContent = photos.length ? `${photos.length}, ${placed} on the globe` : '';
     if (!photos.length) {
       const li = document.createElement('li');
       li.className = 'cg-empty';
-      li.textContent = loaded ? 'No photos yet.' : 'Loading…';
+      li.textContent = loaded ? 'No pictures yet.' : 'Loading…';
       ul.appendChild(li);
       return;
     }
@@ -601,7 +687,7 @@ export function mountGlobe(container, options = {}) {
         unknownHeader = true;
         const h = document.createElement('li');
         h.className = 'cg-list-sub cg-fine';
-        h.textContent = 'Time unknown · not placed';
+        h.textContent = 'Not on the globe: only the date is known';
         ul.appendChild(h);
       }
       const li = document.createElement('li');
@@ -610,13 +696,25 @@ export function mountGlobe(container, options = {}) {
       b.className = 'cg-photo';
       b.dataset.id = p.id;
       if (p.id === state.selectedId) b.setAttribute('aria-current', 'true');
+      const thumb = document.createElement('span');
+      thumb.className = 'cg-photo-thumb';
+      const src = safeHref(p.thumb);
+      if (src) {
+        const img = document.createElement('img');
+        img.src = src;
+        img.alt = '';
+        img.loading = 'lazy';
+        img.decoding = 'async';
+        img.addEventListener('error', () => img.remove());
+        thumb.appendChild(img);
+      }
       const t = document.createElement('span');
       t.className = 'cg-photo-title';
-      t.textContent = p.title;
+      t.textContent = photoName(p);
       const m = document.createElement('span');
-      m.className = 'cg-photo-meta mono';
-      m.textContent = p.ms !== null ? `${utcDate(p.ms)} ${utcTime(p.ms)}` : `${p.captureDate || 'date unknown'} · time unknown`;
-      b.append(t, m);
+      m.className = 'cg-photo-meta cg-fine';
+      m.textContent = p.ms !== null ? utcWhen(p.ms) : 'Time not known';
+      b.append(thumb, t, m);
       b.addEventListener('click', () => {
         closeSheet();
         focusPhoto(p.id);
@@ -679,10 +777,15 @@ export function mountGlobe(container, options = {}) {
 
   function paintCard() {
     const p = state.selectedId ? findPhoto(state.selectedId) : null;
+    if (el.card.hidden === !!p) satFoldedByUser = null; // the card comes or goes: fold to fit again
     el.card.hidden = !p;
     root.classList.toggle('cg-has-card', !!p);
-    if (!p) return;
-    el.cardTitle.textContent = p.title;
+    if (p) paintCardBody(p);
+    layout(); // fold "Right now" to fit at once, not when the resize observer next runs
+  }
+
+  function paintCardBody(p) {
+    el.cardTitle.textContent = photoName(p);
     const href = safeHref(p.href);
     for (const a of [el.cardLink, el.cardThumbLink]) {
       if (href) a.href = href;
@@ -699,25 +802,21 @@ export function mountGlobe(container, options = {}) {
       el.cardImg.removeAttribute('src');
     }
     el.cardImg.alt = p.title;
-    el.cardPlace.textContent = p.placed && p.place ? String(p.place) : '';
-    el.cardPlace.hidden = !el.cardPlace.textContent;
     if (p.ms === null) {
-      el.cardTime.textContent = p.captureDate ? `${p.captureDate}\ntime unknown` : 'Capture time unknown';
-      el.cardPos.textContent = 'Not placed on the globe';
+      el.cardTime.textContent = p.captureDate ? `${utcDay(Date.parse(p.captureDate))}, time not known` : 'Time not known';
+      el.cardPos.textContent = 'Not on the globe';
       el.cardLight.textContent = '';
       return;
     }
-    el.cardTime.textContent = `${utcDate(p.ms)}\n${utcTime(p.ms)} UTC`;
+    el.cardTime.textContent = utcWhen(p.ms);
     if (!p.placed) {
       el.cardPos.textContent = 'Position unavailable';
       el.cardLight.textContent = '';
       return;
     }
-    el.cardPos.textContent = `${fmtLat(p.lat)}  ${fmtLon(p.lon)}`;
-    const sunEl = astro.sunElevationDeg(p.lat, p.lon, p.ms);
-    const light = astro.groundLight(sunEl);
-    const word = light === 'day' ? 'Ground sunlit' : light === 'twilight' ? 'Ground in twilight' : 'Ground dark';
-    el.cardLight.textContent = `${word} · sun ${signed(sunEl)}°`;
+    const s = orbit ? orbit.stateAt(p.ms) : null;
+    el.cardPos.textContent = `${fmtLat(p.lat)}, ${fmtLon(p.lon)}${s ? `, ${Math.round(s.altKm)} km up` : ''}`;
+    el.cardLight.textContent = fmtGround(astro.sunElevationDeg(p.lat, p.lon, p.ms), ' below');
   }
 
   listen(el.cardImg, 'error', () => {
@@ -729,6 +828,20 @@ export function mountGlobe(container, options = {}) {
   });
   listen(el.cardClose, 'click', clearSelection);
 
+  // Opening the picture keeps the way back to this exact view: its page gets
+  // our link state as #/photo/<id>?globe=<state>, and so does this page's own
+  // URL, for the browser's Back button.
+  function linkBack(e) {
+    const p = state.selectedId ? findPhoto(state.selectedId) : null;
+    const href = p ? safeHref(p.href) : null;
+    if (!href || !/#\/photo\/[^?]*$/.test(href)) return;
+    e.currentTarget.href = `${href}?globe=${encodeURIComponent(stateParams({ view: true }))}`;
+    if (e.type === 'click') writeHash({ view: true });
+  }
+  for (const a of [el.cardLink, el.cardThumbLink]) {
+    for (const type of ['pointerdown', 'focus', 'click']) listen(a, type, linkBack);
+  }
+
   // ---- readouts --------------------------------------------------------------
   const shown = new Map();
   function put(node, text) {
@@ -739,13 +852,13 @@ export function mountGlobe(container, options = {}) {
   }
 
   function paintClock() {
-    put(el.date, utcDate(state.ms));
-    put(el.hms, utcTime(state.ms));
-    const local = localTime(state.ms);
-    put(el.local, `${local.time} ${local.zone} · Calgary`);
+    // no-break spaces: on a phone the line may only break after the date
+    put(el.utc, `${utcDay(state.ms).replace(/ /g, ' ')}, ${utcTime(state.ms)} UTC`);
+    const local = localTime(state.ms, false);
+    put(el.local, `${local.time} ${local.zone} in Calgary`);
     const offset = Math.round((state.ms - state.focusMs) / MIN_MS);
     if (document.activeElement !== el.scrub && String(offset) !== el.scrub.value) el.scrub.value = String(offset);
-    put(el.offset, fmtOffset(state.ms - state.focusMs));
+    put(el.offset, state.live ? 'Now' : fmtOffset(state.ms - state.focusMs));
   }
 
   function paintReadouts() {
@@ -758,48 +871,42 @@ export function mountGlobe(container, options = {}) {
         !orbit
           ? loaded
             ? 'Orbit data unavailable.'
-            : 'Loading orbit…'
+            : 'Loading the orbit…'
           : state.ms < launchMs
-            ? `Not launched yet: lift-off ${utcDate(launchMs)} ${utcTime(launchMs).slice(0, 5)} UTC.`
-            : 'No position: SGP4 failed for this time.',
+            ? `Not launched yet. Lift-off was ${utcDay(launchMs)}, ${utcTime(launchMs, false)} UTC.`
+            : 'No position for this time: the orbit calculation failed.',
       );
+      el.tle.classList.remove('cg-warn');
       put(el.gs, '');
       return;
     }
     put(el.lat, fmtLat(s.latDeg));
     put(el.lon, fmtLon(s.lonDeg));
-    put(el.alt, `${s.altKm.toFixed(1)} km`);
+    put(el.alt, `${Math.round(s.altKm)} km`);
     put(el.speed, `${s.speedKmS.toFixed(2)} km/s`);
     const sun = astro.sunPosition(state.ms);
     const light = astro.satelliteLight(s.eci, sun); // the gallery's model, so the two agree
-    put(el.illum, light === 'sunlit' ? 'Sunlit' : light === 'shadow' ? 'In Earth’s shadow' : 'At the terminator · sun at Earth’s edge');
+    put(el.illum, light === 'sunlit' ? 'In sunlight' : light === 'shadow' ? 'In the Earth’s shadow' : 'At the edge of the Earth’s shadow');
     el.illum.dataset.state = light;
-    const sunEl = astro.sunElevationDeg(s.latDeg, s.lonDeg, state.ms);
-    const ground = astro.groundLight(sunEl);
-    put(el.ground, `${ground === 'day' ? 'Day' : ground === 'twilight' ? 'Twilight' : 'Night'} · sun ${signed(sunEl)}°`);
+    put(el.ground, fmtGround(astro.sunElevationDeg(s.latDeg, s.lonDeg, state.ms)));
     const rev = orbit.revolutionAt(state.ms);
     put(el.orbit, rev === null ? dash : rev.toLocaleString('en-US'));
-    const ageDays = (state.ms - s.tleEpochMs) / DAY_MS;
-    const age =
-      ageDays < 0
-        ? `${Math.abs(ageDays).toFixed(1)} d ahead`
-        : `${ageDays.toFixed(1)} d old`;
+    const age = state.ms - s.tleEpochMs;
+    const stale = Math.abs(age) > 7 * DAY_MS;
     put(
       el.tle,
-      `TLE ${shortDate.format(s.tleEpochMs)} ${utcTime(s.tleEpochMs).slice(0, 5)} UTC · ${age}` +
-        (Math.abs(ageDays) > 7 ? ' · position approximate' : ''),
+      `Worked out from orbital elements of ${utcDay(s.tleEpochMs, false)}, ${utcTime(s.tleEpochMs, false)} UTC ` +
+        `(${fmtAge(age)})${stale ? ', so the position may be off by tens of kilometres' : ''}.`,
     );
+    el.tle.classList.toggle('cg-warn', stale);
 
     const look = s.look || astro.lookAngles(observer, s.ecef);
     if (look.elevationDeg > 0) {
-      put(
-        el.gs,
-        `In view now · el ${look.elevationDeg.toFixed(0)}° · az ${look.azimuthDeg.toFixed(0)}° ${astro.compassPoint(look.azimuthDeg)}`,
-      );
+      put(el.gs, `In view now, ${look.elevationDeg.toFixed(0)}° up in the ${astro.compassPoint(look.azimuthDeg)}`);
       el.gs.dataset.state = 'up';
     } else {
       const next = (passes.list || []).find((p) => p.riseMs > state.ms);
-      put(el.gs, next ? `Below the horizon · next pass in ${fmtDuration(next.riseMs - state.ms)}` : 'Below the horizon');
+      put(el.gs, next ? `Next pass in ${fmtDuration(next.riseMs - state.ms)}` : 'Below the horizon');
       el.gs.dataset.state = 'down';
     }
   }
@@ -831,6 +938,19 @@ export function mountGlobe(container, options = {}) {
     }
   }
 
+  /** Side panels on wide screens; hidden leaves the globe, photo card and clock. */
+  function setPanels(on) {
+    state.panels = on;
+    root.classList.toggle('cg-panels-off', !on);
+    el.panels.textContent = on ? 'Hide panels' : 'Show panels';
+    el.panels.setAttribute('aria-expanded', String(on));
+    try {
+      localStorage.setItem(PANELS_KEY, on ? 'shown' : 'hidden');
+    } catch {
+      // storage blocked: the choice lasts until the page closes
+    }
+  }
+
   /** On narrow screens, put the sheet away so the globe shows what was picked. */
   function closeSheet() {
     if (state.tab && root.classList.contains('cg-narrow')) setTab(state.tab);
@@ -844,6 +964,7 @@ export function mountGlobe(container, options = {}) {
   }
   listen(el.speedCycle, 'click', () => setSpeed(SPEEDS[(SPEEDS.indexOf(state.speed) + 1) % SPEEDS.length]));
   listen(el.follow, 'click', () => setFollow(!state.follow));
+  listen(el.panels, 'click', () => setPanels(!state.panels));
   for (const b of root.querySelectorAll('[data-tab]')) listen(b, 'click', () => setTab(b.dataset.tab));
   listen(el.scrub, 'input', () => {
     state.ms = state.focusMs + Number(el.scrub.value) * MIN_MS;
@@ -893,7 +1014,7 @@ export function mountGlobe(container, options = {}) {
   listen(canvas, 'pointermove', (e) => {
     if (e.pointerType !== 'mouse' || e.buttons) return;
     const r = canvas.getBoundingClientRect();
-    const hit = scene.pick(e.clientX - r.left, e.clientY - r.top);
+    const hit = scene.pick(e.clientX - r.left, e.clientY - r.top, 12 * uiScale);
     if (!hit) {
       if (!tip.hidden || canvas.style.cursor) hideTip();
       return;
@@ -901,13 +1022,14 @@ export function mountGlobe(container, options = {}) {
     scene.setHover(hit.type === 'photo' ? hit.id : null);
     if (hit.type === 'photo') {
       const p = findPhoto(hit.id);
-      tip.textContent = p ? `${p.title} · ${utcTime(p.ms)} UTC` : '';
+      // "Antarctica, 25 Oct, 00:54 UTC"
+      tip.textContent = p ? `${p.place ? `${p.place}, ` : ''}${utcDay(p.ms, false)}, ${utcTime(p.ms, false)} UTC` : '';
     } else if (hit.type === 'satellite') {
-      tip.textContent = state.follow ? 'CTS-SAT-1' : 'CTS-SAT-1 · click to follow';
+      tip.textContent = state.follow ? 'CTS-SAT-1' : 'Click to follow CTS-SAT-1';
     } else if (hit.type === 'station') {
       tip.textContent = 'University of Calgary ground station';
     } else {
-      tip.textContent = 'Subsolar point: the Sun is overhead here';
+      tip.textContent = 'The Sun is overhead here';
     }
     canvas.style.cursor = hit.type === 'photo' || hit.type === 'satellite' ? 'pointer' : '';
     tip.hidden = false;
@@ -917,7 +1039,7 @@ export function mountGlobe(container, options = {}) {
   listen(canvas, 'pointerup', (e) => {
     if (scene.controls.dragged) return;
     const r = canvas.getBoundingClientRect();
-    const hit = scene.pick(e.clientX - r.left, e.clientY - r.top, e.pointerType === 'mouse' ? 12 : 22);
+    const hit = scene.pick(e.clientX - r.left, e.clientY - r.top, (e.pointerType === 'mouse' ? 12 : 22) * uiScale);
     if (hit?.type === 'photo') {
       closeSheet();
       focusPhoto(hit.id);
@@ -934,7 +1056,7 @@ export function mountGlobe(container, options = {}) {
     if (t && (t.isContentEditable || tag === 'TEXTAREA' || tag === 'SELECT')) return;
     if (tag === 'INPUT' && t.type !== 'range') return;
     if (tag === 'INPUT' && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) return; // the scrubber's own keys
-    if ((tag === 'BUTTON' || tag === 'A') && (e.key === ' ' || e.key === 'Enter')) return;
+    if ((tag === 'BUTTON' || tag === 'A' || tag === 'SUMMARY') && (e.key === ' ' || e.key === 'Enter')) return;
     switch (e.key) {
       case ' ':
         setPlaying(!state.playing);
@@ -946,6 +1068,12 @@ export function mountGlobe(container, options = {}) {
       case 'f':
       case 'F':
         setFollow(!state.follow);
+        break;
+      case 'p':
+      case 'P':
+        // only where the button shows: the side-panel layout of the full UI
+        if (opts.ui === 'compact' || root.classList.contains('cg-narrow')) return;
+        setPanels(!state.panels);
         break;
       case 'ArrowLeft':
         step(-(e.shiftKey ? 60 : 1) * MIN_MS);
@@ -969,21 +1097,26 @@ export function mountGlobe(container, options = {}) {
   function hashParams() {
     if (!opts.hashState) return {};
     const p = new URLSearchParams(location.hash.replace(/^#/, ''));
-    return { t: p.get('t'), photo: p.get('photo') };
+    return { t: p.get('t'), photo: p.get('photo'), view: parseView(p.get('view')) };
   }
 
-  function stateParams() {
+  /** #t=<iso>&photo=<id>, and with `view` the camera: &view=<lat>,<lon>,<distance>. */
+  function stateParams({ view = false } = {}) {
     const p = new URLSearchParams();
     if (!state.live) p.set('t', isoUtc(state.ms));
     if (state.selectedId) p.set('photo', state.selectedId);
-    return p.toString().replace(/%3A/gi, ':');
+    const v = view ? scene.viewPoint() : null;
+    if (v) p.set('view', `${v.latDeg.toFixed(2)},${v.lonDeg.toFixed(2)},${v.distance.toFixed(2)}`);
+    return p.toString().replace(/%3A/gi, ':').replace(/%2C/gi, ',');
   }
 
-  function writeHash() {
+  // Routine updates leave the camera out: it moves without telling us, so a
+  // stale view would win over the photo on a reload.
+  function writeHash({ view = false } = {}) {
     if (!opts.hashState || destroyed) return;
     const url = new URL(location.href);
     url.searchParams.delete('photo');
-    const params = stateParams();
+    const params = stateParams({ view });
     url.hash = params ? `#${params}` : '';
     const next = url.href.replace(/#$/, '');
     if (next !== location.href) history.replaceState(history.state, '', next);
@@ -991,8 +1124,16 @@ export function mountGlobe(container, options = {}) {
 
   function shareUrl() {
     const url = new URL('index.html', MODULE_BASE);
-    const params = stateParams();
+    const params = stateParams({ view: true });
     return params ? `${url.href}#${params}` : url.href;
+  }
+
+  /** Put the camera back where a link's view had it (at the current time). */
+  function applyView(v) {
+    if (!v) return;
+    state.userMovedCamera = true;
+    setFollow(false);
+    scene.flyToGround(v.lat, v.lon, { distance: v.distance, immediate: true });
   }
 
   function applyHash() {
@@ -1005,6 +1146,7 @@ export function mountGlobe(container, options = {}) {
         jumpTo(ms);
       }
     }
+    applyView(h.view);
   }
   if (opts.hashState) listen(window, 'hashchange', applyHash);
 
@@ -1045,12 +1187,12 @@ export function mountGlobe(container, options = {}) {
         if (err.name === 'AbortError') throw err;
         if (err.status !== 404) {
           console.warn('Globe: photo data unavailable', err);
-          note('Photo data unavailable');
+          note('Picture data unavailable.');
           return [];
         }
         json = await fetchJson(opts.sampleUrl);
         sample = true;
-        note('Sample data', 'site/data/images.json was not found, so the globe shows sample photos.');
+        note('Sample data.', 'site/data/images.json was not found, so the globe shows sample pictures.');
       }
     }
     launchMs = launchTime(json) ?? astro.LAUNCH_MS;
@@ -1069,6 +1211,15 @@ export function mountGlobe(container, options = {}) {
   }
 
   // ---- start -------------------------------------------------------------------
+  if (opts.ui !== 'compact') {
+    let panels = null;
+    try {
+      panels = localStorage.getItem(PANELS_KEY);
+    } catch {
+      // storage blocked: start with the panels shown
+    }
+    if (panels === 'hidden') setPanels(false);
+  }
   paintTransport();
   paintPhotoList();
   paintPasses();
@@ -1085,6 +1236,7 @@ export function mountGlobe(container, options = {}) {
       jumpTo(ms);
     }
   }
+  applyView(hash.view);
   raf = requestAnimationFrame(frame);
 
   Promise.all([loadOrbit(), loadPhotos()])
@@ -1096,12 +1248,13 @@ export function mountGlobe(container, options = {}) {
       trackKey = null;
       pushScene(true);
       paintPasses();
-      const wanted = pendingFocus || (startPhoto ? { id: startPhoto, fly: true, immediate: true } : null);
+      // a link with a camera view keeps it rather than flying to the photo
+      const wanted = pendingFocus || (startPhoto ? { id: startPhoto, fly: !hash.view, immediate: true } : null);
       pendingFocus = null;
       const focused = wanted ? focusPhoto(wanted.id, { fly: wanted.fly, immediate: wanted.immediate }) : false;
       if (wanted && !focused) {
-        const msg = `Photo “${wanted.id}” not found`;
-        note(el.note.hidden ? msg : `${el.note.textContent} · ${msg}`, el.note.title);
+        const msg = `Picture “${wanted.id}” not found.`;
+        note(el.note.hidden ? msg : `${el.note.textContent} ${msg}`, el.note.title);
       }
       if (focused && startTime !== null && hash.t) {
         const ms = Date.parse(hash.t);
@@ -1113,13 +1266,14 @@ export function mountGlobe(container, options = {}) {
       // nothing placed to look at: start on the satellite
       const onPhoto = focused && findPhoto(wanted.id)?.placed;
       if (!onPhoto && !state.userMovedCamera) scene.flyToSatellite({ immediate: true });
+      applyView(hash.view); // again, now the Earth is turned to the final time
       markDirty();
     })
     .catch((err) => {
       if (err.name === 'AbortError' || destroyed) return;
       console.error('Globe: failed to load data', err);
       loaded = true;
-      note('Could not load data');
+      note('Could not load the data.');
       paintPhotoList();
     });
 
