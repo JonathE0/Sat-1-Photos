@@ -59,7 +59,7 @@ function cornerData(p) {
   let when;
   if (Number.isFinite(ms)) {
     const calgary = calgaryTime(ms);
-    when = [utcLong(ms), `${calgary.time} ${calgary.zone} in Calgary`];
+    when = [utcLong(ms), `${calgary.time} ${calgary.zone}${calgary.otherDay ? ` on ${calgary.date}` : ''} in Calgary`];
   } else {
     when = p.captureDate ? [photoTime(p), 'Time not known'] : ['Date not known'];
   }
