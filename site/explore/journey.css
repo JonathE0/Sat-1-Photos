@@ -44,7 +44,9 @@
 .jy-root *, .jy-root *::before, .jy-root *::after { box-sizing: border-box; }
 .jy-root [hidden] { display: none !important; }
 .jy-root :focus-visible { outline: 2px solid var(--jy-blue); outline-offset: 2px; }
-.jy-root.jy-instant * { transition: none !important; }
+.jy-root.jy-instant *,
+.jy-root.jy-instant .jy-beat.is-on,
+.jy-root.jy-instant .jy-beat.is-past { transition: none !important; }
 /* a drag on the globe never turns into a text selection */
 html.jy-dragging, html.jy-dragging * { -webkit-user-select: none !important; user-select: none !important; }
 html.jy-dragging { cursor: grabbing; }
@@ -111,6 +113,16 @@ html.jy-dragging { cursor: grabbing; }
 }
 .jy-over-canvas[hidden] { display: none; }
 .jy-earth-ready .jy-over-canvas { opacity: 1; }
+
+/* Before the globe's code arrives (site/index.html): the opening words on black, in
+   the place they'll have, on one screen. */
+.jy-shell .jy {
+  height: calc(100vh - var(--jy-top));
+  height: calc(100dvh - var(--jy-top));
+}
+@media (max-width: 599px), (max-aspect-ratio: 4/5) { .jy-shell .jy-text { top: 88px; } }
+/* the globe couldn't start: the notice clears the nav laid over this view */
+#journey > .notice { padding-top: calc(var(--jy-nav) + 32px); }
 
 /* ---- text: one anchor on the left margin ------------------------------------- */
 
@@ -209,6 +221,16 @@ html.jy-dragging { cursor: grabbing; }
   visibility: hidden;
   transition: opacity 240ms var(--jy-ease-exit), visibility 0s linear 240ms;
 }
+/* Short of room at the end, the words give way so the satellite fits (computeFrame): at
+   1 how to drag goes, at 2 the facts banner moves into the details, at 3 the live
+   sentence keeps only where it is, at 4 the subheading goes. */
+.jy-root[data-fit="1"] .jy-hint,
+.jy-root[data-fit="2"] .jy-hint,
+.jy-root[data-fit="3"] .jy-hint,
+.jy-root[data-fit="4"] .jy-hint,
+.jy-root[data-fit="3"] .jy-lead-more,
+.jy-root[data-fit="4"] .jy-lead-more,
+.jy-root.jy-composed[data-fit="4"] .jy-sub { display: none; }
 
 /* "Scroll to learn more": still, quiet, gone once the visitor scrolls */
 .jy-cue {
@@ -436,6 +458,7 @@ html.jy-dragging { cursor: grabbing; }
   /* down to just above the bottom-right controls */
   bottom: calc(var(--jy-bottom) + var(--jy-ctl) + 24px);
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows: auto minmax(0, 1fr);
   width: clamp(380px, 18vw, 420px);
   max-width: calc(100% - 2 * var(--jy-m));
@@ -534,7 +557,7 @@ html.jy-dragging { cursor: grabbing; }
   .jy-dock { --vf-caption: 124px; }
 }
 
-@media (max-width: 1099px) and (min-width: 700px) {
+@media (max-width: 1099px) {
   /* the corner row goes above the time row so the two never meet */
   .jy-root:not(.jy-narrow) .jy-corner { bottom: calc(var(--jy-bottom) + var(--jy-ctl) + 12px); }
   .jy-root:not(.jy-narrow) .jy-facts-slot { bottom: calc(var(--jy-bottom) + 2 * var(--jy-ctl) + 28px); }
@@ -749,6 +772,10 @@ html.jy-dragging { cursor: grabbing; }
 .jy-muted { color: var(--jy-muted); }
 .jy-over { margin-top: 12px !important; max-width: none; }
 .jy-panel-zoom { margin-top: 4px !important; }
+/* the facts, when the end view has no room for their banner */
+.jy-details-facts { margin-top: 16px; }
+.jy-details-facts:empty { display: none; }
+.jy-details-facts .cf { max-width: none; padding: 0; background: none; }
 
 .jy-facts {
   display: grid;
@@ -841,6 +868,17 @@ html.jy-dragging { cursor: grabbing; }
 /* no bar on a phone, and the details are a bottom sheet over the whole stage */
 .jy-narrow .jy-dock { position: static; display: block; width: auto; max-width: none; }
 .jy-narrow .jy-summary { display: none; }
+/* the narrowest phones: every row still fits, the clock whole */
+@media (max-width: 340px) {
+  .jy-narrow .jy-corner { column-gap: 4px; }
+  .jy-narrow .jy-again,
+  .jy-narrow .jy-details { padding: 0 8px; }
+  .jy-narrow .jy-all { padding: 0 14px; }
+  .jy-narrow .jy-clock { padding: 4px 6px; }
+  .jy-narrow .jy-clock-main { font-size: 15px; }
+  .jy-narrow .jy-speed span { min-width: 34px; padding: 0 2px; }
+  .jy-narrow .jy-now { padding: 0 8px; }
+}
 .jy-narrow .jy-facts-slot { bottom: calc(var(--jy-bottom) + 3 * var(--jy-ctl) + 32px); }
 .jy-narrow.jy-panel-open .jy-time,
 .jy-narrow.jy-panel-open .jy-corner,
@@ -898,7 +936,7 @@ html.jy-dragging { cursor: grabbing; }
 
 /* ---- short screens (laptops with a small window, phones on their side) ------------------ */
 
-@media (max-height: 640px) and (min-width: 700px) {
+@media (max-height: 640px) and (min-width: 600px) {
   .jy-root { --jy-display: clamp(48px, 12svh, 96px); }
   .jy-text { top: max(16vh, calc(var(--jy-nav) + 16px)); top: max(16svh, calc(var(--jy-nav) + 16px)); }
   .jy-sub { margin-top: 10px; }
@@ -909,7 +947,10 @@ html.jy-dragging { cursor: grabbing; }
   /* phones on their side: the name, the subheading and the live sentence */
   .jy-root.jy-composed .jy-tip,
   .jy-root.jy-composed .jy-hint { display: none; }
-  .jy-root.jy-composed .jy-live-lead { margin-top: 12px; }
+  /* wider, so where it is takes one line */
+  .jy-root.jy-composed .jy-live-lead { margin-top: 12px; max-width: 60ch; }
+  /* the bar stays clear of the headline */
+  .jy-root:not(.jy-narrow) .jy-dock { width: min(380px, calc(100vw - 300px)); }
 }
 
 /* ---- reduced motion: opacity only, 200ms or less --------------------------------------- */

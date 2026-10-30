@@ -61,7 +61,8 @@ const HIGHLIGHT_EMISSIVE = new THREE.Color(0x182030);
  * @param {boolean} [opts.materialPresets=true]  apply MATERIAL_PRESETS by material name.
  * @param {number}  [opts.earthshine=1]   strength of the faint Earth-reflected fill on the
  *                                        nadir side (0 = none, e.g. over the night side).
- * @param {number}  [opts.timeoutMs=20000] give up on the model and use the stand-in.
+ * @param {number}  [opts.timeoutMs=20000] start with the stand-in if the model takes longer;
+ *                                        the result's `late` then brings the model when it comes.
  */
 export async function createSatellite({
   modelUrl = DEFAULT_MODEL_URL,
@@ -72,23 +73,44 @@ export async function createSatellite({
   earthshine = 1,
   timeoutMs = 20000,
 } = {}) {
-  let model = null;
-  let error = null;
-  if (modelUrl) {
+  const prepare = (gltf) => {
+    const model = gltf.scene;
     try {
-      const gltf = await loadGLTF(modelUrl, timeoutMs);
-      model = gltf.scene;
       fitToFrame(model, { rotation, metresPerUnit, centre });
       if (materialPresets) applyPresets(model);
     } catch (e) {
+      disposeTree(model);
+      throw e;
+    }
+    return model;
+  };
+  const standIn = (e) => {
+    console.warn(`[satellite] could not load ${modelUrl}; using the stand-in 3U.`, e);
+    return null;
+  };
+  let model = null;
+  let error = null;
+  let late = null;
+  if (modelUrl) {
+    const load = loadGLTF(modelUrl);
+    try {
+      const first = await withinTime(load, timeoutMs);
+      if (first) model = prepare(first);
+      // a slow line, not a failure: the stand-in for now, and the model when it comes
+      else late = load.then(prepare).then((m) => assemble(m, 'model', null, earthshine), standIn);
+    } catch (e) {
       error = e;
-      if (model) disposeTree(model);
-      model = null;
-      console.warn(`[satellite] could not load ${modelUrl}; using the stand-in 3U.`, e);
+      standIn(e);
     }
   }
-  const source = model ? 'model' : 'fallback';
-  if (!model) model = buildStandIn();
+  const api = assemble(model || buildStandIn(), model ? 'model' : 'fallback', error, earthshine);
+  /** A promise of the real satellite (or null if it never comes), when this is a stand-in for now. */
+  api.late = late;
+  return api;
+}
+
+/** One satellite around a model that is already in the frame described at the top. */
+function assemble(model, source, error, earthshine) {
   model.name = model.name || 'satellite-model';
 
   // Bounds in metres, before the display scale. The click box and outline hug the body;
@@ -209,24 +231,20 @@ export async function createSatellite({
 
 // ---------------------------------------------------------------------------------------
 
-function loadGLTF(url, timeoutMs) {
+function loadGLTF(url) {
   const loader = new GLTFLoader();
   loader.setMeshoptDecoder(MeshoptDecoder);
-  const load = loader.loadAsync(url);
+  return loader.loadAsync(url);
+}
+
+/** The load's result, or null if it is still going after `timeoutMs` (0 waits for as long as it takes). */
+function withinTime(load, timeoutMs) {
   if (!(timeoutMs > 0)) return load;
   let timer;
-  const timeout = new Promise((_, reject) => {
-    timer = setTimeout(() => reject(new Error(`timed out after ${timeoutMs} ms`)), timeoutMs);
+  const timeout = new Promise((resolve) => {
+    timer = setTimeout(() => resolve(null), timeoutMs);
   });
-  return Promise.race([load, timeout]).then(
-    (gltf) => { clearTimeout(timer); return gltf; },
-    (err) => {
-      clearTimeout(timer);
-      // If the load finishes after the timeout, free it.
-      load.then((g) => disposeTree(g.scene), () => {});
-      throw err;
-    },
-  );
+  return Promise.race([load, timeout]).finally(() => clearTimeout(timer));
 }
 
 function fitToFrame(model, { rotation, metresPerUnit, centre }) {

@@ -8,7 +8,6 @@ import { h, append, mono, announce, store } from './dom.js';
 import { loadImages, loadAnnotations, mergeAll, readFilters, applyFilters } from './data.js';
 import { createCatalogue } from './catalogue.js';
 import { createDetail, NAME_KEY } from './detail.js';
-import { mountJourney } from '../explore/journey.js';
 import { mountCredits } from './credits.js';
 import { toDate, utcLong, plural } from './format.js';
 
@@ -46,13 +45,36 @@ if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 
 const SITE = new URL('./', location.href);
 
-// The globe is the front page, but the pictures must not depend on it: if it
-// can't start, the rest of the site still works and Explore says so.
-const journey = startJourney();
+// The globe is the front page, but nothing else waits for it (three.js alone is
+// 690 KB): it loads the first time Explore is shown. If it can't start, the rest
+// of the site still works and Explore says so. Until it is here, the page holds
+// the story's opening words (index.html).
+let journey = null;
+let journeyModule = null;
 
-function startJourney() {
+function showJourney() {
+  if (journey) {
+    journey.show();
+    return;
+  }
+  // a first arrival starts at the top of the story, wherever the last page was scrolled to
+  window.scrollTo(0, 0);
+  // index.html has already started this if the page opened on Explore
+  journeyModule ||= window.CTS1_JOURNEY_LOADING || import('../explore/journey.js');
+  window.CTS1_JOURNEY_LOADING = null;
+  journeyModule.then(startJourney, (err) => {
+    journeyModule = null; // the next visit to Explore tries again
+    journeyFailed(err);
+  });
+}
+
+function startJourney({ mountJourney }) {
+  // if the visitor has moved on, it waits until they come back
+  if (journey || state.view !== 'explore') return;
   try {
-    return mountJourney($('#journey'), {
+    $('#journey').replaceChildren();
+    journey = mountJourney($('#journey'), {
+      photos: state.photos,
       tleUrl: new URL('data/tle.json', SITE).href,
       siteRoot: SITE.href,
       photoHref: (id) => `#/pictures?id=${encodeURIComponent(id)}&from=globe`,
@@ -63,14 +85,21 @@ function startJourney() {
       onOpenCatalogue() { location.hash = '#/pictures?from=globe'; },
     });
   } catch (err) {
-    console.error('Explore: the globe could not start', err);
-    $('#journey').replaceChildren(h('p', { class: 'notice' },
-      "The globe couldn't start in this browser. ",
-      h('a', { class: 'text-link', href: '#/pictures' }, 'See the pictures')));
     const noop = () => {};
-    return { hide: noop, show: noop, setPhotos: noop, openCredits: noop, closeCredits: noop };
+    journey = { hide: noop, show: noop, setPhotos: noop };
+    journeyFailed(err);
   }
 }
+
+function journeyFailed(err) {
+  console.error('Explore: the globe could not start', err);
+  $('#journey').replaceChildren(h('p', { class: 'notice' },
+    "The globe couldn't start in this browser. ",
+    h('a', { class: 'text-link', href: '#/pictures' }, 'See the pictures')));
+}
+
+// the loading line in index.html gives way to the catalogue's own loading frames
+views.pictures.replaceChildren();
 
 const gallery = createCatalogue(views.pictures, {
   onQueryChange(query) { state.galleryQuery = query; },
@@ -189,7 +218,7 @@ function route() {
   const previous = state.view;
   // The globe keeps its camera, time, scroll and lock while hidden; hide it
   // before anything else scrolls the page.
-  if (previous === 'explore' && next.view !== 'explore') journey.hide();
+  if (previous === 'explore' && next.view !== 'explore') journey?.hide();
   if (next.view === 'detail') {
     state.fromGallery = previous === 'pictures' || (previous === 'detail' && state.fromGallery);
   }
@@ -201,7 +230,7 @@ function route() {
   if (next.view === 'explore') {
     document.title = 'CTS-SAT-1 · Interactive picture visualizer';
     if (next.credits) history.replaceState(history.state, '', '#/');
-    if (previous !== 'explore') journey.show();
+    if (previous !== 'explore') showJourney();
     if (next.credits) credits.open();
     return;
   }
@@ -240,7 +269,7 @@ function rebuild() {
   state.photos = mergeAll(state.data.images, state.annotations);
   state.byId = new Map(state.photos.map((p) => [p.id, p]));
   gallery.setData(state.photos);
-  journey.setPhotos(state.photos);
+  journey?.setPhotos(state.photos);
   updateCounts();
   renderSkipped();
 }

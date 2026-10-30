@@ -106,8 +106,17 @@ const CHASE_BEHIND_KM = 1400;
 const CHASE_YAW = 0.52;
 /** The satellite's smallest length on screen when zoomed far out, px. */
 const SAT_MIN_PX = 12;
-/** Room for the tallest fact in the phone banner (three lines and the source row), px. */
+/** Room for the tallest fact in the banner (phone: three lines and the source row), px. */
 const FACTS_RESERVE_PX = 140;
+const FACTS_RESERVE_WIDE_PX = 120;
+/** From the satellite's centre to whatever is under it: half its button and a margin, px. */
+const SAT_CLEAR_PX = 30;
+/** How far the limb sits under the text, and the satellite at least under the limb (fractions of the height). */
+const LIMB_UNDER_TEXT = 0.03;
+const SAT_UNDER_LIMB = 0.06;
+/** journey.css data-fit: what the end view gives up when short of room (see endRoom). */
+const FIT_NO_FACTS = 2;
+const FIT_MOST = 4;
 /** Screens with room for the picture viewfinder; keep in step with .jy-vf-slot in journey.css. */
 const VIEWFINDER_MEDIA = '(min-width: 1360px) and (min-height: 760px) and (min-aspect-ratio: 4/5)';
 /** Close up, the camera levels out to this pitch so the limb sits behind the satellite. */
@@ -167,7 +176,7 @@ function template(id, siteRoot) {
           <p class="jy-sub"><span class="jy-words">Interactive picture visualizer</span></p>
           <p class="jy-lead jy-intro-only"><span class="jy-words">Calgary To Space\u2019s first satellite, built by University of Calgary students and in orbit since ${launchDate}.</span></p>
           <p class="jy-cue jy-intro-only" data-ref="cue" tabindex="-1"><span class="jy-words">Scroll to learn more</span> ${ICON_DOWN}</p>
-          <p class="jy-lead jy-live-lead jy-end-only"><span class="jy-words" data-ref="liveLead"></span></p>
+          <p class="jy-lead jy-live-lead jy-end-only"><span class="jy-words" data-ref="liveLead"></span> <span class="jy-words jy-lead-more" data-ref="liveMore"></span></p>
           <p class="jy-tip jy-end-only"><span class="jy-words" data-ref="satTip"></span></p>
           <p class="jy-hint jy-end-only" data-ref="hint"><span class="jy-words" data-ref="hintText"></span></p>
         </div>
@@ -252,6 +261,7 @@ function template(id, siteRoot) {
             <dt>Orbits so far</dt><dd data-ref="fRev"></dd>
           </dl>
           <p class="jy-small jy-muted jy-elements" data-ref="elements"></p>
+          <div class="jy-details-facts" data-ref="detailsFacts"></div>
           <p class="jy-small jy-retry" data-ref="noOrbit" hidden>Couldn\u2019t work out where it is: no orbital elements loaded.
             <button type="button" class="jy-textbtn" data-ref="retry">Try again</button></p>
           <section class="jy-latest" data-ref="latest" hidden>
@@ -307,7 +317,8 @@ export function mountJourney(container, options = {}) {
 
   ensureStylesheet();
   const root = document.createElement('div');
-  root.className = 'jy-root';
+  // no entrances on the first frame: the page may already show these words (index.html)
+  root.className = 'jy-root jy-instant';
   root.innerHTML = template(id, siteRoot);
   container.appendChild(root);
   const ref = {};
@@ -463,6 +474,7 @@ export function mountJourney(container, options = {}) {
       if (earthReady || destroyed) return;
       earthReady = true;
       stage.classList.add('jy-earth-ready');
+      for (const pin of pins) loadPinPicture(pin.el.querySelector('img'));
     };
     // fade in once the full maps are uploaded (the upload itself can stall a
     // frame, so not mid-fade); on a very slow line, show the previews anyway
@@ -493,10 +505,19 @@ export function mountJourney(container, options = {}) {
       console.warn('Journey: satellite.js unavailable, using a box', err);
       made = fallbackSatellite();
     }
+    useSatellite(made);
+    // on a slow line the first one is a stand-in: the real model takes its place when it comes
+    made.late?.then((real) => {
+      if (real) useSatellite(real);
+    });
+  }
+
+  function useSatellite(made) {
     if (destroyed) {
       made.dispose();
       return;
     }
+    satellite?.dispose();
     satellite = made;
     satHolder.add(satellite.object3d);
     const set = new Set();
@@ -657,8 +678,49 @@ export function mountJourney(container, options = {}) {
     return (lo + hi) / 2;
   }
 
+  /**
+   * Where the satellite can go on the end view, for the words ending at
+   * `textBottom`: under the limb, and clear of the controls and the facts banner.
+   * On a phone the banner runs across the width under the satellite, from a fixed
+   * bottom with room for the tallest fact, so the framing doesn't move as facts
+   * change. Elsewhere it is a column on the left, which the satellite moves right
+   * of when they'd meet. `fits` is false when the words, the satellite and
+   * everything kept at this level don't all fit.
+   */
+  function endRoom(s, narrow, textBottom, fit) {
+    const controls = union([boxOf(ref.corner, s), boxOf(ref.time, s)]);
+    const floor = controls ? controls.top : H;
+    const satMin = textBottom / H + LIMB_UNDER_TEXT + SAT_UNDER_LIMB;
+    let satMax = (floor - SAT_CLEAR_PX) / H;
+    let satX = narrow ? 0.5 : 0.62;
+    let clearOfText = true;
+    if (fit < FIT_NO_FACTS) {
+      const top = narrow ? floor - 20 - FACTS_RESERVE_PX : floor - 16 - FACTS_RESERVE_WIDE_PX;
+      clearOfText = top >= textBottom + 8;
+      if (narrow) {
+        satMax = (top - 50) / H;
+      } else if (controls) {
+        const m = controls.left;
+        const right = m + Math.min(34 * parseFloat(getComputedStyle(ref.factsSlot).fontSize), W - 2 * m);
+        const beside = right + 40; // the model's half length
+        if (beside > satX * W) {
+          // room for the model and its label to the banner's right, or else above it
+          if (beside + 90 <= W - m) satX = beside / W;
+          else satMax = (top - SAT_CLEAR_PX) / H;
+        }
+      }
+    }
+    return { fits: clearOfText && satMin <= satMax, satMax, satX };
+  }
+
+  /** The facts banner, or the same facts in the details when the end view has no room for it. */
+  function placeFacts() {
+    const home = frame.fit >= FIT_NO_FACTS ? ref.detailsFacts : ref.factsSlot;
+    if (ticker?.element && ticker.element.parentNode !== home) home.append(ticker.element);
+  }
+
   function computeFrame() {
-    const narrow = W < 700 || W / H < 0.8;
+    const narrow = W < 600 || W / H < 0.8 || (W < 700 && W / H < 1.2);
     frame.narrow = narrow;
     frame.ui = clamp(1 + ((W - 1920) / 1920) * 0.3, 1, 1.2);
     // landscape: 35 degrees tall; portrait: hold 35 degrees across
@@ -674,8 +736,32 @@ export function mountJourney(container, options = {}) {
     root.classList.remove('jy-composed');
     const introBox = boxOf(ref.b1, s);
     root.classList.add('jy-composed');
-    const endBox = boxOf(ref.b1, s);
+    // With no viewfinder the end view can be short of room. The satellite comes
+    // first: what can go goes, one step at a time, until it fits. Within one window
+    // size it only ever gives up more, so nothing flickers as the place name changes.
+    const slot = boxOf(ref.viewfinderSlot, s);
+    const size = `${W}x${H}`;
+    if (frame.fitSize !== size) {
+      frame.fitSize = size;
+      frame.fit = 0;
+    }
+    if (slot) frame.fit = 0;
+    let endBox;
+    let room;
+    for (;;) {
+      root.dataset.fit = String(frame.fit);
+      endBox = boxOf(ref.b1, s);
+      if (endBox) {
+        // as laid out: the block may be mid-entrance, moved by its transform
+        const top = ref.b1.offsetParent.getBoundingClientRect().top - s.top + ref.b1.offsetTop;
+        endBox = { ...endBox, top, bottom: top + ref.b1.offsetHeight };
+      }
+      room = slot ? null : endRoom(s, narrow, endBox ? endBox.bottom : 0, frame.fit);
+      if (!room || room.fits || frame.fit >= FIT_MOST) break;
+      frame.fit++;
+    }
     root.classList.toggle('jy-composed', composedNow);
+    placeFacts();
 
     // beat 1: the whole Earth
     let diam;
@@ -690,25 +776,21 @@ export function mountJourney(container, options = {}) {
     frame.d0 = 1 / Math.sin(Math.atan(diam * frame.tanHalf));
 
     // the end: behind the satellite, the limb under the headline block (and
-    // under the big live sentence, which is still up as the camera arrives)
-    frame.endText = union([endBox, boxOf(ref.b2, s)]);
+    // under the big live sentence, which is still up as the camera arrives,
+    // unless that would leave the satellite no room)
+    const story = boxOf(ref.b2, s);
+    const storyFits = !room || (story && story.bottom / H + LIMB_UNDER_TEXT + SAT_UNDER_LIMB <= room.satMax);
+    frame.endText = union([endBox, storyFits ? story : null]);
     let satY = narrow ? 0.64 : 0.6;
     let limbY = narrow ? 0.45 : 0.42;
-    if (frame.endText) limbY = Math.max(limbY, frame.endText.bottom / H + 0.03);
+    if (frame.endText) limbY = Math.max(limbY, frame.endText.bottom / H + LIMB_UNDER_TEXT);
     // ... and under the summary bar, with the picture viewfinder below it on big
     // screens (the bar isn't laid out on a phone, nor the viewfinder off big screens)
-    const slot = boxOf(ref.viewfinderSlot, s);
     const dock = union([boxOf(ref.summary, s), slot]);
-    if (dock) limbY = Math.max(limbY, dock.bottom / H + 0.03);
+    if (dock) limbY = Math.max(limbY, dock.bottom / H + LIMB_UNDER_TEXT);
     satY = clamp(Math.max(satY, limbY + 0.12), 0, narrow ? 0.8 : 0.86);
-    if (narrow) {
-      // On a phone the facts banner spans the width under the satellite: keep
-      // it above the tallest fact (from the banner's bottom, which stays put
-      // as facts change, so the framing doesn't move with each one).
-      const facts = boxOf(ref.factsSlot, s);
-      if (facts) satY = Math.max(limbY + 0.06, Math.min(satY, (facts.bottom - FACTS_RESERVE_PX - 50) / H));
-    }
-    let satX = narrow ? 0.5 : 0.62;
+    if (room) satY = Math.max(limbY + SAT_UNDER_LIMB, Math.min(satY, room.satMax));
+    let satX = room ? room.satX : 0.62;
     if (state.panel && !narrow && !slot) {
       // keep the satellite clear of the details on narrower desktops (with the
       // viewfinder they stay in its place, above the limb, and nothing moves)
@@ -1242,6 +1324,12 @@ export function mountJourney(container, options = {}) {
 
   const underText = (x, y) => frame.textNow.some((r) => x > r.left && x < r.right && y > r.top && y < r.bottom);
 
+  /** Pins wait for the Earth: on a slow line their pictures would hold up its textures, and they show only at the end. */
+  function loadPinPicture(img) {
+    if (img.dataset.src) img.src = img.dataset.src;
+    delete img.dataset.src;
+  }
+
   function buildPins() {
     for (const pin of pins) {
       pin.el.remove();
@@ -1263,7 +1351,8 @@ export function mountJourney(container, options = {}) {
       const img = document.createElement('img');
       img.alt = '';
       img.decoding = 'async';
-      img.src = new URL(p.thumb || p.src, siteRoot).href;
+      img.dataset.src = new URL(p.thumb || p.src, siteRoot).href;
+      if (earthReady) loadPinPicture(img);
       a.appendChild(img);
       const count = document.createElement('span');
       count.className = 'jy-pile-count';
@@ -1433,15 +1522,33 @@ export function mountJourney(container, options = {}) {
     requestAnimationFrame(() => ref.card.classList.add('is-on'));
   }
 
+  /**
+   * Above the pin if there is room, else under it. The top-right dock (the
+   * viewfinder or the details) is drawn over the card, so the card stays clear of
+   * it: when neither fits, it sits beside the pin, below the dock.
+   */
   function placeCard() {
     const pin = card.pin;
     const el = ref.card;
     const w = el.offsetWidth;
     const h = el.offsetHeight;
     const gap = 16 * frame.ui;
-    const x = clamp(pin.x - w / 2, 8, W - w - 8);
+    const s = stageRect();
+    const dock = union([boxOf(ref.summary, s), state.panel ? boxOf(ref.panel, s) : boxOf(ref.viewfinderSlot, s)]);
+    const clear = (cx, cy) => !dock || cx + w <= dock.left - 8 || cy >= dock.bottom + 8;
+    let x = clamp(pin.x - w / 2, 8, W - w - 8);
     let y = pin.y - h - gap;
-    if (y < 8) y = pin.y + gap;
+    if (y < 8 || !clear(x, y)) y = pin.y + gap;
+    if (y + h > H - 8 || !clear(x, y)) {
+      const top = dock ? dock.bottom + 8 : 8;
+      y = clamp(pin.y - h / 2, top, Math.max(top, H - h - 8));
+      x = pin.x - w - gap >= 8 ? pin.x - w - gap : pin.x + gap;
+      // too tall to fit under the dock: left of it, as far down as it goes
+      if (y + h > H - 8) {
+        x = dock ? Math.max(8, dock.left - w - 8) : x;
+        y = Math.max(8, H - h - 8);
+      }
+    }
     el.style.transform = `translate(${Math.round(x)}px, ${Math.round(y)}px)`;
   }
 
@@ -1815,7 +1922,8 @@ export function mountJourney(container, options = {}) {
     return `over ${place || `${fmtLatShort(s.latDeg)}, ${fmtLonShort(s.lonDeg)}`}, ${Math.round(s.altKm)} km up`;
   }
 
-  function liveSentence() {
+  /** The live sentence's first half, which stays when the end view is short of room. */
+  function liveWhere() {
     const s = sat.state;
     if (!s) {
       return orbitStatus === 'failed'
@@ -1825,11 +1933,15 @@ export function mountJourney(container, options = {}) {
     const when = state.live ? 'Right now' : `At ${calgaryTime(state.simMs).time} in Calgary`;
     const alt = Math.round(s.altKm);
     const place = regionAt(s.latDeg, s.lonDeg);
-    const where = place
+    return place
       ? `${when} it\u2019s over ${place}, ${alt} km up.`
       : `${when} it\u2019s ${alt} km above ${fmtLatShort(s.latDeg)}, ${fmtLonShort(s.lonDeg)}.`;
+  }
+
+  function liveMore() {
+    if (!sat.state) return '';
     const period = Math.round(orbit.periodMinutes(state.simMs));
-    return `${where} It completes one orbit of the Earth every ${period} minutes, on a near-polar path.`;
+    return `It completes one orbit of the Earth every ${period} minutes, on a near-polar path.`;
   }
 
   function hintText() {
@@ -1870,14 +1982,16 @@ export function mountJourney(container, options = {}) {
   let lastPanel = 0;
   function paintText(now) {
     if (uiDirty || now - lastSentence > 1000) {
-      const text = liveSentence();
-      const a = put(ref.b2t, text);
-      const b = put(ref.liveLead, text);
-      const c = put(ref.hintText, hintText());
-      const d = put(ref.satTip, satTipText());
-      if (d) ref.sat.setAttribute('aria-label', `CTS-SAT-1: where it is now${bigQuery.matches ? '' : ' and its latest picture'}`);
+      const where = liveWhere();
+      const more = liveMore();
+      const a = put(ref.b2t, more ? `${where} ${more}` : where);
+      const b = put(ref.liveLead, where);
+      const c = put(ref.liveMore, more);
+      const d = put(ref.hintText, hintText());
+      const e = put(ref.satTip, satTipText());
+      if (e) ref.sat.setAttribute('aria-label', `CTS-SAT-1: where it is now${bigQuery.matches ? '' : ' and its latest picture'}`);
       // the words moved: where pins hide follows them
-      if (a || b || c || d) measureText();
+      if (a || b || c || d || e) measureText();
       put(ref.summaryWhere, summaryWhere());
       paintClock();
       lastSentence = now;
@@ -2488,6 +2602,7 @@ export function mountJourney(container, options = {}) {
           // the facts slide and fade even when the system prefers reduced
           // motion (the site's choice); ?motion=reduced still keeps them still
           ticker = mod.createFactTicker(ref.factsSlot, { facts, live, reducedMotion: motionOverride === 'reduced' });
+          placeFacts();
         }
         if (typeof mod.createNewsList === 'function') newsList = mod.createNewsList(ref.newsSlot, { news });
         if (state.locked && state.shown) ticker?.start?.();
@@ -2582,7 +2697,14 @@ export function mountJourney(container, options = {}) {
   textObserver.observe(ref.b2);
   textObserver.observe(ref.factsSlot); // the banner fills in after the facts load
   textObserver.observe(ref.viewfinderSlot); // it appears once there are pictures, on big screens
-  document.fonts?.ready?.then(() => !destroyed && resize());
+  // the words re-wrap when the real fonts arrive, perhaps much later: fit the end view afresh
+  const fontsArrived = () => {
+    if (destroyed) return;
+    frame.fitSize = '';
+    resize();
+  };
+  document.fonts?.ready?.then(fontsArrived);
+  if (document.fonts) listen(document.fonts, 'loadingdone', fontsArrived);
 
   const io = new IntersectionObserver((entries) => {
     state.visible = entries.some((e) => e.isIntersecting);
@@ -2622,6 +2744,7 @@ export function mountJourney(container, options = {}) {
   }
   loadTicker();
   syncLoop();
+  settleInstant();
 
   return {
     setPhotos,
