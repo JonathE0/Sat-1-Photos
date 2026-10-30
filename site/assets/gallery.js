@@ -11,6 +11,12 @@ import { justifyRows, mosaicSettings, layoutRatio } from './layout.js';
 import { createFilterForm } from './filters.js';
 
 const EAGER_TILES = 8;
+
+// Pictures left out of the grid unless their switch is on (dark=1, missing=1).
+const TUCKED = [
+  { key: 'dark', is: (p) => p.dark, one: 'dark frame', what: 'nothing but black, sensor noise or the Sun as a single dot' },
+  { key: 'missing', is: (p) => p.mostlyMissing, one: 'mostly missing picture', what: 'less than a fifth of the picture can be shown' },
+];
 const THUMB_WIDTH = 480; // cts1_gallery/build.py THUMB_WIDTH
 
 function gridAlt(p) {
@@ -67,8 +73,8 @@ export function createGallery(root, { onQueryChange }) {
 
   const notice = h('div', { class: 'notice', role: 'status' }, 'Loading pictures…');
   const list = h('ul', { class: 'mosaic', 'aria-label': 'Pictures, newest first' });
-  const darkNote = h('p', { class: 'dark-note', hidden: true });
-  const wrap = h('div', { class: 'mosaic-wrap' }, list, darkNote);
+  const hiddenNote = h('p', { class: 'hidden-note', hidden: true });
+  const wrap = h('div', { class: 'mosaic-wrap' }, list, hiddenNote);
   root.append(form, notice, wrap);
 
   const observer = new ResizeObserver(() => layout());
@@ -122,22 +128,33 @@ export function createGallery(root, { onQueryChange }) {
         h('button', { type: 'button', class: 'linkish', onclick: clearFilters }, 'Clear filters'),
       );
     }
-    // Frames with nothing to see stay out of the grid until asked for.
-    const dark = applyFilters(photos, { ...filters, dark: '1' }).filter((p) => p.dark).length;
-    const toggleDark = () => setFilter('dark', filters.dark ? '' : '1');
-    darkNote.hidden = !dark;
-    darkNote.replaceChildren(
-      filters.dark
-        ? `Showing ${plural(dark, 'dark frame')}: nothing but black, sensor noise or the Sun as a single dot.`
-        : `${plural(dark, 'dark frame')} hidden: nothing but black, sensor noise or the Sun as a single dot.`,
-      h('button', { type: 'button', class: 'linkish', onclick: toggleDark }, filters.dark ? 'Hide them' : 'Show them'),
-    );
+    // Frames with nothing to see, and pictures that are mostly missing, stay
+    // out of the grid until asked for.
+    const tucked = TUCKED.map((kind) => ({
+      ...kind,
+      count: applyFilters(photos, { ...filters, [kind.key]: '1' }).filter(kind.is).length,
+      toggle: () => setFilter(kind.key, filters[kind.key] ? '' : '1'),
+    })).filter((kind) => kind.count);
+    hiddenNote.hidden = !tucked.length;
+    hiddenNote.replaceChildren(...tucked.map((kind) => h('span', { class: 'hidden-line' },
+      filters[kind.key]
+        ? `Showing ${plural(kind.count, kind.one)}: ${kind.what}.`
+        : `${plural(kind.count, kind.one)} hidden: ${kind.what}.`,
+      h('button', { type: 'button', class: 'linkish', onclick: kind.toggle }, filters[kind.key] ? 'Hide them' : 'Show them'))));
+    const stillHidden = tucked.filter((kind) => !filters[kind.key]);
     if (!photos.length) {
       showNotice(['No pictures yet. The list is empty until the first image has been reassembled.']);
-    } else if (!shown.length && dark && !filters.dark) {
+    } else if (!shown.length && stillHidden.length) {
       showNotice([
-        `Only dark frames match these filters (${dark}).`,
-        h('button', { type: 'button', class: 'linkish', onclick: toggleDark }, 'Show them'),
+        'Only hidden pictures match these filters.',
+        h('button', {
+          type: 'button',
+          class: 'linkish',
+          onclick: () => {
+            for (const kind of stillHidden) filters[kind.key] = '1';
+            setFilter(stillHidden[0].key, '1');
+          },
+        }, 'Show them'),
       ]);
     } else if (!shown.length) {
       showNotice([

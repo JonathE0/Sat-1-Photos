@@ -12,9 +12,10 @@
 import * as THREE from './vendor/three.module.min.js';
 import { DEG, EARTH_RADIUS_KM } from './astro.js';
 
-const ORANGE = '#FF4F00';
-const INK = '#C9D3DB';
-const BACKGROUND = '#0B0F13';
+const BLUE = '#3C9DF5'; // the satellite and its path, nothing else
+const INK = '#E6EBF0';
+const MUTED = '#8A96A3';
+const BACKGROUND = '#05070A';
 
 const SURFACE = 1.0015; // ground track, coverage circle
 const PIN_RADIUS = 1.004;
@@ -564,17 +565,17 @@ export function createScene(canvas, labelLayer, opts = {}) {
 
   // ---- satellite, orbit and ground track ---------------------------------
   const MAX_TRACK = 1024;
-  const orbitLine = new THREE.Line(keep(trackGeometry(MAX_TRACK)), trackMaterial(ORANGE, 1));
+  const orbitLine = new THREE.Line(keep(trackGeometry(MAX_TRACK)), trackMaterial(BLUE, 1));
   orbitLine.frustumCulled = false;
   orbitLine.renderOrder = 2;
   scene.add(orbitLine);
 
-  const groundLine = new THREE.Line(keep(trackGeometry(MAX_TRACK)), trackMaterial(ORANGE, 0.55));
+  const groundLine = new THREE.Line(keep(trackGeometry(MAX_TRACK)), trackMaterial(BLUE, 0.55));
   groundLine.frustumCulled = false;
   groundLine.renderOrder = 2;
   earth.add(groundLine);
 
-  const nadirLine = new THREE.Line(keep(trackGeometry(2)), trackMaterial(ORANGE, 0.4));
+  const nadirLine = new THREE.Line(keep(trackGeometry(2)), trackMaterial(BLUE, 0.4));
   nadirLine.frustumCulled = false;
   nadirLine.renderOrder = 2;
   nadirLine.geometry.attributes.fade.array.set([1, 1]);
@@ -582,7 +583,7 @@ export function createScene(canvas, labelLayer, opts = {}) {
   earth.add(nadirLine);
 
   const COVERAGE_SEGMENTS = 128;
-  const coverageLine = new THREE.LineLoop(keep(trackGeometry(COVERAGE_SEGMENTS)), trackMaterial(ORANGE, 0.6));
+  const coverageLine = new THREE.LineLoop(keep(trackGeometry(COVERAGE_SEGMENTS)), trackMaterial(INK, 0.35));
   coverageLine.geometry.attributes.fade.array.fill(1);
   coverageLine.geometry.setDrawRange(0, COVERAGE_SEGMENTS);
   coverageLine.frustumCulled = false;
@@ -590,7 +591,7 @@ export function createScene(canvas, labelLayer, opts = {}) {
   coverageLine.visible = false;
   earth.add(coverageLine);
 
-  const linkLine = new THREE.Line(keep(trackGeometry(2)), trackMaterial(ORANGE, 0.5));
+  const linkLine = new THREE.Line(keep(trackGeometry(2)), trackMaterial(INK, 0.3));
   linkLine.geometry.attributes.fade.array.set([1, 1]);
   linkLine.geometry.setDrawRange(0, 2);
   linkLine.frustumCulled = false;
@@ -598,7 +599,7 @@ export function createScene(canvas, labelLayer, opts = {}) {
   linkLine.visible = false;
   earth.add(linkLine);
 
-  const satellite = makeMarker('disc', ORANGE, 11, scene);
+  const satellite = makeMarker('disc', BLUE, 11, scene);
   const station = makeMarker('diamond', INK, 10, earth);
   const subsolar = makeMarker('sun', '#E9E4D4', 13, earth);
 
@@ -606,8 +607,8 @@ export function createScene(canvas, labelLayer, opts = {}) {
   let pins = { points: null, ids: [], positions: [], geometry: null };
   let selectedId = null;
   let hoverId = null;
-  const pinColor = new THREE.Color(INK);
-  const pinSelected = new THREE.Color(ORANGE);
+  const pinColor = new THREE.Color(MUTED);
+  const pinSelected = new THREE.Color(INK);
   const pinMaterial = markerMaterial('square');
 
   function paintPins() {
@@ -615,7 +616,7 @@ export function createScene(canvas, labelLayer, opts = {}) {
     const colors = pins.geometry.attributes.aColor.array;
     const sizes = pins.geometry.attributes.aSize.array;
     pins.ids.forEach((id, i) => {
-      const c = id === selectedId ? pinSelected : pinColor;
+      const c = id === selectedId || id === hoverId ? pinSelected : pinColor;
       colors.set([c.r, c.g, c.b], i * 3);
       sizes[i] = id === selectedId ? 12 : id === hoverId ? 10 : 8;
     });
@@ -833,6 +834,19 @@ export function createScene(canvas, labelLayer, opts = {}) {
     needsRender = true;
   }
 
+  /** Where the camera looks (or is flying to): the ground point under the
+   * view centre at the current Earth rotation, and the camera distance. */
+  function viewPoint() {
+    const c = controls.flight ? controls.flight.to : controls;
+    const s = Math.sin(c.phi);
+    const v = spin(tmp.set(s * Math.sin(c.theta), Math.cos(c.phi), s * Math.cos(c.theta)), -gmstNow);
+    return {
+      latDeg: Math.asin(THREE.MathUtils.clamp(v.y, -1, 1)) / DEG,
+      lonDeg: Math.atan2(-v.z, v.x) / DEG,
+      distance: c.distance,
+    };
+  }
+
   function flyToSatellite({ distance, immediate } = {}) {
     if (!satellite.points.visible) return;
     controls.flyTo(satellite.position.clone(), distance ?? controls.distance, { immediate });
@@ -882,7 +896,8 @@ export function createScene(canvas, labelLayer, opts = {}) {
     return best;
   }
 
-  function resize(w, h) {
+  /** `scale` sizes the markers with the page's type (1 = their drawn size). */
+  function resize(w, h, scale = 1) {
     width = Math.max(1, w);
     height = Math.max(1, h);
     renderer.setSize(width, height, false);
@@ -891,7 +906,7 @@ export function createScene(canvas, labelLayer, opts = {}) {
     const half = Math.tan((35 * DEG) / 2);
     camera.fov = camera.aspect < 1 ? Math.min(75, (2 * Math.atan(half / camera.aspect)) / DEG) : 35;
     camera.updateProjectionMatrix();
-    const ratio = renderer.getPixelRatio();
+    const ratio = renderer.getPixelRatio() * scale;
     for (const m of disposables) {
       if (m.uniforms?.pixelRatio) m.uniforms.pixelRatio.value = ratio;
     }
@@ -938,6 +953,7 @@ export function createScene(canvas, labelLayer, opts = {}) {
     setHover,
     flyToGround,
     flyToSatellite,
+    viewPoint,
     follow,
     pick,
     resize,
