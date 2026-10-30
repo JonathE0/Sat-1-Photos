@@ -1,0 +1,60 @@
+/* The Credits dialog (credits.js): a flat panel over any page, with the
+   page dimmed behind it. Tokens follow docs/design-direction.md. */
+
+.credits {
+  --cr-panel: #10151B;
+  --cr-ink: #E6EBF0;
+  --cr-muted: #8A96A3;
+  --cr-blue: #3C9DF5;
+  box-sizing: border-box;
+  width: min(36em, calc(100vw - 32px));
+  max-height: min(80vh, 760px);
+  overflow: auto;
+  margin: auto;
+  border: 0;
+  padding: 24px 28px 28px;
+  background: var(--cr-panel);
+  color: var(--cr-ink);
+  font: 400 15px/1.55 "Jost", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+.credits::backdrop { background: rgba(5, 7, 10, 0.62); }
+
+.credits-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.credits-title { margin: 0; font-size: 18px; font-weight: 600; outline: none; }
+.credits-close {
+  min-height: 36px;
+  border: 0;
+  padding: 0;
+  background: none;
+  color: var(--cr-muted);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.credits-close:hover { color: var(--cr-ink); }
+
+.credits-logo { display: block; width: auto; height: 32px; margin: 0 0 16px; }
+.credits p { margin: 0 0 12px; color: #C3CCD5; }
+.credits a {
+  color: var(--cr-ink);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  text-decoration-color: rgba(230, 235, 240, 0.4);
+}
+.credits a:hover { text-decoration-color: currentColor; }
+.credits :focus-visible { outline: 2px solid var(--cr-blue); outline-offset: 2px; }
+
+.credits-links { display: flex; flex-wrap: wrap; gap: 6px 24px; margin: 4px 0 20px; padding: 0; list-style: none; }
+.credits-news:empty { display: none; }
+.credits-news { padding-top: 16px; border-top: 1px solid #1C242D; }
+
+@media (pointer: coarse) { .credits-close { min-height: 44px; } }
+@media (max-width: 599px) { .credits { padding: 20px 20px 24px; font-size: 14px; } }

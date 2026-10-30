@@ -9,6 +9,7 @@ import { loadImages, loadAnnotations, mergeAll, readFilters, applyFilters } from
 import { createCatalogue } from './catalogue.js';
 import { createDetail, NAME_KEY } from './detail.js';
 import { mountJourney } from '../explore/journey.js';
+import { mountCredits } from './credits.js';
 import { toDate, utcLong, plural } from './format.js';
 
 const config = { repoUrl: '', ...(window.CTS1_CONFIG || {}) };
@@ -154,9 +155,9 @@ function parseRoute() {
   const qi = raw.indexOf('?');
   const path = qi >= 0 ? raw.slice(0, qi) : raw;
   const query = qi >= 0 ? raw.slice(qi + 1) : '';
-  // #/?credits=1 (from the Orbit page's Credits link) opens the globe with its
-  // credits panel; an old gallery link with filters (#/?camera=picam) opens
-  // the catalogue.
+  // #/?credits=1 (an older Credits link from the Orbit page) opens the globe
+  // with the credits over it; an old gallery link with filters
+  // (#/?camera=picam) opens the catalogue.
   if (path === '' || path === '/') {
     if (new URLSearchParams(query).get('credits') === '1') return { view: 'explore', credits: true };
     return query ? { view: 'pictures', query } : { view: 'explore' };
@@ -199,15 +200,9 @@ function route() {
 
   if (next.view === 'explore') {
     document.title = 'CTS-SAT-1 · Interactive picture visualizer';
-    if (next.credits) {
-      state.creditsAfterRoute = true;
-      history.replaceState(history.state, '', '#/');
-    }
+    if (next.credits) history.replaceState(history.state, '', '#/');
     if (previous !== 'explore') journey.show();
-    if (state.creditsAfterRoute) {
-      state.creditsAfterRoute = false;
-      journey.openCredits($('#credits'));
-    }
+    if (next.credits) credits.open();
     return;
   }
 
@@ -370,25 +365,11 @@ function setupNameControl() {
   setNameLabel();
 }
 
-/* Credits: a panel over the globe, reachable from every page */
-
-function setupCredits() {
-  const button = $('#credits');
-  button.addEventListener('click', () => {
-    if (button.getAttribute('aria-expanded') === 'true') {
-      journey.closeCredits();
-      return;
-    }
-    if (state.view === 'explore') {
-      journey.openCredits(button);
-    } else {
-      state.creditsAfterRoute = true; // route() opens it once the globe is shown
-      location.hash = '#/';
-    }
-  });
-}
-
 /* Start */
+
+// Credits: a pop-up over whichever view is open (assets/credits.js); the
+// Orbit and Watchlist pages use the same one.
+const credits = mountCredits($('#credits'));
 
 document.querySelector('[data-skip]').addEventListener('click', (e) => {
   e.preventDefault();
@@ -423,6 +404,5 @@ window.addEventListener('beforeunload', (e) => {
 });
 
 setupNameControl();
-setupCredits();
 route();
 loadData();

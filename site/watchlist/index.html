@@ -12,17 +12,24 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600&display=swap">
   <link rel="stylesheet" href="watchlist.css">
   <script src="watchlist.js" defer></script>
+  <script type="module">
+    import { mountCredits } from '../assets/credits.js';
+    mountCredits(document.getElementById('credits'));
+  </script>
 </head>
 <body>
   <header class="top">
     <nav class="nav" aria-label="Main">
-      <a class="brand" href="../" aria-label="CTS-SAT-1 pictures">
+      <a class="brand" href="../index.html#/" aria-label="CTS-SAT-1, explore: where the satellite is now">
         <img src="../assets/calgarytospace-logo.png" width="640" height="204" alt="">
       </a>
       <div class="nav-links">
-        <a href="../">Pictures</a>
-        <a href="../globe/">Orbit</a>
-        <a href="./" aria-current="page">Watchlist</a>
+        <a href="../index.html#/">Explore</a>
+        <a href="../index.html#/pictures">Pictures</a>
+        <a href="../globe/index.html">Orbit</a>
+        <a href="index.html" aria-current="page">Watchlist</a>
+        <a href="../index.html#/about">About</a>
+        <button type="button" class="nav-btn" id="credits">Credits</button>
       </div>
     </nav>
   </header>

@@ -49,15 +49,39 @@ ol, ul { padding: 0; list-style: none; }
 
 /* -- nav ------------------------------------------------------------------ */
 
-.top { padding: 0 var(--margin); }
-.nav { display: flex; align-items: center; justify-content: space-between; gap: 16px; height: 64px; max-width: 1840px; margin: 0 auto; }
-.brand { display: inline-flex; align-items: center; min-height: 44px; }
-.brand img { display: block; height: 28px; width: auto; }
-.nav-links { display: flex; gap: 24px; }
-.nav-links a { display: inline-flex; align-items: center; min-height: 44px; font-weight: 500; text-decoration: none; border-bottom: 2px solid transparent; }
-.nav-links a:hover { border-bottom-color: var(--link-rest); }
-.nav-links a[aria-current="page"] { border-bottom-color: var(--ink); }
-@media (max-width: 599px) { .nav { height: 52px; } .nav-links { gap: 16px; } }
+/* The site's nav, as on the Pictures and About pages (site/assets/style.css):
+   sticky, muted links, the current page underlined in the team blue. */
+.top {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  padding: 0 var(--margin);
+  background: var(--space);
+  border-bottom: 1px solid #1C242D;
+}
+.nav { display: flex; align-items: center; justify-content: space-between; gap: 16px; height: 60px; font-size: 14px; font-weight: 500; }
+.brand { display: inline-flex; flex: none; align-items: center; min-height: 44px; }
+.brand img { display: block; height: 34px; width: auto; }
+.nav-links { display: flex; align-items: center; gap: 24px; min-width: 0; }
+.nav-links a,
+.nav-btn { display: inline-flex; align-items: center; min-height: 44px; color: var(--muted); text-decoration: none; white-space: nowrap; }
+/* Credits opens a pop-up, so it's a button that looks like the links */
+.nav-btn { border: 0; padding: 0; background: none; font: inherit; cursor: pointer; transition: color var(--t-hover) var(--ease-out); }
+.nav-links a:hover,
+.nav-btn:hover,
+.nav-btn[aria-expanded="true"],
+.nav-links a[aria-current="page"] { color: var(--ink); }
+.nav-links a[aria-current="page"] { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 6px; text-decoration-color: var(--blue); }
+@media (max-width: 599px) {
+  .nav { height: 52px; gap: 10px; font-size: 13px; }
+  .nav-links { gap: 10px; }
+  .brand img { height: 22px; }
+}
+@media (max-width: 430px) {
+  .nav { gap: 8px; font-size: 12px; }
+  .nav-links { gap: 8px; }
+  .brand img { height: 18px; }
+}
 
 /* -- intro ---------------------------------------------------------------- */
 

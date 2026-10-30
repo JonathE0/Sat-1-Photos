@@ -708,6 +708,17 @@ body[data-view="explore"] .name-ctl { display: none; }
   .stage { padding: 40px 60px; }
 }
 
+/* Six links, the logo and the name button on one line: below 900px the
+   wordmark goes (the page title says it) and the gaps close up. */
+@media (max-width: 899px) {
+  .wordmark { display: none; }
+  .nav-side { gap: 16px; }
+}
+@media (max-width: 699px) {
+  .nav-side { gap: 14px; }
+  .brand-logo { height: 28px; }
+}
+
 /* Phones and narrow tablets */
 
 @media (max-width: 799px) {
@@ -746,7 +757,7 @@ body[data-view="explore"] .name-ctl { display: none; }
 
 @media (max-width: 599px) {
   .nav { gap: 10px; font-size: 13px; }
-  /* five links and the logo share a phone's width */
+  /* six links and the logo share a phone's width */
   .nav-side { gap: 10px; }
   .brand { gap: 10px; }
   .brand-logo { height: 22px; }
@@ -778,6 +789,13 @@ body[data-view="explore"] .name-ctl { display: none; }
   .site-foot { grid-template-columns: minmax(0, 1fr); gap: 16px; }
   .about-list { grid-template-columns: minmax(0, 1fr); }
   .about-list dt { padding-bottom: 0; border-bottom: 0; }
+}
+
+/* six links and the logo share the narrowest phones' width */
+@media (max-width: 430px) {
+  .nav { gap: 8px; font-size: 12px; }
+  .nav-side { gap: 8px; }
+  .brand-logo { height: 18px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

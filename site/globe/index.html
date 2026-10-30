@@ -67,7 +67,8 @@
     }
 
     .site-nav .brand,
-    .site-nav .nav-links a {
+    .site-nav .nav-links a,
+    .site-nav .nav-btn {
       pointer-events: auto;
     }
 
@@ -91,14 +92,25 @@
     }
 
     /* a taller hit area than the words, without moving them */
-    .nav-links a {
+    .nav-links a,
+    .nav-btn {
       padding: 14px 0;
       color: #E6EBF0;
       text-decoration: none;
       white-space: nowrap;
     }
 
-    .nav-links a:hover {
+    /* Credits opens a pop-up, so it's a button that looks like the links */
+    .nav-btn {
+      border: 0;
+      background: none;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    .nav-links a:hover,
+    .nav-btn:hover,
+    .nav-btn[aria-expanded="true"] {
       text-decoration: underline;
       text-decoration-thickness: 1px;
       text-underline-offset: 6px;
@@ -112,12 +124,13 @@
       text-decoration-color: #3C9DF5;
     }
 
-    .site-nav a:focus-visible {
+    .site-nav a:focus-visible,
+    .site-nav .nav-btn:focus-visible {
       outline: 2px solid #3C9DF5;
       outline-offset: 2px;
     }
 
-    /* five links and the logo on one line across a phone */
+    /* six links and the logo on one line across a phone */
     @media (max-width: 599px) {
       .site-nav {
         gap: 10px;
@@ -130,6 +143,21 @@
 
       .site-nav .brand-logo {
         height: 22px;
+      }
+    }
+
+    @media (max-width: 430px) {
+      .site-nav {
+        gap: 8px;
+        font-size: 12px;
+      }
+
+      .nav-links {
+        gap: 8px;
+      }
+
+      .site-nav .brand-logo {
+        height: 18px;
       }
     }
 
@@ -150,8 +178,9 @@
       <a href="../index.html#/">Explore</a>
       <a href="../index.html#/pictures">Pictures</a>
       <a href="index.html" aria-current="page">Orbit</a>
+      <a href="../watchlist/index.html">Watchlist</a>
       <a href="../index.html#/about">About</a>
-      <a href="../index.html#/?credits=1">Credits</a>
+      <button type="button" class="nav-btn" id="credits">Credits</button>
     </div>
   </nav>
   <main id="globe" aria-label="CTS-SAT-1 orbit globe"></main>
@@ -166,6 +195,9 @@
   </script>
   <script type="module">
     import { mountGlobe } from './globe.js';
+    import { mountCredits } from '../assets/credits.js';
+
+    mountCredits(document.getElementById('credits'));
 
     // ?photo=<id> focuses that photo; #t=<iso>&photo=<id> restores a shared view.
     // The site nav's Pictures link is the way back, so no "All pictures" link.
