@@ -146,8 +146,9 @@ for the next run to compare against.
 | [GDACS](https://www.gdacs.org/) map feeds, `TC`, `FL`, `VO`, `WF` | tropical cyclones (track and forecast positions), floods, volcanoes, wildfires worldwide | UN and European Commission; RSS marked public domain, EC content CC BY 4.0 with credit. No limit stated. Answers 404 for a type with nothing current. |
 | [NOAA SWPC](https://www.swpc.noaa.gov/) 3-day Kp forecast and OVATION nowcast | geomagnetic activity, for aurora | US government, public domain; no endorsement implied. Polled no faster than the data changes. |
 
-Each feed is fetched at most every 55 minutes (the workflow runs every 30)
-and its answer cached. A feed that fails, or answers in a shape the parser
+Each feed is fetched at most every 55 minutes (the scheduled update runs twice
+a day; a run by hand in between reuses the cached answer if it is recent) and
+its answer cached. A feed that fails, or answers in a shape the parser
 doesn't know, keeps its last good answer: its events stay on the list and
 the file says how old they are. Only a missing `tle_history.parquet` stops
 the run (exit code 2), and the workflow then republishes the last list.

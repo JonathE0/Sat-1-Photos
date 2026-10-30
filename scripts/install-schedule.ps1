@@ -4,19 +4,27 @@
 
 .DESCRIPTION
     Registers a per-user task that runs scripts\scheduled_update.py with the project's
-    .venv\Scripts\pythonw.exe every -IntervalMinutes minutes. The task runs as the current
-    user, only while that user is logged on, stores no password and needs no admin rights.
-    Re-running replaces the task. See docs\SCHEDULING.md.
+    .venv\Scripts\pythonw.exe every day at the times in -At (10:00 and 22:00 local time by
+    default), or every -IntervalMinutes minutes when that is given instead. The task runs
+    as the current user, only while that user is logged on, stores no password and needs
+    no admin rights. Re-running replaces the task. See docs\SCHEDULING.md.
 
 .EXAMPLE
-    powershell -ExecutionPolicy Bypass -File scripts\install-schedule.ps1 -IntervalMinutes 30 -RunNow
+    powershell -ExecutionPolicy Bypass -File scripts\install-schedule.ps1 -RunNow
+
+.EXAMPLE
+    powershell -ExecutionPolicy Bypass -File scripts\install-schedule.ps1 -At 08:00,20:00
+
+.EXAMPLE
+    powershell -ExecutionPolicy Bypass -File scripts\install-schedule.ps1 -IntervalMinutes 30
 
 .EXAMPLE
     powershell -ExecutionPolicy Bypass -File scripts\install-schedule.ps1 -Uninstall
 #>
 param(
+    [string[]]$At = @("10:00", "22:00"),
     [ValidateRange(1, 1440)]
-    [int]$IntervalMinutes = 30,
+    [int]$IntervalMinutes = 0,
     [string]$TaskName = "CTS-SAT-1 Gallery Update",
     [switch]$Uninstall,
     [switch]$RunNow
@@ -51,18 +59,33 @@ if (-not (Test-Path -LiteralPath $pythonw)) {
 # pythonw.exe has no console, so no window flashes up on every run.
 $action = New-ScheduledTaskAction -Execute "`"$pythonw`"" -Argument "`"$updateScript`"" -WorkingDirectory $repo
 
-# First run a minute from now; with -RunNow a run starts at once, so the schedule begins
-# one interval later. (A start time already past when the task is saved would count as
-# a missed run.) The repetition gets a long finite duration because
-# -RepetitionDuration ([TimeSpan]::MaxValue) is rejected on some PS 5.1 builds.
-$start = if ($RunNow) { (Get-Date).AddMinutes($IntervalMinutes) } else { (Get-Date).AddMinutes(1) }
-$triggerParams = @{
-    Once               = $true
-    At                 = $start
-    RepetitionInterval = (New-TimeSpan -Minutes $IntervalMinutes)
-    RepetitionDuration = (New-TimeSpan -Days 3650)
+if ($IntervalMinutes -gt 0) {
+    # First run a minute from now; with -RunNow a run starts at once, so the schedule
+    # begins one interval later. (A start time already past when the task is saved would
+    # count as a missed run.) The repetition gets a long finite duration because
+    # -RepetitionDuration ([TimeSpan]::MaxValue) is rejected on some PS 5.1 builds.
+    $start = if ($RunNow) { (Get-Date).AddMinutes($IntervalMinutes) } else { (Get-Date).AddMinutes(1) }
+    $triggerParams = @{
+        Once               = $true
+        At                 = $start
+        RepetitionInterval = (New-TimeSpan -Minutes $IntervalMinutes)
+        RepetitionDuration = (New-TimeSpan -Days 3650)
+    }
+    $trigger = New-ScheduledTaskTrigger @triggerParams
+    $when = "every $IntervalMinutes minutes"
+} else {
+    # One daily trigger per time, in local time, so it follows daylight saving.
+    $times = foreach ($t in $At) {
+        $parsed = [datetime]::MinValue
+        if (-not [datetime]::TryParseExact($t, "HH:mm", $null, "None", [ref]$parsed)) {
+            Write-Host "Not a time: '$t'. Write each as HH:mm, e.g. -At 10:00,22:00" -ForegroundColor Red
+            exit 1
+        }
+        $parsed
+    }
+    $trigger = @($times | ForEach-Object { New-ScheduledTaskTrigger -Daily -At $_ })
+    $when = "every day at " + (($times | ForEach-Object { $_.ToString("HH:mm") }) -join " and ")
 }
-$trigger = New-ScheduledTaskTrigger @triggerParams
 
 $settingsParams = @{
     MultipleInstances          = "IgnoreNew"
@@ -84,7 +107,7 @@ $taskParams = @{
     Trigger     = $trigger
     Settings    = $settings
     Principal   = $principal
-    Description = "Syncs CTS-SAT-1 (FrontierSat) downlink data and rebuilds the image gallery every $IntervalMinutes minutes (python -m cts1_gallery update; plain Python, no AI). Logs: $logDir"
+    Description = "Syncs CTS-SAT-1 (FrontierSat) downlink data and rebuilds the image gallery $when (python -m cts1_gallery update; plain Python, no AI). Logs: $logDir"
     Force       = $true
 }
 Register-ScheduledTask @taskParams | Out-Null
@@ -96,7 +119,7 @@ if ($RunNow) {
 $info = Get-ScheduledTaskInfo -TaskName $TaskName -TaskPath "\"
 Write-Host "Registered scheduled task '$TaskName'."
 Write-Host "  Runs:     `"$pythonw`" `"$updateScript`""
-Write-Host "  Interval: every $IntervalMinutes minutes"
+Write-Host "  When:     $when"
 Write-Host ("  Next run: {0:yyyy-MM-dd HH:mm}" -f $info.NextRunTime)
 if ($RunNow) {
     Write-Host "  Started:  a run is going now, in the background"

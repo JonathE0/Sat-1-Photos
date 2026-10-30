@@ -1,11 +1,12 @@
 # Keeps the published gallery current, with no person or AI in the loop.
 #
-# Every 30 minutes, and on every push to the default branch, GitHub runs the
+# Twice a day, and on every push to the default branch, GitHub runs the
 # same update the local scheduled task runs (python -m cts1_gallery update),
 # commits any new pictures and site data back to the repository, and
 # publishes site/ to GitHub Pages. A scheduled run that finds nothing new
-# commits and publishes nothing, except that the event watchlist (below)
-# republishes about once an hour.
+# commits nothing; the event watchlist (below) changes every hour, so each
+# scheduled run republishes it. To pick up a downlink straight away, run the
+# workflow by hand (Actions > Update and publish > Run workflow).
 #
 # One-time setup: Settings > Pages > Source: "GitHub Actions".
 
@@ -13,7 +14,9 @@ name: Update and publish
 
 on:
   schedule:
-    - cron: "11,41 * * * *" # every 30 minutes, off the busy top of the hour
+    # 04:00 and 16:00 UTC: 10 PM and 10 AM in Calgary on daylight time
+    # (9 PM and 9 AM on standard time, Nov to Mar; cron can't follow DST).
+    - cron: "0 4,16 * * *"
   push:
     branches: [main]
   workflow_dispatch:
