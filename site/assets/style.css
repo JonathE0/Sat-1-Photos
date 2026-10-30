@@ -856,6 +856,7 @@ body[data-view="gallery"] .wordmark { display: none; }
 
 .about {
   max-width: 42em;
+  margin: 0 auto; /* a readable column, centred on wide screens */
   padding: 48px var(--pad) 80px;
   font-size: 15.5px;
   line-height: 1.6;
