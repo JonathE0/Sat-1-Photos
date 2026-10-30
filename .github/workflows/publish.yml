@@ -4,7 +4,8 @@
 # same update the local scheduled task runs (python -m cts1_gallery update),
 # commits any new pictures and site data back to the repository, and
 # publishes site/ to GitHub Pages. A scheduled run that finds nothing new
-# commits and publishes nothing.
+# commits and publishes nothing, except that the event watchlist (below)
+# republishes about once an hour.
 #
 # One-time setup: Settings > Pages > Source: "GitHub Actions".
 
@@ -32,7 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     outputs:
-      publish: ${{ steps.commit.outputs.changed == 'true' || github.event_name != 'schedule' }}
+      publish: ${{ steps.commit.outputs.changed == 'true' || steps.watch.outputs.changed == 'true' || github.event_name != 'schedule' }}
     steps:
       - uses: actions/checkout@v6
 
@@ -59,6 +60,27 @@ jobs:
         env:
           PYTHONUTF8: "1"
 
+      # Things on Earth worth photographing and the satellite's coming passes
+      # over them (site/data/watchlist.json, not committed). Each event feed
+      # is fetched at most hourly and kept in data/cache/watch, so a feed
+      # that's down leaves its last good answer; a failure here never stops
+      # the publish, it republishes the last list. The list changes when
+      # the hour does (it starts on the hour), so it publishes hourly.
+      - name: Refresh the event watchlist
+        id: watch
+        continue-on-error: true
+        run: |
+          before=$(sha256sum data/cache/watch/watchlist.json 2>/dev/null || true)
+          if ! python -m cts1_gallery watch; then
+            echo "::warning::The watchlist couldn't be refreshed; publishing the last one."
+            mkdir -p site/data
+            cp data/cache/watch/watchlist.json site/data/ 2>/dev/null || true
+          fi
+          after=$(sha256sum data/cache/watch/watchlist.json 2>/dev/null || true)
+          if [ "$before" != "$after" ]; then echo "changed=true"; else echo "changed=false"; fi >> "$GITHUB_OUTPUT"
+        env:
+          PYTHONUTF8: "1"
+
       - name: Save the data cache
         uses: actions/cache/save@v5
         with:
@@ -81,10 +103,10 @@ jobs:
           git push origin "HEAD:$GITHUB_REF_NAME"
           echo "changed=true" >> "$GITHUB_OUTPUT"
 
-      - if: steps.commit.outputs.changed == 'true' || github.event_name != 'schedule'
+      - if: steps.commit.outputs.changed == 'true' || steps.watch.outputs.changed == 'true' || github.event_name != 'schedule'
         uses: actions/configure-pages@v5
 
-      - if: steps.commit.outputs.changed == 'true' || github.event_name != 'schedule'
+      - if: steps.commit.outputs.changed == 'true' || steps.watch.outputs.changed == 'true' || github.event_name != 'schedule'
         uses: actions/upload-pages-artifact@v4
         with:
           path: site
