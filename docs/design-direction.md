@@ -281,6 +281,7 @@ The only loud motion on the site.
 - **A pin is the picture itself**: its thumbnail at 32 × 24 (desktop) or 24 × 18 (phone), 24 × 24 for
   attitude-camera frames, square, with a 2px Ink edge so it reads over cloud and sea. Pins sit on
   the surface and hide behind the limb. No teardrops, dots, glows or ripples.
+- Dark frames are the exception: a 10px hollow square, Ink at 55%, with the same card.
 - Pins closer than 28px stack as a small pile (each offset 3px) with the count beside it in Small
   Ink, "3 pictures"; clicking a pile moves the camera in until they separate.
 - Hover or focus: a card above the pin on Panel, 12px padding: the picture at 160 × 120, the place

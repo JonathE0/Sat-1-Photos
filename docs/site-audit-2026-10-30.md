@@ -88,6 +88,18 @@ The lead session checked these eight against the screenshots or the code.
 
 ## Polish
 
+**All fixed on `main`, except 4K at DPR 1, which was left on purpose (last item).** The trade-offs that came with them:
+
+- **Pictures:** the actions now come before the facts, so Notes sit lower, below the fold on laptops.
+- **Nav:** one shared file, `assets/nav.css`. The current page's underline is now Ink rather than team blue, and the Watchlist gains the CTS-SAT-1 wordmark.
+- **Pins under controls:** a pin hides as soon as it touches a control or an open panel and comes back 6 px clear, so there's a small pin-free gap around each one. Dark pins use the same box as thumbnails, so they hide a little before they actually touch.
+- **Peek sheet:** the swipe opens it only at the story's end. During the story it scrolls the page, and the grabber and More open it.
+- **Tab order at the story's end:** an open details panel's heading now comes before the h1 for a screen reader. The dock is inert during the story, so the h1 still comes first then.
+- **Night passes:** the satellite's light in shadow isn't physical, and how bright it should be is a matter of taste (`SAT_SHADOW_AMBIENT`, `SAT_SHADOW_FILL` in `explore/journey.js`). Dark-frame pins are now a 10 px hollow square, which is easier to miss.
+- **Orbit:** on a phone the time picker and a sheet show one at a time. The map can show one fewer longitude label on tabbed layouts. Keys also goes on a tablet with a keyboard attached. Left and Right don't step the time while focus is in a row of buttons. Pictures with no time now sort as a block, newest date first, then the 3 undated frames.
+
+The list as found:
+
 - Orbit: "Keys" opens below the fold, and also shows on touch where there's no keyboard.
 - Pictures: the Download and Copy link row falls at the fold on 1366×768 and 1280×720; uneven line spacing in the hidden-frames notes.
 - Explore: swiping up on the peek sheet's body does nothing (only the grabber); pins sit half under controls at some times.
@@ -99,7 +111,7 @@ The lead session checked these eight against the screenshots or the code.
 - The nav is built three separate ways: heights differ, the logo shifts 8 px on Watchlist, and Orbit underlines the current page in team blue.
 - Screen-reader labels: "24 Oct 2026, 24 Oct 2026" repeats. Orbit has 62 tab stops. Explore's end tabs through the bottom controls before the top right.
 - Night passes: the satellite is invisible in shadow, and dark-frame pins read as empty boxes. A matter of taste.
-- 4K at DPR 1: type and panels stop growing, so everything looks small.
+- 4K at DPR 1: type and panels stop growing, so everything looks small. **Not fixed.** A zoom on the whole page inflates `vw` and `svh` by the same factor, which pushes the satellite off screen on Explore and breaks the layout elsewhere, and a proper fix means reworking the sizes on every page. At 150% Windows scaling or with browser zoom, the same screen gets the 2560×1440 layout, which is tested.
 
 ## Decisions rather than bugs
 
