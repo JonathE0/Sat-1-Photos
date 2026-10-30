@@ -155,6 +155,11 @@ paragraphs.
   loop (time constant about 120ms) so wheel steps don't stutter. `aria-label="CTS-SAT-1 right now"`.
 - **Text sits on black sky, never over the Earth.** The framings below keep sky free for it. Check
   at 1440 × 900, 1280 × 720, 390 × 844 and 375 × 812; if text and Earth meet, move the Earth.
+- **The satellite always fits (updated 30 Oct 2026, from the site audit).** The line above it says to
+  tap it, so on phones and small windows it comes first. When the end view is short of room, these
+  give way in order, as far as that size needs: "Drag to look around"; the facts banner, whose facts
+  move into the details; the second half of the live sentence; the subheading. The framing is worked
+  out with room for the tallest fact, so it stays still as facts change. Big screens lose nothing.
 - One text anchor for every beat: the left margin, block top at 22svh (desktop) or 88px (phone),
   just under the nav.
 - The first frame is HTML: the h1, the sentence and the button are painted before WebGL starts.

@@ -9,13 +9,15 @@
   <link rel="icon" type="image/png" href="assets/cubesat-icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Jost:wght@400;500;600;700;800&display=swap">
+  <!-- the fonts don't hold up the first paint: the words show in a fallback face until they arrive -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Jost:wght@400;500;600;700;800&display=swap" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Jost:wght@400;500;600;700;800&display=swap"></noscript>
   <link rel="stylesheet" href="assets/style.css">
   <link rel="stylesheet" href="assets/catalogue.css">
   <link rel="stylesheet" href="explore/journey.css">
   <!-- the 3D model loader imports "three" by name; this must come before any module script -->
   <script type="importmap">{ "imports": { "three": "./globe/vendor/three.module.min.js" } }</script>
-  <script src="config.js"></script>
+  <script src="config.js" defer></script>
   <script type="module" src="assets/app.js"></script>
 </head>
 <body data-view="explore">
@@ -50,9 +52,17 @@
   </header>
 
   <main id="main" tabindex="-1">
-    <section class="view view-explore" id="view-explore" aria-label="Where CTS-SAT-1 is now"><div id="journey"></div></section>
-    <section class="view view-pictures" id="view-pictures" aria-label="Pictures" hidden></section>
-    <section class="view view-detail" id="view-detail" hidden></section>
+    <section class="view view-explore" id="view-explore" aria-label="Where CTS-SAT-1 is now">
+      <!-- the story's opening words, in their own place, until assets/app.js mounts the globe here -->
+      <div id="journey">
+        <div class="jy-root jy-shell"><div class="jy"><div class="jy-stage"><div class="jy-text"><div class="jy-beat is-on">
+          <h1 class="jy-h1"><span class="jy-words">CTS-SAT-1</span></h1>
+          <p class="jy-sub"><span class="jy-words">Interactive picture visualizer</span></p>
+        </div></div></div></div></div>
+      </div>
+    </section>
+    <section class="view view-pictures" id="view-pictures" aria-label="Pictures" hidden><p class="notice" role="status">Loading the pictures…</p></section>
+    <section class="view view-detail" id="view-detail" hidden><p class="notice" role="status">Loading the picture…</p></section>
     <section class="view view-about" id="view-about" hidden>
       <div class="about">
         <h1 class="about-title" tabindex="-1">About</h1>
@@ -87,6 +97,30 @@
       </div>
     </section>
   </main>
+
+  <script>
+    // The right view from the first paint, so the words in this file don't wait for the
+    // scripts. assets/app.js takes over from here (parseRoute is the full version).
+    (function () {
+      var hash = location.hash.replace(/^#/, '');
+      var qi = hash.indexOf('?');
+      var path = qi < 0 ? hash : hash.slice(0, qi);
+      var query = qi < 0 ? '' : hash.slice(qi + 1);
+      var view = 'explore';
+      if (/^\/pictures\/?$/.test(path)) view = 'pictures';
+      else if (/^\/photo\/[^/]+\/?$/.test(path)) view = 'detail';
+      else if (path === '/about') view = 'about';
+      else if ((path === '' || path === '/') && query && !/(^|&)credits=1(&|$)/.test(query)) view = 'pictures';
+      document.body.dataset.view = view;
+      ['explore', 'pictures', 'detail', 'about'].forEach(function (name) {
+        document.getElementById('view-' + name).hidden = name !== view;
+      });
+      // the globe's code is only wanted on Explore; there, it needn't wait for app.js to ask for it
+      if (view !== 'explore') return;
+      window.CTS1_JOURNEY_LOADING = import('./explore/journey.js');
+      window.CTS1_JOURNEY_LOADING.catch(function () { /* app.js says so on the page */ });
+    })();
+  </script>
 
   <footer class="site-foot">
     <div class="foot-col">
