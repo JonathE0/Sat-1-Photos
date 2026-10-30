@@ -13,10 +13,15 @@
   <link rel="modulepreload" href="globe.js">
   <link rel="modulepreload" href="vendor/three.module.min.js">
   <link rel="modulepreload" href="vendor/satellite.es.js">
-  <link rel="stylesheet" href="../assets/nav.css">
   <style>
     :root {
-      --nav-h: var(--nav-bar);
+      --nav-h: 60px;
+    }
+
+    @media (max-width: 599px) {
+      :root {
+        --nav-h: 52px;
+      }
     }
 
     html,
@@ -36,13 +41,60 @@
       padding: 0 env(safe-area-inset-right, 0px) 0 env(safe-area-inset-left, 0px);
     }
 
-    /* The site's nav (assets/nav.css), laid over the stage with no bar behind it. */
-    .site-nav {
+    /* The site's nav, laid over the stage with no bar behind it. Its styles are in
+       assets/nav.css, loaded below the loading line so nothing holds that line back;
+       these few keep the nav in shape on a slow connection until they arrive. */
+    .site-nav.is-over {
       position: fixed;
       top: 0;
       right: 0;
       left: 0;
       z-index: 10;
+    }
+
+    .site-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: var(--nav-h);
+      padding: 0 24px;
+      font: 500 14px/1.45 "Jost", system-ui, sans-serif;
+    }
+
+    .brand-logo {
+      display: block;
+      width: auto;
+      height: 34px;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 16px;
+    }
+
+    .nav-links > a,
+    .nav-btn {
+      border: 0;
+      padding: 0;
+      background: none;
+      color: #E6EBF0;
+      font: inherit;
+      text-decoration: none;
+    }
+
+    @media (max-width: 599px) {
+      .site-nav {
+        padding: 0 16px;
+        font-size: 12px;
+      }
+
+      .brand-logo {
+        height: 18px;
+      }
+
+      .nav-links {
+        gap: 8px;
+      }
     }
 
     .skip-link {
@@ -116,6 +168,7 @@
   <!-- Here rather than in the head: the nav and the loading line above carry
        their own styles, so they show without waiting for any of these. The
        module below still waits for them, so the globe never appears unstyled. -->
+  <link rel="stylesheet" href="../assets/nav.css">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600&display=swap">
   <link rel="stylesheet" href="globe.css">
   <link rel="stylesheet" href="map2d.css">
