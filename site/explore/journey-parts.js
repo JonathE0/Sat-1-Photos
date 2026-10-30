@@ -92,6 +92,41 @@ export function placeOf(photo) {
 /** In the catalogue's default set: not a dark frame, not mostly missing. */
 export const inDefaultSet = (photo) => !photo.dark && !photo.mostlyMissing;
 
+/**
+ * How many rows of a loaded picture to show: all, or for one that never fully
+ * came down, those above the flat grey a JPEG decoder fills the missing part
+ * with, so the picture stops where the data did.
+ */
+export function rowsWithData(img, photo) {
+  const w = img.naturalWidth;
+  const h = img.naturalHeight;
+  if (!((photo.raw?.completeness ?? photo.completeness) < 1)) return h;
+  try {
+    const probe = document.createElement('canvas').getContext('2d', { willReadFrequently: true });
+    probe.canvas.width = w;
+    probe.canvas.height = h;
+    probe.drawImage(img, 0, 0);
+    const { data } = probe.getImageData(0, 0, w, h);
+    const isGrey = (i) => Math.abs(data[i] - 128) < 5 && Math.abs(data[i + 1] - 128) < 5 && Math.abs(data[i + 2] - 128) < 5;
+    const samples = Math.ceil(w / 8);
+    for (let y = h - 1; y >= 0; y--) {
+      // the camera's last line can end a block or two into its row, the rest of
+      // it grey: a row counts once more than a stray block of it has data
+      let filled = 0;
+      for (let x = 0; x < w; x += 8) {
+        if (!isGrey((y * w + x) * 4)) filled++;
+      }
+      if (filled < samples * 0.05) continue;
+      if (y + 1 >= h) return h;
+      // data ends on a 16-row JPEG block; the few rows past it are only ringing
+      return y + 1 - (y + 1) % 16 || y + 1;
+    }
+  } catch {
+    // can't read it back: show the whole file
+  }
+  return h;
+}
+
 /** "24 Oct 2026, 17:37 UTC", or the date alone when that is all there is. */
 export function photoTime(photo) {
   const ms = photo.capturedAt ? Date.parse(photo.capturedAt) : NaN;

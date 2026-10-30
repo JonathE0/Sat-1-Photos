@@ -28,6 +28,7 @@ import {
   inDefaultSet,
   photoTime,
   placeOf,
+  rowsWithData,
   statusLine,
   utcLong,
   utcShort,
@@ -209,31 +210,8 @@ export function createViewfinder(container, {
     fetchAhead();
   }
 
-  // how many rows of this picture to draw: all, or for one that never fully came
-  // down, those above the flat grey a JPEG decoder fills the missing part with
-  // (below them the frame stays black: the picture stops where the data did)
+  // the rows to draw (rowsWithData); below them the frame stays black
   let drawRows = 0;
-  function rowsWithData(img, photo) {
-    const w = img.naturalWidth;
-    const h = img.naturalHeight;
-    if (!((photo.raw?.completeness ?? photo.completeness) < 1)) return h;
-    try {
-      const probe = document.createElement('canvas').getContext('2d', { willReadFrequently: true });
-      probe.canvas.width = w;
-      probe.canvas.height = h;
-      probe.drawImage(img, 0, 0);
-      const { data } = probe.getImageData(0, 0, w, h);
-      const isGrey = (i) => Math.abs(data[i] - 128) < 5 && Math.abs(data[i + 1] - 128) < 5 && Math.abs(data[i + 2] - 128) < 5;
-      for (let y = h - 1; y >= 0; y--) {
-        for (let x = 0; x < w; x += 8) {
-          if (!isGrey((y * w + x) * 4)) return Math.min(h, y + 1);
-        }
-      }
-    } catch {
-      // can't read it back: show the whole file
-    }
-    return h;
-  }
 
   function drawWhole(img) {
     ctx.drawImage(img, 0, 0, img.naturalWidth, drawRows, 0, 0, img.naturalWidth, drawRows);

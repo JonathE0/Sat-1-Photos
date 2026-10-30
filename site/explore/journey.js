@@ -68,6 +68,7 @@ import {
   inDefaultSet,
   photoTime,
   placeOf,
+  rowsWithData,
   statusLine,
   utcShort,
 } from './journey-parts.js';
@@ -183,6 +184,8 @@ function template(id, siteRoot) {
 
       <div class="jy-corner" data-ref="corner">
         <button type="button" class="jy-textbtn jy-again" data-ref="again">Play the intro again</button>
+        <button type="button" class="jy-textbtn jy-details" data-ref="details" aria-expanded="false"
+          aria-controls="jy-panel-${id}">Satellite details</button>
         <a class="jy-btn jy-all" data-ref="all"></a>
         <div class="jy-zoom" role="group" aria-label="Zoom">
           <button type="button" class="jy-sq" data-ref="zoomOut" aria-label="Zoom out">${ICON_MINUS}</button>
@@ -220,9 +223,13 @@ function template(id, siteRoot) {
       </section>
 
       <div class="jy-facts-slot" data-ref="factsSlot"></div>
-      <div class="jy-vf-slot" data-ref="viewfinderSlot" hidden></div>
 
-      <aside class="jy-panel" data-ref="panel" hidden aria-labelledby="jy-panel-title-${id}">
+      <div class="jy-dock">
+        <button type="button" class="jy-summary" data-ref="summary" aria-expanded="false" aria-controls="jy-panel-${id}"
+          aria-label="CTS-SAT-1: where it is now"><span class="jy-summary-text"><span class="jy-summary-name">CTS-SAT-1</span> <span data-ref="summaryWhere"></span></span>${ICON_DOWN}</button>
+        <div class="jy-vf-slot" data-ref="viewfinderSlot" hidden></div>
+
+      <aside class="jy-panel" id="jy-panel-${id}" data-ref="panel" hidden aria-labelledby="jy-panel-title-${id}">
         <button type="button" class="jy-grab" data-ref="grab" aria-hidden="true" tabindex="-1"><span></span></button>
         <div class="jy-panel-head">
           <h2 class="jy-panel-title" id="jy-panel-title-${id}" tabindex="-1">CTS-SAT-1</h2>
@@ -259,6 +266,7 @@ function template(id, siteRoot) {
           </section>
         </div>
       </aside>
+      </div>
     </div>
   </section>`;
 }
@@ -319,8 +327,10 @@ export function mountJourney(container, options = {}) {
 
   const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
   const touchQuery = window.matchMedia('(hover: none) and (pointer: coarse)');
+  const bigQuery = window.matchMedia(VIEWFINDER_MEDIA);
   let motionOverride = opts.motion === 'full' || opts.motion === 'reduced' ? opts.motion : null;
   const reducedMotion = () => (motionOverride ? motionOverride === 'reduced' : motionQuery.matches);
+  root.classList.toggle('jy-calm', motionOverride === 'reduced');
 
   // ---- state -----------------------------------------------------------------
   const state = {
@@ -685,9 +695,11 @@ export function mountJourney(container, options = {}) {
     let satY = narrow ? 0.64 : 0.6;
     let limbY = narrow ? 0.45 : 0.42;
     if (frame.endText) limbY = Math.max(limbY, frame.endText.bottom / H + 0.03);
-    // ... and under the picture viewfinder on big screens (not laid out elsewhere)
+    // ... and under the summary bar, with the picture viewfinder below it on big
+    // screens (the bar isn't laid out on a phone, nor the viewfinder off big screens)
     const slot = boxOf(ref.viewfinderSlot, s);
-    if (slot) limbY = Math.max(limbY, slot.bottom / H + 0.03);
+    const dock = union([boxOf(ref.summary, s), slot]);
+    if (dock) limbY = Math.max(limbY, dock.bottom / H + 0.03);
     satY = clamp(Math.max(satY, limbY + 0.12), 0, narrow ? 0.8 : 0.86);
     if (narrow) {
       // On a phone the facts banner spans the width under the satellite: keep
@@ -697,10 +709,12 @@ export function mountJourney(container, options = {}) {
       if (facts) satY = Math.max(limbY + 0.06, Math.min(satY, (facts.bottom - FACTS_RESERVE_PX - 50) / H));
     }
     let satX = narrow ? 0.5 : 0.62;
-    if (state.panel && !narrow) {
-      // keep the satellite clear of the open panel on narrower desktops
+    if (state.panel && !narrow && !slot) {
+      // keep the satellite clear of the details on narrower desktops (with the
+      // viewfinder they stay in its place, above the limb, and nothing moves)
       const panel = boxOf(ref.panel, s);
-      if (panel) satX = Math.min(satX, Math.max(0.3, (panel.left - 72 * frame.ui) / W));
+      // room for the model and its label, which runs about 90px to its right
+      if (panel) satX = Math.min(satX, Math.max(0.3, (panel.left - 104 * frame.ui) / W));
     }
     frame.lens1 = { x: satX, y: satY };
     const delta = Math.atan(2 * Math.max(0.02, satY - limbY) * frame.tanHalf);
@@ -1201,6 +1215,7 @@ export function mountJourney(container, options = {}) {
       root.classList.toggle('jy-ui-on', ui);
       ref.time.inert = !ui || still;
       ref.corner.inert = !ui;
+      ref.summary.inert = !ui || still;
       marks.inert = !ui || still;
       ref.satMarks.inert = !ui || still;
       canvas.tabIndex = ui && !still ? 0 : -1;
@@ -1496,19 +1511,29 @@ export function mountJourney(container, options = {}) {
     opts.onOpenPhoto(pid);
   }
 
-  // ---- the status panel ------------------------------------------------------------------
+  // ---- the satellite's details: one state, opened by the summary bar, the phone's
+  // "Satellite details" button or the satellite itself ------------------------------------
+  function setExpanded(open) {
+    for (const toggle of [ref.summary, ref.details, ref.sat]) toggle.setAttribute('aria-expanded', String(open));
+  }
+
   function openPanel({ focus = true } = {}) {
     dismissHint();
     closeCredits();
     state.panel = true;
     ref.panel.hidden = false;
     root.classList.add('jy-panel-open');
+    setExpanded(true);
     requestAnimationFrame(() => ref.panel.classList.add('is-on'));
     uiDirty = true;
     paintPanel(true);
     reframe();
     syncViewfinder();
-    if (focus) root.querySelector('.jy-panel-title').focus({ preventScroll: true });
+    if (focus) {
+      // the bar stays right above the details; a phone's sheet has its own title
+      const target = frame.narrow ? ref.panel.querySelector('.jy-panel-title') : ref.summary;
+      target.focus({ preventScroll: true });
+    }
   }
 
   /** The panel opened or closed: ease the satellite clear of it (or back). */
@@ -1526,14 +1551,15 @@ export function mountJourney(container, options = {}) {
     ref.more.setAttribute('aria-expanded', 'false');
     ref.more.textContent = 'More';
     root.classList.remove('jy-panel-open');
+    setExpanded(false);
     reframe();
     syncViewfinder();
     const done = () => {
       if (!state.panel) ref.panel.hidden = true;
     };
-    if (reducedMotion()) done();
+    if (motionOverride === 'reduced') done();
     else setTimeout(done, 160);
-    if (restoreFocus && !ref.sat.hidden) ref.sat.focus({ preventScroll: true });
+    if (restoreFocus) (frame.narrow ? ref.details : ref.summary).focus({ preventScroll: true });
   }
 
   function setSheet(open) {
@@ -1555,6 +1581,15 @@ export function mountJourney(container, options = {}) {
   }
 
   listen(ref.sat, 'click', (e) => satelliteClicked(e.detail));
+  listen(ref.summary, 'click', () => {
+    if (state.panel) closePanel();
+    else openPanel({ focus: false });
+  });
+  // the button says details, so a phone's sheet opens all the way
+  listen(ref.details, 'click', () => {
+    openPanel();
+    setSheet(true);
+  });
   listen(ref.close, 'click', () => closePanel({ restoreFocus: true }));
   listen(ref.more, 'click', () => setSheet(!state.sheetOpen));
   listen(ref.grab, 'click', () => setSheet(!state.sheetOpen));
@@ -1568,6 +1603,8 @@ export function mountJourney(container, options = {}) {
   listen(ref.latestImg, 'load', () => {
     ref.latestImg.hidden = false;
     ref.latestFailed.hidden = true;
+    // the frame ends where the data did; the picture is anchored to its top (journey.css)
+    if (latest) ref.latestFrame.style.aspectRatio = `${ref.latestImg.naturalWidth} / ${rowsWithData(ref.latestImg, latest)}`;
   });
   listen(ref.latestRetry, 'click', () => {
     if (!latest) return;
@@ -1747,8 +1784,9 @@ export function mountJourney(container, options = {}) {
   }
 
   function paintLatest() {
-    ref.latest.hidden = !latest;
-    if (!latest) return;
+    // where the viewfinder shows, it already is the latest picture
+    ref.latest.hidden = !latest || (bigQuery.matches && !ref.viewfinderSlot.hidden);
+    if (ref.latest.hidden) return;
     if (ref.latest.dataset.id !== latest.id) {
       ref.latest.dataset.id = latest.id;
       const href = opts.photoHref(latest.id);
@@ -1767,6 +1805,14 @@ export function mountJourney(container, options = {}) {
       put(ref.latestStatus, status);
       ref.latestStatus.hidden = !status;
     }
+  }
+
+  /** The bar's words after the name: "over Africa, 501 km up". */
+  function summaryWhere() {
+    const s = sat.state;
+    if (!s) return orbitStatus === 'failed' ? 'position unavailable' : '';
+    const place = regionAt(s.latDeg, s.lonDeg);
+    return `over ${place || `${fmtLatShort(s.latDeg)}, ${fmtLonShort(s.lonDeg)}`}, ${Math.round(s.altKm)} km up`;
   }
 
   function liveSentence() {
@@ -1830,6 +1876,7 @@ export function mountJourney(container, options = {}) {
       const d = put(ref.satTip, satTipText());
       // the words moved: where pins hide follows them
       if (a || b || c || d) measureText();
+      put(ref.summaryWhere, summaryWhere());
       paintClock();
       lastSentence = now;
     }
@@ -2462,7 +2509,6 @@ export function mountJourney(container, options = {}) {
   }
 
   // ---- the picture viewfinder (site/explore/viewfinder.js, if it is there) --------------------
-  const bigQuery = window.matchMedia(VIEWFINDER_MEDIA);
   let viewfinder = null;
   let viewfinderLoading = null;
 
@@ -2499,7 +2545,7 @@ export function mountJourney(container, options = {}) {
     })();
   }
 
-  /** It runs at the end of the story, on big screens, unless a panel has taken its corner. */
+  /** It runs at the end of the story, on big screens, unless the details or the credits have taken its place. */
   function syncViewfinder() {
     const on = webgl && state.locked && state.shown && !state.panel && !state.creditsOpen && bigQuery.matches;
     if (on) loadViewfinder();
@@ -2625,6 +2671,7 @@ export function mountJourney(container, options = {}) {
     /** 'full', 'reduced', or null to follow prefers-reduced-motion. */
     setMotion(m) {
       motionOverride = m === 'full' || m === 'reduced' ? m : null;
+      root.classList.toggle('jy-calm', motionOverride === 'reduced');
       applyMode();
       readScroll();
     },

@@ -306,14 +306,22 @@ Bottom left on the margins (desktop); one row across the bottom above the safe a
 
 ### Status panel
 
-Opens from the satellite (click, tap, Enter); closes with Close, Esc, or a click on empty space.
+(Updated 30 Oct 2026, at the user's request.) Opens from the satellite (click, tap, Enter) or from a
+control that is always there at the end view, so nobody has to find the satellite first. There is one
+state and one set of details. Closes with the same control, Esc, or a click on empty space.
 
-- **Desktop:** right side, 360px wide, top 96px, 32px from the right, down to 32px above the bottom
-  at most, scrolling inside. Panel ground, 24px padding, square, no border, no shadow. Opens in
-  240ms (opacity, 16px from the right); closes in 150ms.
-- **Phone:** a bottom sheet across the full width. Peek height 120px (title and the place line);
-  drag or tap "More" to open up to 85svh. A 36 × 4 Muted grabber bar. The time controls hide while
-  it is open.
+- **Big screens (where the viewfinder shows):** a summary bar on Panel at the top of the viewfinder's
+  slot, reading "CTS-SAT-1 over Africa, 501 km up" with a chevron. Pressing it swaps the viewfinder
+  for the details in the same place, under the bar, and folding them up brings back the same picture.
+  No "Latest picture" here (the viewfinder is that), and the framing does not move.
+- **Laptops and smaller desktops:** the same bar top right under the nav, 380px wide, with the details
+  dropping down beneath it, "Latest picture" included.
+- Both: the bar stands in for the title, the place line and Close. Panel ground, square, no border, no
+  shadow. Opens in 240ms (opacity, 8px down); closes in 150ms.
+- **Phone:** no bar over the text. "Satellite details" beside "Play the intro again" opens a bottom
+  sheet across the full width, all the way up; a tap on the satellite opens it to its peek of 120px
+  (title and the place line); drag or tap "More" to open up to 85svh. A 36 × 4 Muted grabber bar. The
+  time controls hide while it is open.
 
 Copy, top to bottom:
 
