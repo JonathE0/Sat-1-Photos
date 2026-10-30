@@ -98,7 +98,8 @@ const CHASE_BEHIND_KM = 1400;
  * The end view's heading, radians off the track. Straight behind, the camera
  * sits in the orbit's plane and the 3U shows only its end; this side sends
  * the coming track off toward the text column on the left (the composition
- * the user chose); the line is cut only where it would cross words (TEXT_GAP).
+ * the user chose). The text is see-through, so the line runs behind it and
+ * only the letters themselves cover it.
  */
 const CHASE_YAW = 0.52;
 /** Room for the tallest fact in the phone banner (three lines and the source row), px. */
@@ -116,13 +117,6 @@ const SCROLL_SPRING = 14;
 const SCROLL_LAG_REDUCED_S = 0.03;
 const ZOOM_LAG_S = 0.14;
 const BLEND_MS = 600;
-/**
- * Around each line of words (not the text block as a whole) the orbit line
- * is transparent within TEXT_GAP px and fades back in over TEXT_FEATHER px;
- * between lines, past the end of a short line and everywhere else it shows.
- */
-const TEXT_GAP = 12;
-const TEXT_FEATHER = 12;
 
 /** Behind the Earth: true black, with the stars, the Sun and the Moon (sky.js) on it. */
 const SKY = '#000000';
@@ -700,9 +694,9 @@ export function mountJourney(container, options = {}) {
 
   /**
    * The words on screen now (including a block still fading out), one
-   * rectangle per line of text: the orbit line is cut only around these,
-   * and pins hide under them. The block itself is see-through and takes no
-   * pointer, so the globe shows, and turns, everywhere else.
+   * rectangle per line of text: pins hide under these. The block itself is
+   * see-through and takes no pointer, so the globe and the orbit line show,
+   * and the globe turns, everywhere but under the letters.
    */
   const leaving = new Map(); // block -> time it started fading out
   function measureText() {
@@ -724,7 +718,6 @@ export function mountJourney(container, options = {}) {
     }
     frame.textBoxes = lines;
     frame.textNow = lines.map((b) => ({ left: b.left - 8, top: b.top - 8, right: b.right + 8, bottom: b.bottom + 8 }));
-    orbitLine.setKeepOut(lines, { gap: TEXT_GAP, feather: TEXT_FEATHER });
   }
 
   function resize() {
@@ -1180,7 +1173,7 @@ export function mountJourney(container, options = {}) {
     const scrolled = still || p > 0.01;
     if (root.classList.contains('jy-scrolled') !== scrolled) {
       root.classList.toggle('jy-scrolled', scrolled);
-      changed = true; // the cue's line no longer cuts the orbit
+      changed = true; // the cue's line no longer hides pins
     }
     const ui = still || p >= P.ui;
     if (beatShown.ui !== ui) {
@@ -1811,7 +1804,7 @@ export function mountJourney(container, options = {}) {
       const a = put(ref.b2t, text);
       const b = put(ref.liveLead, text);
       const c = put(ref.hintText, hintText());
-      // the words moved: the orbit line's cut-outs follow them
+      // the words moved: where pins hide follows them
       if (a || b || c) measureText();
       paintClock();
       lastSentence = now;
@@ -2560,10 +2553,6 @@ export function mountJourney(container, options = {}) {
     get debug() {
       return {
         state, frame, sat, camera, scene, orbitLine, trackN, W, H, quality, earth, satellite, zoomLimits, swingAngle,
-        /** How close (px) the drawn orbit line came to the text in the last frame (Infinity: nowhere near). */
-        trackGapPx() {
-          return orbitLine.nearestPx;
-        },
         /** The swing sampled at n steps for the current satellite: the largest turn between steps, and so on. */
         swingCheck(n = 200, ms = state.simMs) {
           const theta = gmstAt(ms);
