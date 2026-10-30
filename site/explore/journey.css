@@ -413,6 +413,51 @@ html.jy-dragging { cursor: grabbing; }
 .jy-facts-slot:empty { display: none; }
 .jy-panel-open .jy-facts-slot { opacity: 0; visibility: hidden; }
 
+/* The picture viewfinder (viewfinder.js): big screens only, in the sky at the top
+   right, at the end only. Its box is set here, whatever the picture and before the
+   module loads, because the framing keeps the Earth's limb under it from the start
+   (computeFrame). The picture is 4:3 and never larger than its own 640 x 480: it
+   gives way to the height, and on narrower screens to the headline.
+   The media query is VIEWFINDER_MEDIA in journey.js. */
+.jy-vf-slot { display: none; }
+@media (min-width: 1360px) and (min-height: 760px) and (min-aspect-ratio: 4/5) {
+  .jy-vf-slot {
+    --vf-top: calc(var(--jy-nav) + 8px);
+    --vf-inset: 8px;
+    --vf-band-top: 44px;
+    --vf-band-bottom: 28px;
+    --vf-caption: 84px;
+    --vf-pic-h: min(480px,
+      calc(66vh - var(--vf-top) - var(--vf-band-top) - var(--vf-band-bottom) - var(--vf-caption)),
+      calc((50vw - 112px) * 3 / 4));
+    position: absolute;
+    z-index: 2;
+    top: var(--vf-top);
+    right: var(--jy-m);
+    display: block;
+    width: calc(var(--vf-pic-h) * 4 / 3 + 2 * var(--vf-inset));
+    height: calc(var(--vf-band-top) + var(--vf-pic-h) + var(--vf-band-bottom) + var(--vf-caption));
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 150ms var(--jy-ease-exit), visibility 0s linear 150ms;
+  }
+  .jy-locked .jy-vf-slot {
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 240ms var(--jy-ease-out), visibility 0s;
+  }
+  .jy-vf-slot > * { pointer-events: auto; }
+  /* a panel in the same corner: it steps aside until the panel closes */
+  .jy-panel-open .jy-vf-slot,
+  .jy-credits-open .jy-vf-slot { opacity: 0; visibility: hidden; }
+}
+/* on the shortest of these the frame is narrow and the caption's lines may wrap */
+@media (min-width: 1360px) and (max-height: 859px) and (min-height: 760px) and (min-aspect-ratio: 4/5) {
+  .jy-vf-slot { --vf-caption: 124px; }
+}
+.jy-root[data-mode="still"] .jy-vf-slot { display: none; }
+
 @media (max-width: 1099px) and (min-width: 700px) {
   /* the corner row goes above the time row so the two never meet */
   .jy-root:not(.jy-narrow) .jy-corner { bottom: calc(var(--jy-bottom) + var(--jy-ctl) + 12px); }
@@ -758,6 +803,7 @@ html.jy-dragging { cursor: grabbing; }
   .jy-root .jy-time,
   .jy-root .jy-corner,
   .jy-root .jy-facts-slot,
+  .jy-root .jy-vf-slot,
   .jy-root .jy-marks,
   .jy-root .jy-card,
   .jy-root .jy-cue,
