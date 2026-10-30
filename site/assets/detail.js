@@ -186,7 +186,7 @@ export function createDetail(root, ctx) {
             alt: detailAlt(p),
             decoding: 'async',
             fetchpriority: 'high',
-            style: `max-width: ${p.width * 2}px`,
+            style: `max-width: ${p.width}px`, // never past its own size: the frames are small and grainy enlarged
           }),
           note && h('figcaption', { class: 'shot-note' }, note)),
         h('nav', { class: 'stepper', 'aria-label': 'Browse pictures' },

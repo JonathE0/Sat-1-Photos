@@ -10,6 +10,7 @@ import {
 import { justifyRows, mosaicSettings, layoutRatio } from './layout.js';
 
 const EAGER_TILES = 8;
+const THUMB_WIDTH = 480; // cts1_gallery/build.py THUMB_WIDTH
 
 function gridAlt(p) {
   const camera = CAMERAS[p.camera]?.alt || 'Camera';
@@ -241,6 +242,9 @@ export function createGallery(root, { onQueryChange }) {
     const ratio = layoutRatio(p.width, p.height);
     const img = h('img', {
       src: p.thumb,
+      // Tiles wider than a thumbnail (featured rows) load the full picture
+      // rather than stretching the thumbnail; layout() sets `sizes`.
+      srcset: p.src !== p.thumb && p.width > THUMB_WIDTH ? `${p.thumb} ${THUMB_WIDTH}w, ${p.src} ${p.width}w` : null,
       width: p.width,
       height: p.height,
       alt: gridAlt(p),
@@ -290,6 +294,7 @@ export function createGallery(root, { onQueryChange }) {
         li.style.flex = row.ragged
           ? `0 0 ${(ratios[i] * row.height).toFixed(2)}px`
           : `${ratios[i].toFixed(4)} 1 0px`;
+        li.querySelector('img').sizes = `${Math.ceil(ratios[i] * row.height)}px`;
         frag.append(li);
       }
     });
