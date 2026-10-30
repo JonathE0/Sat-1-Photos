@@ -95,12 +95,14 @@ function confirmLeave() {
   return true;
 }
 
-// Prev/next replace the history entry, so Back returns to the grid.
+// Prev/next replace the history entry, so Back returns to the grid (or to
+// the globe the picture was opened from: its ?globe= state stays on).
 function goToPhoto(id, via) {
   if (!confirmLeave()) return;
   state.skipGuard = true; // already asked
   state.pendingFocus = via || null; // "prev", "next" or "key": where focus goes on the new picture
-  location.replace(`#/photo/${encodeURIComponent(id)}`);
+  const qi = location.hash.indexOf('?');
+  location.replace(`#/photo/${encodeURIComponent(id)}${qi >= 0 ? location.hash.slice(qi) : ''}`);
 }
 
 function closeDetail() {
