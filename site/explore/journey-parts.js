@@ -89,6 +89,9 @@ export function placeOf(photo) {
   return photo.place || photo.computedPlace || null;
 }
 
+/** In the catalogue's default set: not a dark frame, not mostly missing. */
+export const inDefaultSet = (photo) => !photo.dark && !photo.mostlyMissing;
+
 /** "24 Oct 2026, 17:37 UTC", or the date alone when that is all there is. */
 export function photoTime(photo) {
   const ms = photo.capturedAt ? Date.parse(photo.capturedAt) : NaN;

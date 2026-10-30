@@ -1,0 +1,187 @@
+/* The picture viewfinder (viewfinder.js). Tokens follow docs/design-direction.md
+   section 2. The sizes (--vf-pic-h and the bands) come from .jy-vf-slot in
+   journey.css, because the framing has to know them before this file loads.
+   Data and captions sit around the picture, never on it. */
+
+.vf {
+  --vf-raised: var(--jy-raised, #1A2129);
+  --vf-ink: var(--jy-ink, #E6EBF0);
+  --vf-muted: var(--jy-muted, #8A96A3);
+  --vf-blue: var(--jy-blue, #3C9DF5);
+  --vf-small: var(--jy-small, 13px);
+  --vf-line: color-mix(in srgb, var(--vf-ink) 70%, transparent);
+  --vf-faint: color-mix(in srgb, var(--vf-ink) 28%, transparent);
+  box-sizing: border-box;
+  height: 100%;
+  /* the sky's own black, so nothing behind it (the Sun, the Moon, a dragged Earth) reads through the words */
+  background: #000;
+  color: var(--vf-ink);
+  font-family: var(--jy-font, "Jost", "Futura", "Century Gothic", "Helvetica Neue", Arial, sans-serif);
+  font-size: var(--vf-small);
+  line-height: 1.35;
+  letter-spacing: 0.01em;
+  font-variant-numeric: tabular-nums;
+}
+.vf * { box-sizing: border-box; }
+.vf p { margin: 0; }
+.vf [hidden] { display: none !important; }
+
+/* ---- the frame: four brackets, data in the corners, the picture between ---- */
+
+.vf-frame {
+  position: relative;
+  padding: 0 var(--vf-inset);
+}
+
+.vf-bracket {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border: 0 solid var(--vf-line);
+  pointer-events: none;
+}
+.vf-bracket-tl { left: 0; top: 0; border-width: 1px 0 0 1px; }
+.vf-bracket-tr { right: 0; top: 0; border-width: 1px 1px 0 0; }
+.vf-bracket-bl { left: 0; bottom: 0; border-width: 0 0 1px 1px; }
+.vf-bracket-br { right: 0; bottom: 0; border-width: 0 1px 1px 0; }
+
+.vf-data {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  overflow: hidden;
+}
+.vf-data-top { height: var(--vf-band-top); padding-top: 4px; }
+.vf-data-bottom { height: var(--vf-band-bottom); padding-top: 4px; }
+
+.vf-corner { white-space: nowrap; }
+.vf-corner span { display: block; }
+.vf-corner-right { text-align: right; }
+
+.vf-pic {
+  position: relative;
+  display: block;
+  height: var(--vf-pic-h);
+  background: #000;
+}
+a.vf-pic[href] { cursor: pointer; }
+.vf-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* square attitude-camera frames sit whole in the 4:3 opening */
+  object-fit: contain;
+}
+
+/* the centre mark: 1px, low opacity, and it stays through the shutter */
+.vf-cross {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 25px;
+  height: 25px;
+  margin: -12px 0 0 -12px;
+  pointer-events: none;
+}
+.vf-cross::before,
+.vf-cross::after {
+  content: "";
+  position: absolute;
+  background: var(--vf-faint);
+}
+.vf-cross::before { left: 12px; top: 0; width: 1px; height: 25px; }
+.vf-cross::after { left: 0; top: 12px; width: 25px; height: 1px; }
+
+/* ---- the caption, under the frame ---- */
+
+.vf-caption {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 12px;
+  align-items: center;
+  padding: 8px var(--vf-inset) 0;
+}
+.vf-place {
+  min-width: 0;
+  overflow-wrap: break-word;
+  font-size: var(--jy-body, 16px);
+  font-weight: 500;
+  line-height: 1.3;
+  letter-spacing: 0;
+}
+.vf-down,
+.vf-note { grid-column: 1 / -1; }
+.vf-down { color: var(--vf-muted); }
+
+.vf-nav {
+  display: flex;
+  flex: none;
+  gap: 4px;
+  margin-right: -8px;
+}
+/* as the facts banner's buttons */
+.vf-btn {
+  appearance: none;
+  min-height: 36px;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  padding: 0 8px;
+  background: transparent;
+  color: var(--vf-ink);
+  font: 500 13px/1 var(--jy-font, "Jost", sans-serif);
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: background-color 180ms cubic-bezier(.22, 1, .36, 1);
+}
+.vf-btn:hover { background: var(--vf-raised); }
+
+.vf :focus-visible {
+  outline: 2px solid var(--vf-blue);
+  outline-offset: 2px;
+}
+
+@media (pointer: coarse) {
+  .vf-btn { min-height: 44px; min-width: 44px; }
+}
+
+/* an empty frame until the first picture arrives: no caption, no buttons */
+.vf:not(.has-picture) .vf-caption { visibility: hidden; }
+
+/* ---- how a picture changes ----
+   The shutter: the frame's contents and the caption fade to black (160ms, as
+   SHUTTER_MS in viewfinder.js) while the brackets and the centre mark stay.
+   The picture then draws itself in, the caption comes back with it, and the
+   corner data follows once the picture is whole. The transitions are !important
+   so the site-wide reduced-motion rule doesn't remove them: the Explore page
+   asks for them even when the system prefers reduced motion. Only .vf-calm
+   (reducedMotion: true in viewfinder.js) keeps it to a plain fade. */
+.vf .vf-words {
+  transition: opacity 400ms cubic-bezier(.22, 1, .36, 1) !important;
+}
+.vf .vf-fades { opacity: 0; }
+.vf.is-settled .vf-fades {
+  opacity: 1;
+  transition: opacity 480ms cubic-bezier(.22, 1, .36, 1) !important;
+}
+.vf.is-shut .vf-canvas,
+.vf.is-shut .vf-words,
+.vf.is-shut .vf-fades {
+  opacity: 0;
+  transition: opacity 160ms cubic-bezier(.55, .055, .675, .19) !important;
+}
+.vf.vf-calm .vf-canvas { transition: opacity 160ms linear !important; }
+
+/* screen-reader-only text: the live region */
+.vf-sr {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}

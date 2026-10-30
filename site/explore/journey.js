@@ -65,6 +65,7 @@ import {
   fmtLonShort,
   isSquare,
   launchDate,
+  inDefaultSet,
   photoTime,
   placeOf,
   statusLine,
@@ -106,6 +107,8 @@ const CHASE_YAW = 0.52;
 const SAT_MIN_PX = 12;
 /** Room for the tallest fact in the phone banner (three lines and the source row), px. */
 const FACTS_RESERVE_PX = 140;
+/** Screens with room for the picture viewfinder; keep in step with .jy-vf-slot in journey.css. */
+const VIEWFINDER_MEDIA = '(min-width: 1360px) and (min-height: 760px) and (min-aspect-ratio: 4/5)';
 /** Close up, the camera levels out to this pitch so the limb sits behind the satellite. */
 const CLOSE_PITCH = 18 * DEG;
 /** Long swings rise this much (times the beat 1 distance) at their middle so they don't whip. */
@@ -217,6 +220,7 @@ function template(id, siteRoot) {
       </section>
 
       <div class="jy-facts-slot" data-ref="factsSlot"></div>
+      <div class="jy-vf-slot" data-ref="viewfinderSlot" hidden></div>
 
       <aside class="jy-panel" data-ref="panel" hidden aria-labelledby="jy-panel-title-${id}">
         <button type="button" class="jy-grab" data-ref="grab" aria-hidden="true" tabindex="-1"><span></span></button>
@@ -681,6 +685,9 @@ export function mountJourney(container, options = {}) {
     let satY = narrow ? 0.64 : 0.6;
     let limbY = narrow ? 0.45 : 0.42;
     if (frame.endText) limbY = Math.max(limbY, frame.endText.bottom / H + 0.03);
+    // ... and under the picture viewfinder on big screens (not laid out elsewhere)
+    const slot = boxOf(ref.viewfinderSlot, s);
+    if (slot) limbY = Math.max(limbY, slot.bottom / H + 0.03);
     satY = clamp(Math.max(satY, limbY + 0.12), 0, narrow ? 0.8 : 0.86);
     if (narrow) {
       // On a phone the facts banner spans the width under the satellite: keep
@@ -1081,6 +1088,7 @@ export function mountJourney(container, options = {}) {
     startBlend(); // from the end view to beat 1 without a cut (none under reduced motion)
     resetCamera();
     root.classList.remove('jy-locked');
+    syncViewfinder();
     scrollWindow(sectionTop());
     state.pTarget = 0;
     state.pSmooth = 0;
@@ -1499,6 +1507,7 @@ export function mountJourney(container, options = {}) {
     uiDirty = true;
     paintPanel(true);
     reframe();
+    syncViewfinder();
     if (focus) root.querySelector('.jy-panel-title').focus({ preventScroll: true });
   }
 
@@ -1518,6 +1527,7 @@ export function mountJourney(container, options = {}) {
     ref.more.textContent = 'More';
     root.classList.remove('jy-panel-open');
     reframe();
+    syncViewfinder();
     const done = () => {
       if (!state.panel) ref.panel.hidden = true;
     };
@@ -1622,6 +1632,7 @@ export function mountJourney(container, options = {}) {
     root.classList.add('jy-credits-open');
     creditsOpener?.setAttribute?.('aria-expanded', 'true');
     requestAnimationFrame(() => ref.credits.classList.add('is-on'));
+    syncViewfinder();
     ref.credits.querySelector('.jy-panel-title').focus({ preventScroll: true });
   }
   function closeCredits({ restoreFocus = false } = {}) {
@@ -1630,6 +1641,7 @@ export function mountJourney(container, options = {}) {
     ref.credits.classList.remove('is-on');
     ref.credits.hidden = true;
     root.classList.remove('jy-credits-open');
+    syncViewfinder();
     creditsOpener?.setAttribute?.('aria-expanded', 'false');
     if (restoreFocus && creditsOpener?.isConnected) creditsOpener.focus({ preventScroll: true });
     creditsOpener = null;
@@ -2442,9 +2454,57 @@ export function mountJourney(container, options = {}) {
     if (!webgl) return;
     loadTicker();
     ticker?.start?.();
+    syncViewfinder();
   }
   function stopTicker() {
     ticker?.stop?.();
+    syncViewfinder();
+  }
+
+  // ---- the picture viewfinder (site/explore/viewfinder.js, if it is there) --------------------
+  const bigQuery = window.matchMedia(VIEWFINDER_MEDIA);
+  let viewfinder = null;
+  let viewfinderLoading = null;
+
+  function loadViewfinder() {
+    if (viewfinderLoading) return;
+    viewfinderLoading = (async () => {
+      try {
+        const mod = await import('./viewfinder.js');
+        const href = new URL('viewfinder.css', MODULE_BASE).href;
+        if (![...document.querySelectorAll('link[rel="stylesheet"]')].some((l) => l.href === href)) {
+          // the styles first, so the frame never shows unstyled
+          await new Promise((done) => {
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = href;
+            link.onload = link.onerror = done;
+            document.head.appendChild(link);
+          });
+        }
+        if (destroyed) return;
+        viewfinder = mod.createViewfinder(ref.viewfinderSlot, {
+          photos,
+          siteRoot: siteRoot.href,
+          photoHref: opts.photoHref,
+          onOpen: openPhoto,
+          // as the facts: it moves even when the system prefers reduced motion
+          // (the site's choice); ?motion=reduced still keeps it still
+          reducedMotion: motionOverride === 'reduced',
+        });
+        syncViewfinder();
+      } catch {
+        // no viewfinder module (yet): the sky stays empty
+      }
+    })();
+  }
+
+  /** It runs at the end of the story, on big screens, unless a panel has taken its corner. */
+  function syncViewfinder() {
+    const on = webgl && state.locked && state.shown && !state.panel && !state.creditsOpen && bigQuery.matches;
+    if (on) loadViewfinder();
+    if (on) viewfinder?.start();
+    else viewfinder?.stop();
   }
 
   // ---- photos ---------------------------------------------------------------------------
@@ -2456,6 +2516,8 @@ export function mountJourney(container, options = {}) {
     ref.latest.dataset.id = '';
     const n = photos.length;
     ref.all.textContent = n ? `See all ${n.toLocaleString('en-US')} pictures` : 'See the pictures';
+    ref.viewfinderSlot.hidden = !photos.some(inDefaultSet);
+    viewfinder?.setPhotos(photos);
     if (webgl) buildPins();
     uiDirty = true;
   }
@@ -2471,6 +2533,7 @@ export function mountJourney(container, options = {}) {
   textObserver.observe(ref.b1);
   textObserver.observe(ref.b2);
   textObserver.observe(ref.factsSlot); // the banner fills in after the facts load
+  textObserver.observe(ref.viewfinderSlot); // it appears once there are pictures, on big screens
   document.fonts?.ready?.then(() => !destroyed && resize());
 
   const io = new IntersectionObserver((entries) => {
@@ -2494,6 +2557,7 @@ export function mountJourney(container, options = {}) {
   listen(touchQuery, 'change', () => {
     uiDirty = true;
   });
+  listen(bigQuery, 'change', syncViewfinder);
 
   // ---- start ------------------------------------------------------------------------------
   loadOrbit();
@@ -2522,6 +2586,7 @@ export function mountJourney(container, options = {}) {
       resize();
       if (state.saved) restoreScroll();
       if (state.locked) ticker?.start?.();
+      syncViewfinder();
       syncLoop();
     },
     hide() {
@@ -2608,6 +2673,7 @@ export function mountJourney(container, options = {}) {
       for (const off of cleanups) off();
       ticker?.dispose?.();
       newsList?.dispose?.();
+      viewfinder?.dispose();
       document.documentElement.classList.remove('jy-dragging');
       earth?.dispose();
       satellite?.dispose();

@@ -627,6 +627,11 @@ the page. Put it behind a `<details>` with the summary "Keys" (Small 500 Ink). I
 
 ## 6. Checklist: tells to keep off these pages
 
+One exception, the user's choice (30 Oct 2026): the picture viewfinder on the landing's end view
+(`site/explore/viewfinder.js`) has corner brackets, a crosshair and a top-down reveal with a faint
+scanline, on purpose. Its data and captions still sit around the picture, never on it, in Jost and
+sentence case. These stay off every other page and component.
+
 The globe and the scene
 
 - [ ] A glowing halo, cyan rim light or bloom around the Earth (the atmosphere is a thin edge)
