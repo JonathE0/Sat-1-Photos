@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-10-30T04:12:06Z",
+ "generated_at": "2026-10-30T05:17:53Z",
  "satellite": {
   "name": "CTS-SAT-1",
   "alias": "FrontierSat",
@@ -7,6 +7,48 @@
   "launched_at": "2026-05-03T06:59:00Z"
  },
  "images": [
+  {
+   "id": "2026-10-30-024600z",
+   "file": "camera/2026-10-30_024600Z.img",
+   "camera": "picam",
+   "title": "30 Oct 2026, 02:45 UTC",
+   "src": "images/2026-10-30-024600z.jpg",
+   "thumb": "images/thumbs/2026-10-30-024600z.jpg",
+   "width": 640,
+   "height": 480,
+   "status": "partial",
+   "status_note": "300 of 752 lines arrived, but line 43 did not, and the camera's JPEGs can't be decoded past a gap: the picture is shown down to it.",
+   "completeness": 0.0572,
+   "dark": false,
+   "file_size": 50462,
+   "sha256": "7cc7b46b0e5149e854c813509e0de71e38ac9fba1aa83a6086f9d3dbed85dbf2",
+   "sha256_expected": "2e022cbefeb30e251cd6d7d36835a7e560704b72283b2554beba8cacb6ec7215",
+   "captured_at": "2026-10-30T02:45:44Z",
+   "capture_date": "2026-10-30",
+   "capture_basis": "filename",
+   "satellite_clock": {
+    "correction_s": -15.8
+   },
+   "downlink": {
+    "first": "2026-10-30T04:48:00Z",
+    "last": "2026-10-30T04:54:01Z",
+    "packets": 161
+   },
+   "position": {
+    "lat": 21.7024,
+    "lon": 115.963,
+    "alt_km": 497.7,
+    "place": null,
+    "ground_sunlit": true,
+    "sun_elevation_deg": 50.2,
+    "satellite_sunlit": true,
+    "satellite_light": "sunlit",
+    "sun_above_limb_deg": 72.3,
+    "tle_epoch": "2026-10-27T22:38:42Z",
+    "basis": "SGP4 from the most recent TLE before capture"
+   },
+   "unnamed": false
+  },
   {
    "id": "2026-10-30-024400z",
    "file": "camera/2026-10-30_024400Z.img",
@@ -27,7 +69,7 @@
    "capture_date": "2026-10-30",
    "capture_basis": "filename",
    "satellite_clock": {
-    "correction_s": -15.9
+    "correction_s": -15.8
    },
    "downlink": {
     "first": "2026-10-30T03:13:08Z",
