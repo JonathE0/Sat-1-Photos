@@ -2,6 +2,52 @@
    above field, fields on Raised with no border, the one primary button in
    Ink. On a narrow globe it spans the width above the bottom bar. */
 
+/* the clock's time is the button that opens it */
+.cg button.cg-time {
+  display: block;
+  margin: 0;
+  padding: 0;
+  background: none;
+  border: 0;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.cg-time .cg-utc,
+.cg-time > .cg-fine {
+  display: block;
+}
+
+.cg button.cg-time:hover .cg-utc > span {
+  text-decoration: underline;
+  text-decoration-color: var(--cg-link, rgba(230, 235, 240, 0.4));
+  text-underline-offset: 3px;
+}
+
+.cg-time-icon {
+  display: inline-block;
+  width: calc(12 * var(--cg-u, 1px));
+  height: calc(12 * var(--cg-u, 1px));
+  margin-left: calc(8 * var(--cg-u, 1px));
+  color: var(--cg-muted, #8A96A3);
+  vertical-align: -0.05em;
+}
+
+.cg button.cg-time:hover .cg-time-icon,
+.cg button.cg-time[aria-expanded="true"] .cg-time-icon {
+  color: var(--cg-text, #E6EBF0);
+}
+
+.cg-vh {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 .cg-tp {
   position: absolute;
   bottom: calc(var(--cg-clock-h, 64px) + 2 * var(--cg-gap, 16px));

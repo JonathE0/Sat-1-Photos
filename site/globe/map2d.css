@@ -34,8 +34,20 @@
 
 /* in map mode the 3D canvas and its labels step aside */
 .cg-mode-map .cg-canvas,
-.cg-mode-map .cg-labels {
+.cg-mode-map .cg-labels,
+.cg-mode-map .cg-nogl {
   visibility: hidden;
+}
+
+/* over the map the header's text would sit on ice and cloud: give it the
+   panels' flat ground (narrow screens start the map below it instead) */
+.cg-mode-map:not(.cg-narrow) .cg-head {
+  padding: var(--cg-pad);
+  background: var(--cg-panel);
+}
+
+.cg[data-ui="compact"] .cg-views {
+  display: none;
 }
 
 /* ---- Globe / Map, and the map's zoom ------------------------------------------ */
@@ -96,14 +108,35 @@
   display: none;
 }
 
-/* narrow: top right, clear of the title on the left */
+/* narrow: the switch top right, clear of the title on the left; zoom at the
+   right edge just above the bottom bar, under any open sheet */
 .cg-narrow .cg-views {
+  display: contents;
+}
+
+.cg-narrow .cg-seg-view {
+  position: absolute;
+  top: 12px;
   right: 12px;
-  left: auto;
-  transform: none;
+  z-index: 2;
+}
+
+.cg-narrow .cg-seg-zoom {
+  position: absolute;
+  right: 12px;
+  bottom: calc(var(--cg-dock-h, 0px) + 12px);
+  z-index: 1;
+  flex-direction: column-reverse;
 }
 
 .cg-narrow .cg-seg button {
   height: 44px;
   min-width: 44px;
+}
+
+@media (pointer: coarse) {
+  .cg-seg button {
+    height: max(44px, var(--cg-btn-h, 32px));
+    min-width: 44px;
+  }
 }

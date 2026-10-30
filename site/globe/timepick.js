@@ -14,9 +14,19 @@
 const DAY_MS = 86_400_000;
 const HOUR_MS = 3_600_000;
 const LOCAL_ZONE = 'America/Edmonton';
-/** Past this many days from the newest elements, say plainly that the
- * position is a rough guess. */
+/** Past this many days from the elements, say how far off the position may
+ * be; past VERY_FAR_DAYS, that the timing is a rough guess. SGP4's error
+ * for a low, drag-affected orbit grows from a few kilometres at the epoch
+ * to tens after a week and hundreds or more after a few weeks, mostly
+ * along the track. */
 export const FAR_DAYS = 7;
+export const VERY_FAR_DAYS = 14;
+
+/** "tens of kilometres" or "hundreds of kilometres or more": how far off a
+ * position worked out `days` from its elements may be (past FAR_DAYS). */
+export function offBy(days) {
+  return Math.abs(days) > VERY_FAR_DAYS ? 'hundreds of kilometres or more' : 'tens of kilometres';
+}
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const pad = (n) => String(n).padStart(2, '0');
@@ -82,12 +92,21 @@ export function elementsNote(ms, orbit) {
       days,
     };
   }
-  if (ms > orbit.lastEpochMs && days > FAR_DAYS) {
+  if (ms > orbit.lastEpochMs && days > VERY_FAR_DAYS) {
     return {
       text:
         `A forecast ${span(age)} past the newest orbital elements (${of}). ` +
-        'This far out the satellite could be hundreds of kilometres or more ahead of or behind where it is drawn, ' +
+        `This far out the satellite could be ${offBy(days)} ahead of or behind where it is drawn, ` +
         'so the time it passes any place is a rough guess.',
+      level: 'far',
+      days,
+    };
+  }
+  if (ms > orbit.lastEpochMs && days > FAR_DAYS) {
+    return {
+      text:
+        `A forecast ${span(age)} past the newest orbital elements (${of}), ` +
+        `so the position may be off by ${offBy(days)}, mostly along the track.`,
       level: 'far',
       days,
     };
@@ -143,6 +162,7 @@ export function createTimePicker({ launchMs, getOrbit, onPick, onClose = () => {
   form.className = 'cg-tp';
   form.hidden = true;
   form.noValidate = true;
+  form.setAttribute('role', 'dialog');
   form.setAttribute('aria-label', 'Go to a time');
   const launch = utcInputs(launchMs);
   form.innerHTML = `

@@ -91,6 +91,24 @@ export function maskCell(i, j, cols = MASK_COLS, rows = MASK_ROWS) {
   return { lonDeg: -180 + ((i + 0.5) * 360) / cols, latDeg: 90 - ((j + 0.5) * 180) / rows };
 }
 
+/** Mask alphas by the Sun's cosine, in steps of 1/2048 (about 0.03 degrees
+ * of Sun height near the horizon), so a mask costs no powers or curves. */
+const SHADE_STEPS = 4096;
+let shadeTables = null;
+function shades() {
+  if (!shadeTables) {
+    const dim = new Uint8Array(SHADE_STEPS + 1);
+    const day = new Uint8Array(SHADE_STEPS + 1);
+    for (let i = 0; i <= SHADE_STEPS; i++) {
+      const mu = (2 * i) / SHADE_STEPS - 1;
+      dim[i] = Math.round(255 * (1 - Math.pow(daylight(mu), 1 / 2.2)));
+      day[i] = Math.round(255 * dayWeight(mu));
+    }
+    shadeTables = { dim, day };
+  }
+  return shadeTables;
+}
+
 /**
  * Fill two RGBA masks (cols × rows over the whole map) for the Sun at `sun`
  * (unit vector, ECEF): `dim` is black whose alpha darkens the day picture,
@@ -98,6 +116,8 @@ export function maskCell(i, j, cols = MASK_COLS, rows = MASK_ROWS) {
  * so the dimming is taken to the 1/2.2 power to match a linear fall-off.
  */
 export function shadeMasks(sun, dim, day, cols = MASK_COLS, rows = MASK_ROWS) {
+  const table = shades();
+  const half = SHADE_STEPS / 2;
   const across = new Float64Array(cols);
   for (let i = 0; i < cols; i++) {
     const lon = maskCell(i, 0, cols, rows).lonDeg * DEG;
@@ -109,11 +129,11 @@ export function shadeMasks(sun, dim, day, cols = MASK_COLS, rows = MASK_ROWS) {
     const s = Math.sin(lat) * sun.z;
     let o = j * cols * 4;
     for (let i = 0; i < cols; i++, o += 4) {
-      const mu = c * across[i] + s;
+      const k = Math.round((c * across[i] + s + 1) * half);
       dim[o] = dim[o + 1] = dim[o + 2] = 0;
-      dim[o + 3] = Math.round(255 * (1 - Math.pow(daylight(mu), 1 / 2.2)));
+      dim[o + 3] = table.dim[k];
       day[o] = day[o + 1] = day[o + 2] = 255;
-      day[o + 3] = Math.round(255 * dayWeight(mu));
+      day[o + 3] = table.day[k];
     }
   }
 }
@@ -340,6 +360,7 @@ export function createMap(container, opts = {}) {
   const dimData = dimCtx.createImageData(MASK_COLS, MASK_ROWS);
   const dayData = dayCtx.createImageData(MASK_COLS, MASK_ROWS);
   const pictures = { day: null, night: null };
+  let textureWidth = 2048;
   let texturesRequested = false;
   let sun = null; // ECEF unit vector of the Sun for the masks drawn
   let wantSun = sunDirectionEcef(Date.now());
@@ -350,8 +371,7 @@ export function createMap(container, opts = {}) {
     texturesRequested = true;
     const big = !preferSmallTextures && Math.max(view.w, view.h) * ratio >= 1200;
     const size = big ? 4096 : 2048;
-    world.width = size;
-    world.height = size / 2;
+    textureWidth = size;
     worldDirty = true;
     const load = (name) =>
       new Promise((resolve, reject) => {
@@ -401,15 +421,25 @@ export function createMap(container, opts = {}) {
     return bitmap;
   }
 
+  /** Compose the world at the size it is shown (in 512 px steps), up to
+   * the pictures' own: at the widest zoom that is a fraction of the 4096
+   * pictures' pixels, which matters when the night side moves every frame.
+   * It grows as you zoom in and shrinks only once well too big. */
+  function sizeWorld() {
+    const shown = Math.ceil((360 * view.k * ratio) / 512) * 512;
+    const want = clamp(shown, 1024, textureWidth);
+    if (want > world.width || want < world.width * 0.6) {
+      world.width = want;
+      world.height = want / 2;
+      worldDirty = true;
+    }
+  }
+
   function buildWorld() {
     sun = wantSun;
     shadeMasks(sun, dimData.data, dayData.data);
     dimCtx.putImageData(dimData, 0, 0);
     dayCtx.putImageData(dayData, 0, 0);
-    if (!world.width) {
-      world.width = 2048;
-      world.height = 1024;
-    }
     const W = world.width;
     const H = world.height;
     wctx.save();
@@ -921,8 +951,12 @@ export function createMap(container, opts = {}) {
     if (inset) view.inset = { top: 0, right: 0, bottom: 0, left: 0, ...inset };
     ratio = Math.min(window.devicePixelRatio || 1, 2);
     for (const c of [base, over]) {
-      c.width = Math.round(view.w * ratio);
-      c.height = Math.round(view.h * ratio);
+      const cw = Math.round(view.w * ratio);
+      const ch = Math.round(view.h * ratio);
+      if (c.width !== cw || c.height !== ch) {
+        c.width = cw;
+        c.height = ch;
+      }
     }
     if (atWidest) view.k = view.minK;
     changed();
@@ -966,6 +1000,7 @@ export function createMap(container, opts = {}) {
     frame(now) {
       if (!visible) return false;
       stepFlight(now);
+      sizeWorld();
       const drawWorld = worldDirty;
       if (worldDirty) buildWorld();
       const drawB = baseDirty;

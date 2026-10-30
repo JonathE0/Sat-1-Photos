@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url';
 import { applyAnnotations, launchTime, toIsoUtc, toPhotos } from '../adapter.js';
 import * as astro from '../astro.js';
 import * as map2d from '../map2d.js';
-import { elementsNote, FAR_DAYS, parseUtcInput, utcInputs } from '../timepick.js';
+import { elementsNote, FAR_DAYS, parseUtcInput, utcInputs, VERY_FAR_DAYS } from '../timepick.js';
 
 const read = (rel) => JSON.parse(readFileSync(fileURLToPath(new URL(rel, import.meta.url)), 'utf8'));
 const tles = read('../../data/tle.json');
@@ -390,10 +390,16 @@ check('compass points', astro.compassPoint(0) === 'N' && astro.compassPoint(355)
   const inside = elementsNote(orbit.items[10].epochMs + 3_600_000, orbit);
   const soon = elementsNote(last + 3 * day, orbit);
   const far = elementsNote(last + (FAR_DAYS + 1) * day, orbit);
+  const veryFar = elementsNote(last + (VERY_FAR_DAYS + 30) * day, orbit);
   check('time picker: on launch day it says the elements are later and the position approximate', launch.level === 'ok' && /first orbital elements/.test(launch.text) && /approximate/.test(launch.text), launch.text);
   check('time picker: inside the history it gives the elements and their age', inside.level === 'ok' && /\(1 hour old\)/.test(inside.text), inside.text);
   check('time picker: 3 days past the newest elements is a forecast, plainly worded', soon.level === 'ok' && /^Forecast/.test(soon.text) && /3 days old/.test(soon.text), soon.text);
-  check(`time picker: more than ${FAR_DAYS} days past them it warns strongly`, far.level === 'far' && /rough guess/.test(far.text), far.text);
+  check(`time picker: more than ${FAR_DAYS} days past them it warns of tens of kilometres`, far.level === 'far' && /tens of kilometres/.test(far.text), far.text);
+  check(
+    `time picker: more than ${VERY_FAR_DAYS} days past them, hundreds of kilometres and a rough guess`,
+    veryFar.level === 'far' && /hundreds of kilometres/.test(veryFar.text) && /rough guess/.test(veryFar.text),
+    veryFar.text,
+  );
 }
 
 console.log(`\n${passed} passed, ${failures} failed`);
