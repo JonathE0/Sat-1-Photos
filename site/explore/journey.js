@@ -120,6 +120,8 @@ const BLEND_MS = 600;
 
 /** Behind the Earth: true black, with the stars, the Sun and the Moon (sky.js) on it. */
 const SKY = '#000000';
+/** Where the satellite and its orbit line go out of sight behind the Earth, Earth radii: about 64 km up, in the lit air. */
+const OCCLUDER_RADIUS = 1.01;
 const BLUE = '#3C9DF5';
 
 const clamp = (x, lo, hi) => Math.min(hi, Math.max(lo, x));
@@ -354,8 +356,10 @@ export function mountJourney(container, options = {}) {
   // ---- renderer and scene ------------------------------------------------------
   // Two canvases. The Earth and the sky are drawn under the picture pins; the
   // satellite and its orbit line on a transparent canvas over them, so where
-  // they cross a pin they cover it. On that canvas an Earth-sized sphere that
-  // only writes depth still hides whatever passes behind the Earth.
+  // they cross a pin they cover it. On that canvas a sphere that only writes
+  // depth still hides whatever passes behind the Earth. It reaches up into the
+  // atmosphere (earth.js): below the lit band the air is dark, so a line that
+  // ran down to the solid ground would look as if it entered the Earth.
   let renderer = null;
   let overRenderer = null;
   const scene = new THREE.Scene();
@@ -368,7 +372,7 @@ export function mountJourney(container, options = {}) {
   satHolder.visible = false;
   const orbitLine = createScreenLine(260, { color: BLUE, widthPx: 2 });
   orbitLine.setOpacity(0);
-  const occluder = new THREE.Mesh(new THREE.SphereGeometry(1, 128, 64), new THREE.MeshBasicMaterial({ colorWrite: false }));
+  const occluder = new THREE.Mesh(new THREE.SphereGeometry(OCCLUDER_RADIUS, 128, 64), new THREE.MeshBasicMaterial({ colorWrite: false }));
   occluder.renderOrder = -1;
   overScene.add(occluder, sunLight, sunLight.target, ambient, satHolder, orbitLine.mesh);
 
@@ -1253,7 +1257,7 @@ export function mountJourney(container, options = {}) {
    */
   function satelliteRect(satAlpha) {
     if (!overRenderer || !satellite || !satellite.bodyBounds || satAlpha < 0.5 || !sat.ok) return null;
-    if (hiddenByEarth(camera.position, sat.S)) return null;
+    if (hiddenByEarth(camera.position, sat.S, OCCLUDER_RADIUS)) return null;
     const { min, max } = satellite.bodyBounds;
     let left = Infinity, top = Infinity, right = -Infinity, bottom = -Infinity;
     for (let i = 0; i < 8; i++) {
@@ -1337,7 +1341,7 @@ export function mountJourney(container, options = {}) {
       }
     }
     // the satellite button: the model plus its label 12px to the right
-    const satOn = satAlpha > 0.5 && sat.ok && !hiddenByEarth(camera.position, sat.S);
+    const satOn = satAlpha > 0.5 && sat.ok && !hiddenByEarth(camera.position, sat.S, OCCLUDER_RADIUS);
     const s = satOn ? toScreen(sat.S) : null;
     if (s) {
       ref.sat.hidden = false;
@@ -1759,7 +1763,7 @@ export function mountJourney(container, options = {}) {
       ? `${when} it\u2019s over ${place}, ${alt} km up.`
       : `${when} it\u2019s ${alt} km above ${fmtLatShort(s.latDeg)}, ${fmtLonShort(s.lonDeg)}.`;
     const period = Math.round(orbit.periodMinutes(state.simMs));
-    return `${where} It goes round the Earth every ${period} minutes, passing over both poles.`;
+    return `${where} It completes one orbit of the Earth every ${period} minutes, on a near-polar path.`;
   }
 
   function hintText() {
