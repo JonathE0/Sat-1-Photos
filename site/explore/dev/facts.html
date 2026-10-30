@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Facts banner test</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../facts.css">
+<style>
+  /* A stand-in for the journey's end state: dark ground, the banner bottom left
+     above a fake time row, the news list in a Credits-like panel on the right. */
+  :root { --m: 16px; }
+  @media (min-width: 600px) { :root { --m: 24px; } }
+  @media (min-width: 1100px) { :root { --m: 32px; } }
+  html, body { margin: 0; min-height: 100%; background: #05070A; color: #E6EBF0;
+    font: 400 16px/1.5 "Jost", "Futura", "Century Gothic", Arial, sans-serif; }
+  body { min-height: 100svh; }
+  .earth { position: fixed; right: -18vmin; bottom: -38vmin; width: 110vmin; height: 110vmin;
+    border-radius: 50%; background: #1d3550; }
+  .dev { position: relative; z-index: 1; max-width: 40em; padding: 24px var(--m); font-size: 13px; color: #8A96A3; }
+  .dev h1 { margin: 0 0 8px; font-size: 20px; font-weight: 600; color: #E6EBF0; }
+  .dev p { margin: 0 0 8px; }
+  .dev label { margin-right: 16px; color: #E6EBF0; }
+  .dev button { font: 500 13px/1 "Jost", "Futura", Arial, sans-serif; color: #E6EBF0; background: #1A2129; border: 0; min-height: 32px; padding: 0 12px; margin-right: 8px; cursor: pointer; }
+  .dev :focus-visible { outline: 2px solid #3C9DF5; outline-offset: 2px; }
+  #live { font-variant-numeric: tabular-nums; color: #E6EBF0; }
+  .slot { position: fixed; z-index: 2; left: var(--m); bottom: calc(var(--m) + 36px + 16px); width: min(34em, calc(100% - 2 * var(--m))); }
+  .timerow { position: fixed; z-index: 2; left: var(--m); bottom: var(--m); height: 36px; width: 300px; max-width: calc(100% - 2 * var(--m));
+    background: #10151B; color: #8A96A3; font-size: 13px; display: flex; align-items: center; padding: 0 12px; }
+  .credits { position: fixed; z-index: 2; top: 96px; right: var(--m); width: clamp(300px, 18vw, 420px); max-width: calc(100% - 2 * var(--m));
+    max-height: calc(100% - 96px - 36px - 2 * var(--m) - 24px); overflow: auto; padding: 24px; background: #10151B;
+    font-size: 13px; color: #8A96A3; }
+  .credits h2 { margin: 0 0 8px; color: #E6EBF0; font-size: 20px; font-weight: 600; }
+  @media (max-width: 699px) {
+    .credits { position: relative; top: auto; right: auto; margin: 0 var(--m) 160px; width: auto; max-height: none; }
+    .slot { bottom: calc(var(--m) + 36px + 12px); }
+  }
+</style>
+</head>
+<body>
+  <div class="earth" aria-hidden="true"></div>
+  <div class="dev">
+    <h1>Facts banner test</h1>
+    <p>Live numbers from <code>Orbit.stateAt(Date.now())</code> with <code>data/tle.json</code>.
+      Query: <code>?interval=3000</code>, <code>?motion=reduced</code>.</p>
+    <p id="live">Loading…</p>
+    <p>
+      <label><input type="checkbox" id="rm"> Reduced motion</label>
+      <button type="button" id="start">Start</button>
+      <button type="button" id="stop">Stop</button>
+    </p>
+    <p id="count"></p>
+  </div>
+
+  <aside class="credits" aria-labelledby="credits-title">
+    <h2 id="credits-title">Credits</h2>
+    <p>Earth: NASA. Orbital elements: Space-Track.org. Packets: the SatNOGS network.</p>
+    <div id="news"></div>
+  </aside>
+
+  <div class="slot" id="slot"></div>
+  <div class="timerow" aria-hidden="true">(time controls sit here)</div>
+
+<script type="module">
+import { createFactTicker, createNewsList } from '../facts.js';
+import { Orbit, LAUNCH_MS } from '../../globe/astro.js';
+import { regionAt } from '../journey-region.js';
+
+const q = new URLSearchParams(location.search);
+const interval = Number(q.get('interval')) || 9000;
+const rmBox = document.getElementById('rm');
+rmBox.checked = q.get('motion') === 'reduced' ||
+  (q.get('motion') !== 'full' && matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+async function json(url) {
+  const res = await fetch(url, { cache: 'no-cache' });
+  if (!res.ok) throw new Error(`${res.status} for ${url}`);
+  return res.json();
+}
+
+const [data, tles, images] = await Promise.all([
+  json('../facts.json'),
+  json('../../data/tle.json'),
+  json('../../data/images.json').catch(() => null),
+]);
+const orbit = new Orbit(tles);
+const pictures = Array.isArray(images?.images) ? images.images.length : null;
+
+let rev = { at: 0, value: null };
+function live() {
+  const ms = Date.now();
+  const s = orbit.stateAt(ms);
+  if (!s) return null;
+  if (Math.abs(ms - rev.at) > 1000) rev = { at: ms, value: orbit.revolutionAt(ms) };
+  return {
+    speedKmS: s.speedKmS,
+    altKm: s.altKm,
+    latDeg: s.latDeg,
+    lonDeg: s.lonDeg,
+    placeName: regionAt(s.latDeg, s.lonDeg),
+    orbitsSinceLaunch: rev.value,
+    daysInOrbit: (ms - LAUNCH_MS) / 86_400_000,
+    pictures,
+  };
+}
+
+const liveLine = document.getElementById('live');
+setInterval(() => {
+  const r = live();
+  liveLine.textContent = r
+    ? `${r.speedKmS.toFixed(3)} km/s, ${r.altKm.toFixed(1)} km, ${r.latDeg.toFixed(2)}, ${r.lonDeg.toFixed(2)}, ` +
+      `${r.placeName || 'no place name'}, rev ${r.orbitsSinceLaunch}, day ${r.daysInOrbit.toFixed(2)}, ${r.pictures} pictures`
+    : 'No state';
+}, 1000);
+
+const facts = Array.isArray(data) ? data : data.facts;
+document.getElementById('count').textContent =
+  `${facts.length} facts and ${(data.news || []).length} news items, updated ${data.updated}.`;
+
+let ticker = null;
+function make() {
+  ticker?.dispose();
+  ticker = createFactTicker(document.getElementById('slot'), { facts, live, intervalMs: interval, reducedMotion: rmBox.checked });
+  ticker.start();
+  window.ticker = ticker;
+}
+make();
+rmBox.addEventListener('change', make);
+document.getElementById('start').addEventListener('click', () => ticker.start());
+document.getElementById('stop').addEventListener('click', () => ticker.stop());
+
+createNewsList(document.getElementById('news'), { news: data.news });
+</script>
+</body>
+</html>

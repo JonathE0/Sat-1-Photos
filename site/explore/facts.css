@@ -1,0 +1,196 @@
+/* The facts banner and the "In the news" list (facts.js).
+   Tokens follow docs/design-direction.md section 2. Inside the journey the
+   --jy-* values win; on their own the defaults below apply. */
+
+.cf,
+.cf-news {
+  --cf-panel: var(--jy-panel, #10151B);
+  --cf-raised: var(--jy-raised, #1A2129);
+  --cf-ink: var(--jy-ink, #E6EBF0);
+  --cf-muted: var(--jy-muted, #8A96A3);
+  --cf-blue: var(--jy-blue, #3C9DF5);
+  --cf-font: var(--jy-font, "Jost", "Futura", "Century Gothic", "Helvetica Neue", Arial, sans-serif);
+  --cf-underline: color-mix(in srgb, var(--cf-ink) 40%, transparent);
+  font-family: var(--cf-font);
+}
+.cf *,
+.cf-news * { box-sizing: border-box; }
+
+/* ---- the banner: one fact on a flat Panel block, readable over cloud ---- */
+
+.cf {
+  box-sizing: border-box;
+  position: relative;
+  max-width: 34em;
+  margin: 0;
+  padding: 12px 16px 4px;
+  background: var(--cf-panel);
+  color: var(--cf-ink);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.45;
+  font-variant-numeric: tabular-nums;
+}
+
+.cf-text {
+  margin: 0;
+  /* two lines kept free, so short facts don't make the block jump */
+  min-height: 2.9em;
+  text-wrap: pretty;
+  overflow-wrap: break-word;
+}
+
+.cf-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 2px;
+}
+
+.cf-meta {
+  min-width: 0;
+  margin: 0;
+  color: var(--cf-muted);
+  font-size: 13px;
+  line-height: 1.45;
+  letter-spacing: 0.01em;
+}
+
+/* Each fact slides out to one side while it fades (240ms) and the next slides
+   in from the other side (400ms); Previous reverses the direction. The
+   transitions are !important so the site-wide reduced-motion rule (which
+   turns every transition off) doesn't remove the fade; with reduced motion
+   (.cf-calm, decided in facts.js) the slide goes and the fade stays. */
+.cf .cf-fades {
+  transition: opacity 400ms cubic-bezier(.22, 1, .36, 1), transform 400ms cubic-bezier(.22, 1, .36, 1) !important;
+}
+.cf.is-out .cf-fades {
+  opacity: 0;
+  transform: translateX(-28px);
+  transition: opacity 240ms cubic-bezier(.55, .055, .675, .19), transform 240ms cubic-bezier(.55, .055, .675, .19) !important;
+}
+.cf.is-back.is-out .cf-fades { transform: translateX(28px); }
+.cf.is-enter .cf-fades { opacity: 0; transform: translateX(28px); transition: none !important; }
+.cf.is-back.is-enter .cf-fades { transform: translateX(-28px); }
+.cf.cf-calm .cf-fades,
+.cf.cf-calm.is-out .cf-fades,
+.cf.cf-calm.is-enter .cf-fades { transform: none; }
+
+.cf-link {
+  color: var(--cf-ink);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--cf-underline);
+  transition: text-decoration-color 180ms cubic-bezier(.22, 1, .36, 1);
+}
+.cf-link:hover { text-decoration-color: var(--cf-ink); }
+
+.cf-nav {
+  display: flex;
+  flex: none;
+  gap: 4px;
+  margin-right: -8px;
+}
+
+.cf-btn,
+.cf-textbtn {
+  appearance: none;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--cf-ink);
+  font: 500 13px/1 var(--cf-font);
+  letter-spacing: 0.01em;
+  cursor: pointer;
+}
+.cf-btn {
+  min-height: 36px;
+  padding: 0 8px;
+  transition: background-color 180ms cubic-bezier(.22, 1, .36, 1);
+}
+.cf-btn:hover { background: var(--cf-raised); }
+.cf-btn[aria-disabled="true"] { color: var(--cf-muted); background: transparent; cursor: default; }
+
+.cf :focus-visible,
+.cf-news :focus-visible {
+  outline: 2px solid var(--cf-blue);
+  outline-offset: 2px;
+}
+
+@media (pointer: coarse) {
+  .cf-btn { min-height: 44px; min-width: 44px; }
+}
+
+/* a phone: the source line and the buttons may need two rows */
+@media (max-width: 420px) {
+  .cf { padding: 10px 12px 4px; }
+  .cf-foot { flex-wrap: wrap; row-gap: 0; }
+  .cf-nav { margin-left: auto; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cf-link,
+  .cf-btn { transition: none; }
+}
+
+/* screen-reader-only text: the live region and "(opens in a new tab)" */
+.cf-sr {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---- In the news: a compact list in the Credits panel ---- */
+
+.cf-news {
+  margin-top: 8px;
+  color: var(--cf-muted);
+  font-size: var(--jy-small, 13px);
+  line-height: 1.45;
+  letter-spacing: 0.01em;
+}
+.cf-news-title {
+  margin: 0 0 8px;
+  color: var(--cf-ink);
+  font-size: var(--jy-body, 16px);
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: 0;
+}
+.cf-news-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.cf-news-item { display: flex; flex-direction: column; gap: 2px; }
+.cf-news-item[hidden] { display: none; }
+.cf-news-link { overflow-wrap: break-word; }
+.cf-news-meta { color: var(--cf-muted); font-variant-numeric: tabular-nums; }
+
+.cf-textbtn {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  margin-top: 4px;
+  padding: 0;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--cf-underline);
+  font-size: var(--jy-small, 13px);
+}
+.cf-textbtn:hover { text-decoration-color: var(--cf-ink); }
+@media (pointer: coarse) { .cf-textbtn { min-height: 44px; } }

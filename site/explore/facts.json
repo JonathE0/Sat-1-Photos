@@ -1,0 +1,485 @@
+{
+  "updated": "2026-10-30",
+  "facts": [
+    {
+      "id": "first-student-satellite",
+      "text": "CTS-SAT-1, also called FrontierSat, is Calgary's first student-built satellite.",
+      "category": "mission",
+      "sources": [
+        { "title": "UCalgary, we have liftoff: Team set to launch city's first student-built satellite into orbit to study STEVE", "outlet": "UCalgary News", "date": "2026-05-01", "url": "https://ucalgary.ca/news/ucalgary-we-have-liftoff-team-set-launch-citys-first-student-built-satellite-orbit-study-steve" },
+        { "title": "FrontierSat", "outlet": "SatNOGS DB", "date": null, "accessed": "2026-10-29", "url": "https://db.satnogs.org/satellite/GGCH-4346-1583-9419-5634/" }
+      ]
+    },
+    {
+      "id": "steve-target",
+      "text": "Its science target is STEVE, a narrow ribbon of purple light in the night sky that researchers have found is not an aurora.",
+      "category": "mission",
+      "sources": [
+        { "title": "Funding helps students explore ongoing mysteries of STEVE", "outlet": "UCalgary News", "date": "2024-06-05", "url": "https://www.ucalgary.ca/news/funding-helps-students-explore-ongoing-mysteries-steve" },
+        { "title": "UCalgary, we have liftoff: Team set to launch city's first student-built satellite into orbit to study STEVE", "outlet": "UCalgary News", "date": "2026-05-01", "url": "https://ucalgary.ca/news/ucalgary-we-have-liftoff-team-set-launch-citys-first-student-built-satellite-orbit-study-steve" }
+      ]
+    },
+    {
+      "id": "steve-name",
+      "text": "STEVE stands for Strong Thermal Emission Velocity Enhancement. It can be thousands of degrees hotter than the air around it.",
+      "category": "mission",
+      "sources": [
+        { "title": "Funding helps students explore ongoing mysteries of STEVE", "outlet": "UCalgary News", "date": "2024-06-05", "url": "https://www.ucalgary.ca/news/funding-helps-students-explore-ongoing-mysteries-steve" }
+      ]
+    },
+    {
+      "id": "mpi-windsock",
+      "text": "Its main instrument, the Mini Plasma Imager, measures winds of charged gas high above Earth. Its designer calls it a \"high-tech windsock\".",
+      "category": "mission",
+      "sources": [
+        { "title": "Funding helps students explore ongoing mysteries of STEVE", "outlet": "UCalgary News", "date": "2024-06-05", "url": "https://www.ucalgary.ca/news/funding-helps-students-explore-ongoing-mysteries-steve" },
+        { "title": "Calgary's first student-built satellite successfully launched into orbit", "outlet": "Calgary Herald", "date": "2026-05-04", "url": "https://ca.news.yahoo.com/calgarys-first-student-built-satellite-202219187.html" }
+      ]
+    },
+    {
+      "id": "mpi-first-orbit",
+      "text": "It's the Mini Plasma Imager's first flight in orbit; an earlier version had flown on a suborbital rocket.",
+      "category": "mission",
+      "sources": [
+        { "title": "FrontierSat (CTS-SAT-1)", "outlet": "CalgaryToSpace", "date": null, "accessed": "2026-10-29", "url": "https://www.calgarytospace.ca/cts-sat-1" },
+        { "title": "UCalgary, we have liftoff: Team set to launch city's first student-built satellite into orbit to study STEVE", "outlet": "UCalgary News", "date": "2026-05-01", "url": "https://ucalgary.ca/news/ucalgary-we-have-liftoff-team-set-launch-citys-first-student-built-satellite-orbit-study-steve" }
+      ]
+    },
+    {
+      "id": "mpi-swarm",
+      "text": "The Mini Plasma Imager is a scaled-down cousin of the ion imagers flying on ESA's Swarm satellites since 2013.",
+      "category": "mission",
+      "sources": [
+        { "title": "FrontierSat (CTS-SAT-1)", "outlet": "CalgaryToSpace", "date": null, "accessed": "2026-10-29", "url": "https://www.calgarytospace.ca/cts-sat-1" },
+        { "title": "One large step for students: Calgary's first student designed satellite to launch this fall", "outlet": "LiveWire Calgary", "date": "2025-06-17", "url": "https://livewirecalgary.com/2025/06/17/one-large-step-for-students-calgarys-first-student-designed-satellite-to-launch-this-fall/" }
+      ],
+      "note": "The team's page says the imager is based on Swarm's thermal ion imagers; LiveWire says it is a miniature of an instrument flying since 2013."
+    },
+    {
+      "id": "burchill",
+      "text": "Dr. Johnathan Burchill of UCalgary's physics and astronomy department designed the Mini Plasma Imager and leads the science.",
+      "category": "mission",
+      "sources": [
+        { "title": "UCalgary, we have liftoff: Team set to launch city's first student-built satellite into orbit to study STEVE", "outlet": "UCalgary News", "date": "2026-05-01", "url": "https://ucalgary.ca/news/ucalgary-we-have-liftoff-team-set-launch-citys-first-student-built-satellite-orbit-study-steve" }
+      ]
+    },
+    {
+      "id": "three-years",
+      "text": "The team plans to run it for at least three years from UCalgary's Rothney Astrophysical Observatory, southwest of the city.",
+      "category": "mission",
+      "sources": [
+        { "title": "UCalgary, we have liftoff: Team set to launch city's first student-built satellite into orbit to study STEVE", "outlet": "UCalgary News", "date": "2026-05-01", "url": "https://ucalgary.ca/news/ucalgary-we-have-liftoff-team-set-launch-citys-first-student-built-satellite-orbit-study-steve" }
+      ]
+    },
+    {
+      "id": "boom",
+      "text": "It also tests a new boom of 3D-printed carbon fibre, stowed for launch and designed to reach 1,143 mm when it opens.",
+      "category": "hardware",
+      "sources": [
+        { "title": "Deployable Composite Lattice Boom", "outlet": "CTS-SAT-1 wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Deployable-Composite-Lattice-Boom" },
+        { "title": "FrontierSat (CTS-SAT-1)", "outlet": "CalgaryToSpace", "date": null, "accessed": "2026-10-29", "url": "https://www.calgarytospace.ca/cts-sat-1" }
+      ]
+    },
+    {
+      "id": "boom-timing",
+      "text": "The boom was planned to stay stowed for most of the mission and open near the end, after at least six months of plasma data.",
+      "category": "mission",
+      "sources": [
+        { "title": "Deployable Composite Lattice Boom", "outlet": "CTS-SAT-1 wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Deployable-Composite-Lattice-Boom" }
+      ],
+      "note": "Whether the boom has been opened yet is not published; the fact states the plan only."
+    },
+    {
+      "id": "csa-imager",
+      "text": "The Canadian Space Agency backs its science through IMAGER, a $500,000 FAST grant to UCalgary led by Dr. Burchill.",
+      "category": "team",
+      "sources": [
+        { "title": "Grants awarded under the FAST 2023 Announcement of Opportunity", "outlet": "Canadian Space Agency", "date": "2025-02-13", "url": "https://www.asc-csa.gc.ca/eng/funding-programs/programs/fast/grants-awarded-fast-ao-2023.asp" },
+        { "title": "Innovative Measurements of Auroral Geophysics for Education and Research (IMAGER)", "outlet": "Government of Canada grants records", "date": "2024-03-27", "url": "https://search.open.canada.ca/grants/record/csa-asc,003-2023-2024-Q4-00074,current" }
+      ],
+      "note": "IMAGER pays to fly the Mini Plasma Imager on a sounding rocket and a CubeSat. SpaceQ notes the satellite was not part of the CSA's CUBICS programme; no source ties it to the earlier Canadian CubeSat Project. Notebookcheck calls the CSA the primary funder; the grant record is used instead."
+    },
+    {
+      "id": "esa-fys",
+      "text": "Through ESA's Fly Your Satellite! programme, six team members shook a test model of it in Belgium in October 2024.",
+      "category": "team",
+      "sources": [
+        { "title": "From Canada to Belgium, the CalgaryToSpace team completes a vibration test campaign", "outlet": "European Space Agency", "date": "2024-11-06", "url": "https://education.esa.int/CubeSats_-_Fly_Your_Satellite/From_Canada_to_Belgium_the_CalgaryToSpace_team_completes_a_vibration_test_campaign" }
+      ]
+    },
+    {
+      "id": "founded-2020",
+      "text": "CalgaryToSpace started in 2020, so getting to orbit took the student team nearly six years.",
+      "category": "team",
+      "sources": [
+        { "title": "UCalgary team prepares to launch city's first student-built satellite", "outlet": "UCalgary News", "date": "2025-06-09", "url": "https://www.ucalgary.ca/news/ucalgary-team-prepares-launch-citys-first-student-built-satellite" },
+        { "title": "Calgary's first student-built satellite successfully launched into orbit", "outlet": "Calgary Herald", "date": "2026-05-04", "url": "https://ca.news.yahoo.com/calgarys-first-student-built-satellite-202219187.html" }
+      ],
+      "note": "UCalgary, LiveWire and the Calgary Herald (\"summer 2020\") give 2020; the team's wiki gives 1 January 2021 and calls it just over five years."
+    },
+    {
+      "id": "hundred-students",
+      "text": "More than 100 students have worked on it, most of them undergraduates.",
+      "category": "team",
+      "sources": [
+        { "title": "One large step for students: Calgary's first student designed satellite to launch this fall", "outlet": "LiveWire Calgary", "date": "2025-06-17", "url": "https://livewirecalgary.com/2025/06/17/one-large-step-for-students-calgarys-first-student-designed-satellite-to-launch-this-fall/" },
+        { "title": "Satellite built by Calgary students expected to launch into space this fall", "outlet": "CTV News", "date": "2025-06-17", "url": "https://www.ctvnews.ca/calgary/article/satellite-built-by-calgary-students-expected-to-launch-into-space-this-fall/" }
+      ],
+      "note": "CTV and the Calgary Herald say about 100; the team's wiki says 100 to 200 members over the project; in July 2023 UCalgary counted 60 members at that time."
+    },
+    {
+      "id": "cofounders",
+      "text": "The project was co-founded by students Elian Dupre Sarmiento and Liana Goodman.",
+      "category": "team",
+      "sources": [
+        { "title": "UCalgary students count down to success with anticipated satellite launch", "outlet": "UCalgary News", "date": "2023-07-20", "url": "https://ucalgary.ca/news/ucalgary-students-count-down-success-anticipated-satellite-launch" }
+      ]
+    },
+    {
+      "id": "faculties",
+      "text": "Its builders are mainly students from UCalgary's Schulich School of Engineering and Faculty of Science.",
+      "category": "team",
+      "sources": [
+        { "title": "Calgary's first student-built satellite to launch in 2026", "outlet": "CityNews Calgary", "date": "2025-08-13", "url": "https://calgary.citynews.ca/2025/08/13/calgarys-first-student-built-satellite-launch-2026/" },
+        { "title": "Student-built satellite set to study rare atmospheric phenomenon in space", "outlet": "Interesting Engineering", "date": "2025-08-12", "url": "https://interestingengineering.com/space/calgarys-first-student-built-satellite" }
+      ]
+    },
+    {
+      "id": "built-in-house",
+      "text": "Students built its frame, payload mechanisms and onboard computer, and the computer's firmware is open source.",
+      "category": "team",
+      "sources": [
+        { "title": "One large step for students: Calgary's first student designed satellite to launch this fall", "outlet": "LiveWire Calgary", "date": "2025-06-17", "url": "https://livewirecalgary.com/2025/06/17/one-large-step-for-students-calgarys-first-student-designed-satellite-to-launch-this-fall/" },
+        { "title": "FrontierSat (CTS-SAT-1)", "outlet": "CalgaryToSpace", "date": null, "accessed": "2026-10-29", "url": "https://www.calgarytospace.ca/cts-sat-1" }
+      ]
+    },
+    {
+      "id": "solar-panels",
+      "text": "Three of its seven solar panels were made by the team; the other four were bought ready-made.",
+      "category": "hardware",
+      "sources": [
+        { "title": "Solar Panels", "outlet": "CTS-SAT-1 wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Solar-Panels" }
+      ]
+    },
+    {
+      "id": "road-trip",
+      "text": "Customs trouble kept it off a plane, so the team drove it to California: a U-Haul into Montana, then a four-day road trip.",
+      "category": "launch",
+      "sources": [
+        { "title": "UCalgary, we have liftoff: Team set to launch city's first student-built satellite into orbit to study STEVE", "outlet": "UCalgary News", "date": "2026-05-01", "url": "https://ucalgary.ca/news/ucalgary-we-have-liftoff-team-set-launch-citys-first-student-built-satellite-orbit-study-steve" },
+        { "title": "Calgary's first student-built satellite is officially in orbit", "outlet": "LiveWire Calgary", "date": "2026-05-05", "url": "https://livewirecalgary.com/2026/05/05/calgary-student-built-satellite-orbit/" }
+      ]
+    },
+    {
+      "id": "cts-sat-2",
+      "text": "The team is already designing a second satellite, CTS-SAT-2, with more of its parts made in-house.",
+      "category": "team",
+      "sources": [
+        { "title": "UCalgary, we have liftoff: Team set to launch city's first student-built satellite into orbit to study STEVE", "outlet": "UCalgary News", "date": "2026-05-01", "url": "https://ucalgary.ca/news/ucalgary-we-have-liftoff-team-set-launch-citys-first-student-built-satellite-orbit-study-steve" },
+        { "title": "Calgary's first student-built satellite is officially in orbit", "outlet": "LiveWire Calgary", "date": "2026-05-05", "url": "https://livewirecalgary.com/2026/05/05/calgary-student-built-satellite-orbit/" }
+      ]
+    },
+    {
+      "id": "supporters",
+      "text": "SkyFox Labs and NovAtel, which made its main camera and GNSS receiver, were among the companies that supported the project.",
+      "category": "team",
+      "sources": [
+        { "title": "UCalgary students count down to success with anticipated satellite launch", "outlet": "UCalgary News", "date": "2023-07-20", "url": "https://ucalgary.ca/news/ucalgary-students-count-down-success-anticipated-satellite-launch" },
+        { "title": "Camera", "outlet": "CTS-SAT-1 wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Camera" },
+        { "title": "GNSS Receiver", "outlet": "CTS-SAT-1 wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/GNSS-Receiver" }
+      ],
+      "note": "UCalgary names \"Hexagon (NovAtel)\"."
+    },
+    {
+      "id": "size",
+      "text": "It's a 3U CubeSat about 34 cm long, roughly the size of a loaf of bread.",
+      "category": "hardware",
+      "sources": [
+        { "title": "One large step for students: Calgary's first student designed satellite to launch this fall", "outlet": "LiveWire Calgary", "date": "2025-06-17", "url": "https://livewirecalgary.com/2025/06/17/one-large-step-for-students-calgarys-first-student-designed-satellite-to-launch-this-fall/" },
+        { "title": "FrontierSat (CTS-SAT-1)", "outlet": "CalgaryToSpace", "date": null, "accessed": "2026-10-29", "url": "https://www.calgarytospace.ca/cts-sat-1" }
+      ],
+      "note": "Interesting Engineering, Universe Space Tech and spacebahd say about 30 cm."
+    },
+    {
+      "id": "mass",
+      "text": "It weighs 2.897 kg, give or take 1%.",
+      "category": "hardware",
+      "sources": [
+        { "title": "Overall CTS SAT 1 Properties", "outlet": "CTS-SAT-1 wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Overall-CTS-SAT-1-Properties" }
+      ],
+      "note": "Gunter's Space Page lists 5 kg; the team's own figure is used."
+    },
+    {
+      "id": "mpi-size",
+      "text": "The Mini Plasma Imager weighs 0.36 kg and fits in a box 48 × 96 × 96 mm.",
+      "category": "hardware",
+      "sources": [
+        { "title": "Mini Plasma Imager (MPI)", "outlet": "CTS-SAT-1 wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Mini-Plasma-Imager-(MPI)" }
+      ]
+    },
+    {
+      "id": "mpi-rate",
+      "text": "The Mini Plasma Imager takes 32 ion images a second, in runs of up to 15 to 20 minutes each orbit.",
+      "category": "hardware",
+      "sources": [
+        { "title": "Mini Plasma Imager (MPI)", "outlet": "CTS-SAT-1 wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Mini-Plasma-Imager-(MPI)" }
+      ]
+    },
+    {
+      "id": "camera",
+      "text": "Its main camera is a SkyFox Labs piCAM that takes 640 × 480 pictures with a 60° view, corner to corner.",
+      "category": "hardware",
+      "sources": [
+        { "title": "Camera", "outlet": "CTS-SAT-1 wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Camera" }
+      ]
+    },
+    {
+      "id": "pixel-size",
+      "text": "From about 500 km up, each pixel of the main camera covers roughly 710 m of ground.",
+      "category": "hardware",
+      "sources": [
+        { "title": "Camera", "outlet": "CTS-SAT-1 wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Camera" }
+      ]
+    },
+    {
+      "id": "camera-job",
+      "text": "The main camera is there mostly to watch the boom unfold. Pictures of Earth and the aurora are its other jobs.",
+      "category": "hardware",
+      "sources": [
+        { "title": "Camera", "outlet": "CTS-SAT-1 wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Camera" }
+      ]
+    },
+    {
+      "id": "attitude-camera",
+      "text": "A second, smaller camera helps its attitude system work out which way the satellite is pointing.",
+      "category": "hardware",
+      "sources": [
+        { "title": "Calgary's first student-built satellite to launch in 2026", "outlet": "CityNews Calgary", "date": "2025-08-13", "url": "https://calgary.citynews.ca/2025/08/13/calgarys-first-student-built-satellite-launch-2026/" }
+      ]
+    },
+    {
+      "id": "gnss",
+      "text": "It works out its own position and the exact time with a NovAtel OEM719 GNSS receiver.",
+      "category": "hardware",
+      "sources": [
+        { "title": "GNSS Receiver", "outlet": "CTS-SAT-1 wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/GNSS-Receiver" }
+      ]
+    },
+    {
+      "id": "radio",
+      "text": "It radios home on an amateur radio frequency, 436.15 MHz, at 9,600 bits a second.",
+      "category": "hardware",
+      "sources": [
+        { "title": "FrontierSat", "outlet": "SatNOGS DB", "date": null, "accessed": "2026-10-29", "url": "https://db.satnogs.org/satellite/GGCH-4346-1583-9419-5634/" }
+      ],
+      "note": "SatNOGS cites the team's own radio configuration. One third-party blog gives 437.385 MHz; it is not used."
+    },
+    {
+      "id": "obc",
+      "text": "Its onboard computer was designed by the students around an STM32L4R5 chip, with firmware written in C.",
+      "category": "hardware",
+      "sources": [
+        { "title": "Onboard Computer (OBC)", "outlet": "CTS-SAT-1 wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Onboard-Computer-(OBC)" }
+      ]
+    },
+    {
+      "id": "liftoff",
+      "text": "It lifted off on a SpaceX Falcon 9 from Vandenberg, California, at about 1 a.m. Calgary time on 3 May 2026.",
+      "category": "launch",
+      "sources": [
+        { "title": "FrontierSat (CTS-SAT-1)", "outlet": "CalgaryToSpace", "date": null, "accessed": "2026-10-29", "url": "https://www.calgarytospace.ca/cts-sat-1" },
+        { "title": "Calgary's first student-built satellite is officially in orbit", "outlet": "LiveWire Calgary", "date": "2026-05-05", "url": "https://livewirecalgary.com/2026/05/05/calgary-student-built-satellite-orbit/" },
+        { "title": "FrontierSat", "outlet": "SatNOGS DB", "date": null, "accessed": "2026-10-29", "url": "https://db.satnogs.org/satellite/GGCH-4346-1583-9419-5634/" }
+      ],
+      "note": "SatNOGS gives 06:59 UTC; Gunter's Space Page gives the pad as SLC-4E."
+    },
+    {
+      "id": "rideshare",
+      "text": "It flew on the CAS500-2 rideshare: 45 spacecraft in all, with Korea's CAS500-2 satellite as the main passenger.",
+      "category": "launch",
+      "sources": [
+        { "title": "SpaceX deploys seven Canadian satellites on CAS500-2 mission, marking University of Calgary's first", "outlet": "SpaceQ", "date": "2026-05-04", "url": "https://spaceq.ca/spacex-deploys-seven-canadian-satellites-on-cas500-2-mission-marking-university-of-calgarys-first/" },
+        { "title": "Mission Operations", "outlet": "CTS-SAT-1 wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Mission-Operations" }
+      ],
+      "note": "SpaceQ counts 44 secondary payloads; the wiki counts 45 satellites in total."
+    },
+    {
+      "id": "deployment",
+      "text": "Exolaunch's EXOpod Nova pushed it into orbit at about 2:16 a.m. Calgary time, some 77 minutes after liftoff.",
+      "category": "launch",
+      "sources": [
+        { "title": "FrontierSat", "outlet": "SatNOGS DB", "date": null, "accessed": "2026-10-29", "url": "https://db.satnogs.org/satellite/GGCH-4346-1583-9419-5634/" },
+        { "title": "Calgary's first student-built satellite is officially in orbit", "outlet": "LiveWire Calgary", "date": "2026-05-05", "url": "https://livewirecalgary.com/2026/05/05/calgary-student-built-satellite-orbit/" },
+        { "title": "FrontierSat (CTS-SAT-1)", "outlet": "CalgaryToSpace", "date": null, "accessed": "2026-10-29", "url": "https://www.calgarytospace.ca/cts-sat-1" }
+      ],
+      "note": "SatNOGS lists launch 06:59:00 and deployment 08:15:52 UTC; the team's wiki derives 02:17:19 MDT from power-system uptime."
+    },
+    {
+      "id": "slip",
+      "text": "Its launch slipped from fall 2025 to May 2026 after the rideshare flight it was booked on was overbooked.",
+      "category": "launch",
+      "sources": [
+        { "title": "Student-built satellite set to study rare atmospheric phenomenon in space", "outlet": "Interesting Engineering", "date": "2025-08-12", "url": "https://interestingengineering.com/space/calgarys-first-student-built-satellite" },
+        { "title": "FrontierSat delay reinforces Canada's push for sovereign launch", "outlet": "spacebahd", "date": "2025-10-15", "url": "https://spacebahd.ca/canadian-space-news/frontiersat-delay-reinforces-canadas-push-for-sovereign-launch/" }
+      ],
+      "note": "The team's own October 2025 notice spoke of an unexpected change in rideshare availability."
+    },
+    {
+      "id": "momentus",
+      "text": "Its first launch deal, signed in 2023, was with Momentus for a 2025 ride; it finally flew with Exolaunch.",
+      "category": "launch",
+      "sources": [
+        { "title": "Momentus' contract with student team CalgaryToSpace for 2025 orbital delivery services", "outlet": "Satnews", "date": "2023-12-11", "url": "https://satnews.com/2023/12/11/momentus-contract-with-student-team-calgarytospace-for-2025-orbital-delivery-services/" },
+        { "title": "UCalgary team prepares to launch city's first student-built satellite", "outlet": "UCalgary News", "date": "2025-06-09", "url": "https://www.ucalgary.ca/news/ucalgary-team-prepares-launch-citys-first-student-built-satellite" }
+      ]
+    },
+    {
+      "id": "vibe-test",
+      "text": "The flight satellite passed its launch vibration test in Airdrie, Alberta, in June 2025; the test cost under $5,000.",
+      "category": "launch",
+      "sources": [
+        { "title": "Vibe Test", "outlet": "CTS-SAT-1 wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Vibe-Test" },
+        { "title": "Student-built satellite set to study rare atmospheric phenomenon in space", "outlet": "Interesting Engineering", "date": "2025-08-12", "url": "https://interestingengineering.com/space/calgarys-first-student-built-satellite" }
+      ]
+    },
+    {
+      "id": "sun-synchronous",
+      "text": "Its orbit is sun-synchronous, so it crosses the equator at about the same local time every day.",
+      "category": "orbit",
+      "sources": [
+        { "title": "FrontierSat (CTS-SAT-1)", "outlet": "CalgaryToSpace", "date": null, "accessed": "2026-10-29", "url": "https://www.calgarytospace.ca/cts-sat-1" }
+      ]
+    },
+    {
+      "id": "inclination",
+      "text": "Its orbit is tilted about 97.4° to the equator, so it reaches as far as 82.6° north and south.",
+      "category": "orbit",
+      "sources": [
+        { "title": "FrontierSat (CTS-SAT 1)", "outlet": "Gunter's Space Page", "date": null, "accessed": "2026-10-29", "url": "https://space.skyrocket.de/doc_sdat/frontiersat.htm" }
+      ],
+      "note": "Gunter's gives 97.40°; the published orbital elements on this site give 97.38° (27 Oct 2026)."
+    },
+    {
+      "id": "lifetime",
+      "text": "It could stay in orbit for up to about seven years, depending on how active the Sun is.",
+      "category": "orbit",
+      "sources": [
+        { "title": "Student-built satellite set to study rare atmospheric phenomenon in space", "outlet": "Interesting Engineering", "date": "2025-08-12", "url": "https://interestingengineering.com/space/calgarys-first-student-built-satellite" },
+        { "title": "CalgaryToSpace student satellite: FrontierSat will help simulate space weather", "outlet": "Universe Space Tech", "date": "2025-08-13", "url": "https://universemagazine.com/en/calgarytospace-student-satellite-frontiersat-will-help-simulate-space-weather/" }
+      ],
+      "note": "Notebookcheck's page summary says 10 years; three outlets agree on up to seven."
+    },
+    {
+      "id": "ids",
+      "text": "Trackers know it as NORAD 69015, international designator 2026-100AM.",
+      "category": "orbit",
+      "sources": [
+        { "title": "FrontierSat", "outlet": "SatNOGS DB", "date": null, "accessed": "2026-10-29", "url": "https://db.satnogs.org/satellite/GGCH-4346-1583-9419-5634/" },
+        { "title": "SATCAT entry for 69015", "outlet": "CelesTrak", "date": null, "accessed": "2026-10-30", "url": "https://celestrak.org/satcat/table-satcat.php?CATNR=69015" }
+      ],
+      "note": "Wikipedia gives 2026-100D; CelesTrak, Gunter's and the TLEs say 2026-100AM."
+    },
+    {
+      "id": "first-beacon",
+      "text": "Volunteer SatNOGS stations heard its first beacon at 3:44 a.m. Calgary time on launch day, under 90 minutes after release.",
+      "category": "data",
+      "sources": [
+        { "title": "Mission Operations", "outlet": "CTS-SAT-1 wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Mission-Operations" }
+      ]
+    },
+    {
+      "id": "hello",
+      "text": "Its beacon carries a greeting, which radio volunteers decoded as \"Hello from CalgaryToSpace FrontierSat\".",
+      "category": "data",
+      "sources": [
+        { "title": "FrontierSat: A plasma-imaging cubesat that loves SatNOGS", "outlet": "Libre Space Community", "date": "2026-05-27", "url": "https://community.libre.space/t/frontiersat-a-plasma-imaging-cubesat-that-loves-satnogs/14830" },
+        { "title": "Lessons Learned During Operations", "outlet": "CTS-SAT-1 wiki", "date": "2026-06-14", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Lessons-Learned-During-Operations" }
+      ]
+    },
+    {
+      "id": "mothers-day",
+      "text": "On 10 May 2026 the team changed its beacon message to wish everyone a happy Mother's Day.",
+      "category": "data",
+      "sources": [
+        { "title": "Mission Operations", "outlet": "CTS-SAT-1 wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Mission-Operations" }
+      ]
+    },
+    {
+      "id": "first-commands",
+      "text": "The team first sent it commands on 10 May 2026, a week after launch.",
+      "category": "data",
+      "sources": [
+        { "title": "Mission Operations", "outlet": "CTS-SAT-1 wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Mission-Operations" }
+      ]
+    },
+    {
+      "id": "first-picture",
+      "text": "It took its first picture on 1 June 2026. Getting that picture down to the ground took until 28 June.",
+      "category": "data",
+      "sources": [
+        { "title": "Mission Operations", "outlet": "CTS-SAT-1 wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Mission-Operations" }
+      ],
+      "note": "Matches this site's own picture list, whose earliest capture is 1 June 2026."
+    },
+    {
+      "id": "satnogs",
+      "text": "Volunteer SatNOGS ground stations around the world are its main way of sending data home, picture files included.",
+      "category": "data",
+      "sources": [
+        { "title": "Mission Operations", "outlet": "CTS-SAT-1 wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Mission-Operations" },
+        { "title": "FrontierSat: A plasma-imaging cubesat that loves SatNOGS", "outlet": "Libre Space Community", "date": "2026-05-27", "url": "https://community.libre.space/t/frontiersat-a-plasma-imaging-cubesat-that-loves-satnogs/14830" }
+      ]
+    },
+    {
+      "id": "first-mpi-data",
+      "text": "Its first Mini Plasma Imager recording, two minutes long, was made on 21 July 2026 and was on the ground within hours.",
+      "category": "data",
+      "sources": [
+        { "title": "Mission Operations", "outlet": "CTS-SAT-1 wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Mission-Operations" }
+      ]
+    },
+    {
+      "id": "command-record",
+      "text": "On 30 June 2026 the team sent it 630 commands during a single pass overhead.",
+      "category": "data",
+      "sources": [
+        { "title": "Mission Operations", "outlet": "CTS-SAT-1 wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Mission-Operations" }
+      ]
+    },
+    {
+      "id": "low-uplink",
+      "text": "In June 2026 the team reached it from just 2° above the horizon, using 30 W of transmit power.",
+      "category": "data",
+      "sources": [
+        { "title": "Mission Operations", "outlet": "CTS-SAT-1 wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Mission-Operations" }
+      ]
+    }
+  ],
+  "news": [
+    { "title": "Calgary to Space - Kaleigh Beer, #calgarytospace - Ep06S02", "outlet": "Albertans In Space Podcast", "date": "2026-05-19", "url": "https://shows.acast.com/albertans-in-space-podcast/episodes/calgary-to-space-kaleigh-beer-calgarytospace-ep06s02-alberta", "kind": "podcast" },
+    { "title": "BONUS EPISODE - UPDATE: CalgarytoSpace May 6, 2026", "outlet": "Albertans In Space Podcast", "date": "2026-05-19", "url": "https://shows.acast.com/albertans-in-space-podcast/episodes/bonus-episode-update-calgarytospace-may-6-2026", "kind": "podcast" },
+    { "title": "FrontierSat: A plasma-imaging cubesat that loves SatNOGS", "outlet": "Libre Space Community forum", "date": "2026-05-27", "url": "https://community.libre.space/t/frontiersat-a-plasma-imaging-cubesat-that-loves-satnogs/14830", "kind": "page" },
+    { "title": "“So surreal”: University of Calgary students celebrate as their satellite orbits earth", "outlet": "CTV News", "date": "2026-05-05", "url": "https://www.ctvnews.ca/calgary/article/so-surreal-university-of-calgary-students-celebrate-as-their-satellite-orbits-earth/", "kind": "article" },
+    { "title": "Calgary’s first student-built satellite is officially in orbit", "outlet": "LiveWire Calgary", "date": "2026-05-05", "url": "https://livewirecalgary.com/2026/05/05/calgary-student-built-satellite-orbit/", "kind": "article" },
+    { "title": "SpaceX deploys seven Canadian satellites on CAS500-2 mission, marking University of Calgary’s first", "outlet": "SpaceQ", "date": "2026-05-04", "url": "https://spaceq.ca/spacex-deploys-seven-canadian-satellites-on-cas500-2-mission-marking-university-of-calgarys-first/", "kind": "article" },
+    { "title": "Calgary's first student-built satellite successfully launched into orbit", "outlet": "Calgary Herald", "date": "2026-05-04", "url": "https://ca.news.yahoo.com/calgarys-first-student-built-satellite-202219187.html", "kind": "article" },
+    { "title": "UCalgary, we have liftoff: Team set to launch city’s first student-built satellite into orbit to study STEVE", "outlet": "UCalgary News", "date": "2026-05-01", "url": "https://ucalgary.ca/news/ucalgary-we-have-liftoff-team-set-launch-citys-first-student-built-satellite-orbit-study-steve", "kind": "article" },
+    { "title": "FrontierSat delay reinforces Canada’s push for sovereign launch", "outlet": "spacebahd", "date": "2025-10-15", "url": "https://spacebahd.ca/canadian-space-news/frontiersat-delay-reinforces-canadas-push-for-sovereign-launch/", "kind": "article" },
+    { "title": "Student-built satellite set to study a rare and mysterious cousin of Aurora Borealis and Australis", "outlet": "Notebookcheck", "date": "2025-08-14", "url": "https://www.notebookcheck.net/Student-built-satellite-set-to-study-a-rare-and-mysterious-cousin-of-Aurora-Borealis-and-Australis.1086959.0.html", "kind": "article" },
+    { "title": "Calgary’s first student-built satellite to launch in 2026", "outlet": "CityNews Calgary", "date": "2025-08-13", "url": "https://calgary.citynews.ca/2025/08/13/calgarys-first-student-built-satellite-launch-2026/", "kind": "video" },
+    { "title": "CalgaryToSpace student satellite: FrontierSat will help simulate space weather", "outlet": "Universe Space Tech", "date": "2025-08-13", "url": "https://universemagazine.com/en/calgarytospace-student-satellite-frontiersat-will-help-simulate-space-weather/", "kind": "article" },
+    { "title": "Student-built satellite set to study rare atmospheric phenomenon in space", "outlet": "Interesting Engineering", "date": "2025-08-12", "url": "https://interestingengineering.com/space/calgarys-first-student-built-satellite", "kind": "article" },
+    { "title": "Eyes on the sky: Calgary's first student-built space satellite gets ready for liftoff", "outlet": "CBC News", "date": "2025-08-11", "url": "https://www.cbc.ca/news/canada/calgary/calgary-student-satellite-1.7602403", "kind": "article" },
+    { "title": "Satellite built by students to be space-bound this year?", "outlet": "CTV News", "date": "2025-06-17", "url": "https://www.ctvnews.ca/calgary/video/2025/06/18/satellite-built-by-students-to-be-space-bound-this-year/", "kind": "video" },
+    { "title": "Satellite built by Calgary students expected to launch into space this fall", "outlet": "CTV News", "date": "2025-06-17", "url": "https://www.ctvnews.ca/calgary/article/satellite-built-by-calgary-students-expected-to-launch-into-space-this-fall/", "kind": "article" },
+    { "title": "One large step for students: Calgary’s first student designed satellite to launch this fall", "outlet": "LiveWire Calgary", "date": "2025-06-17", "url": "https://livewirecalgary.com/2025/06/17/one-large-step-for-students-calgarys-first-student-designed-satellite-to-launch-this-fall/", "kind": "article" },
+    { "title": "UCalgary team prepares to launch city’s first student-built satellite", "outlet": "UCalgary News", "date": "2025-06-09", "url": "https://www.ucalgary.ca/news/ucalgary-team-prepares-launch-citys-first-student-built-satellite", "kind": "article" },
+    { "title": "2.0.5 Calgary to Space: empowering students to explore the aerospace industry", "outlet": "The PAM Talks", "date": "2025-05-06", "url": "https://thepamtalks.podbean.com/e/205-calgary-to-space-empowering-students-to-explore-the-aerospace-industry/", "kind": "podcast" },
+    { "title": "From Canada to Belgium, the CalgaryToSpace team completes a vibration test campaign", "outlet": "European Space Agency", "date": "2024-11-06", "url": "https://education.esa.int/CubeSats_-_Fly_Your_Satellite/From_Canada_to_Belgium_the_CalgaryToSpace_team_completes_a_vibration_test_campaign", "kind": "article" },
+    { "title": "Teams selected for the October 2024 test window of Fly Your Satellite! Test Opportunities", "outlet": "European Space Agency", "date": "2024-07-02", "url": "https://education.esa.int/Educational_Satellites/Teams_selected_for_the_October_2024_test_window_of_Fly_Your_Satellite!_Test_Opportunities", "kind": "article" },
+    { "title": "Funding helps students explore ongoing mysteries of STEVE", "outlet": "UCalgary News", "date": "2024-06-05", "url": "https://www.ucalgary.ca/news/funding-helps-students-explore-ongoing-mysteries-steve", "kind": "article" },
+    { "title": "CalgaryToSpace", "outlet": "Maker Faire Calgary 2024", "date": "2024-05-04", "url": "https://makerfaire.com/yearbook/projects/calgarytospace-2024/", "kind": "page" },
+    { "title": "Momentus’ contract with student team CalgaryToSpace for 2025 orbital delivery services", "outlet": "Satnews", "date": "2023-12-11", "url": "https://satnews.com/2023/12/11/momentus-contract-with-student-team-calgarytospace-for-2025-orbital-delivery-services/", "kind": "article" },
+    { "title": "UCalgary students count down to success with anticipated satellite launch", "outlet": "UCalgary News", "date": "2023-07-20", "url": "https://ucalgary.ca/news/ucalgary-students-count-down-success-anticipated-satellite-launch", "kind": "article" }
+  ]
+}
