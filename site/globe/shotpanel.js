@@ -185,6 +185,8 @@ export function createShotPanel({ getOrbit }) {
   // the page's own shortcuts stay out of it while it is open; Esc still closes it
   dialog.addEventListener('keydown', (e) => e.stopPropagation());
   dialog.addEventListener('close', () => {
+    // browsers deliver this a frame late: by then it may have been opened again
+    if (dialog.open) return;
     token += 1;
     shots = null;
   });

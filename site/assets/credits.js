@@ -112,6 +112,7 @@ export function mountCredits(button) {
   });
   // Escape closes a modal dialog natively; either way, hand focus back
   dialog.addEventListener('close', () => {
+    if (dialog.open) return; // delivered a frame late: it was opened again meanwhile
     button?.setAttribute('aria-expanded', 'false');
     button?.focus({ preventScroll: true });
   });

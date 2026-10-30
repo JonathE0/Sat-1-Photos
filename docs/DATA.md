@@ -171,9 +171,10 @@ within `max_km` of the event and the light is right:
   latitude, from a tilted dipole, between `66.5 - 2.04 Kp` degrees and 12°
   poleward of that: NOAA's rule of thumb for the oval's edge).
 
-`max_km` is a guess: the camera's footprint isn't documented. A 62° lens
-(the Raspberry Pi camera's) would see about 300 km either side of straight
-down from 500 km up; 400 km allows for some pointing.
+`max_km` is a judgement, not a limit of the camera. From 500 km up the picam
+sees about 475 × 355 km (docs/picam-calibration.md), so about 240 km either
+side of straight down along its long edge; 400 km allows for the pointing,
+which was up to about 110 km off in October's fitted frames.
 
 Storms move: their position at a pass is taken along GDACS's forecast track
 where there is one, else carried on along the great circle of their last
