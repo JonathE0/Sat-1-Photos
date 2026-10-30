@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sky module test</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #000; color: #c9d3db; font: 14px/1.4 system-ui, sans-serif; }
+  canvas { display: block; position: fixed; inset: 0; width: 100%; height: 100%; touch-action: none; cursor: grab; }
+  #ui { position: fixed; left: 12px; bottom: 12px; right: 12px; max-width: 680px; display: grid; gap: 6px;
+        background: rgba(0, 0, 0, 0.55); padding: 10px 12px; }
+  #ui input[type=range] { width: 100%; }
+  #ui button, #ui a { font: inherit; color: inherit; background: #1a2026; border: 1px solid #333c44; padding: 3px 8px;
+        text-decoration: none; cursor: pointer; }
+  #ui a.on { background: #c9d3db; color: #0b0f13; }
+  .row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  #status { font-variant-numeric: tabular-nums; opacity: 0.8; }
+</style>
+<script type="importmap">{ "imports": { "three": "../../globe/vendor/three.module.min.js" } }</script>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="ui">
+  <div class="row"><span id="when"></span></div>
+  <input id="offset" type="range" min="-720" max="720" step="1" value="0" aria-label="Time offset, minutes">
+  <div class="row">
+    <button data-view="earth">Earth</button>
+    <button data-view="orion">Orion</button>
+    <button data-view="dipper">Big Dipper</button>
+    <button data-view="cross">Southern Cross</button>
+    <button data-view="sun">Sun</button>
+    <button data-view="sunrise">Sunrise at the limb</button>
+    <button data-view="moon">Moon</button>
+    <button data-view="moonEarth">Moon past Earth</button>
+    <button id="now">Now</button>
+  </div>
+  <div class="row">quality:
+    <a data-q="high" href="?q=high">high</a><a data-q="low" href="?q=low">low</a><a data-q="phone" href="?q=phone">phone</a>
+  </div>
+  <div id="status">loading…</div>
+</div>
+<script type="module">
+import * as THREE from '../../globe/vendor/three.module.min.js';
+import { createSky } from '../sky.js';
+import { createEarth } from '../earth.js';
+import { sunPosition, gmst, DEG, CALGARY } from '../../globe/astro.js';
+import { moonPosition } from '../sky/moon.js';
+
+const params = new URLSearchParams(location.search);
+const quality = params.get('q') || 'high';
+for (const a of document.querySelectorAll('[data-q]')) a.classList.toggle('on', a.dataset.q === quality);
+
+const canvas = document.getElementById('c');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
+renderer.setClearColor(0x000000, 1);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(35, 1, 0.002, 200);
+const sky = createSky(renderer, { quality });
+scene.add(sky.group);
+const earth = createEarth(renderer, { quality: quality === 'phone' ? 'phone' : 'low' });
+scene.add(earth.group);
+const status = document.getElementById('status');
+const t0 = performance.now();
+let readyMs = null;
+sky.ready.then(() => { readyMs = Math.round(performance.now() - t0); });
+
+// ---- time
+let offsetMin = 0;
+const offsetInput = document.getElementById('offset');
+offsetInput.addEventListener('input', () => { offsetMin = Number(offsetInput.value); });
+document.getElementById('now').addEventListener('click', () => { offsetMin = 0; offsetInput.value = 0; });
+const simMs = () => Date.now() + offsetMin * 60_000;
+
+// ---- directions in the scene frame (ECI (x, y, z) -> (x, z, -y))
+const fromEci = (v) => new THREE.Vector3(v.x, v.z, -v.y).normalize();
+const radec = (raH, decD) => fromEci({ x: Math.cos(decD * DEG) * Math.cos(raH * 15 * DEG), y: Math.cos(decD * DEG) * Math.sin(raH * 15 * DEG), z: Math.sin(decD * DEG) });
+function groundDir(latDeg, lonDeg, ms) {
+  const lat = latDeg * DEG;
+  const lon = lonDeg * DEG + gmst(ms);
+  return new THREE.Vector3(Math.cos(lat) * Math.cos(lon), Math.sin(lat), -Math.cos(lat) * Math.sin(lon));
+}
+
+// ---- camera: orbit the Earth, or stand somewhere and look (drag turns the view)
+const view = { mode: 'orbit', theta: 0, phi: Math.PI / 2, distance: 3.4, position: new THREE.Vector3(), yaw: 0, pitch: 0 };
+function orbitTo(dir, distance) {
+  view.mode = 'orbit';
+  view.theta = Math.atan2(dir.x, dir.z);
+  view.phi = Math.acos(THREE.MathUtils.clamp(dir.y, -1, 1));
+  view.distance = distance;
+  camera.fov = 35;
+}
+function lookFrom(position, dir, fov = 35) {
+  view.mode = 'look';
+  view.position.copy(position);
+  const d = dir.clone().normalize();
+  view.yaw = Math.atan2(d.x, d.z);
+  view.pitch = Math.asin(THREE.MathUtils.clamp(d.y, -1, 1));
+  camera.fov = fov;
+}
+function placeCamera() {
+  camera.up.set(0, 1, 0);
+  if (view.mode === 'orbit') {
+    const s = Math.sin(view.phi);
+    camera.position.set(view.distance * s * Math.sin(view.theta), view.distance * Math.cos(view.phi), view.distance * s * Math.cos(view.theta));
+    camera.lookAt(0, 0, 0);
+  } else {
+    camera.position.copy(view.position);
+    const c = Math.cos(view.pitch);
+    camera.lookAt(view.position.clone().add(new THREE.Vector3(c * Math.sin(view.yaw), Math.sin(view.pitch), c * Math.cos(view.yaw))));
+  }
+  camera.updateProjectionMatrix();
+}
+// look outward at a sky direction from 3 Earth radii on that side, so the Earth is behind
+const outward = (dir, fov) => lookFrom(dir.clone().multiplyScalar(3), dir, fov);
+
+const views = {
+  earth() { orbitTo(groundDir(CALGARY.latDeg, CALGARY.lonDeg, simMs()), 3.4); },
+  orion() { outward(radec(5.6, -1), 40); },
+  dipper() { outward(radec(12.2, 55), 40); },
+  cross() { outward(radec(12.45, -60), 30); },
+  sun() { const s = fromEci(sunPosition(simMs())); outward(s, 6); },
+  // 1200 km up on the night side, placed so the Sun sits half a degree above
+  // the Earth's limb: the lit edge of the atmosphere should be right under it
+  sunrise(aboveDeg = 0.5) {
+    const s = fromEci(sunPosition(simMs()));
+    const side = new THREE.Vector3(0, 1, 0).cross(s).normalize();
+    const r = 1 + 1200 / 6371;
+    const a = Math.PI / 2 + Math.acos(1 / r) - aboveDeg * DEG;
+    const pos = s.clone().multiplyScalar(Math.cos(a)).addScaledVector(side, Math.sin(a)).multiplyScalar(r);
+    lookFrom(pos, s, 12);
+  },
+  moon() { const m = fromEci(moonPosition(simMs())); outward(m, 2.5); },
+  // from 8 Earth radii behind the Earth and a little aside, the Moon just past its limb
+  moonEarth() {
+    const mp = moonPosition(simMs());
+    const m = fromEci(mp);
+    const perp = new THREE.Vector3(0, 1, 0).cross(m).normalize();
+    const pos = m.clone().multiplyScalar(-8).addScaledVector(perp, 1.6);
+    const moonAt = m.clone().multiplyScalar(mp.distanceKm / 6371);
+    lookFrom(pos, moonAt.sub(pos).normalize().lerp(pos.clone().negate().normalize(), 0.5), 22);
+  },
+};
+for (const b of document.querySelectorAll('[data-view]')) b.addEventListener('click', () => views[b.dataset.view]());
+views.earth();
+
+let drag = null;
+canvas.addEventListener('pointerdown', (e) => { canvas.setPointerCapture(e.pointerId); drag = { x: e.clientX, y: e.clientY }; });
+canvas.addEventListener('pointermove', (e) => {
+  if (!drag) return;
+  const k = (2 * Math.tan((camera.fov * DEG) / 2)) / canvas.clientHeight;
+  const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+  drag = { x: e.clientX, y: e.clientY };
+  if (view.mode === 'orbit') {
+    const kk = k * Math.max(0.05, view.distance - 0.95);
+    view.theta -= dx * kk;
+    view.phi = THREE.MathUtils.clamp(view.phi - dy * kk, 0.02, Math.PI - 0.02);
+  } else {
+    view.yaw += dx * k;
+    view.pitch = THREE.MathUtils.clamp(view.pitch + dy * k, -1.55, 1.55);
+  }
+});
+canvas.addEventListener('pointerup', () => { drag = null; });
+canvas.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  if (view.mode === 'orbit') view.distance = THREE.MathUtils.clamp(view.distance * Math.exp(e.deltaY * 0.001), 1.05, 40);
+  else camera.fov = THREE.MathUtils.clamp(camera.fov * Math.exp(e.deltaY * 0.001), 0.5, 90);
+}, { passive: false });
+
+function resize() {
+  renderer.setSize(innerWidth, innerHeight, false);
+  camera.aspect = innerWidth / innerHeight;
+}
+addEventListener('resize', resize);
+resize();
+
+// ---- loop (rAF stops in a background tab; a timer keeps it drawing slowly there)
+const when = document.getElementById('when');
+let last = performance.now(), frames = 0, fpsT = last;
+function draw(now = performance.now()) {
+  last = now;
+  const ms = simMs();
+  earth.setTime(gmst(ms), sunPosition(ms), ms);
+  sky.setTime(ms, gmst(ms));
+  placeCamera();
+  earth.update(0, camera);
+  sky.update(camera);
+  renderer.render(scene, camera);
+  frames++;
+  if (now - fpsT > 1000) {
+    const fps = Math.round((frames * 1000) / (now - fpsT));
+    frames = 0;
+    fpsT = now;
+    when.textContent = new Date(ms).toISOString().slice(0, 16).replace('T', ' ') + ' UTC' + (offsetMin ? ` (${offsetMin > 0 ? '+' : ''}${offsetMin} min)` : ' (now)');
+    status.textContent = `${quality} · ${fps} fps · fov ${camera.fov.toFixed(1)}° · ` + (readyMs === null ? 'loading…' : `sky ready in ${readyMs} ms`);
+  }
+}
+function frame(now) { draw(now); requestAnimationFrame(frame); }
+requestAnimationFrame(frame);
+setInterval(() => { if (performance.now() - last > 400) draw(); }, 400);
+
+window.dev = { THREE, renderer, scene, camera, sky, earth, views, view, radec, fromEci, draw, lookFrom, orbitTo,
+  setOffset(min) { offsetMin = min; offsetInput.value = Math.max(-720, Math.min(720, min)); } };
+</script>
+</body>
+</html>

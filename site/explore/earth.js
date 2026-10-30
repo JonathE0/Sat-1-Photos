@@ -34,6 +34,7 @@
  * dark-ocean sphere with its atmosphere.
  */
 import * as THREE from '../globe/vendor/three.module.min.js';
+import { moonPosition, moonIlluminated } from './sky/moon.js';
 
 /** Radius of the cloud shell (+0.3%, about 19 km: thick enough to clear the ground mesh). */
 const CLOUD_RADIUS = 1.003;
@@ -91,10 +92,11 @@ const COMMON = /* glsl */ `
   }
 
   // What a surface of this albedo reflects of the night sky's light: dark
-  // surfaces are lifted a little (eyes and cameras compress at this level)
-  // and colour is half gone; slightly blue, as moonlit scenes look.
+  // surfaces are lifted a little (eyes and cameras compress at this level),
+  // but not so far that they would outshine their own low-Sun daylight, and
+  // colour is half gone; slightly blue, as moonlit scenes look.
   vec3 nightGround(vec3 albedo, float moonMu) {
-    vec3 a = pow(max(albedo, vec3(1e-5)), vec3(0.3));
+    vec3 a = pow(max(albedo, vec3(1e-5)), vec3(0.6));
     a = mix(vec3(dot(a, vec3(0.2126, 0.7152, 0.0722))), a, 0.5);
     return a * vec3(0.84, 0.90, 1.0) * (nightGlow + moonLight * moonPhase * max(moonMu, 0.0));
   }
@@ -220,11 +222,10 @@ const SURFACE_FS = /* glsl */ `
     color += albedo * vec3(1.0, 0.8, 1.0) * dusk * twilight;
 
     // ---- night ground: airglow, starlight and the Moon keep the land just
-    // readable. It only exists once the Sun is down, and is taken as a floor
-    // rather than added, so the day side is untouched and the fading twilight
-    // hands over to it without a darker ring in between.
-    float afterSunset = 1.0 - smoothstep(-0.06, 0.0, mu);
-    color = max(color, nightGround(albedo, dot(n, normalize(vMoonLocal))) * afterSunset);
+    // readable. Taken as a constant floor (not added, and not faded in), so
+    // the fading daylight hands over to it without a darker ring at the
+    // terminator, and the day side, which is far brighter, is untouched.
+    color = max(color, nightGround(albedo, dot(n, normalize(vMoonLocal))));
 
     // ---- city lights come on through civil twilight (~8 degree terminator)
     float night = 1.0 - smoothstep(-0.12, -0.01, mu);
@@ -283,8 +284,7 @@ const CLOUD_FS = /* glsl */ `
     float albedo = mix(0.60, 0.90, smoothstep(0.15, 0.9, c));   // thin cloud is greyer
     vec3 color = albedo * sunTint(mu + 0.07) * diffuse * lit;
     // night: the cloud tops catch airglow and moonlight like the ground does
-    float afterSunset = 1.0 - smoothstep(-0.06, 0.0, mu);
-    color = max(color, 0.8 * afterSunset * nightGround(vec3(albedo), dot(N, normalize(moonDir))));
+    color = max(color, 0.8 * nightGround(vec3(albedo), dot(N, normalize(moonDir))));
     // city light below comes through thick cloud dimmed and spread out
     if (haveLights > 0.5) {
       float night = 1.0 - smoothstep(-0.12, -0.01, mu);
@@ -426,32 +426,6 @@ const ATMOSPHERE_FS = /* glsl */ `
 `;
 
 // ---------------------------------------------------------------------------
-// the Moon (for moonlight on the night side only)
-
-const DEG = Math.PI / 180;
-
-/**
- * Unit vector toward the Moon in ECI (equator and equinox of date), from the
- * Astronomical Almanac's low-precision series (about 0.3 degrees).
- */
-function moonDirection(ms) {
-  const T = (ms / 86_400_000 + 2440587.5 - 2451545.0) / 36525;
-  const s = (a, b) => Math.sin((a + b * T) * DEG);
-  const lon =
-    (218.32 + 481267.881 * T + 6.29 * s(134.9, 477198.85) - 1.27 * s(259.2, -413335.38) +
-      0.66 * s(235.7, 890534.23) + 0.21 * s(269.9, 954397.7) - 0.19 * s(357.5, 35999.05) -
-      0.11 * s(186.6, 966404.05)) * DEG;
-  const lat =
-    (5.13 * s(93.3, 483202.03) + 0.28 * s(228.2, 960400.87) - 0.28 * s(318.3, 6003.18) -
-      0.17 * s(217.6, -407332.2)) * DEG;
-  const eps = (23.439 - 0.013 * T) * DEG;
-  const x = Math.cos(lat) * Math.cos(lon);
-  const y = Math.cos(lat) * Math.sin(lon);
-  const z = Math.sin(lat);
-  return { x, y: Math.cos(eps) * y - Math.sin(eps) * z, z: Math.sin(eps) * y + Math.cos(eps) * z };
-}
-
-// ---------------------------------------------------------------------------
 // texture loading
 
 /** Fetch and decode an image, off the main thread where the browser can. */
@@ -504,7 +478,7 @@ export function createEarth(renderer, { quality = 'high', textureBase } = {}) {
   const night = {
     lightsGain: { value: 2.0 },
     lightsCurve: { value: 1.3 },
-    nightGlow: { value: 0.02 },
+    nightGlow: { value: 0.03 },
     moonLight: { value: 0.02 },
     moonPhase: { value: 0 },
     moonDir: { value: moonDir },
@@ -731,13 +705,11 @@ export function createEarth(renderer, { quality = 'high', textureBase } = {}) {
   function setTime(gmstAngle, sunEci, ms = Date.now()) {
     group.rotation.y = gmstAngle;
     sunDir.set(sunEci.x, sunEci.z, -sunEci.y).normalize();
-    const moon = moonDirection(ms);
+    // the same Moon the sky draws (sky/moon.js)
+    const moon = moonPosition(ms);
     moonDir.set(moon.x, moon.z, -moon.y);
-    // lit fraction of the disc from the Sun-Moon elongation; the Moon's
-    // brightness falls much faster than that (a half Moon gives ~1/10 of full)
-    const s = Math.hypot(sunEci.x, sunEci.y, sunEci.z) || 1;
-    const lit = (1 - (sunEci.x * moon.x + sunEci.y * moon.y + sunEci.z * moon.z) / s) / 2;
-    night.moonPhase.value = lit ** 3;
+    // its brightness falls much faster than the lit fraction (a half Moon gives ~1/10 of full)
+    night.moonPhase.value = moonIlluminated(moon, sunEci) ** 3;
   }
 
   // The clouds are fixed to the ground and the Sun moves only through
