@@ -19,9 +19,14 @@
  *
  *   const earth = createEarth(renderer, { quality: 'high' });
  *   scene.add(earth.group);
- *   earth.setTime(gmst(ms), sunPosition(ms));   // site/globe/astro.js
+ *   earth.setTime(gmst(ms), sunPosition(ms), ms);   // site/globe/astro.js; ms places the Moon
  *   // each frame: earth.update(dt, camera); renderer.render(scene, camera);
  *   await earth.ready;                            // full-resolution maps in
+ *
+ * Night side: Black Marble city lights (calibrated against CTS-SAT-1's own
+ * night frames: warm-white metro cores, amber towns), dimmed and spread under
+ * thick cloud, over a faint airglow + moonlight floor (Moon from a low-precision
+ * ephemeris, phase-aware) that keeps land and coasts just readable.
  *
  * quality: 'high' 8192-wide maps, 'low' 4096, 'phone' 2048 (all also share a
  * 1024 preview set). Textures load without blocking: the ~0.2 MB preview set
@@ -71,22 +76,48 @@ const COMMON = /* glsl */ `
   float cloudCover(float c) {
     return smoothstep(0.0, 0.82, c);
   }
+
+  // ---- the night side
+  uniform float lightsGain;     // city light at a full-brightness Black Marble pixel
+  uniform float lightsCurve;    // map value to radiance exponent (the map is display-coded)
+  uniform float nightGlow;      // airglow + starlight on the ground, relative to the Sun at zenith
+  uniform float moonLight;      // extra light from a full Moon overhead
+  uniform float moonPhase;      // the Moon's brightness now relative to full (0..1)
+
+  // Weights a city-light map value: sodium orange when dim, warm white in the cores.
+  vec3 cityLight(float raw) {
+    vec3 lamp = mix(vec3(1.0, 0.58, 0.27), vec3(1.0, 0.68, 0.40), smoothstep(0.2, 0.9, raw));
+    return lamp * pow(raw, lightsCurve) * lightsGain;
+  }
+
+  // What a surface of this albedo reflects of the night sky's light: dark
+  // surfaces are lifted a little (eyes and cameras compress at this level)
+  // and colour is half gone; slightly blue, as moonlit scenes look.
+  vec3 nightGround(vec3 albedo, float moonMu) {
+    vec3 a = pow(max(albedo, vec3(1e-5)), vec3(0.3));
+    a = mix(vec3(dot(a, vec3(0.2126, 0.7152, 0.0722))), a, 0.5);
+    return a * vec3(0.84, 0.90, 1.0) * (nightGlow + moonLight * moonPhase * max(moonMu, 0.0));
+  }
 `;
 
 const SURFACE_VS = /* glsl */ `
   uniform vec3 sunDir;
+  uniform vec3 moonDir;
   varying vec2 vUv;
   varying vec3 vLocal;     // Earth-fixed unit normal
   varying vec3 vNormalW;   // world normal
   varying vec3 vPosW;
   varying vec3 vSunLocal;  // unit vector to the Sun, Earth-fixed (same at every vertex)
+  varying vec3 vMoonLocal; // and to the Moon
   void main() {
     vUv = uv;
     vLocal = normalize(position);
     vec4 world = modelMatrix * vec4(position, 1.0);
     vPosW = world.xyz;
     vNormalW = normalize(mat3(modelMatrix) * position);
-    vSunLocal = normalize(transpose(mat3(modelMatrix)) * sunDir);
+    mat3 toLocal = transpose(mat3(modelMatrix));
+    vSunLocal = normalize(toLocal * sunDir);
+    vMoonLocal = normalize(toLocal * moonDir);
     gl_Position = projectionMatrix * viewMatrix * world;
   }
 `;
@@ -102,13 +133,13 @@ const SURFACE_FS = /* glsl */ `
   uniform vec2 reliefTexel;     // 1 / relief map size
   uniform vec3 sunDir;          // unit vector to the Sun, world frame
   uniform float glint;          // sun glint strength
-  uniform float lightsGain;     // city light brightness
   uniform float dusk;           // skylight on the ground just after sunset
   varying vec2 vUv;
   varying vec3 vLocal;
   varying vec3 vNormalW;
   varying vec3 vPosW;
   varying vec3 vSunLocal;
+  varying vec3 vMoonLocal;
 
   ${COMMON}
 
@@ -188,16 +219,16 @@ const SURFACE_FS = /* glsl */ `
     float twilight = smoothstep(-0.10, -0.005, mu) * (1.0 - smoothstep(-0.005, 0.05, mu));
     color += albedo * vec3(1.0, 0.8, 1.0) * dusk * twilight;
 
-    // ---- night: city lights come on through civil twilight (~8 degree terminator)
+    // ---- night ground: airglow, starlight and the Moon keep the land just
+    // readable. It only exists once the Sun is down, and is taken as a floor
+    // rather than added, so the day side is untouched and the fading twilight
+    // hands over to it without a darker ring in between.
+    float afterSunset = 1.0 - smoothstep(-0.06, 0.0, mu);
+    color = max(color, nightGround(albedo, dot(n, normalize(vMoonLocal))) * afterSunset);
+
+    // ---- city lights come on through civil twilight (~8 degree terminator)
     float night = 1.0 - smoothstep(-0.12, -0.01, mu);
-    if (have.y > 0.5) {
-      float raw = texture2D(lightsMap, uv).r;
-      float lum = pow(raw, 1.8);
-      vec3 lamp = mix(vec3(1.0, 0.60, 0.26), vec3(1.0, 0.86, 0.64), smoothstep(0.2, 0.9, raw));
-      color += lamp * lum * lightsGain * night;
-    }
-    // a trace of moon/earthshine so the night side isn't a hole
-    color += albedo * vec3(0.0018, 0.0022, 0.0030) * night;
+    if (have.y > 0.5) color += cityLight(texture2D(lightsMap, uv).r) * night;
 
     gl_FragColor = vec4(rollOff(color), 1.0);
     #include <tonemapping_fragment>
@@ -222,7 +253,11 @@ const CLOUD_VS = /* glsl */ `
 
 const CLOUD_FS = /* glsl */ `
   uniform sampler2D cloudMap;
+  uniform sampler2D lightsMap;
+  uniform float haveLights;
   uniform vec3 sunDir;
+  uniform vec3 moonDir;
+  uniform float cloudThrough;   // share of city light a thick cloud deck lets through, diffused
   varying vec2 vUv;
   varying vec3 vNormalW;
   varying vec3 vPosW;
@@ -231,7 +266,8 @@ const CLOUD_FS = /* glsl */ `
   ${COMMON}
 
   void main() {
-    float c = texture2D(cloudMap, vec2(vUv.x, 1.0 - vUv.y)).r;
+    vec2 uv = vec2(vUv.x, 1.0 - vUv.y);
+    float c = texture2D(cloudMap, uv).r;
     vec3 N = normalize(vNormalW);
     // seen edge-on at the limb the shell would stand clear of the ground and
     // the haze; there the air hides cloud anyway, so let it go
@@ -246,7 +282,14 @@ const CLOUD_FS = /* glsl */ `
     float diffuse = clamp((mu + 0.07) / 1.07, 0.0, 1.0);
     float albedo = mix(0.60, 0.90, smoothstep(0.15, 0.9, c));   // thin cloud is greyer
     vec3 color = albedo * sunTint(mu + 0.07) * diffuse * lit;
-    color += vec3(0.0018, 0.0022, 0.0030) * (1.0 - lit);         // moonlit, barely
+    // night: the cloud tops catch airglow and moonlight like the ground does
+    float afterSunset = 1.0 - smoothstep(-0.06, 0.0, mu);
+    color = max(color, 0.8 * afterSunset * nightGround(vec3(albedo), dot(N, normalize(moonDir))));
+    // city light below comes through thick cloud dimmed and spread out
+    if (haveLights > 0.5) {
+      float night = 1.0 - smoothstep(-0.12, -0.01, mu);
+      color += cityLight(texture2D(lightsMap, uv, 1.5).r) * cloudThrough * night;
+    }
     gl_FragColor = vec4(rollOff(color), 1.0);
     #include <tonemapping_fragment>
     #include <colorspace_fragment>
@@ -383,6 +426,32 @@ const ATMOSPHERE_FS = /* glsl */ `
 `;
 
 // ---------------------------------------------------------------------------
+// the Moon (for moonlight on the night side only)
+
+const DEG = Math.PI / 180;
+
+/**
+ * Unit vector toward the Moon in ECI (equator and equinox of date), from the
+ * Astronomical Almanac's low-precision series (about 0.3 degrees).
+ */
+function moonDirection(ms) {
+  const T = (ms / 86_400_000 + 2440587.5 - 2451545.0) / 36525;
+  const s = (a, b) => Math.sin((a + b * T) * DEG);
+  const lon =
+    (218.32 + 481267.881 * T + 6.29 * s(134.9, 477198.85) - 1.27 * s(259.2, -413335.38) +
+      0.66 * s(235.7, 890534.23) + 0.21 * s(269.9, 954397.7) - 0.19 * s(357.5, 35999.05) -
+      0.11 * s(186.6, 966404.05)) * DEG;
+  const lat =
+    (5.13 * s(93.3, 483202.03) + 0.28 * s(228.2, 960400.87) - 0.28 * s(318.3, 6003.18) -
+      0.17 * s(217.6, -407332.2)) * DEG;
+  const eps = (23.439 - 0.013 * T) * DEG;
+  const x = Math.cos(lat) * Math.cos(lon);
+  const y = Math.cos(lat) * Math.sin(lon);
+  const z = Math.sin(lat);
+  return { x, y: Math.cos(eps) * y - Math.sin(eps) * z, z: Math.sin(eps) * y + Math.cos(eps) * z };
+}
+
+// ---------------------------------------------------------------------------
 // texture loading
 
 /** Fetch and decode an image, off the main thread where the browser can. */
@@ -425,12 +494,23 @@ export function createEarth(renderer, { quality = 'high', textureBase } = {}) {
   let disposed = false;
 
   const sunDir = new THREE.Vector3(1, 0, 0);
+  const moonDir = new THREE.Vector3(-1, 0, 0);
 
   const blank = new THREE.DataTexture(new Uint8Array([0, 0, 0, 255]), 1, 1);
   blank.needsUpdate = true;
 
   // ---- materials
+  // night-side values shared by the ground and the clouds (see COMMON)
+  const night = {
+    lightsGain: { value: 2.0 },
+    lightsCurve: { value: 1.3 },
+    nightGlow: { value: 0.02 },
+    moonLight: { value: 0.02 },
+    moonPhase: { value: 0 },
+    moonDir: { value: moonDir },
+  };
   const surfaceUniforms = {
+    ...night,
     dayMap: { value: blank },
     lightsMap: { value: blank },
     cloudMap: { value: blank },
@@ -441,7 +521,6 @@ export function createEarth(renderer, { quality = 'high', textureBase } = {}) {
     reliefTexel: { value: new THREE.Vector2(1 / 4096, 1 / 2048) },
     sunDir: { value: sunDir },
     glint: { value: 0.18 },
-    lightsGain: { value: 1.5 },
     dusk: { value: 0.02 },
   };
   const surfaceMaterial = new THREE.ShaderMaterial({
@@ -461,7 +540,14 @@ export function createEarth(renderer, { quality = 'high', textureBase } = {}) {
     blendDstAlpha: THREE.OneMinusSrcAlphaFactor,
   };
 
-  const cloudUniforms = { cloudMap: { value: blank }, sunDir: { value: sunDir } };
+  const cloudUniforms = {
+    ...night,
+    cloudMap: { value: blank },
+    lightsMap: { value: blank },
+    haveLights: { value: 0 },
+    cloudThrough: { value: 0.2 },
+    sunDir: { value: sunDir },
+  };
   const cloudMaterial = new THREE.ShaderMaterial({
     name: 'EarthClouds',
     uniforms: cloudUniforms,
@@ -547,6 +633,8 @@ export function createEarth(renderer, { quality = 'high', textureBase } = {}) {
       have.x = 1;
     } else if (slot === 'lights') {
       surfaceUniforms.lightsMap.value = tex;
+      cloudUniforms.lightsMap.value = tex;
+      cloudUniforms.haveLights.value = 1;
       have.y = 1;
     } else if (slot === 'clouds') {
       surfaceUniforms.cloudMap.value = tex;
@@ -624,6 +712,7 @@ export function createEarth(renderer, { quality = 'high', textureBase } = {}) {
     }
     surfaceUniforms.have.value.set(0, 0, 0, 0);
     surfaceUniforms.haveRelief.value = 0;
+    cloudUniforms.haveLights.value = 0;
     clouds.visible = false;
     loadAll();
   };
@@ -634,10 +723,21 @@ export function createEarth(renderer, { quality = 'high', textureBase } = {}) {
   const centre = new THREE.Vector3();
   const scale = new THREE.Vector3();
 
-  /** gmstAngle in radians; sunEci a vector toward the Sun in ECI (any length). */
-  function setTime(gmstAngle, sunEci) {
+  /**
+   * gmstAngle in radians; sunEci a vector toward the Sun in ECI (any length).
+   * ms (optional, default now) is only used to place the Moon for moonlight,
+   * which changes slowly, so leaving it out costs little.
+   */
+  function setTime(gmstAngle, sunEci, ms = Date.now()) {
     group.rotation.y = gmstAngle;
     sunDir.set(sunEci.x, sunEci.z, -sunEci.y).normalize();
+    const moon = moonDirection(ms);
+    moonDir.set(moon.x, moon.z, -moon.y);
+    // lit fraction of the disc from the Sun-Moon elongation; the Moon's
+    // brightness falls much faster than that (a half Moon gives ~1/10 of full)
+    const s = Math.hypot(sunEci.x, sunEci.y, sunEci.z) || 1;
+    const lit = (1 - (sunEci.x * moon.x + sunEci.y * moon.y + sunEci.z * moon.z) / s) / 2;
+    night.moonPhase.value = lit ** 3;
   }
 
   // The clouds are fixed to the ground and the Sun moves only through

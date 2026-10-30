@@ -159,6 +159,25 @@ const views = {
     lookAcross(camUp, tangentToward(camUp, heading), 507 + 700, -3);
   },
 };
+// a globe view centred on a place
+views.over = (latDeg, lonDeg, distance = 3.4) => orbitTo(groundDir(latDeg, lonDeg, simMs()), distance);
+// the swing's end-frame geometry over a place: satellite 507 km above it, camera
+// 1400 km behind (along headingDeg from north) and 700 km above, horizon near the top
+views.satOver = (latDeg, lonDeg, headingDeg = 0) => {
+  const up = groundDir(latDeg, lonDeg, simMs());
+  const north = tangentToward(up, new THREE.Vector3(0, 1, 0));
+  const heading = north.clone().applyAxisAngle(up, -headingDeg * DEG);
+  const back = 1400 / 6371;
+  const camUp = up.clone().multiplyScalar(Math.cos(back)).addScaledVector(heading, -Math.sin(back)).normalize();
+  lookAcross(camUp, tangentToward(camUp, heading), 507 + 700, -3);
+};
+// straight down from the satellite's height, roughly its own camera's view
+views.nadir = (latDeg, lonDeg, altKm = 507) => {
+  const up = groundDir(latDeg, lonDeg, simMs());
+  const position = up.clone().multiplyScalar(1 + altKm / 6371);
+  view.fixed = { position, target: up.clone(), up: tangentToward(up, new THREE.Vector3(0, 1, 0)) };
+};
+
 // magnify the horizon of the current fixed view (fov in degrees; 0 restores 35)
 function zoomHorizon(fov = 6) {
   camera.fov = fov || 35;
@@ -228,7 +247,7 @@ function draw(now = performance.now()) {
   const dt = (now - last) / 1000;
   last = now;
   const ms = simMs();
-  earth.setTime(gmst(ms), sunPosition(ms));
+  earth.setTime(gmst(ms), sunPosition(ms), ms);
   placeCamera();
   earth.update(dt, camera);
   renderer.render(scene, camera);
@@ -249,6 +268,7 @@ schedule();
 window.dev = { THREE, renderer, scene, camera, earth, views, view, sunWorld, groundDir, draw, zoomHorizon,
   uniforms: {
     surface: earth.group.getObjectByName('EarthSurface').material.uniforms,
+    clouds: earth.group.getObjectByName('EarthClouds').material.uniforms,
     atmosphere: earth.group.getObjectByName('EarthAtmosphere').material.uniforms,
   },
   setOffset(min) { offsetMin = min; offsetInput.value = Math.max(-720, Math.min(720, min)); },
