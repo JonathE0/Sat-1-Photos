@@ -92,15 +92,17 @@ ol, ul { padding: 0; list-style: none; }
   .brand img { height: 22px; }
 }
 @media (max-width: 430px) {
-  .nav { gap: 8px; font-size: 12px; }
+  .nav { gap: 8px; }
   .nav-links { gap: 8px; }
   .brand img { height: 18px; }
 }
-/* Six links and the logo need about 346 px. Below that the logo goes: it
-   leads to the same place as Explore. */
-@media (max-width: 350px) {
+@media (max-width: 389px) {
+  .nav { font-size: 12px; }
+}
+/* The six links alone fill the narrowest phones; Explore goes to the same place as the logo. */
+@media (max-width: 359px) {
+  .nav { justify-content: flex-end; }
   .brand { display: none; }
-  .nav-links { flex: 1; justify-content: space-between; gap: 4px; }
 }
 
 /* -- intro ---------------------------------------------------------------- */
