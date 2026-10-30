@@ -97,7 +97,7 @@ html.jy-dragging { cursor: grabbing; }
 
 /* the satellite and its orbit line, over the pins (see journey.js, renderer
    and scene); clicks go through to the pins and the globe */
-.jy-over {
+.jy-over-canvas {
   position: absolute;
   left: 0;
   top: 0;
@@ -109,8 +109,8 @@ html.jy-dragging { cursor: grabbing; }
   opacity: 0;
   transition: opacity 600ms linear;
 }
-.jy-over[hidden] { display: none; }
-.jy-earth-ready .jy-over { opacity: 1; }
+.jy-over-canvas[hidden] { display: none; }
+.jy-earth-ready .jy-over-canvas { opacity: 1; }
 
 /* ---- text: one anchor on the left margin ------------------------------------- */
 
@@ -760,7 +760,7 @@ html.jy-dragging { cursor: grabbing; }
   .jy-root .jy-credits,
   .jy-root .jy-credits.is-on { transform: none !important; transition: opacity 150ms linear !important; }
   .jy-root .jy-canvas,
-  .jy-root .jy-over { transition: opacity 200ms linear !important; }
+  .jy-root .jy-over-canvas { transition: opacity 200ms linear !important; }
   .jy-root .jy-time,
   .jy-root .jy-corner,
   .jy-root .jy-facts-slot,

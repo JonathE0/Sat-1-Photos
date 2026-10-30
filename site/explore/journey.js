@@ -102,6 +102,8 @@ const CHASE_BEHIND_KM = 1400;
  * only the letters themselves cover it.
  */
 const CHASE_YAW = 0.52;
+/** The satellite's smallest length on screen when zoomed far out, px. */
+const SAT_MIN_PX = 12;
 /** Room for the tallest fact in the phone banner (three lines and the source row), px. */
 const FACTS_RESERVE_PX = 140;
 /** Close up, the camera levels out to this pitch so the limb sits behind the satellite. */
@@ -148,7 +150,7 @@ function template(id, siteRoot) {
         aria-label="The Earth and CTS-SAT-1. Drag or use the arrow keys to look around; plus and minus zoom."></canvas>
       <canvas class="jy-still" hidden aria-hidden="true"></canvas>
       <div class="jy-marks"></div>
-      <canvas class="jy-over" aria-hidden="true"></canvas>
+      <canvas class="jy-over-canvas" aria-hidden="true"></canvas>
       <div class="jy-marks jy-marks-sat" data-ref="satMarks">
         <button type="button" class="jy-sat" data-ref="sat" hidden
           aria-label="CTS-SAT-1: where it is now and its latest picture"><span class="jy-sat-label" aria-hidden="true">CTS-SAT-1</span></button>
@@ -303,7 +305,7 @@ export function mountJourney(container, options = {}) {
   const canvas = root.querySelector('.jy-canvas');
   const still = root.querySelector('.jy-still');
   const marks = root.querySelector('.jy-marks'); // the pins; the satellite's button is in ref.satMarks
-  const overCanvas = root.querySelector('.jy-over');
+  const overCanvas = root.querySelector('.jy-over-canvas');
 
   const cleanups = [];
   const listen = (target, type, fn, o) => {
@@ -1777,7 +1779,7 @@ export function mountJourney(container, options = {}) {
     return touchQuery.matches && !state.locked ? 'Drag sideways to look around.' : 'Drag to look around.';
   }
 
-  const satTipText = () => `${touchQuery.matches ? 'Tap' : 'Click'} on the satellite to see its latest image`;
+  const satTipText = () => `${touchQuery.matches ? 'Tap' : 'Click'} on the satellite to see its latest image!`;
 
   function atNow() {
     return state.live && state.speed === 1 && state.follow && !state.custom;
@@ -2189,15 +2191,15 @@ export function mountJourney(container, options = {}) {
       mSat.makeBasis(tmpA, sat.U, sat.F);
       qSat.setFromRotationMatrix(mSat);
       satellite.object3d.quaternion.copy(qSat);
-      // a fixed size on screen from the end view outward; from there inward it keeps
-      // that exaggeration, so zooming in brings it closer like a real object
-      const distance = camera.position.distanceTo(sat.S);
-      const def = zoomLimits().def;
-      const unitsPerPx = (2 * frame.tanHalf * Math.max(distance, def)) / H;
+      // drawn larger than life by one fixed amount (frame.satPx long at the end view), so
+      // zooming either way changes its size like a real object; far out it stops at
+      // SAT_MIN_PX, where it would otherwise be lost
+      const distance = Math.max(1e-6, camera.position.distanceTo(sat.S));
+      lengthPx = Math.max(SAT_MIN_PX * frame.ui, (frame.satPx * zoomLimits().def) / distance);
+      const unitsPerPx = (2 * frame.tanHalf * distance) / H;
       const length = satellite.bodyBounds ? satellite.bodyBounds.max.z - satellite.bodyBounds.min.z : 0.34;
-      satScale = (frame.satPx * unitsPerPx) / Math.max(0.05, length);
+      satScale = (lengthPx * unitsPerPx) / Math.max(0.05, length);
       satellite.setScale(satScale);
-      lengthPx = frame.satPx * Math.max(1, def / Math.max(1e-6, distance));
       setSatOpacity(satAlpha);
       // the Sun on it, unless the Earth is in the way; earthshine from below
       sunDir.set(sun.x, sun.z, -sun.y).normalize();
@@ -2448,7 +2450,9 @@ export function mountJourney(container, options = {}) {
   // ---- photos ---------------------------------------------------------------------------
   function setPhotos(list) {
     photos = Array.isArray(list) ? list.filter((p) => p && p.id) : [];
-    latest = photos.reduce((best, p) => (!best || (p.sortTime || 0) > (best.sortTime || 0) ? p : best), null);
+    // the newest the catalogue shows by default: not a black frame, not one mostly missing
+    const shown = photos.filter((p) => !p.dark && !p.mostlyMissing);
+    latest = (shown.length ? shown : photos).reduce((best, p) => (!best || (p.sortTime || 0) > (best.sortTime || 0) ? p : best), null);
     ref.latest.dataset.id = '';
     const n = photos.length;
     ref.all.textContent = n ? `See all ${n.toLocaleString('en-US')} pictures` : 'See the pictures';
