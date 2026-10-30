@@ -21,6 +21,9 @@ time and an hour earlier on standard time) and publishes the result; see
 
 1. An incremental sync of the ground-station pipeline's parquet tables.
 2. Reassembling images that are new or changed, then rebuilding the site data.
+3. Refreshing the event watchlist (`python -m cts1_gallery watch`). A feed
+   that is down leaves its last good answer, and this step's own failures are
+   logged without failing the run.
 
 The source is the CalgaryToSpace processing pipeline's public web UI
 (frontiersat.mooo.com), which re-processes every SatNOGS observation of the

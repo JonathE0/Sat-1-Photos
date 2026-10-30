@@ -18,6 +18,18 @@
   <link rel="modulepreload" href="vendor/three.module.min.js">
   <link rel="modulepreload" href="vendor/satellite.es.js">
   <style>
+    :root {
+      --nav-h: 60px;
+      --nav-pad: 24px;
+    }
+
+    @media (max-width: 599px) {
+      :root {
+        --nav-h: 52px;
+        --nav-pad: 16px;
+      }
+    }
+
     html,
     body {
       height: 100%;
@@ -26,22 +38,122 @@
     }
 
     /* viewport-fit=cover lets the narrow dock pad for the home indicator;
-       keep the whole globe clear of a landscape phone's notch. */
+       keep the whole globe clear of a landscape phone's notch. The globe's
+       corners start below the site nav (--cg-top). */
     #globe {
+      --cg-top: var(--nav-h);
       position: fixed;
       inset: 0;
       padding: 0 env(safe-area-inset-right, 0px) 0 env(safe-area-inset-left, 0px);
     }
 
+    /* The site's nav, as on the front page's globe: laid over the stage with
+       no bar behind it, and only its links take the pointer, so the globe
+       still drags right up to them. */
+    .site-nav {
+      position: fixed;
+      top: 0;
+      right: 0;
+      left: 0;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      height: var(--nav-h);
+      padding: 0 calc(var(--nav-pad) + env(safe-area-inset-right, 0px)) 0 calc(var(--nav-pad) + env(safe-area-inset-left, 0px));
+      font: 500 14px/1 "Jost", system-ui, -apple-system, "Segoe UI", sans-serif;
+      pointer-events: none;
+    }
+
+    .site-nav .brand,
+    .site-nav .nav-links a {
+      pointer-events: auto;
+    }
+
+    .site-nav .brand {
+      display: flex;
+      flex: none;
+      align-items: center;
+    }
+
+    .site-nav .brand-logo {
+      display: block;
+      width: auto;
+      height: 34px;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      min-width: 0;
+    }
+
+    /* a taller hit area than the words, without moving them */
+    .nav-links a {
+      padding: 14px 0;
+      color: #E6EBF0;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .nav-links a:hover {
+      text-decoration: underline;
+      text-decoration-thickness: 1px;
+      text-underline-offset: 6px;
+      text-decoration-color: rgba(230, 235, 240, 0.4);
+    }
+
+    .nav-links a[aria-current="page"] {
+      text-decoration: underline;
+      text-decoration-thickness: 1px;
+      text-underline-offset: 6px;
+      text-decoration-color: #3C9DF5;
+    }
+
+    .site-nav a:focus-visible {
+      outline: 2px solid #3C9DF5;
+      outline-offset: 2px;
+    }
+
+    /* five links and the logo on one line across a phone */
+    @media (max-width: 599px) {
+      .site-nav {
+        gap: 10px;
+        font-size: 13px;
+      }
+
+      .nav-links {
+        gap: 10px;
+      }
+
+      .site-nav .brand-logo {
+        height: 22px;
+      }
+    }
+
     .nojs {
       margin: 0;
-      padding: 24px;
+      padding: calc(var(--nav-h) + 24px) 24px 24px;
       font: 16px/1.5 "Jost", system-ui, sans-serif;
       color: #E6EBF0;
     }
   </style>
 </head>
 <body>
+  <nav class="site-nav" aria-label="Main">
+    <a class="brand" href="../index.html#/" aria-label="CTS-SAT-1, explore: where the satellite is now">
+      <img class="brand-logo" src="../assets/calgarytospace-logo.png" width="640" height="204" alt="">
+    </a>
+    <div class="nav-links">
+      <a href="../index.html#/">Explore</a>
+      <a href="../index.html#/pictures">Pictures</a>
+      <a href="index.html" aria-current="page">Orbit</a>
+      <a href="../index.html#/about">About</a>
+      <a href="../index.html#/?credits=1">Credits</a>
+    </div>
+  </nav>
   <main id="globe" aria-label="CTS-SAT-1 orbit globe"></main>
   <noscript><p class="nojs">The orbit globe needs JavaScript and WebGL.</p></noscript>
   <script>
@@ -56,12 +168,12 @@
     import { mountGlobe } from './globe.js';
 
     // ?photo=<id> focuses that photo; #t=<iso>&photo=<id> restores a shared view.
+    // The site nav's Pictures link is the way back, so no "All pictures" link.
     const params = new URLSearchParams(location.search);
     mountGlobe(document.getElementById('globe'), {
       photoId: params.get('photo'),
       hashState: true,
       keyboard: 'global',
-      backHref: '../',
     });
   </script>
 </body>

@@ -73,6 +73,45 @@ def update_command() -> list[str]:
     return [str(venv) if venv.exists() else sys.executable, "-m", "cts1_gallery", "update"]
 
 
+def watch_command() -> list[str] | None:
+    """The event watchlist refresh that follows the update; none when testing."""
+    if os.environ.get("CTS1_UPDATE_CMD"):
+        return None
+    return [*update_command()[:-1], "watch"]
+
+
+def run_command(cmd: list[str], output) -> int:
+    """Run cmd from the repo root, passing each output line to output(); its exit code."""
+    env = {**os.environ, "PYTHONUTF8": "1", "PYTHONUNBUFFERED": "1"}
+    # pythonw has no console, so without CREATE_NO_WINDOW a python.exe child would open one.
+    flags = subprocess.CREATE_NO_WINDOW if os.name == "nt" and sys.stdout is None else 0
+    try:
+        proc = subprocess.Popen(cmd, cwd=REPO, env=env, creationflags=flags,
+                                stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+                                stderr=subprocess.STDOUT, encoding="utf-8", errors="replace")
+    except OSError as e:
+        output(f"scheduled_update: could not start {cmd[0]}: {e}")
+        return 1
+
+    def pump() -> None:
+        for line in proc.stdout:
+            output(line.rstrip("\n"))
+
+    reader = threading.Thread(target=pump, daemon=True)
+    reader.start()
+    timed_out = False
+    try:
+        code = proc.wait(timeout=TIMEOUT_S)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        proc.wait()
+        timed_out, code = True, 124
+    reader.join(timeout=10)
+    if timed_out:
+        output(f"scheduled_update: killed after {TIMEOUT_S // 60} minutes")
+    return code
+
+
 def run_update(log) -> int:
     cmd = update_command()
     tail: deque[str] = deque(maxlen=TAIL_LINES)
@@ -83,38 +122,19 @@ def run_update(log) -> int:
 
     started_at, t0 = utc_now(), time.monotonic()
     log.write(f"==== {started_at} start: {subprocess.list2cmdline(cmd)}\n")
-    env = {**os.environ, "PYTHONUTF8": "1", "PYTHONUNBUFFERED": "1"}
-    # pythonw has no console, so without CREATE_NO_WINDOW a python.exe child would open one.
-    flags = subprocess.CREATE_NO_WINDOW if os.name == "nt" and sys.stdout is None else 0
-    try:
-        proc = subprocess.Popen(cmd, cwd=REPO, env=env, creationflags=flags,
-                                stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
-                                stderr=subprocess.STDOUT, encoding="utf-8", errors="replace")
-    except OSError as e:
-        output(f"scheduled_update: could not start {cmd[0]}: {e}")
-        code = 1
-    else:
-        def pump() -> None:
-            for line in proc.stdout:
-                output(line.rstrip("\n"))
-
-        reader = threading.Thread(target=pump, daemon=True)
-        reader.start()
-        timed_out = False
-        try:
-            code = proc.wait(timeout=TIMEOUT_S)
-        except subprocess.TimeoutExpired:
-            proc.kill()
-            proc.wait()
-            timed_out, code = True, 124
-        reader.join(timeout=10)
-        if timed_out:
-            output(f"scheduled_update: killed after {TIMEOUT_S // 60} minutes")
+    code = run_command(cmd, output)
+    # Then the event watchlist. Its own failures are logged, but the run's exit
+    # code stays the picture update's: the feeds it reads are often down.
+    watch_code = None
+    if (watch := watch_command()) is not None:
+        log.write(f"==== {utc_now()} then: {subprocess.list2cmdline(watch)}\n")
+        watch_code = run_command(watch, output)
 
     finished_at, duration = utc_now(), round(time.monotonic() - t0, 1)
-    log.write(f"==== {finished_at} end: exit code {code}, {duration} s\n")
+    watch_note = "" if watch_code is None else f", watchlist exit code {watch_code}"
+    log.write(f"==== {finished_at} end: exit code {code}{watch_note}, {duration} s\n")
     summary = {"started_at": started_at, "finished_at": finished_at, "exit_code": code,
-               "duration_s": duration, "tail": list(tail)}
+               "watch_exit_code": watch_code, "duration_s": duration, "tail": list(tail)}
     tmp = LOG_DIR / "last_run.json.tmp"
     tmp.write_text(json.dumps(summary, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     os.replace(tmp, LOG_DIR / "last_run.json")  # readers never see a half-written file

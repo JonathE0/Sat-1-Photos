@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-10-30T05:17:53Z",
+ "generated_at": "2026-10-30T07:42:39Z",
  "satellite": {
   "name": "CTS-SAT-1",
   "alias": "FrontierSat",
@@ -38,7 +38,7 @@
     "lat": 21.7024,
     "lon": 115.963,
     "alt_km": 497.7,
-    "place": null,
+    "place": "North Pacific Ocean",
     "ground_sunlit": true,
     "sun_elevation_deg": 50.2,
     "satellite_sunlit": true,

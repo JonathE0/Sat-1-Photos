@@ -54,7 +54,7 @@
 
 .cg-views {
   position: absolute;
-  top: var(--cg-gap, 16px);
+  top: calc(var(--cg-top, 0px) + var(--cg-gap, 16px));
   left: 50%;
   z-index: 2;
   display: flex;
@@ -120,9 +120,16 @@
   display: contents;
 }
 
+/* the title shares its row with the switch; the lines under it start below */
+.cg-narrow .cg-title {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+}
+
 .cg-narrow .cg-views-main {
   position: absolute;
-  top: 12px;
+  top: calc(var(--cg-top, 0px) + 12px);
   right: 12px;
   z-index: 2;
 }
