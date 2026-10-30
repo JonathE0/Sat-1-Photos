@@ -3,30 +3,36 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Pictures from orbit · CTS-SAT-1</title>
-  <meta name="description" content="Every picture downlinked from CTS-SAT-1 (FrontierSat) that could be rebuilt, from Calgary To Space's first student-built satellite.">
-  <meta name="theme-color" content="#090C10">
+  <title>CTS-SAT-1 · Interactive picture visualizer</title>
+  <meta name="description" content="Where CTS-SAT-1, Calgary To Space's first student-built satellite, is right now, and every picture it has sent down.">
+  <meta name="theme-color" content="#05070A">
   <link rel="icon" type="image/png" href="assets/cubesat-icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Jost:wght@400;500;600;700;800&display=swap">
   <link rel="stylesheet" href="assets/style.css">
+  <link rel="stylesheet" href="assets/catalogue.css">
+  <link rel="stylesheet" href="explore/journey.css">
+  <!-- the 3D model loader imports "three" by name; this must come before any module script -->
+  <script type="importmap">{ "imports": { "three": "./globe/vendor/three.module.min.js" } }</script>
   <script src="config.js"></script>
   <script type="module" src="assets/app.js"></script>
 </head>
-<body data-view="gallery">
+<body data-view="explore">
   <a class="skip" href="#main" data-skip>Skip to content</a>
 
   <header class="site-head">
     <nav class="nav" aria-label="Main">
-      <a class="brand" href="#/" aria-label="CTS-SAT-1 pictures, by CalgaryToSpace">
+      <a class="brand" href="#/" aria-label="CTS-SAT-1, explore: where the satellite is now">
         <img class="brand-logo" src="assets/calgarytospace-logo.png" width="640" height="204" alt="">
         <span class="wordmark">CTS-SAT-1</span>
       </a>
       <div class="nav-side nav-right">
-        <a href="#/" data-nav="gallery">Pictures</a>
+        <a href="#/" data-nav="explore">Explore</a>
+        <a href="#/pictures" data-nav="pictures">Pictures</a>
         <a href="globe/index.html">Orbit</a>
         <a href="#/about" data-nav="about">About</a>
+        <button type="button" class="nav-btn" id="credits" aria-expanded="false" aria-haspopup="dialog">Credits</button>
         <div class="name-ctl" hidden>
           <button type="button" class="name-btn" aria-expanded="false" aria-controls="name-form">Your name</button>
           <form class="name-form" id="name-form" hidden>
@@ -40,40 +46,11 @@
         </div>
       </div>
     </nav>
-
-    <div class="hero">
-      <div class="hero-space">
-        <canvas class="stars" aria-hidden="true"></canvas>
-        <div class="limb" aria-hidden="true"></div>
-        <div class="hero-text">
-          <h1 class="headline"><span class="eyebrow">Pictures from orbit</span> <span class="headline-main">CTS-SAT-1</span></h1>
-          <p class="hero-sub">FrontierSat, Calgary To Space's first student-built satellite</p>
-          <button type="button" class="down" aria-label="Go to the pictures">
-            <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M7 1v11M2 7.5 7 12.5l5-5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
-          </button>
-        </div>
-      </div>
-
-      <div class="hero-side">
-        <div class="hero-photos"></div>
-        <div class="hero-about">
-          <h2>About the pictures</h2>
-          <p class="intro">These are the images downlinked from CTS-SAT-1 (FrontierSat) since its launch on 3&nbsp;May 2026, heard by the SatNOGS ground-station network and rebuilt here from the satellite's radio packets.</p>
-          <p class="tally" id="count">Loading pictures…</p>
-          <div class="reel-bar" hidden>
-            <span class="mono reel-index">01</span>
-            <span class="reel-track" aria-hidden="true"><span class="reel-fill"></span></span>
-            <span class="mono reel-total">01</span>
-            <button type="button" class="reel-btn" data-toggle>Pause</button>
-            <button type="button" class="reel-btn" data-next aria-label="Next picture">Next</button>
-          </div>
-        </div>
-      </div>
-    </div>
   </header>
 
   <main id="main" tabindex="-1">
-    <section class="view view-gallery" id="view-gallery" aria-label="Pictures"></section>
+    <section class="view view-explore" id="view-explore" aria-label="Where CTS-SAT-1 is now"><div id="journey"></div></section>
+    <section class="view view-pictures" id="view-pictures" aria-label="Pictures" hidden></section>
     <section class="view view-detail" id="view-detail" hidden></section>
     <section class="view view-about" id="view-about" hidden>
       <div class="about">

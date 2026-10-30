@@ -363,7 +363,7 @@ export function createDetail(root, ctx) {
 
   function plainLinks(items, key) {
     return h('span', { class: 'plain-list' }, joined(items.map((item) => h('a', {
-      href: `#/?${new URLSearchParams({ [key]: item })}`,
+      href: `#/pictures?${new URLSearchParams({ [key]: item })}`,
       title: `All pictures with ${item}`,
     }, item)), ', '));
   }
@@ -748,7 +748,7 @@ export function createDetail(root, ctx) {
     root.replaceChildren(h('div', { class: 'notice' },
       h('h1', { class: 'detail-title', id: 'detail-title', tabindex: '-1' }, 'Picture not found'),
       h('p', null, `There is no picture with the id “${id}”. It may have been renamed when the list was rebuilt.`),
-      h('p', null, h('a', { class: 'text-link', href: '#/' }, 'See all pictures'))));
+      h('p', null, h('a', { class: 'text-link', href: '#/pictures' }, 'See all pictures'))));
   }
 
   function render(id, { flash = '', keepScroll = false, focusSave = false, focus = null } = {}) {

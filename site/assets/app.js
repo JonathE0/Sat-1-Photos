@@ -1,16 +1,17 @@
 // CTS-SAT-1 picture gallery: data loading, hash routes and the shared chrome.
-//   #/              the gallery (filters in the query: #/?camera=picam&q=clouds)
-//   #/photo/<id>    one picture
+//   #/              explore: the scroll story and the live satellite (site/explore/)
+//   #/pictures      the catalogue (filters and selection in the query: #/pictures?id=…&camera=picam)
+//   #/photo/<id>    one picture, with every detail and the edit form
 //   #/about         what the site shows and where it comes from
 
 import { h, append, mono, announce, store } from './dom.js';
 import { loadImages, loadAnnotations, mergeAll, readFilters, applyFilters } from './data.js';
-import { createGallery } from './gallery.js';
+import { createCatalogue } from './catalogue.js';
 import { createDetail, NAME_KEY } from './detail.js';
-import { createHero } from './hero.js';
-import { toDate, utcLong, dayMonthYear, clock, plural } from './format.js';
+import { mountJourney } from '../explore/journey.js';
+import { toDate, utcLong, plural } from './format.js';
 
-const config = { repoUrl: '', refreshMinutes: 30, heroPicture: '', ...(window.CTS1_CONFIG || {}) };
+const config = { repoUrl: '', refreshMinutes: 30, ...(window.CTS1_CONFIG || {}) };
 
 const state = {
   data: null,
@@ -22,10 +23,9 @@ const state = {
   loaded: false,
   view: null,
   galleryQuery: '',
-  galleryScroll: 0,
-  galleryScrollQuery: null,
   lastPhotoId: null,
   fromGallery: false,
+  picturesFromExplore: false, // the catalogue was opened from the globe: its Back returns there
   pendingFocus: null,
   navigated: false, // false until the first in-page navigation; focus stays put on a fresh load
   hash: '', // the route being shown, to undo a navigation the member declines
@@ -35,17 +35,45 @@ const state = {
 const $ = (selector) => document.querySelector(selector);
 
 const views = {
-  gallery: $('#view-gallery'),
+  explore: $('#view-explore'),
+  pictures: $('#view-pictures'),
   detail: $('#view-detail'),
   about: $('#view-about'),
 };
 
 if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 
-const hero = createHero($('.hero'), { stillId: String(config.heroPicture || '') });
+const SITE = new URL('./', location.href);
 
-const gallery = createGallery(views.gallery, {
+// The globe is the front page, but the pictures must not depend on it: if it
+// can't start, the rest of the site still works and Explore says so.
+const journey = startJourney();
+
+function startJourney() {
+  try {
+    return mountJourney($('#journey'), {
+      tleUrl: new URL('data/tle.json', SITE).href,
+      siteRoot: SITE.href,
+      photoHref: (id) => `#/pictures?id=${encodeURIComponent(id)}&from=globe`,
+      catalogueHref: '#/pictures?from=globe',
+      // ?motion=full or ?motion=reduced overrides prefers-reduced-motion (for testing)
+      motion: new URLSearchParams(location.search).get('motion'),
+      onOpenPhoto(id) { location.hash = `#/pictures?id=${encodeURIComponent(id)}&from=globe`; },
+      onOpenCatalogue() { location.hash = '#/pictures?from=globe'; },
+    });
+  } catch (err) {
+    console.error('Explore: the globe could not start', err);
+    $('#journey').replaceChildren(h('p', { class: 'notice' },
+      "The globe couldn't start in this browser. ",
+      h('a', { class: 'text-link', href: '#/pictures' }, 'See the pictures')));
+    const noop = () => {};
+    return { hide: noop, show: noop, setPhotos: noop, openCredits: noop, closeCredits: noop };
+  }
+}
+
+const gallery = createCatalogue(views.pictures, {
   onQueryChange(query) { state.galleryQuery = query; },
+  onBack: backToExplore,
 });
 
 const detail = createDetail(views.detail, {
@@ -73,7 +101,14 @@ const detail = createDetail(views.detail, {
 /* Navigation helpers */
 
 function galleryHref() {
-  return state.galleryQuery ? `#/?${state.galleryQuery}` : '#/';
+  return state.galleryQuery ? `#/pictures?${state.galleryQuery}` : '#/pictures';
+}
+
+// "Back to the globe" in the catalogue: the globe is still as it was (it is
+// only hidden), so going back in history returns to it exactly.
+function backToExplore() {
+  if (state.picturesFromExplore && history.length > 1) history.back();
+  else location.hash = '#/';
 }
 
 // Prev/next follow the gallery as last filtered, or every picture when the
@@ -119,7 +154,9 @@ function parseRoute() {
   const qi = raw.indexOf('?');
   const path = qi >= 0 ? raw.slice(0, qi) : raw;
   const query = qi >= 0 ? raw.slice(qi + 1) : '';
-  if (path === '' || path === '/') return { view: 'gallery', query };
+  // An old gallery link with filters (#/?camera=picam) opens the catalogue.
+  if (path === '' || path === '/') return query ? { view: 'pictures', query } : { view: 'explore' };
+  if (path === '/pictures' || path === '/pictures/') return { view: 'pictures', query };
   const photo = /^\/photo\/([^/]+)\/?$/.exec(path);
   if (photo) {
     let id = photo[1];
@@ -127,7 +164,7 @@ function parseRoute() {
     return { view: 'detail', id };
   }
   if (path === '/about') return { view: 'about' };
-  return { view: 'gallery', query: '' };
+  return { view: 'explore' };
 }
 
 function setView(view) {
@@ -144,24 +181,29 @@ function route() {
   state.hash = location.hash;
   const next = parseRoute();
   const previous = state.view;
-  if (previous === 'gallery' && next.view !== 'gallery') {
-    state.galleryScroll = window.scrollY;
-    state.galleryScrollQuery = state.galleryQuery;
-  }
+  // The globe keeps its camera, time, scroll and lock while hidden; hide it
+  // before anything else scrolls the page.
+  if (previous === 'explore' && next.view !== 'explore') journey.hide();
   if (next.view === 'detail') {
-    state.fromGallery = previous === 'gallery' || (previous === 'detail' && state.fromGallery);
+    state.fromGallery = previous === 'pictures' || (previous === 'detail' && state.fromGallery);
+  }
+  if (next.view === 'pictures' && previous !== 'pictures') {
+    state.picturesFromExplore = previous === 'explore';
   }
   setView(next.view);
 
-  if (next.view === 'gallery') {
+  if (next.view === 'explore') {
+    document.title = 'CTS-SAT-1 · Interactive picture visualizer';
+    if (previous !== 'explore') journey.show();
+    return;
+  }
+
+  if (next.view === 'pictures') {
     state.galleryQuery = next.query;
-    document.title = 'Pictures from orbit · CTS-SAT-1';
+    document.title = 'Pictures · CTS-SAT-1';
+    if (previous !== 'pictures') window.scrollTo(0, 0);
     gallery.show(new URLSearchParams(next.query));
-    if (previous && previous !== 'gallery') {
-      const sameView = state.galleryScrollQuery === next.query;
-      window.scrollTo(0, sameView ? state.galleryScroll : 0);
-      if (previous === 'detail' && sameView && state.lastPhotoId) gallery.focusTile(state.lastPhotoId);
-    }
+    if (previous === 'detail' && state.lastPhotoId) gallery.focusTile(state.lastPhotoId);
     return;
   }
 
@@ -190,7 +232,7 @@ function rebuild() {
   state.photos = mergeAll(state.data.images, state.annotations);
   state.byId = new Map(state.photos.map((p) => [p.id, p]));
   gallery.setData(state.photos);
-  hero.setData(state.photos);
+  journey.setPhotos(state.photos);
   updateCounts();
   renderSkipped();
 }
@@ -210,13 +252,6 @@ function renderSkipped() {
 
 function updateCounts() {
   const built = toDate(state.data?.generated_at);
-  const verified = state.photos.filter((p) => p.status === 'verified').length;
-  const count = $('#count');
-  count.replaceChildren();
-  append(count, [
-    `${plural(state.photos.length, 'picture')} so far, ${verified.toLocaleString('en-US')} of them verified against the satellite's checksum.`,
-    built ? [' Last updated ', mono(`${dayMonthYear(built)}, ${clock(built)} UTC`), '.'] : '',
-  ]);
   const minutes = Number(config.refreshMinutes);
   const every = Number.isFinite(minutes) && minutes > 0 ? `every ${plural(minutes, 'minute')}` : 'regularly';
   const updated = $('#foot-updated');
@@ -251,7 +286,6 @@ async function loadData() {
   if (images.status === 'rejected') {
     const message = loadErrorMessage(images.reason);
     gallery.showError(message);
-    $('#count').textContent = 'No pictures yet';
     if (state.view === 'detail') views.detail.replaceChildren(h('p', { class: 'notice' }, ...message));
     if (images.reason?.kind === 'missing') {
       window.clearTimeout(retryTimer);
@@ -318,6 +352,21 @@ function setupNameControl() {
   setNameLabel();
 }
 
+/* Credits: a panel over the globe, reachable from every page */
+
+function setupCredits() {
+  const button = $('#credits');
+  button.addEventListener('click', () => {
+    if (button.getAttribute('aria-expanded') === 'true') {
+      journey.closeCredits();
+      return;
+    }
+    if (state.view !== 'explore') location.hash = '#/';
+    // after the route change has shown the globe again
+    window.requestAnimationFrame(() => journey.openCredits(button));
+  });
+}
+
 /* Start */
 
 document.querySelector('[data-skip]').addEventListener('click', (e) => {
@@ -353,5 +402,6 @@ window.addEventListener('beforeunload', (e) => {
 });
 
 setupNameControl();
+setupCredits();
 route();
 loadData();
