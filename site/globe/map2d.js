@@ -21,6 +21,7 @@
  * fixtures/verify.mjs checks them against astro.js under Node.
  */
 import { DEG, clamp, footprintAngle, sunDirectionEcef, subsolarPoint } from './astro.js';
+import { labelBox, placeLabel } from './labels.js';
 import { RIPPLE_COLOR, RIPPLE_GAP_S, RIPPLE_RADIUS_PX, RIPPLE_S, RIPPLE_STRENGTH, RIPPLE_WAVES, RIPPLE_WAVE_S } from './ripple.js';
 
 const BLUE = '#3C9DF5'; // the satellite and its path, nothing else
@@ -476,6 +477,7 @@ export function createMap(container, opts = {}) {
   let selectedId = null;
   let hoverId = null;
   let trackColor = BLUE;
+  let stationSide = 'right'; // where Calgary's label is: see drawOverlay
 
   function setTime(ms) {
     wantSun = sunDirectionEcef(ms);
@@ -604,7 +606,9 @@ export function createMap(container, opts = {}) {
     const x = view.x(lonDeg);
     const y = view.y(latDeg);
     const i = view.inset;
-    return x >= i.left + margin && x <= view.w - i.right - margin && y >= i.top + margin && y <= view.h - i.bottom - margin;
+    // more room on the right, where a marker's label goes
+    const right = view.w - i.right - margin - 70 * scale;
+    return x >= i.left + margin && x <= right && y >= i.top + margin && y <= view.h - i.bottom - margin;
   }
 
   /** Bring a ground point into view: the map only moves if it has to. While
@@ -808,15 +812,23 @@ export function createMap(container, opts = {}) {
     const baseY = Math.min(view.h - i.bottom, bottom) - gap;
     const latFloor = baseY - 18 * scale; // keep clear of the longitude labels
     octx.textAlign = 'left';
+    // where the world is small (a phone with a sheet open) lines are closer
+    // than their labels are long: a label that would touch the last is skipped
+    let lastY = Infinity;
     for (const { lat, y } of lats) {
       if (y - gap < i.top + 14 * scale || y - gap > latFloor) continue;
+      if (lastY - y < 18 * scale) continue;
       halo(gridLabel(lat, 'lat'), i.left + 8 * scale, y - gap);
+      lastY = y;
     }
+    let lastRight = -Infinity;
     for (const { lon, x } of lons) {
       const text = gridLabel(lon, 'lon');
       const tw = octx.measureText(text).width;
       if (x + gap < i.left || x + gap + tw > view.w - i.right) continue;
+      if (x + gap < lastRight + gap) continue;
       halo(text, x + gap, baseY);
+      lastRight = x + gap + tw;
     }
   }
 
@@ -950,8 +962,32 @@ export function createMap(container, opts = {}) {
     octx.lineWidth = 3 * scale;
     octx.strokeStyle = 'rgba(5, 7, 10, 0.85)';
     octx.fillStyle = INK;
-    for (const x of stationXs) halo('Calgary', x + 11 * scale, view.y(station.latDeg));
     for (const x of satXs) halo('CTS-SAT-1', x + 12 * scale, view.y(sat.latDeg));
+    if (station) {
+      // the satellite's name wins: Calgary's moves aside, or waits, while they overlap
+      const h = 16 * scale;
+      const reach = 8 * scale;
+      const satY = sat ? view.y(sat.latDeg) : 0;
+      const satW = octx.measureText('CTS-SAT-1').width;
+      const avoid = satXs.flatMap((x) => [
+        labelBox('right', { x, y: satY, w: satW, h, gap: 12 * scale }),
+        { left: x - reach, top: satY - reach, right: x + reach, bottom: satY + reach },
+      ]);
+      // and it stays on the map: past the frame's right edge it would be cut off
+      const edge = view.w - view.inset.right;
+      avoid.push({ left: edge, top: -Infinity, right: Infinity, bottom: Infinity });
+      const w = octx.measureText('Calgary').width;
+      const y = view.y(station.latDeg);
+      stationXs.forEach((x, i) => {
+        const label = { x, y, w, h, gap: 11 * scale };
+        const side = placeLabel(label, avoid, stationSide);
+        if (i === 0) stationSide = side;
+        if (side) {
+          const box = labelBox(side, label);
+          halo('Calgary', box.left, (box.top + box.bottom) / 2);
+        }
+      });
+    }
     overDirty = false;
   }
 
@@ -1041,6 +1077,10 @@ export function createMap(container, opts = {}) {
     setVisible,
     get visible() {
       return visible;
+    },
+    /** Is the view moving to somewhere? */
+    get busy() {
+      return !!flight;
     },
     /** Draw whatever changed; returns true if anything was drawn. */
     frame(now) {

@@ -157,6 +157,32 @@
       }
     }
 
+    /* the narrowest phones: the logo is the way to Explore, so its word makes room */
+    @media (max-width: 345px) {
+      .nav-explore {
+        display: none;
+      }
+    }
+
+    .skip-link {
+      position: fixed;
+      top: -100px;
+      left: 16px;
+      z-index: 20;
+      padding: 8px 12px;
+      background: #E6EBF0;
+      color: #05070A;
+      font: 500 14px/1.4 "Jost", system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+
+    .skip-link:focus {
+      top: 8px;
+    }
+
+    #globe:focus {
+      outline: none;
+    }
+
     .nojs {
       margin: 0;
       padding: calc(var(--nav-h) + 24px) 24px 24px;
@@ -181,12 +207,14 @@
   <noscript><style>.orbit-loading { display: none; }</style></noscript>
 </head>
 <body>
+  <!-- by script, so the page's own #t=... state stays in the address -->
+  <a class="skip-link" href="#globe" onclick="event.preventDefault();document.getElementById('globe').focus();">Skip to the globe</a>
   <nav class="site-nav" aria-label="Main">
     <a class="brand" href="../index.html#/" aria-label="CTS-SAT-1, explore: where the satellite is now">
       <img class="brand-logo" src="../assets/calgarytospace-logo.png" width="640" height="204" alt="">
     </a>
     <div class="nav-links">
-      <a href="../index.html#/">Explore</a>
+      <a class="nav-explore" href="../index.html#/">Explore</a>
       <a href="../index.html#/pictures">Pictures</a>
       <a href="index.html" aria-current="page">Orbit</a>
       <a href="../watchlist/index.html">Watchlist</a>
@@ -194,7 +222,7 @@
       <button type="button" class="nav-btn" id="credits">Credits</button>
     </div>
   </nav>
-  <main id="globe" aria-label="CTS-SAT-1 orbit globe"><p class="orbit-loading" role="status">Loading the globe…</p></main>
+  <main id="globe" tabindex="-1" aria-label="CTS-SAT-1 orbit globe"><p class="orbit-loading" role="status">Loading the globe…</p></main>
   <noscript><p class="nojs">The orbit globe needs JavaScript and WebGL.</p></noscript>
   <script>
     // Browsers won't load ES modules or JSON from file:// pages.

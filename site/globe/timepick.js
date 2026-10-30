@@ -254,13 +254,14 @@ export function createTimePicker({ launchMs, getOrbit, onPick, onClose = () => {
     close();
     onPick(ms);
   });
-  form.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      e.preventDefault();
-      e.stopPropagation();
-      close();
-    }
-  });
+  // on the document: Escape still closes it after Tab has left it
+  const onEscape = (e) => {
+    if (e.key !== 'Escape' || form.hidden) return;
+    e.preventDefault();
+    e.stopPropagation();
+    close();
+  };
+  document.addEventListener('keydown', onEscape, true);
   $('close').addEventListener('click', () => close());
   shot.addEventListener('click', () => {
     const ms = paint();
@@ -297,6 +298,7 @@ export function createTimePicker({ launchMs, getOrbit, onPick, onClose = () => {
     },
     destroy() {
       document.removeEventListener('pointerdown', outside, true);
+      document.removeEventListener('keydown', onEscape, true);
       form.remove();
     },
   };

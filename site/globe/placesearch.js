@@ -59,10 +59,12 @@ let uid = 0;
  * @param {() => object|null} o.getOrbit   the astro.Orbit, or null while loading
  * @param {() => number} o.getTime         the time showing, ms
  * @param {(pass: object) => void} o.onJump        show this pass
- * @param {(place: object|null) => void} o.onPlace a place was chosen, or cleared
+ * @param {(place: object|null, moveFocus: boolean) => void} o.onPlace a place was
+ *   chosen, or cleared; with moveFocus, put the focus somewhere sensible
+ * @param {() => boolean} [o.isLive]      is the time showing the present?
  * @param {(pass: object, place: object) => void} [o.onPreview] offer "Preview picture" on each pass
  */
-export function createPlaceSearch({ getOrbit, getTime, onJump, onPlace = () => {}, onPreview = null }) {
+export function createPlaceSearch({ getOrbit, getTime, onJump, onPlace = () => {}, onPreview = null, isLive = () => true }) {
   const n = ++uid;
   const root = document.createElement('div');
   root.className = 'cg-place';
@@ -173,13 +175,11 @@ export function createPlaceSearch({ getOrbit, getTime, onJump, onPlace = () => {
     e.preventDefault();
   });
 
-  clear.addEventListener('click', () => {
-    reset();
-    input.focus();
-  });
+  // not back into the box: on a phone that would bring the keyboard up again
+  clear.addEventListener('click', () => reset(true));
 
   // ---- results ----------------------------------------------------------------------
-  function reset() {
+  function reset(moveFocus = false) {
     ac?.abort();
     place = null;
     found = null;
@@ -191,7 +191,7 @@ export function createPlaceSearch({ getOrbit, getTime, onJump, onPlace = () => {
     clear.hidden = true;
     status.textContent = '';
     root.classList.remove('cg-place-on');
-    onPlace(null);
+    onPlace(null, moveFocus);
   }
 
   function choose(s) {
@@ -201,7 +201,9 @@ export function createPlaceSearch({ getOrbit, getTime, onJump, onPlace = () => {
     clear.hidden = false;
     clear.setAttribute('aria-label', 'Back to the passes over Calgary');
     root.classList.add('cg-place-on');
-    onPlace(place);
+    // leaving the box puts a phone's keyboard away, so the results show
+    input.blur();
+    onPlace(place, true);
     search();
   }
 
@@ -226,7 +228,7 @@ export function createPlaceSearch({ getOrbit, getTime, onJump, onPlace = () => {
         signal: mine.signal, count: 12, enough: SHOWN, enoughDays: 7,
       });
       if (mine.signal.aborted || target !== place) return;
-      found = { fromMs, passes, best: bestPass(passes), place: target };
+      found = { fromMs, passes, best: bestPass(passes), place: target, live: isLive() };
       paintResults();
     } catch (err) {
       if (err.name !== 'AbortError') {
@@ -254,7 +256,7 @@ export function createPlaceSearch({ getOrbit, getTime, onJump, onPlace = () => {
     }
     const sub1 = document.createElement('span');
     sub1.className = 'cg-fine';
-    sub1.textContent = `${utc(p.closestMs)}. ${span(p.durationS)} over ${found.place.label}${p.inProgress ? ', under way now' : ''}.`;
+    sub1.textContent = `${utc(p.closestMs)}. ${span(p.durationS)} over ${found.place.label}${p.inProgress ? `, under way ${found.live ? 'now' : 'at this time'}` : ''}.`;
     const sub2 = document.createElement('span');
     sub2.className = 'cg-fine';
     sub2.textContent = `${fmtKm(p.closestKm)} from the middle. ${light(p)}.`;
