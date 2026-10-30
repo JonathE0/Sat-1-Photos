@@ -434,7 +434,7 @@
   left: var(--cg-gap);
   z-index: 2;
   display: grid;
-  grid-template-columns: 96px 1fr;
+  grid-template-columns: 1fr;
   column-gap: 12px;
   width: 280px;
   padding: 12px;
@@ -442,11 +442,13 @@
   border: 1px solid var(--cg-line);
 }
 
+/* the picture across the card, under its title (narrow: a small one beside it) */
 .cg-card-thumb {
   position: relative;
   display: block;
-  width: 96px;
-  height: 72px;
+  grid-row: 2;
+  aspect-ratio: 4 / 3;
+  margin-top: 10px;
   overflow: hidden;
   background: #1A242D;
   border: 1px solid var(--cg-line);
@@ -456,7 +458,7 @@
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain; /* square ADCS frames show whole */
 }
 
 .cg-card-thumb span {
@@ -474,6 +476,7 @@
 }
 
 .cg-card-head {
+  grid-row: 1;
   min-width: 0;
   padding-right: 22px;
 }
@@ -482,10 +485,10 @@
   margin-top: 3px;
   font-size: 11.5px;
   line-height: 1.5;
-  white-space: pre-line;
 }
 
 .cg-card-body {
+  grid-row: 3;
   grid-column: 1 / -1;
   min-width: 0;
   margin-top: 10px;
@@ -749,6 +752,17 @@
   flex: none;
 }
 
+.cg-panels-btn {
+  flex: none;
+  min-width: 92px; /* "Hide" and "Show" panels: no shift when it flips */
+}
+
+/* panels hidden: just the globe, the photo card and the clock */
+.cg-panels-off:not(.cg-narrow) .cg-panel[data-panel],
+.cg-panels-off:not(.cg-narrow) .cg-keys {
+  display: none;
+}
+
 .cg-tabs {
   display: none;
 }
@@ -829,8 +843,18 @@
 }
 
 .cg-narrow .cg-card-thumb {
+  grid-row: 1;
   width: 80px;
   height: 60px;
+  margin-top: 0;
+}
+
+.cg-narrow .cg-card-head p {
+  white-space: pre-line;
+}
+
+.cg-narrow .cg-card-body {
+  grid-row: 2;
 }
 
 .cg-narrow .cg-dock {
@@ -900,6 +924,7 @@
 }
 
 .cg-narrow .cg-speeds,
+.cg-narrow .cg-panels-btn,
 .cg-narrow .cg-clock > .cg-share {
   display: none;
 }
@@ -933,6 +958,7 @@
 
 .cg[data-ui="compact"] .cg-panel[data-panel],
 .cg[data-ui="compact"] .cg-keys,
+.cg[data-ui="compact"] .cg-panels-btn,
 .cg[data-ui="compact"] .cg-tabs {
   display: none !important;
 }

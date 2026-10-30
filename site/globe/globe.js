@@ -22,6 +22,7 @@ const MIN_MS = 60_000;
 const LOCAL_ZONE = 'America/Edmonton';
 const PASS_COUNT = 4;
 const PASS_MASK_DEG = 10;
+const PANELS_KEY = 'cts-globe-panels';
 
 const pad = (n) => String(n).padStart(2, '0');
 const MINUS = '−';
@@ -118,7 +119,7 @@ const TEMPLATE = `
       </dl>
       <p class="cg-fine" data-ref="tle"></p>
     </section>
-    <p class="cg-fine cg-keys">Space play/pause · N now · ← → 1 min, with Shift 1 h · F follow</p>
+    <p class="cg-fine cg-keys">Space play/pause · N now · ← → 1 min, with Shift 1 h · F follow · P panels</p>
   </div>
 
   <div class="cg-col cg-col-right">
@@ -186,6 +187,8 @@ const TEMPLATE = `
         <span>${MINUS}1 d</span><span data-ref="offset">+0 h 00 m</span><span>+1 d</span>
       </div>
     </div>
+    <button type="button" class="cg-btn cg-panels-btn" data-ref="panels" aria-expanded="true"
+      title="Show or hide the side panels (P)">Hide panels</button>
     <button type="button" class="cg-btn cg-share" data-ref="share">Copy link</button>
   </div>
   </div>
@@ -286,6 +289,7 @@ export function mountGlobe(container, options = {}) {
     selectedId: null,
     follow: false,
     tab: null,
+    panels: true,
     userMovedCamera: false,
   };
   let orbit = null;
@@ -831,6 +835,19 @@ export function mountGlobe(container, options = {}) {
     }
   }
 
+  /** Side panels on wide screens; hidden leaves the globe, photo card and clock. */
+  function setPanels(on) {
+    state.panels = on;
+    root.classList.toggle('cg-panels-off', !on);
+    el.panels.textContent = on ? 'Hide panels' : 'Show panels';
+    el.panels.setAttribute('aria-expanded', String(on));
+    try {
+      localStorage.setItem(PANELS_KEY, on ? 'shown' : 'hidden');
+    } catch {
+      // storage blocked: the choice lasts until the page closes
+    }
+  }
+
   /** On narrow screens, put the sheet away so the globe shows what was picked. */
   function closeSheet() {
     if (state.tab && root.classList.contains('cg-narrow')) setTab(state.tab);
@@ -844,6 +861,7 @@ export function mountGlobe(container, options = {}) {
   }
   listen(el.speedCycle, 'click', () => setSpeed(SPEEDS[(SPEEDS.indexOf(state.speed) + 1) % SPEEDS.length]));
   listen(el.follow, 'click', () => setFollow(!state.follow));
+  listen(el.panels, 'click', () => setPanels(!state.panels));
   for (const b of root.querySelectorAll('[data-tab]')) listen(b, 'click', () => setTab(b.dataset.tab));
   listen(el.scrub, 'input', () => {
     state.ms = state.focusMs + Number(el.scrub.value) * MIN_MS;
@@ -946,6 +964,12 @@ export function mountGlobe(container, options = {}) {
       case 'f':
       case 'F':
         setFollow(!state.follow);
+        break;
+      case 'p':
+      case 'P':
+        // only where the button shows: the side-panel layout of the full UI
+        if (opts.ui === 'compact' || root.classList.contains('cg-narrow')) return;
+        setPanels(!state.panels);
         break;
       case 'ArrowLeft':
         step(-(e.shiftKey ? 60 : 1) * MIN_MS);
@@ -1069,6 +1093,15 @@ export function mountGlobe(container, options = {}) {
   }
 
   // ---- start -------------------------------------------------------------------
+  if (opts.ui !== 'compact') {
+    let panels = null;
+    try {
+      panels = localStorage.getItem(PANELS_KEY);
+    } catch {
+      // storage blocked: start with the panels shown
+    }
+    if (panels === 'hidden') setPanels(false);
+  }
   paintTransport();
   paintPhotoList();
   paintPasses();
