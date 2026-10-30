@@ -162,6 +162,7 @@ function template(id, siteRoot) {
           <p class="jy-lead jy-intro-only"><span class="jy-words">Calgary To Space\u2019s first satellite, built by University of Calgary students and in orbit since ${launchDate}.</span></p>
           <p class="jy-cue jy-intro-only" data-ref="cue" tabindex="-1"><span class="jy-words">Scroll to learn more</span> ${ICON_DOWN}</p>
           <p class="jy-lead jy-live-lead jy-end-only"><span class="jy-words" data-ref="liveLead"></span></p>
+          <p class="jy-tip jy-end-only"><span class="jy-words" data-ref="satTip"></span></p>
           <p class="jy-hint jy-end-only" data-ref="hint"><span class="jy-words" data-ref="hintText"></span></p>
         </div>
         <p class="jy-beat jy-statement jy-b2" data-ref="b2"><span class="jy-words" data-ref="b2t"></span></p>
@@ -1773,11 +1774,10 @@ export function mountJourney(container, options = {}) {
 
   function hintText() {
     // on touch, before the end locks, vertical swipes still scroll the page
-    if (!touchQuery.matches) return 'Drag to look around. Click the satellite to see the last picture it sent.';
-    return state.locked
-      ? 'Drag to look around. Tap the satellite to see the last picture it sent.'
-      : 'Drag sideways to look around. Tap the satellite to see the last picture it sent.';
+    return touchQuery.matches && !state.locked ? 'Drag sideways to look around.' : 'Drag to look around.';
   }
+
+  const satTipText = () => `${touchQuery.matches ? 'Tap' : 'Click'} on the satellite to see its latest image`;
 
   function atNow() {
     return state.live && state.speed === 1 && state.follow && !state.custom;
@@ -1813,8 +1813,9 @@ export function mountJourney(container, options = {}) {
       const a = put(ref.b2t, text);
       const b = put(ref.liveLead, text);
       const c = put(ref.hintText, hintText());
+      const d = put(ref.satTip, satTipText());
       // the words moved: where pins hide follows them
-      if (a || b || c) measureText();
+      if (a || b || c || d) measureText();
       paintClock();
       lastSentence = now;
     }

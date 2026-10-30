@@ -186,16 +186,21 @@ html.jy-dragging { cursor: grabbing; }
 .jy-sub + .jy-lead { margin-top: 20px; }
 
 /* Beat 1 shows the first sentence and the cue; the end shows the live
-   sentence and, until the first drag or click, how to use it. */
+   sentence, what the satellite does when clicked and, until the first drag
+   or click, that the globe turns. */
 .jy-root.jy-composed .jy-intro-only,
 .jy-root:not(.jy-composed) .jy-end-only { display: none; }
 .jy-live-lead { font-variant-numeric: tabular-nums; }
+.jy-tip,
 .jy-hint {
   max-width: 40ch;
-  margin: 16px 0 0;
   font-size: var(--jy-body);
   font-weight: 500;
   line-height: 1.45;
+}
+.jy-tip { margin: 16px 0 0; }
+.jy-hint {
+  margin: 4px 0 0;
   transition: opacity 240ms var(--jy-ease-out), visibility 0s;
 }
 /* hidden, not removed, so the block keeps its size and the framing stays put */
@@ -736,6 +741,7 @@ html.jy-dragging { cursor: grabbing; }
 }
 @media (max-height: 480px) {
   /* phones on their side: the name, the subheading and the live sentence */
+  .jy-root.jy-composed .jy-tip,
   .jy-root.jy-composed .jy-hint { display: none; }
   .jy-root.jy-composed .jy-live-lead { margin-top: 12px; }
 }
