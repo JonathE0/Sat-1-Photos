@@ -1837,7 +1837,8 @@ export function mountJourney(container, options = {}) {
     return touchQuery.matches && !state.locked ? 'Drag sideways to look around.' : 'Drag to look around.';
   }
 
-  const satTipText = () => `${touchQuery.matches ? 'Tap' : 'Click'} on the satellite to see its latest image!`;
+  // on a big screen the latest picture is already up in the viewfinder, and the satellite opens its details
+  const satTipText = () => `${touchQuery.matches ? 'Tap' : 'Click'} on the satellite to see ${bigQuery.matches ? 'where it is now' : 'its latest image'}!`;
 
   function atNow() {
     return state.live && state.speed === 1 && state.follow && !state.custom;
@@ -1874,6 +1875,7 @@ export function mountJourney(container, options = {}) {
       const b = put(ref.liveLead, text);
       const c = put(ref.hintText, hintText());
       const d = put(ref.satTip, satTipText());
+      if (d) ref.sat.setAttribute('aria-label', `CTS-SAT-1: where it is now${bigQuery.matches ? '' : ' and its latest picture'}`);
       // the words moved: where pins hide follows them
       if (a || b || c || d) measureText();
       put(ref.summaryWhere, summaryWhere());
