@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Earth module test</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #000; color: #c9d3db; font: 14px/1.4 system-ui, sans-serif; }
+  canvas { display: block; position: fixed; inset: 0; width: 100%; height: 100%; touch-action: none; cursor: grab; }
+  canvas:active { cursor: grabbing; }
+  #ui { position: fixed; left: 12px; bottom: 12px; right: 12px; max-width: 640px; display: grid; gap: 6px;
+        background: rgba(0, 0, 0, 0.55); padding: 10px 12px; }
+  #ui input[type=range] { width: 100%; }
+  #ui button, #ui a { font: inherit; color: inherit; background: #1a2026; border: 1px solid #333c44; padding: 3px 8px;
+        text-decoration: none; cursor: pointer; }
+  #ui a.on { background: #c9d3db; color: #0b0f13; }
+  .row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  #status { font-variant-numeric: tabular-nums; opacity: 0.8; }
+</style>
+<script type="importmap">{ "imports": { "three": "../../globe/vendor/three.module.min.js" } }</script>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="ui">
+  <div class="row"><span id="when"></span></div>
+  <input id="offset" type="range" min="-720" max="720" step="1" value="0" aria-label="Time offset, minutes">
+  <div class="row">
+    <button data-view="calgary">Calgary</button>
+    <button data-view="day">Day side</button>
+    <button data-view="terminator">Terminator</button>
+    <button data-view="night">Night side</button>
+    <button data-view="limb">Limb close-up</button>
+    <button data-view="sat">Satellite view</button>
+    <button id="now">Now</button>
+  </div>
+  <div class="row">quality:
+    <a data-q="high" href="?q=high">high</a><a data-q="low" href="?q=low">low</a><a data-q="phone" href="?q=phone">phone</a>
+    tone mapping: <a data-tm="aces" href="?tm=aces">ACES</a><a data-tm="none" href="?tm=none">none</a>
+  </div>
+  <div id="status">loading…</div>
+</div>
+<script type="module">
+import * as THREE from '../../globe/vendor/three.module.min.js';
+import { createEarth } from '../earth.js';
+import { sunPosition, gmst, DEG, CALGARY } from '../../globe/astro.js';
+
+const params = new URLSearchParams(location.search);
+const quality = params.get('q') || 'high';
+const toneMap = params.get('tm') || 'aces';
+for (const a of document.querySelectorAll('[data-q]')) {
+  a.classList.toggle('on', a.dataset.q === quality);
+  a.href = `?q=${a.dataset.q}&tm=${toneMap}`;
+}
+for (const a of document.querySelectorAll('[data-tm]')) {
+  a.classList.toggle('on', a.dataset.tm === toneMap);
+  a.href = `?q=${quality}&tm=${a.dataset.tm}`;
+}
+
+const canvas = document.getElementById('c');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
+renderer.setClearColor(0x000000, 1);
+if (toneMap === 'aces') renderer.toneMapping = THREE.ACESFilmicToneMapping;
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(35, 1, 0.002, 60);
+const t0 = performance.now();
+const earth = createEarth(renderer, { quality });
+scene.add(earth.group);
+const status = document.getElementById('status');
+let readyMs = null;
+earth.ready.then(() => { readyMs = Math.round(performance.now() - t0); });
+
+// ---- time
+let offsetMin = 0;
+const offsetInput = document.getElementById('offset');
+offsetInput.addEventListener('input', () => { offsetMin = Number(offsetInput.value); });
+document.getElementById('now').addEventListener('click', () => { offsetMin = 0; offsetInput.value = 0; });
+const simMs = () => Date.now() + offsetMin * 60_000;
+addEventListener('keydown', (e) => {
+  const step = { '[': -60, ']': 60, ',': -10, '.': 10 }[e.key];
+  if (step) offsetMin += step;
+  if (e.key === '0') offsetMin = 0;
+  offsetInput.value = Math.max(-720, Math.min(720, offsetMin));
+});
+
+// ---- scene-frame helpers (ECEF -> scene: (x, y, z) -> (x, z, -y))
+function groundDir(latDeg, lonDeg, ms) {
+  const lat = latDeg * DEG;
+  const lon = lonDeg * DEG + gmst(ms);
+  return new THREE.Vector3(Math.cos(lat) * Math.cos(lon), Math.sin(lat), -Math.cos(lat) * Math.sin(lon));
+}
+function sunWorld(ms) {
+  const s = sunPosition(ms);
+  return new THREE.Vector3(s.x, s.z, -s.y).normalize();
+}
+
+// ---- camera: orbit (drag) or a fixed look from a preset
+const view = { theta: 0, phi: Math.PI / 2, distance: 3.4, fixed: null };
+function orbitTo(dir, distance) {
+  const d = dir.clone().normalize();
+  view.theta = Math.atan2(d.x, d.z);
+  view.phi = Math.acos(THREE.MathUtils.clamp(d.y, -1, 1));
+  view.distance = distance;
+  view.fixed = null;
+}
+function placeCamera() {
+  if (view.fixed) {
+    camera.position.copy(view.fixed.position);
+    camera.up.copy(view.fixed.up);
+    camera.lookAt(view.fixed.target);
+    return;
+  }
+  const s = Math.sin(view.phi);
+  camera.position.set(view.distance * s * Math.sin(view.theta), view.distance * Math.cos(view.phi),
+    view.distance * s * Math.cos(view.theta));
+  camera.up.set(0, 1, 0);
+  camera.lookAt(0, 0, 0);
+}
+// a camera at `altKm` above `groundUp` (unit), looking along `heading` (unit, tangent)
+// pitched down so the horizon sits a little above the frame centre
+function lookAcross(groundUp, heading, altKm, pitchExtraDeg = -3) {
+  const r = 1 + altKm / 6371;
+  const position = groundUp.clone().multiplyScalar(r);
+  const dip = Math.acos(1 / r);
+  const pitch = dip + pitchExtraDeg * DEG;
+  const forward = heading.clone().multiplyScalar(Math.cos(pitch)).addScaledVector(groundUp, -Math.sin(pitch));
+  view.fixed = { position, target: position.clone().add(forward), up: groundUp.clone() };
+}
+function tangentToward(up, dir) {
+  return dir.clone().addScaledVector(up, -dir.dot(up)).normalize();
+}
+
+const views = {
+  calgary() { orbitTo(groundDir(CALGARY.latDeg, CALGARY.lonDeg, simMs()), 3.4); },
+  day() { orbitTo(sunWorld(simMs()), 3.0); },
+  night() { orbitTo(sunWorld(simMs()).negate(), 3.0); },
+  terminator() {
+    const s = sunWorld(simMs());
+    const side = new THREE.Vector3(0, 1, 0).cross(s).normalize();
+    orbitTo(side.addScaledVector(s, 0.15), 2.2);
+  },
+  // low over a point 70 degrees from the subsolar point, looking at the sunlit limb
+  limb() {
+    const s = sunWorld(simMs());
+    const axis = new THREE.Vector3(0, 1, 0).cross(s).normalize();
+    const up = s.clone().applyAxisAngle(axis, 70 * DEG);
+    lookAcross(up, tangentToward(up, s.clone().negate()), 400, -1);
+  },
+  // the swing's end frame: 1400 km behind and 700 km above a satellite at 507 km
+  sat(angleFromSunDeg = 45, headingDeg = 90) {
+    const s = sunWorld(simMs());
+    const axis = new THREE.Vector3(0, 1, 0).cross(s).normalize();
+    const satUp = s.clone().applyAxisAngle(axis, angleFromSunDeg * DEG);
+    const towardSun = tangentToward(satUp, s);
+    const heading = towardSun.clone().applyAxisAngle(satUp, headingDeg * DEG);
+    const back = 1400 / 6371;
+    const camUp = satUp.clone().multiplyScalar(Math.cos(back)).addScaledVector(heading, -Math.sin(back)).normalize();
+    lookAcross(camUp, tangentToward(camUp, heading), 507 + 700, -3);
+  },
+};
+// magnify the horizon of the current fixed view (fov in degrees; 0 restores 35)
+function zoomHorizon(fov = 6) {
+  camera.fov = fov || 35;
+  camera.updateProjectionMatrix();
+  const f = view.fixed;
+  if (!f || !fov) return;
+  const fwd = f.target.clone().sub(f.position).normalize();
+  const up = f.position.clone().normalize();
+  const dip = Math.acos(1 / f.position.length());
+  const level = fwd.addScaledVector(up, -fwd.dot(up)).normalize();
+  f.target = f.position.clone().add(level.multiplyScalar(Math.cos(dip)).addScaledVector(up, -Math.sin(dip)));
+}
+for (const b of document.querySelectorAll('[data-view]')) {
+  b.addEventListener('click', () => views[b.dataset.view]());
+}
+views.calgary();
+
+// drag to turn, wheel to zoom
+let drag = null;
+canvas.addEventListener('pointerdown', (e) => {
+  canvas.setPointerCapture(e.pointerId);
+  if (view.fixed) {
+    const p = view.fixed.position;
+    orbitTo(p, p.length());
+  }
+  drag = { x: e.clientX, y: e.clientY };
+});
+canvas.addEventListener('pointermove', (e) => {
+  if (!drag) return;
+  const k = (2 * Math.tan((camera.fov * DEG) / 2) * Math.max(0.05, view.distance - 0.95)) / canvas.clientHeight;
+  view.theta -= (e.clientX - drag.x) * k;
+  view.phi = THREE.MathUtils.clamp(view.phi - (e.clientY - drag.y) * k, 0.02, Math.PI - 0.02);
+  drag = { x: e.clientX, y: e.clientY };
+});
+canvas.addEventListener('pointerup', () => { drag = null; });
+canvas.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  if (view.fixed) orbitTo(view.fixed.position, view.fixed.position.length());
+  view.distance = THREE.MathUtils.clamp(view.distance * Math.exp(e.deltaY * 0.001), 1.03, 12);
+}, { passive: false });
+
+function resize() {
+  const w = innerWidth, h = innerHeight;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+}
+addEventListener('resize', resize);
+resize();
+
+// ---- loop
+const when = document.getElementById('when');
+let last = performance.now();
+let frames = 0, fpsT = last, fps = 0;
+// rAF stops in a background tab; keep drawing (slowly) there so it can be inspected
+function schedule() {
+  requestAnimationFrame(frame);
+}
+function frame(now) {
+  draw(now);
+  schedule();
+}
+setInterval(() => {
+  if (performance.now() - last > 400) draw();
+}, 400);
+function draw(now = performance.now()) {
+  const dt = (now - last) / 1000;
+  last = now;
+  const ms = simMs();
+  earth.setTime(gmst(ms), sunPosition(ms));
+  placeCamera();
+  earth.update(dt, camera);
+  renderer.render(scene, camera);
+  frames++;
+  if (now - fpsT > 1000) {
+    fps = Math.round((frames * 1000) / (now - fpsT));
+    frames = 0;
+    fpsT = now;
+    const off = offsetMin ? ` (${offsetMin > 0 ? '+' : ''}${offsetMin} min)` : ' (now)';
+    when.textContent = new Date(ms).toISOString().slice(0, 16).replace('T', ' ') + ' UTC' + off;
+    const info = renderer.info;
+    status.textContent = `${quality} · ${toneMap} · ${fps} fps · ${info.memory.textures} textures · ` +
+      (readyMs === null ? 'loading full maps…' : `full maps in ${readyMs} ms`);
+  }
+}
+schedule();
+
+window.dev = { THREE, renderer, scene, camera, earth, views, view, sunWorld, groundDir, draw, zoomHorizon,
+  uniforms: {
+    surface: earth.group.getObjectByName('EarthSurface').material.uniforms,
+    atmosphere: earth.group.getObjectByName('EarthAtmosphere').material.uniforms,
+  },
+  setOffset(min) { offsetMin = min; offsetInput.value = Math.max(-720, Math.min(720, min)); },
+  get readyMs() { return readyMs; } };
+</script>
+</body>
+</html>
