@@ -1,0 +1,32 @@
+Unmodified copies, fetched from jsDelivr (npm), three@0.170.0 to match
+../../globe/vendor/three.module.min.js:
+
+loaders/GLTFLoader.js           three@0.170.0  https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/loaders/GLTFLoader.js
+                                sha256 45139faddd5aaf48ed2d62203d976e5cbd703db1a592de40527f9f6cf58abd44
+utils/BufferGeometryUtils.js    three@0.170.0  https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/utils/BufferGeometryUtils.js
+                                sha256 c25b7930e570e9ec56173cd3b866ec8d2e10016630db3937efb439daf1cedbf6
+libs/meshopt_decoder.module.js  three@0.170.0  https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/libs/meshopt_decoder.module.js
+                                sha256 01f48524f4bac6141eaba07e94cc36e7ee56f311796fa6117c159842941b0468
+three.LICENSE                   MIT            https://cdn.jsdelivr.net/npm/three@0.170.0/LICENSE
+                                (identical to ../../globe/vendor/three.LICENSE)
+
+The folder layout mirrors three's examples/jsm, so GLTFLoader's relative import
+"../utils/BufferGeometryUtils.js" resolves unchanged. meshopt_decoder.module.js is
+meshoptimizer's decoder (MIT, Arseny Kapoulkine) as shipped inside three; it has no
+imports. It decodes EXT_meshopt_compression, which ../models/cubesat-3u.glb uses.
+
+GLTFLoader.js and BufferGeometryUtils.js import the bare specifier "three". Every page
+that loads them (directly or through ../satellite.js) must declare an import map
+before its first module script, pointing "three" at the same file the rest of the
+page uses so there is only one copy of three.js:
+
+  site/explore/index.html          {"imports": {"three": "../globe/vendor/three.module.min.js"}}
+  site/explore/dev/satellite.html  {"imports": {"three": "../../globe/vendor/three.module.min.js"}}
+
+e.g.
+  <script type="importmap">
+    { "imports": { "three": "../globe/vendor/three.module.min.js" } }
+  </script>
+
+Modules that import three by relative URL instead of "three" still share the instance
+as long as both resolve to the same absolute URL.

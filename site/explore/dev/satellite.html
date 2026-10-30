@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Satellite model test</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #000; color: #cfd6e4; overflow: hidden;
+    font: 13px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  canvas { display: block; width: 100%; height: 100%; cursor: default; }
+  canvas.hover { cursor: pointer; }
+  #hud { position: fixed; left: 12px; top: 10px; max-width: calc(100% - 24px); pointer-events: none;
+    white-space: pre-wrap; font: 12px/1.5 ui-monospace, Consolas, monospace; color: #9fb0c8; }
+  #hud b { color: #e8eefc; font-weight: 600; }
+  #help { position: fixed; left: 12px; bottom: 10px; right: 12px; font-size: 12px; color: #6c7a90; }
+  #help code { color: #9fb0c8; }
+</style>
+<script type="importmap">
+  { "imports": { "three": "../../globe/vendor/three.module.min.js" } }
+</script>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="hud">loading...</div>
+<div id="help">Hover/click the satellite. Drag to turn it. Query:
+  <code>?model=URL|none</code> <code>spin=0.15</code> <code>yaw= pitch= roll=</code> (deg)
+  <code>scale=10</code> <code>earthshine=1</code> <code>highlight=1</code> <code>axes=1</code></div>
+<script type="module">
+import * as THREE from 'three';
+import { createSatellite } from '../satellite.js';
+
+const q = new URLSearchParams(location.search);
+const num = (k, d) => (q.has(k) && q.get(k) !== '' && Number.isFinite(+q.get(k)) ? +q.get(k) : d);
+const modelParam = q.get('model');
+const opts = {};
+if (modelParam === 'none') opts.modelUrl = null;
+else if (modelParam) opts.modelUrl = new URL(modelParam, location.href).href;
+opts.earthshine = num('earthshine', 1);
+
+const canvas = document.getElementById('c');
+const hud = document.getElementById('hud');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.0;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x000000);
+const camera = new THREE.PerspectiveCamera(30, 1, 0.01, 100);
+camera.position.set(0, 0.9, 7.2);
+camera.lookAt(0, 0, 0);
+
+// One sun, faint ambient, nothing else.
+const sun = new THREE.DirectionalLight(0xfff6ea, 3.2);
+sun.position.set(4, 3, 5);
+scene.add(sun, new THREE.AmbientLight(0xffffff, 0.05));
+
+const t0 = performance.now();
+const sat = await createSatellite(opts);
+const loadMs = performance.now() - t0;
+const SCALE = num('scale', 10);
+sat.setScale(SCALE);
+scene.add(sat.object3d);
+
+// The page frame: spin about world Y; yaw/pitch/roll give fixed starting angles.
+const base = new THREE.Euler(
+  THREE.MathUtils.degToRad(num('pitch', -18)),
+  THREE.MathUtils.degToRad(num('yaw', 35)),
+  THREE.MathUtils.degToRad(num('roll', 0)), 'YXZ');
+const spin = num('spin', 0.15);
+let angle = 0, dragYaw = 0, dragPitch = 0;
+
+if (q.get('axes') === '1') {
+  // +X red, +Y green, +Z blue, plus a white arrow toward nadir (-Y).
+  const axes = new THREE.AxesHelper(0.3);
+  const nadir = new THREE.ArrowHelper(new THREE.Vector3(0, -1, 0), new THREE.Vector3(0, -0.06, 0), 0.12, 0xffffff, 0.02, 0.012);
+  sat.object3d.children[0].add(axes, nadir);
+}
+
+let selected = q.get('highlight') === '1';
+let hovering = false;
+sat.setHighlight(selected);
+
+const ray = new THREE.Raycaster();
+const ndc = new THREE.Vector2();
+function pick(ev) {
+  const r = canvas.getBoundingClientRect();
+  ndc.set(((ev.clientX - r.left) / r.width) * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1);
+  ray.setFromCamera(ndc, camera);
+  return ray.intersectObjects(sat.hitObjects, false).length > 0;
+}
+let drag = null;
+canvas.addEventListener('pointerdown', (ev) => { drag = { x: ev.clientX, y: ev.clientY, moved: false }; });
+addEventListener('pointerup', (ev) => {
+  if (drag && !drag.moved && pick(ev)) {
+    selected = !selected;
+    console.log('[dev] satellite clicked; selected =', selected);
+  }
+  drag = null;
+  sat.setHighlight(selected || hovering);
+});
+canvas.addEventListener('pointermove', (ev) => {
+  if (drag) {
+    const dx = ev.clientX - drag.x, dy = ev.clientY - drag.y;
+    if (Math.abs(dx) + Math.abs(dy) > 3) drag.moved = true;
+    dragYaw += dx * 0.01; dragPitch += dy * 0.01;
+    drag.x = ev.clientX; drag.y = ev.clientY;
+  }
+  hovering = pick(ev);
+  canvas.classList.toggle('hover', hovering);
+  sat.setHighlight(selected || hovering);
+});
+
+function resize() {
+  const w = innerWidth, h = innerHeight;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h;
+  // Keep the whole spacecraft (incl. deployables) in view on any aspect ratio.
+  const span = Math.max(sat.sizeMetres.x, sat.sizeMetres.y, sat.sizeMetres.z) * SCALE * 1.35;
+  const vfov = THREE.MathUtils.degToRad(camera.fov);
+  const fitH = span / 2 / Math.tan(vfov / 2);
+  const fitW = fitH / Math.min(1, camera.aspect);
+  camera.position.set(0, 0.12, 1).normalize().multiplyScalar(Math.max(fitH, fitW));
+  camera.lookAt(0, 0, 0);
+  camera.updateProjectionMatrix();
+}
+addEventListener('resize', resize);
+resize();
+
+const s = sat.sizeMetres;
+let tris = 0;
+sat.object3d.traverse((o) => {
+  if (o.isMesh && o.material.visible !== false) {
+    const g = o.geometry;
+    tris += (g.index ? g.index.count : g.attributes.position.count) / 3;
+  }
+});
+
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(0.1, (now - last) / 1000);
+  last = now;
+  angle += spin * dt;
+  sat.object3d.rotation.set(base.x + dragPitch, base.y + angle + dragYaw, base.z, 'YXZ');
+  renderer.render(scene, camera);
+  hud.innerHTML =
+    `<b>${sat.source === 'model' ? 'GLB model' : 'stand-in 3U (fallback)'}</b>` +
+    (sat.error ? `  <span style="color:#e7a96b">${String(sat.error.message || sat.error).slice(0, 120)}</span>` : '') +
+    `\nloaded in ${loadMs.toFixed(0)} ms  ·  ${tris.toLocaleString()} triangles  ·  ${renderer.info.render.calls} draw calls` +
+    `\nsize ${(s.x * 100).toFixed(1)} x ${(s.y * 100).toFixed(1)} x ${(s.z * 100).toFixed(1)} cm  ·  shown at ${SCALE} units/m` +
+    `\n${selected ? 'selected' : hovering ? 'hover' : ''}`;
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+window.__dev = { sat, renderer, scene, camera, THREE };
+</script>
+</body>
+</html>

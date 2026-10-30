@@ -1,0 +1,671 @@
+/* The catalogue (catalogue.js), after docs/design-direction.md §2 and §4:
+   true black and flat. Separation by lightness only (no borders, rules or
+   shadows), the selected state is Ink, the team blue is only the focus ring
+   (from style.css). Tokens fall back to the direction's values until
+   style.css defines --space, --panel, --raised, --ink and --muted. */
+
+.cat {
+  --c-ground: var(--space, #05070A);
+  --c-panel: var(--panel, #10151B);
+  --c-raised: var(--raised, #1A2129);
+  --c-ink: var(--ink, #E6EBF0);
+  --c-muted: var(--muted, #8A96A3);
+  --c-under: color-mix(in srgb, var(--c-ink) 40%, transparent);
+
+  --m: 32px;          /* outer margin */
+  --gutter: 24px;
+  --ctl-h: 36px;      /* control height; 44px on touch */
+  --thumb-h: 72px;
+  --info-w: 400px;
+  --back-h: 0px;
+  --dock-h: 190px;    /* the dock under the picture: row, strip, month labels */
+
+  /* Pictures are never shown larger than their own size (640 x 480, or
+     512 x 512 for the attitude camera): grainy when enlarged. The viewer is
+     a dark mat as tall as fits above the dock, up to 720px, with the picture
+     centred in it at 1x or smaller. The whole catalogue is capped at a width
+     where two pictures side by side still fit at 1x, so on a wide screen it
+     stays one composition instead of spreading. */
+  --view-max: 720px;
+  --view-h: clamp(240px, calc(100svh - var(--nav-h, 60px) - var(--back-h) - var(--dock-h) - 48px), var(--view-max));
+  --content-max: 1720px;
+
+  background: var(--c-ground);
+  color: var(--c-ink);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+}
+
+.cat.has-back { --back-h: 56px; }
+
+/* Four at once: on a tall screen the viewer grows until all four pictures
+   reach their own size (two rows of 480 plus captions). */
+.cat[data-size="4"] { --view-max: 1100px; }
+
+@media (max-width: 1099px) { .cat { --m: 24px; } }
+@media (max-width: 599px) { .cat { --m: 16px; --gutter: 16px; --thumb-h: 56px; } }
+@media (pointer: coarse) { .cat { --ctl-h: 44px; } }
+
+.cat-in {
+  max-width: calc(var(--content-max) + 2 * var(--m));
+  margin: 0 auto;
+  padding: 16px var(--m) 32px;
+}
+
+.cat-small,
+.cat-second,
+.cat-facts dt,
+.cat-month {
+  font-size: 13px;
+  line-height: 1.45;
+  letter-spacing: 0.01em;
+}
+
+.cat-muted,
+.cat-small { color: var(--c-muted); }
+
+.cat-code {
+  font-family: var(--mono);
+  font-size: 14px;
+  font-variant-numeric: normal;
+}
+
+/* Controls */
+
+.cat-text-btn,
+.cat-inline-btn {
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  background: none;
+  color: var(--c-ink);
+  font: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+  text-decoration-color: var(--c-under);
+  cursor: pointer;
+}
+
+.cat-text-btn {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--ctl-h);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.cat-text-btn:hover,
+.cat-inline-btn:hover { text-decoration-color: currentColor; }
+
+.cat-text-btn[aria-disabled="true"] {
+  color: var(--c-muted);
+  text-decoration: none;
+  cursor: default;
+}
+
+@media (pointer: coarse) {
+  .cat-inline-btn { padding: 10px 0; }
+}
+
+.cat-primary {
+  display: inline-flex;
+  align-items: center;
+  height: var(--ctl-h);
+  padding: 0 16px;
+  border: 0;
+  border-radius: 0;
+  background: var(--c-ink);
+  color: var(--c-ground);
+  font: 500 16px/1 var(--sans);
+  text-decoration: none;
+  cursor: pointer;
+}
+.cat-primary:hover { background: color-mix(in srgb, var(--c-ink) 86%, var(--c-ground)); }
+.cat-primary[aria-disabled="true"] {
+  background: var(--c-panel);
+  color: var(--c-muted);
+  cursor: default;
+}
+
+/* The way back to the globe: first on the page, kept in reach on phones. */
+
+.cat-back-row { margin: 0 0 12px; }
+
+.cat-back {
+  display: inline-flex;
+  align-items: center;
+  height: 44px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 0;
+  background: var(--c-panel);
+  color: var(--c-ink);
+  font: 500 16px/1 var(--sans);
+  cursor: pointer;
+}
+.cat-back:hover { background: var(--c-raised); }
+
+.cat-missing,
+.cat-notice {
+  max-width: 62ch;
+  margin: 0 0 12px;
+}
+.cat-notice { padding: 48px 0; }
+.cat-notice code { font-family: var(--mono); font-size: 14px; }
+.cat-notice .cat-text-btn { margin-left: 0.4em; }
+
+/* Layout: the picture and the dock on the left, the facts on the right.
+   The dock sits under the picture, so a long facts column never pushes it
+   down or opens a gap between them. */
+
+.cat-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--info-w);
+  grid-template-rows: auto 1fr;
+  grid-template-areas:
+    "viewer info"
+    "dock info";
+  column-gap: var(--gutter);
+  align-items: start;
+}
+
+.cat-viewer {
+  grid-area: viewer;
+  min-width: 0;
+  width: 100%;
+  height: var(--view-h);
+}
+
+/* One picture, whole, centred in the mat. The img carries the picture's own
+   width and height, so it is never drawn larger than that; it shrinks (and
+   keeps its shape, object-fit) only when the mat is smaller. */
+
+.cat-frame {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  background: var(--c-panel);
+  touch-action: pan-y pinch-zoom;
+}
+
+.cat-img,
+.cat-cell-pick img {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.cat[data-state="loading"] .cat-img { visibility: hidden; }
+
+.cat-fail {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 4px;
+  padding: 24px;
+  background: var(--c-panel);
+}
+.cat-fail-text { margin: 0; }
+.cat-frame.is-failed .cat-img { visibility: hidden; }
+
+/* Compare: two side by side, or two by two. Each picture keeps its ratio,
+   with its caption right under it. */
+
+.cat-compare {
+  display: grid;
+  height: 100%;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: minmax(0, 1fr);
+  gap: 16px;
+}
+
+.cat-cell {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* Each cell is a 4:3 mat no larger than the camera's frame, the picture
+   centred in it at 1x or smaller. */
+.cat-cell-pick {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 1 auto;
+  width: 100%;
+  max-width: 640px;
+  min-height: 0;
+  aspect-ratio: 4 / 3;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  background: var(--c-panel);
+  color: inherit;
+  cursor: pointer;
+}
+.cat-cell.is-active .cat-cell-pick { cursor: default; }
+
+.cat-cell.is-empty .cat-cell-pick { padding: 16px; }
+
+.cat-cell-empty {
+  color: var(--c-muted);
+  font-size: 13px;
+  line-height: 1.45;
+  letter-spacing: 0.01em;
+  text-align: center;
+}
+
+.cat-cell-cap {
+  position: relative;
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 16px;
+  min-height: 62px;   /* two lines, so filled and empty cells keep equal mats */
+  padding: 8px 0 11px;
+}
+/* The active cell, the one the next pick fills: a 3px Ink bar under its caption. */
+.cat-cell-cap::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+}
+.cat-cell.is-active .cat-cell-cap::after { background: var(--c-ink); }
+
+.cat-cell-place {
+  flex: 1 0 100%;
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.cat-cell-time,
+.cat-cell-status {
+  font-size: 13px;
+  line-height: 1.45;
+  letter-spacing: 0.01em;
+}
+.cat-cell-time { color: var(--c-muted); }
+.cat-cell-remove { min-height: 0; font-size: 13px; letter-spacing: 0.01em; }
+
+@media (pointer: coarse) {
+  .cat-cell-remove { min-height: 44px; }
+}
+
+/* Dock: a row of controls, then the filmstrip */
+
+.cat-dock {
+  grid-area: dock;
+  min-width: 0;
+  padding-top: 16px;
+}
+
+.cat-dock-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 24px;
+  min-height: var(--ctl-h);
+}
+
+.cat-modes {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cat-seg {
+  display: inline-flex;
+  background: var(--c-panel);
+}
+
+.cat-seg-btn {
+  height: var(--ctl-h);
+  min-width: 44px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  color: var(--c-muted);
+  font: 500 16px/1 var(--sans);
+  cursor: pointer;
+}
+.cat-seg-btn:hover { background: var(--c-raised); color: var(--c-ink); }
+.cat-seg-btn[aria-pressed="true"] { background: var(--c-ink); color: var(--c-ground); }
+
+.cat-steps {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.cat-dock-end {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 20px;
+  margin-left: auto;
+}
+
+.cat-count {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 0;
+  color: var(--c-muted);
+  font-size: 13px;
+  letter-spacing: 0.01em;
+}
+.cat-count .cat-text-btn { letter-spacing: 0; }
+
+.cat-filter-toggle[aria-expanded="true"] { text-decoration-color: currentColor; }
+
+/* The filters: plain fields in one row, label above, Panel fill, no border. */
+
+.cat .cat-filters {
+  position: static;
+  z-index: auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px 16px;
+  margin: 12px 0 0;
+  padding: 0;
+  background: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  border: 0;
+  font-size: 16px;
+}
+
+.cat .cat-filters .filter,
+.cat .cat-filters .search {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 4px;
+  min-width: 0;
+  margin: 0;
+}
+
+.cat .cat-filters .filter-label {
+  color: var(--c-muted);
+  font-size: 13px;
+  letter-spacing: 0.01em;
+}
+
+.cat .cat-filters .filter select {
+  height: 40px;
+  max-width: 14em;
+  padding: 0 30px 0 10px;
+  background-color: var(--c-panel);
+  background-position: right 11px center;
+  color: var(--c-ink);
+  font-size: 16px;
+  text-align: left;
+}
+.cat .cat-filters .filter select:hover { background-color: var(--c-raised); text-decoration: none; }
+.cat .cat-filters .filter select.is-set { color: var(--c-ink); font-weight: 600; }
+.cat .cat-filters .filter select:disabled { color: var(--c-muted); background-color: var(--c-panel); }
+
+.cat .cat-filters .search { flex: 1 1 200px; max-width: 360px; }
+.cat .cat-filters .search input,
+.cat .cat-filters .search input.is-set {
+  height: 40px;
+  padding: 0 10px;
+  border: 0;
+  background: var(--c-panel);
+  font-size: 16px;
+}
+.cat .cat-filters .search input:hover { background: var(--c-raised); }
+.cat .cat-filters .search input.is-set { font-weight: 600; }
+.cat .cat-filters .search input::placeholder { color: var(--c-muted); }
+
+/* Filmstrip: every picture at its own ratio, one row, newest first,
+   scrolling sideways inside its own row only. */
+
+.cat-strip {
+  display: flex;
+  gap: 4px;
+  margin: 12px 0 0;
+  padding: 0 4px 8px;
+  list-style: none;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--c-raised) transparent;
+}
+
+/* On touch the strip is swiped; a scrollbar there reads as a second
+   selection bar under the thumbnails. */
+@media (pointer: coarse) {
+  .cat-strip { scrollbar-width: none; }
+  .cat-strip::-webkit-scrollbar { display: none; }
+}
+
+.cat-strip-item {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.cat-month {
+  display: block;
+  height: 20px;
+  color: var(--c-muted);
+  line-height: 20px;
+  white-space: nowrap;
+}
+
+.cat-thumb {
+  position: relative;
+  display: block;
+  margin: 4px 0 0;
+  border: 0;
+  border-radius: 0;
+  padding: 0 0 7px;
+  background: none;
+  cursor: pointer;
+}
+
+.cat-thumb img {
+  display: block;
+  width: auto;
+  height: var(--thumb-h);
+  background: var(--c-panel);
+}
+
+/* The selected frame: a 3px Ink bar under it; hover shows the bar at 40%. */
+.cat-thumb::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+}
+.cat-thumb:hover::after { background: var(--c-under); }
+.cat-thumb[aria-current="true"]::after,
+.cat-thumb[aria-pressed="true"]::after { background: var(--c-ink); }
+
+.cat-thumb-ghost {
+  display: block;
+  width: calc(var(--thumb-h) * 4 / 3);
+  height: var(--thumb-h);
+  margin: 4px 0 7px;
+  background: var(--c-panel);
+}
+
+.cat-strip-end {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  max-width: 13em;
+  padding: 20px 0 7px 16px;
+  color: var(--c-muted);
+  font-size: 13px;
+  line-height: 1.45;
+  letter-spacing: 0.01em;
+}
+.cat-strip-end .cat-text-btn { letter-spacing: 0; }
+
+.cat-strip-note {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 16px;
+  min-height: calc(var(--thumb-h) + 39px);
+  margin: 12px 0 0;
+}
+
+/* Info column */
+
+.cat-info {
+  grid-area: info;
+  min-width: 0;
+}
+
+.cat-title {
+  margin: 0;
+  max-width: 26ch;
+  color: var(--c-ink);
+  font-size: clamp(24px, 1rem + 1.2vw, 32px);
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+  outline: none;
+}
+.cat-title:focus-visible { outline: 2px solid var(--accent, #3C9DF5); outline-offset: 2px; }
+
+.cat-when {
+  margin: 8px 0 0;
+  color: var(--c-muted);
+}
+.cat-line { display: block; }
+
+.cat-status,
+.cat-empty-note {
+  max-width: 62ch;
+  margin: 12px 0 0;
+  color: var(--c-ink);
+}
+
+.cat-facts {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  gap: 12px 16px;
+  margin: 24px 0 0;
+}
+.cat-facts dt {
+  margin: 0;
+  padding-top: 2px;
+  color: var(--c-muted);
+}
+.cat-facts dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.cat-value { display: block; }
+.cat-second {
+  display: block;
+  margin-top: 2px;
+  color: var(--c-muted);
+}
+
+.cat-notes { margin-top: 32px; }
+.cat-notes-heading {
+  margin: 0 0 8px;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.cat-notes-text {
+  max-width: 62ch;
+  margin: 0;
+  white-space: pre-line;
+}
+.cat-notes .cat-small { margin: 4px 0 0; }
+
+.cat-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 20px;
+  margin-top: 32px;
+}
+
+.cat-ghost {
+  display: inline-block;
+  height: 0.85em;
+  vertical-align: middle;
+  background: var(--c-raised);
+}
+
+/* Narrower screens: picture, dock, then the facts, one column. */
+
+@media (max-width: 899px) {
+  .cat-in { max-width: none; padding-top: 12px; }
+
+  .cat-grid {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
+    grid-template-areas:
+      "viewer"
+      "dock"
+      "info";
+  }
+
+  .cat-viewer { height: auto; }
+  .cat-frame { aspect-ratio: 4 / 3; height: auto; max-height: 560px; }
+
+  .cat-compare { height: auto; grid-auto-rows: auto; }
+  .cat-compare[data-size="2"] { grid-template-columns: minmax(0, 1fr); }
+
+  .cat-info { margin-top: 32px; }
+
+  /* The way back stays in reach while the page scrolls. */
+  .cat-back-row {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    margin: -12px calc(-1 * var(--m)) 12px;
+    padding: 8px var(--m);
+    background: var(--c-ground);
+  }
+}
+
+@media (max-width: 599px) {
+  .cat-dock-row { gap: 4px 16px; }
+  .cat-dock-end { width: 100%; margin-left: 0; justify-content: space-between; }
+
+  .cat-facts { grid-template-columns: minmax(0, 1fr); row-gap: 0; }
+  .cat-facts dt { padding-top: 12px; }
+  .cat-facts dt:first-child { padding-top: 0; }
+
+  .cat-compare { gap: 12px; }
+  .cat-compare[data-size="4"] .cat-cell-time { display: none; }
+}

@@ -2,12 +2,13 @@
 
 import { h, mono, joined, announce } from './dom.js';
 import {
-  CAMERAS, cameraShort, statusWord, STATUSES, monthLabel, latLon, toDate, utcShort, plural,
+  CAMERAS, cameraShort, statusWord, latLon, toDate, utcShort, plural,
 } from './format.js';
 import {
-  applyFilters, filterOptions, filtersToQuery, hasFilters, readFilters, FILTER_KEYS,
+  applyFilters, filtersToQuery, hasFilters, readFilters, FILTER_KEYS,
 } from './data.js';
 import { justifyRows, mosaicSettings, layoutRatio } from './layout.js';
+import { createFilterForm } from './filters.js';
 
 const EAGER_TILES = 8;
 
@@ -52,56 +53,14 @@ export function createGallery(root, { onQueryChange }) {
   let announceTimer = 0;
   const tiles = new Map();
 
-  /* Filter row */
+  /* Filter row (the form itself is shared with the catalogue: filters.js) */
 
-  const form = h('form', {
-    class: 'filters',
-    role: 'search',
-    'aria-label': 'Filter pictures',
-    hidden: true,
-    onsubmit: (e) => e.preventDefault(),
-  });
-
-  const selects = {};
-  const makeSelect = (key, label) => {
-    const select = h('select', { id: `filter-${key}`, name: key });
-    select.addEventListener('change', () => setFilter(key, select.value));
-    selects[key] = select;
-    return h('div', { class: 'filter' },
-      h('label', { class: 'filter-label', for: `filter-${key}` }, label),
-      select);
-  };
-
-  const search = h('input', {
-    type: 'search',
-    id: 'filter-q',
-    name: 'q',
-    placeholder: 'Titles, notes, tags, people, files',
-    autocomplete: 'off',
-    spellcheck: 'false',
-  });
-  search.addEventListener('input', () => setFilter('q', search.value));
-  search.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && search.value) {
-      e.preventDefault();
-      search.value = '';
-      setFilter('q', '');
-    }
-  });
+  const filterUi = createFilterForm({ onChange: (key, value) => setFilter(key, value) });
+  const { form, search } = filterUi;
+  form.hidden = true;
 
   const summary = h('p', { class: 'filter-summary' });
-
-  form.append(
-    makeSelect('camera', 'Camera'),
-    makeSelect('status', 'Status'),
-    makeSelect('month', 'Month'),
-    makeSelect('member', 'Member'),
-    makeSelect('tag', 'Tag'),
-    h('div', { class: 'search' },
-      h('label', { class: 'filter-label', for: 'filter-q' }, 'Search'),
-      search),
-    summary,
-  );
+  form.append(summary);
 
   /* Mosaic */
 
@@ -142,47 +101,12 @@ export function createGallery(root, { onQueryChange }) {
     return `${shown.length} of ${plural(photos.length, 'picture')} shown`;
   }
 
-  function fillSelect(select, entries, current) {
-    const values = entries.map(([value]) => value);
-    if (current && !values.some((v) => v.toLowerCase() === current.toLowerCase())) {
-      entries = [...entries, [current, `${current} (no pictures)`]];
-    }
-    select.replaceChildren(...entries.map(([value, label]) => h('option', { value }, label)));
-    const match = entries.find(([value]) => value.toLowerCase() === (current || '').toLowerCase());
-    select.value = match ? match[0] : '';
-  }
-
   function syncControls() {
-    const options = filterOptions(photos);
-    const cameraOrder = ['picam', 'adcs'];
-    const cameras = [...options.cameras].sort((a, b) => {
-      const ia = cameraOrder.indexOf(a); const ib = cameraOrder.indexOf(b);
-      return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
-    });
-    fillSelect(selects.camera, [['', 'All'], ...cameras.map((c) => [c, cameraShort(c)])], filters.camera);
-    const statusOrder = STATUSES.map(([s]) => s);
-    const statuses = [...options.statuses].sort((a, b) => statusOrder.indexOf(a) - statusOrder.indexOf(b));
-    fillSelect(selects.status, [['', 'All'], ...statuses.map((s) => [s, statusWord(s)])], filters.status);
-    fillSelect(selects.month, [['', 'All'], ...options.months.map((m) => [m, monthLabel(m)])], filters.month);
-
-    const memberEntries = options.members.length || filters.member
-      ? [['', 'Anyone'], ...options.members.map((m) => [m, m])]
-      : [['', 'No names yet']];
-    fillSelect(selects.member, memberEntries, filters.member);
-    selects.member.disabled = !options.members.length && !filters.member;
-
-    const tagEntries = options.tags.length || filters.tag
-      ? [['', 'Any'], ...options.tags.map((t) => [t, t])]
-      : [['', 'No tags yet']];
-    fillSelect(selects.tag, tagEntries, filters.tag);
-    selects.tag.disabled = !options.tags.length && !filters.tag;
-
-    if (document.activeElement !== search) search.value = filters.q;
+    filterUi.sync(filters);
   }
 
   function markActive() {
-    for (const [key, select] of Object.entries(selects)) select.classList.toggle('is-set', Boolean(filters[key]));
-    search.classList.toggle('is-set', Boolean(filters.q.trim()));
+    filterUi.markActive(filters);
   }
 
   function render() {
@@ -284,6 +208,7 @@ export function createGallery(root, { onQueryChange }) {
     // New or changed data: rebuild the options and the tiles.
     setData(nextPhotos) {
       photos = nextPhotos;
+      filterUi.setPhotos(photos);
       ready = true;
       tiles.clear();
       form.hidden = !photos.length;

@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Everything below resolves from the site's root, like index.html. -->
+  <base href="../">
+  <title>Catalogue test page (CTS-SAT-1)</title>
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#090C10">
+  <link rel="icon" type="image/png" href="assets/cubesat-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Jost:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="assets/style.css">
+  <link rel="stylesheet" href="assets/catalogue.css">
+  <script type="module">
+    // A test bed for assets/catalogue.js with the real data: the route is
+    // #/pictures?..., as in the site. "All details" opens the site's own
+    // picture page. Add from=globe to the query to see the way back.
+    import { loadImages, loadAnnotations, mergeAll } from './assets/data.js';
+    import { createCatalogue } from './assets/catalogue.js';
+
+    const root = document.getElementById('view-pictures');
+    const catalogue = createCatalogue(root, {
+      onQueryChange() {},
+      onBack() {
+        if (history.length > 1) history.back();
+        else location.assign('globe/index.html');
+      },
+    });
+
+    function route() {
+      const raw = location.hash.replace(/^#/, '');
+      const qi = raw.indexOf('?');
+      const path = qi >= 0 ? raw.slice(0, qi) : raw;
+      const query = qi >= 0 ? raw.slice(qi + 1) : '';
+      catalogue.show(new URLSearchParams(path === '/pictures' ? query : ''));
+    }
+    window.addEventListener('hashchange', route);
+    route();
+
+    const [images, annotations] = await Promise.allSettled([loadImages(), loadAnnotations()]);
+    if (images.status === 'rejected') {
+      catalogue.showError(["Couldn't load the picture list (data/images.json)."]);
+    } else {
+      // Test hook until the build marks dark frames: ?dark=<id>,<id> on this
+      // page (not in the hash) marks those pictures dark.
+      const fakeDark = new URLSearchParams(location.search).get('dark');
+      if (fakeDark) {
+        const ids = new Set(fakeDark.split(','));
+        for (const img of images.value.images) if (ids.has(img.id)) img.dark = true;
+      }
+      const ann = annotations.status === 'fulfilled' ? annotations.value.annotations : {};
+      catalogue.setData(mergeAll(images.value.images, ann));
+    }
+  </script>
+</head>
+<body data-view="pictures">
+  <a class="skip" href="#main" onclick="event.preventDefault(); document.getElementById('main').focus();">Skip to content</a>
+  <header class="site-head">
+    <nav class="nav" aria-label="Main">
+      <a class="brand" href="index.html" aria-label="CTS-SAT-1 pictures, by CalgaryToSpace">
+        <img class="brand-logo" src="assets/calgarytospace-logo.png" width="640" height="204" alt="">
+        <span class="wordmark">CTS-SAT-1</span>
+      </a>
+      <div class="nav-side nav-right">
+        <a href="dev/catalogue.html" aria-current="page">Pictures</a>
+        <a href="globe/index.html">Orbit</a>
+        <a href="index.html#/about">About</a>
+      </div>
+    </nav>
+  </header>
+
+  <main id="main" tabindex="-1">
+    <section class="view" id="view-pictures" aria-label="Pictures"></section>
+  </main>
+
+  <p class="vh" id="announce" aria-live="polite"></p>
+</body>
+</html>
