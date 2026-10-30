@@ -7,6 +7,7 @@
   <meta name="description" content="Things happening on Earth worth photographing from orbit, and when CTS-SAT-1 (FrontierSat) next passes over each in the right light.">
   <meta name="color-scheme" content="dark">
   <meta name="theme-color" content="#05070A">
+  <link rel="icon" type="image/png" href="../assets/cubesat-icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600&display=swap">
@@ -18,6 +19,7 @@
   </script>
 </head>
 <body>
+  <a class="skip" href="#main">Skip to content</a>
   <header class="top">
     <nav class="nav" aria-label="Main">
       <a class="brand" href="../index.html#/" aria-label="CTS-SAT-1, explore: where the satellite is now">
@@ -34,18 +36,24 @@
     </nav>
   </header>
 
-  <main class="page" id="main">
+  <main class="page" id="main" tabindex="-1">
     <div class="intro">
       <h1>Watchlist</h1>
       <p class="lead" id="lead">Things happening on Earth that <span class="name">CTS-SAT-1</span> will pass over soon, in the right light for a picture.</p>
-      <p class="status" id="status" aria-live="polite">Loading the watchlist.</p>
+      <p class="status" id="status">Loading the watchlist.</p>
       <div class="notes" id="notes"></div>
     </div>
 
+    <!-- Says only what a screen reader should hear once: the list arriving and
+         a filter changing it. The "Made 2 h ago" line above changes every 30 s,
+         so it stays out of here. -->
+    <p class="vh" id="announce" role="status"></p>
+
     <div class="filters" id="filters" role="group" aria-label="Show" hidden></div>
 
-    <ol class="list" id="list" aria-label="Coming passes"></ol>
+    <ol class="list" id="list" aria-label="Coming passes, the next first"></ol>
     <p class="empty" id="empty" hidden></p>
+    <p class="pane-hint" id="pane-hint" hidden>Pick an event to see its map, its other passes and its links.</p>
 
     <section class="later" id="later" hidden aria-labelledby="later-title">
       <h2 id="later-title">No pass close enough yet</h2>
@@ -53,12 +61,12 @@
       <ul id="later-list"></ul>
     </section>
 
-    <section class="how" aria-labelledby="how-title">
-      <h2 id="how-title">How this list is made</h2>
+    <details class="how">
+      <summary><h2>How this list is made</h2><span class="icon" aria-hidden="true"></span></summary>
       <div id="how">
         <p>A scheduled job, with no person or AI in the loop, collects open events from public feeds and works out from the satellite's orbital elements when the ground below it next comes close to each one.</p>
       </div>
-    </section>
+    </details>
   </main>
 
   <footer class="foot">

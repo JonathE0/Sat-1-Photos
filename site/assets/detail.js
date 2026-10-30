@@ -66,7 +66,7 @@ function detailAlt(p) {
   if (d) when = `taken ${utcLong(d, false)}`;
   else if (p.captureDate) when = `taken on ${dayMonthYear(toDate(p.captureDate))}`;
   // A computed place belongs to the computed time, not a member's edited one.
-  const stale = p.edited.captured_at && !p.edited.position && !sameTime(p.capturedAt, p.raw.captured_at);
+  const stale = !p.positionRecomputed && p.edited.captured_at && !p.edited.position && !sameTime(p.capturedAt, p.raw.captured_at);
   let where = '';
   if (p.place) where = ` over ${p.place}`;
   else if (!stale && p.computedPlace) where = ` over ${p.computedPlace}`;
@@ -210,20 +210,30 @@ export function createDetail(root, ctx) {
     return link;
   }
 
+  function shotImage(p) {
+    const image = h('img', {
+      src: p.src,
+      width: p.width,
+      height: p.height,
+      alt: detailAlt(p),
+      decoding: 'async',
+      fetchpriority: 'high',
+      style: `max-width: ${p.width}px`, // never past its own size: the frames are small and grainy enlarged
+    });
+    image.addEventListener('error', () => {
+      const failed = h('p', { class: 'shot-fail' }, 'This picture didn’t load. ',
+        h('button', { type: 'button', class: 'linkish', onclick: () => failed.replaceWith(shotImage(p)) }, 'Try again'));
+      image.replaceWith(failed);
+    });
+    return image;
+  }
+
   function stage(p, prev, next, globe) {
     const note = shotNote(p);
     return h('div', { class: 'stage-wrap' },
       h('div', { class: 'stage', style: `--pic-w: ${p.width}px` }, // the arrows stay beside the picture
         h('figure', { class: 'shot' },
-          h('img', {
-            src: p.src,
-            width: p.width,
-            height: p.height,
-            alt: detailAlt(p),
-            decoding: 'async',
-            fetchpriority: 'high',
-            style: `max-width: ${p.width}px`, // never past its own size: the frames are small and grainy enlarged
-          }),
+          shotImage(p),
           note && h('figcaption', { class: 'shot-note' }, note)),
         h('nav', { class: 'stepper', 'aria-label': 'Browse pictures' },
           stepLink(prev, 'prev'),
@@ -288,6 +298,10 @@ export function createDetail(root, ctx) {
       out.push(sub(`Satellite: ${light}`));
     } else if (typeof pos.satellite_sunlit === 'boolean') {
       out.push(sub(`Satellite: ${pos.satellite_sunlit ? 'sunlit' : 'in Earth’s shadow'}`));
+    }
+    if (p.positionRecomputed) {
+      out.push(sub('Altitude and light are worked out from the orbit at this time.', 'small'));
+      return out;
     }
     const computed = isObject(p.raw.position);
     if (computed && p.edited.position) {

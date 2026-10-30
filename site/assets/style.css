@@ -40,6 +40,7 @@ html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
   background: var(--bg);
+  scroll-padding-top: calc(var(--nav-h) + 12px); /* keyboard focus is never left under the sticky nav */
 }
 
 body {
@@ -162,8 +163,12 @@ h1, h2, h3 { font-weight: 600; }
 .nav-side { display: flex; align-items: center; gap: 24px; min-width: 0; }
 .nav-right { justify-content: flex-end; }
 
+/* 44px tall to tap, whatever the size of the words. */
 .nav-side a,
 .nav-btn {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
   border: 0;
   padding: 0;
   background: none;
@@ -195,7 +200,8 @@ body[data-view="explore"] .site-head {
   border-bottom: 0;
   pointer-events: none;
 }
-body[data-view="explore"] .nav > * { pointer-events: auto; }
+body[data-view="explore"] .brand,
+body[data-view="explore"] .nav-side > * { pointer-events: auto; } /* the gaps between them still drag the globe */
 body[data-view="explore"] .nav-side a,
 body[data-view="explore"] .nav-btn { color: var(--fg); }
 body[data-view="explore"] .wordmark,
@@ -450,6 +456,8 @@ body[data-view="explore"] .name-ctl { display: none; }
   max-height: calc(100vh - var(--nav-h) - 150px);
   object-fit: contain;
 }
+
+.shot-fail { min-height: 240px; margin: 0; padding-top: 104px; text-align: center; }
 
 .shot-note {
   max-width: 46em;
@@ -808,9 +816,19 @@ body[data-view="explore"] .name-ctl { display: none; }
 
 /* six links and the logo share the narrowest phones' width */
 @media (max-width: 430px) {
-  .nav { gap: 8px; font-size: 12px; }
+  .nav { gap: 8px; }
   .nav-side { gap: 8px; }
   .brand-logo { height: 18px; }
+}
+
+@media (max-width: 389px) {
+  .nav { font-size: 12px; }
+}
+
+/* The six links alone fill the narrowest phones; Explore goes to the same place as the logo. */
+@media (max-width: 359px) {
+  .nav { justify-content: flex-end; }
+  .brand { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {

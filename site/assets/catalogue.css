@@ -16,6 +16,7 @@
   --gutter: 24px;
   --ctl-h: 36px;      /* control height; 44px on touch */
   --thumb-h: 72px;
+  --strip-h: calc(var(--thumb-h) + 39px); /* a month label, a thumbnail and its bar */
   --info-w: 400px;
   --back-h: 0px;
   --dock-h: 190px;    /* the dock under the picture; catalogue.js measures it */
@@ -27,7 +28,7 @@
      on it at 1x or smaller. On a short window Two and Four outgrow that, for
      pictures worth comparing, and the page scrolls to the dock. The whole
      catalogue is capped at a width where two pictures side by side still fit
-     at 1x. */
+     at 1x, and on very wide screens where four do (at the end of this file). */
   --view-max: 720px;
   --view-fit: clamp(240px, calc(100svh - var(--nav-h, 60px) - var(--back-h) - var(--dock-h) - 48px), var(--view-max));
   --view-h: var(--view-fit);
@@ -115,8 +116,14 @@
   cursor: default;
 }
 
+/* A larger target on touch, without spreading the lines of text around it. */
 @media (pointer: coarse) {
-  .cat-inline-btn { padding: 10px 0; }
+  .cat-inline-btn { position: relative; }
+  .cat-inline-btn::after {
+    content: "";
+    position: absolute;
+    inset: -13px -6px;
+  }
 }
 
 .cat-primary {
@@ -226,6 +233,20 @@
 }
 .cat-fail-text { margin: 0; }
 .cat-frame.is-failed .cat-img { visibility: hidden; }
+
+/* No picture to show: the filters let nothing through. */
+.cat-none {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  align-content: center;
+  justify-content: center;
+  gap: 0 16px;
+  height: 100%;
+  min-height: 240px;
+  margin: 0;
+  padding: 24px;
+}
 
 /* Compare: two side by side, or two by two, centred on the stage as a group,
    each caption directly under its picture and starting at its left edge.
@@ -508,7 +529,7 @@
   overflow-y: hidden;
   overscroll-behavior-x: contain;
   scrollbar-width: thin;
-  scrollbar-color: var(--c-raised) transparent;
+  scrollbar-color: var(--c-muted) transparent; /* says there is more to the right */
 }
 
 /* On touch the strip is swiped; a scrollbar there reads as a second
@@ -562,6 +583,16 @@
 .cat-thumb:hover::after { background: var(--c-under); }
 .cat-thumb[aria-current="true"]::after { background: var(--c-ink); }
 
+/* A thumbnail that didn't load: its flat frame, not a broken-image icon. */
+.cat-thumb.is-failed {
+  background: var(--c-panel);
+  background-clip: content-box;
+}
+.cat-thumb.is-failed img {
+  width: calc(var(--thumb-h) * 4 / 3);
+  visibility: hidden;
+}
+
 /* Compare: the active cell's picture has the full bar, the others in cells
    have it at 40%, and hover shows nothing (it would read as a cell). */
 .cat:not([data-size="1"]) .cat-thumb:hover::after { background: none; }
@@ -581,7 +612,7 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 0 16px;
-  min-height: calc(var(--thumb-h) + 39px);
+  min-height: var(--strip-h);
   margin: 12px 0 0;
 }
 
@@ -652,6 +683,7 @@
   max-width: 62ch;
   margin: 0;
   white-space: pre-line;
+  overflow-wrap: anywhere; /* a long link can't widen the page */
 }
 .cat-notes .cat-small { margin: 4px 0 0; }
 
@@ -688,11 +720,17 @@
 
   .cat-viewer { height: auto; }
   .cat-frame { aspect-ratio: 4 / 3; height: auto; max-height: 560px; }
+  .cat-none { min-height: 200px; }
 
   /* The stage grows with its cells here: no height to share out. */
   .cat-compare,
   .cat-compare[data-size="4"] { --cell-h: 10000px; height: auto; }
-  .cat-compare[data-size="2"] { --cols: 1; }
+
+  /* Comparing: the strip comes straight under the stage, so a picked
+     thumbnail is seen landing in its cell. */
+  .cat:not([data-size="1"]) .cat-dock { display: flex; flex-direction: column; }
+  .cat:not([data-size="1"]) .cat-strip,
+  .cat:not([data-size="1"]) .cat-strip-note { order: -1; margin: 0 0 8px; }
 
   .cat-info { margin-top: 32px; }
 
@@ -717,6 +755,74 @@
   /* 24px between rows, so the active bar doesn't read as a divider. */
   .cat-compare { --pad-s: 12px; --col-gap: 12px; row-gap: 24px; }
   .cat-compare[data-size="4"] .cat-cell-time { display: none; }
+  .cat { --cap-h: 64px; }
+
+  /* Two on a phone: one above the other, each caption beside its picture,
+     and short enough that both and the strip are on the screen together. */
+  .cat-compare[data-size="2"] {
+    --cols: 1;
+    --cell-w: calc(var(--stage-w, 358px) - 2 * var(--pad-s) - var(--side-cap));
+    --cell-h: calc((100svh - var(--nav-h, 52px) - var(--back-h) - 12px - 2 * var(--pad-s) - 24px - 8px - var(--strip-h)) / 2);
+  }
+}
+
+@media (max-width: 599px) and (pointer: coarse) {
+  .cat { --cap-h: 85px; } /* Remove is 44px tall */
+}
+
+/* A phone on its side: nothing is taller than the screen. One picture has the
+   whole height, Two and Four share what the strip leaves, in one row. */
+@media (max-width: 899px) and (max-height: 500px) and (orientation: landscape) {
+  .cat { --thumb-h: 56px; --cap-h: 64px; }
+  .cat-frame {
+    aspect-ratio: auto;
+    height: calc(100svh - var(--nav-h, 60px) - var(--back-h) - 24px);
+    max-height: none;
+  }
+  .cat-compare { --pad-s: 6px; --col-gap: 12px; }
+  .cat-compare,
+  .cat-compare[data-size="4"] {
+    --cell-h: calc(100svh - var(--nav-h, 60px) - var(--back-h) - 12px - 2 * var(--pad-s) - 8px - var(--strip-h) - var(--cap-h) - 1px);
+  }
+  .cat-compare[data-size="4"] { --cols: 4; }
+  .cat-compare[data-size="4"] .cat-cell-time { display: none; }
+  .cat-compare[data-size="2"] {
+    --cols: 2;
+    --cell-w: calc((var(--stage-w, 640px) - 2 * var(--pad-s) - var(--col-gap)) / 2 - var(--side-cap));
+    --cell-h: calc(100svh - var(--nav-h, 60px) - var(--back-h) - 12px - 2 * var(--pad-s) - 8px - var(--strip-h));
+  }
+}
+
+@media (max-width: 899px) and (max-height: 500px) and (orientation: landscape) and (pointer: coarse) {
+  .cat { --cap-h: 85px; }
+}
+
+/* Two on a phone, either way up: the caption beside the picture, which keeps
+   the height for the picture. */
+@media (max-width: 599px), (max-width: 899px) and (max-height: 500px) and (orientation: landscape) {
+  .cat-compare[data-size="2"] {
+    --side-cap: 112px;
+    grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+    justify-content: stretch;
+  }
+  .cat-compare[data-size="2"] .cat-cell {
+    grid-template-columns: auto minmax(0, 1fr);
+    column-gap: 12px;
+    justify-items: stretch;
+  }
+  .cat-compare[data-size="2"] .cat-cell-cap {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: flex-start;
+    width: auto;
+    min-width: 0;
+    min-height: 0;
+    padding: 0 0 11px;
+  }
+  .cat-compare[data-size="2"] .cat-cell-place,
+  .cat-compare[data-size="2"] .cat-cell-status { flex: none; }
+  .cat-compare[data-size="2"] .cat-cell-status { order: 0; }
 }
 
 /* Tall, wide screens: the dock spans both columns and the strip becomes a
@@ -736,4 +842,22 @@
     overflow: visible;
     row-gap: 8px;
   }
+}
+
+/* Very wide screens: a wider cap, and on the widest Four sits in one row,
+   every picture at its own size. */
+@media (min-width: 2400px) {
+  .cat { --content-max: 2400px; --info-w: 480px; }
+}
+@media (min-width: 3000px) {
+  .cat { --content-max: 3400px; --info-w: 560px; }
+  .cat-compare[data-size="4"] {
+    --cols: 4;
+    --cell-h: calc(var(--view-h) - 2 * var(--pad-s) - var(--cap-h) - 1px);
+  }
+}
+/* A 4K screen: larger thumbnails (they are 360px tall, so still not enlarged)
+   fill the height under the stage. */
+@media (min-width: 3000px) and (min-height: 1500px) {
+  .cat { --thumb-h: 240px; --view-max: 1200px; }
 }
