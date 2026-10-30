@@ -34,22 +34,32 @@ function build() {
       <button type="button" class="credits-close" data-close>Close</button>
     </div>
     <img class="credits-logo" src="${logo}" width="640" height="204" alt="CalgaryToSpace">
-    <p>Earth: NASA Blue Marble, Black Marble and cloud imagery. Orbital elements:
-      <a href="https://www.space-track.org/">Space-Track.org</a>. Packets: the
-      <a href="https://network.satnogs.org/">SatNOGS network</a> and the CalgaryToSpace ground station.
-      Place names: © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>.
-      Country borders: <a href="https://www.naturalearthdata.com/">Natural Earth</a> (public domain).</p>
-    <p>Sky: the <a href="http://tdc-www.harvard.edu/catalogs/bsc5.html">Yale Bright Star Catalogue</a>
-      (Hoffleit and Warren, 1991) and the Moon from NASA's Scientific Visualization Studio
-      (<a href="https://svs.gsfc.nasa.gov/4720">CGI Moon Kit</a>).</p>
-    <p>CubeSat model: NASA IceCube, a 3U like CTS-SAT-1, by NASA/Christopher R. Meaney (NASA 3D Resources,
-      public domain); drawn far larger than life.</p>
     <ul class="credits-links">
       <li><a href="https://www.calgarytospace.ca/">calgarytospace.ca</a></li>
       <li><a href="https://frontiersat.mooo.com/">FrontierSat dashboard</a>, live beacon data</li>
       <li><a href="https://github.com/CalgaryToSpace">github.com/CalgaryToSpace</a></li>
     </ul>
-    <p class="credits-made">Website designed by Jonathan Eng and Claude <span aria-hidden="true">🛰️</span></p>
+    <p class="credits-made">Website designed by Jonathan Eng and <span>Claude <span aria-hidden="true">🛰️</span></span></p>
+    <section class="credits-section">
+      <h3>Thank you</h3>
+      <p>To the mission operations team, who do a great job of keeping FrontierSat running and getting its
+        pictures down to Earth. None of this would be possible without them.</p>
+      <p>That thanks extends to the whole CalgaryToSpace team, whose work designing, building and testing the
+        satellite put it in orbit in the first place.</p>
+    </section>
+    <section class="credits-section">
+      <h3>Sources</h3>
+      <p>Earth: NASA Blue Marble, Black Marble and cloud imagery. Orbital elements:
+        <a href="https://www.space-track.org/">Space-Track.org</a>. Packets: the
+        <a href="https://network.satnogs.org/">SatNOGS network</a> and the team's own ground station.
+        Place names: © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>.
+        Country borders: <a href="https://www.naturalearthdata.com/">Natural Earth</a> (public domain).</p>
+      <p>Sky: the <a href="http://tdc-www.harvard.edu/catalogs/bsc5.html">Yale Bright Star Catalogue</a>
+        (Hoffleit and Warren, 1991) and the Moon from NASA's Scientific Visualization Studio
+        (<a href="https://svs.gsfc.nasa.gov/4720">CGI Moon Kit</a>).</p>
+      <p>CubeSat model: NASA IceCube, a 3U like CTS-SAT-1, by NASA/Christopher R. Meaney (NASA 3D Resources,
+        public domain); drawn far larger than life.</p>
+    </section>
     <div class="credits-news"></div>`;
   return dialog;
 }

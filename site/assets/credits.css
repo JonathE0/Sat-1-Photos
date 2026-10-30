@@ -52,8 +52,11 @@
 .credits a:hover { text-decoration-color: currentColor; }
 .credits :focus-visible { outline: 2px solid var(--cr-blue); outline-offset: 2px; }
 
-.credits-links { display: flex; flex-wrap: wrap; gap: 6px 24px; margin: 4px 0 20px; padding: 0; list-style: none; }
+.credits-links { display: flex; flex-wrap: wrap; gap: 6px 24px; margin: 0 0 12px; padding: 0; list-style: none; }
 .credits p.credits-made { margin: 0 0 20px; color: var(--cr-ink); }
+.credits-made > span { white-space: nowrap; } /* the emoji stays with the name */
+.credits-section { margin-bottom: 8px; padding-top: 16px; border-top: 1px solid #1C242D; }
+.credits-section h3 { margin: 0 0 8px; font-size: 16px; font-weight: 600; line-height: 1.3; }
 .credits-news:empty { display: none; }
 .credits-news { padding-top: 16px; border-top: 1px solid #1C242D; }
 
