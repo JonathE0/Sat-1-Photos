@@ -114,6 +114,15 @@
   display: none;
 }
 
+/* beside the switch, out of the group's width: only the switch is centred, so
+   it stays put when the zoom appears in map mode */
+.cg:not(.cg-narrow) .cg-seg-zoom {
+  position: absolute;
+  top: 0;
+  left: 100%;
+  margin-left: calc(8 * var(--cg-u, 1px));
+}
+
 /* narrow: the switch top right, clear of the title on the left; zoom at the
    right edge just above the bottom bar, under any open sheet */
 .cg-narrow .cg-views {
