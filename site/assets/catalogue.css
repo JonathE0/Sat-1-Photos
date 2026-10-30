@@ -671,7 +671,7 @@
   /* The way back stays in reach while the page scrolls. */
   .cat-back-row {
     position: sticky;
-    top: 0;
+    top: calc(var(--nav-h, 52px) + 1px); /* under the sticky site nav */
     z-index: 5;
     margin: -12px calc(-1 * var(--m)) 12px;
     padding: 8px var(--m);

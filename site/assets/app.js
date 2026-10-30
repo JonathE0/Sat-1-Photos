@@ -154,8 +154,13 @@ function parseRoute() {
   const qi = raw.indexOf('?');
   const path = qi >= 0 ? raw.slice(0, qi) : raw;
   const query = qi >= 0 ? raw.slice(qi + 1) : '';
-  // An old gallery link with filters (#/?camera=picam) opens the catalogue.
-  if (path === '' || path === '/') return query ? { view: 'pictures', query } : { view: 'explore' };
+  // #/?credits=1 (from the Orbit page's Credits link) opens the globe with its
+  // credits panel; an old gallery link with filters (#/?camera=picam) opens
+  // the catalogue.
+  if (path === '' || path === '/') {
+    if (new URLSearchParams(query).get('credits') === '1') return { view: 'explore', credits: true };
+    return query ? { view: 'pictures', query } : { view: 'explore' };
+  }
   if (path === '/pictures' || path === '/pictures/') return { view: 'pictures', query };
   const photo = /^\/photo\/([^/]+)\/?$/.exec(path);
   if (photo) {
@@ -194,6 +199,10 @@ function route() {
 
   if (next.view === 'explore') {
     document.title = 'CTS-SAT-1 · Interactive picture visualizer';
+    if (next.credits) {
+      state.creditsAfterRoute = true;
+      history.replaceState(history.state, '', '#/');
+    }
     if (previous !== 'explore') journey.show();
     if (state.creditsAfterRoute) {
       state.creditsAfterRoute = false;

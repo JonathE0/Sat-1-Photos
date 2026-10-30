@@ -137,7 +137,11 @@ h1, h2, h3 { font-weight: 600; }
 
 /* Header and nav */
 
+/* The nav stays on screen on every page. */
 .site-head {
+  position: sticky;
+  top: 0;
+  z-index: 30;
   background: var(--bg);
   border-bottom: 1px solid var(--hair);
 }
@@ -182,7 +186,7 @@ h1, h2, h3 { font-weight: 600; }
    ends with the story, so there is no footer under it. */
 body[data-view="explore"] { --jy-nav: var(--nav-h); }
 body[data-view="explore"] .site-head {
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   right: 0;
@@ -255,7 +259,7 @@ body[data-view="explore"] .name-ctl { display: none; }
 
 .filters {
   position: sticky;
-  top: 0;
+  top: calc(var(--nav-h) + 1px); /* under the sticky nav */
   z-index: 10;
   display: flex;
   flex-wrap: wrap;
@@ -416,7 +420,7 @@ body[data-view="explore"] .name-ctl { display: none; }
 
 .stage {
   position: sticky;
-  top: 0;
+  top: calc(var(--nav-h) + 1px); /* under the sticky nav */
   height: calc(100vh - var(--nav-h) - 1px);
   min-height: 360px;
   display: flex;
