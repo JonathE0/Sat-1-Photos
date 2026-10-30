@@ -239,6 +239,13 @@
   cursor: default;
 }
 
+/* beside a sheet at the side, as the switch is */
+@media (min-width: 760px), (min-width: 480px) and (orientation: landscape) {
+  .cg-narrow:is([data-tab="sat"], [data-tab="passes"], [data-tab="photos"]) .cg-cw {
+    right: calc(min(360px, 45%) + 12px);
+  }
+}
+
 /* narrow: under the switch at the top right */
 .cg-narrow .cg-swatch {
   width: 44px;

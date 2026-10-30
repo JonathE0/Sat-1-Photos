@@ -7,7 +7,7 @@
 // SGP4 implementations and coordinate conversions.
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { applyAnnotations, launchTime, toIsoUtc, toPhotos } from '../adapter.js';
+import { applyAnnotations, comparePhotos, launchTime, toIsoUtc, toPhotos, whenKnown } from '../adapter.js';
 import * as astro from '../astro.js';
 import * as wheel from '../colorwheel.js';
 import { labelBox, placeLabel } from '../labels.js';
@@ -608,6 +608,29 @@ check('compass points', astro.compassPoint(0) === 'N' && astro.compassPoint(355)
     'picam: Earth-fixed to the scene matches earth.js (x, z, -y), turned by GMST',
     a.x === 1 && a.y === 0 && Math.abs(b.z + 1) < 1e-12 && pole.y === 1 && Math.abs(turned.z + 1) < 1e-12,
   );
+}
+
+// ---- pictures without a time ---------------------------------------------------------------
+{
+  check(
+    'pictures: a time, only a date and no date are told apart',
+    whenKnown({ capturedAtUTC: '2026-10-24T17:37:32Z', captureDate: '2026-10-24' }) === 'time' &&
+      whenKnown({ capturedAtUTC: null, captureDate: '2026-10-24' }) === 'date' && whenKnown({ capturedAtUTC: null, captureDate: null }) === 'none' &&
+      whenKnown({ ms: null, capturedAtUTC: 'junk', captureDate: null }) === 'none',
+  );
+  let list = toPhotos(read('../../data/images.json'), { base: 'http://example.test/' });
+  list = applyAnnotations(list, read('../../data/annotations.json'));
+  list.sort(comparePhotos);
+  const kinds = list.map(whenKnown);
+  const n = (k) => kinds.filter((x) => x === k).length;
+  check(
+    'pictures: the three groups add up to all of them, in order, and the undated are their own',
+    n('time') + n('date') + n('none') === list.length && kinds.join() === [...kinds].sort((a, b) => ['time', 'date', 'none'].indexOf(a) - ['time', 'date', 'none'].indexOf(b)).join(),
+    `${n('time')} with a time, ${n('date')} with only a date, ${n('none')} with neither, of ${list.length}`,
+  );
+  const times = list.filter((p) => whenKnown(p) === 'time').map((p) => Date.parse(p.capturedAtUTC));
+  const dates = list.filter((p) => whenKnown(p) === 'date').map((p) => p.captureDate);
+  check('pictures: newest first within each group', times.every((t, i) => !i || t <= times[i - 1]) && dates.every((d, i) => !i || d <= dates[i - 1]));
 }
 
 // ---- labels keeping clear of each other (labels.js) --------------------------------------------

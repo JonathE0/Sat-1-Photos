@@ -369,6 +369,13 @@
   align-self: flex-start;
 }
 
+/* a touch screen has no keys to learn */
+@media (hover: none) and (pointer: coarse) {
+  .cg-keys {
+    display: none;
+  }
+}
+
 .cg-keys summary {
   font: 500 var(--cg-small)/1.45 var(--cg-sans);
   color: var(--cg-text);

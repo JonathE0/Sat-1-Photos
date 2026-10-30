@@ -10,6 +10,7 @@
  *   search.tick(ms);   // a few times a second, from the page's clock
  */
 import { findPlaces, getPlace, loadCountries } from '../explore/journey-region.js';
+import { rovingList } from './rovinglist.js';
 import { FAR_DAYS } from './timepick.js';
 import { bestPass, findRegionPassesAsync, fmtKm, SEARCH_DAYS } from './regionpasses.js';
 
@@ -80,9 +81,9 @@ export function createPlaceSearch({ getOrbit, getTime, onJump, onPlace = () => {
     <p class="cg-place-status" aria-live="polite"></p>
     <div class="cg-place-results" hidden>
       <p class="cg-fine cg-place-note"></p>
-      <ol class="cg-list cg-passes cg-place-passes"></ol>
+      <ol class="cg-list cg-passes cg-place-passes" role="list"></ol>
       <p class="cg-fine cg-place-later" hidden></p>
-      <ol class="cg-list cg-passes cg-place-passes cg-place-best-list" hidden></ol>
+      <ol class="cg-list cg-passes cg-place-passes cg-place-best-list" role="list" hidden></ol>
       <p class="cg-place-reason"></p>
       <p class="cg-fine cg-place-accuracy" hidden></p>
       <button type="button" class="cg-btn cg-place-again" hidden></button>
@@ -95,6 +96,9 @@ export function createPlaceSearch({ getOrbit, getTime, onJump, onPlace = () => {
   const status = $('.cg-place-status');
   const results = $('.cg-place-results');
   const again = $('.cg-place-again');
+
+  // the passes and their Preview buttons are one Tab stop, with the arrow keys inside
+  const resultsList = rovingList(results, { items: '.cg-place-pass, .cg-place-shot' });
 
   let suggestions = [];
   let active = -1;
@@ -292,6 +296,9 @@ export function createPlaceSearch({ getOrbit, getTime, onJump, onPlace = () => {
     const bestLater = best && best.index >= SHOWN ? passes[best.index] : null;
     olBest.replaceChildren(...(bestLater ? [passButton(bestLater, true)] : []));
     olBest.hidden = later.hidden = !bestLater;
+    olShown.setAttribute('aria-label', `Next passes over ${found.place.name}. Arrow keys move between them.`);
+    olBest.setAttribute('aria-label', 'The best pass. Arrow keys move between them.');
+    resultsList.refresh();
     if (bestLater) later.textContent = `Best of the next ${passes.length} passes`;
     $('.cg-place-note').textContent =
       `Crossings after ${utc(fromMs)}, each at its nearest to the middle. Times in Calgary.`;

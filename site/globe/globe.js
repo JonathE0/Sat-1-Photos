@@ -11,13 +11,14 @@
  * site layout (../data/*.json next to this folder).
  */
 import { loadCountries, placeAt, placeInSentence } from '../explore/journey-region.js';
-import { annotationUrls, applyAnnotations, launchTime, toPhotos } from './adapter.js';
+import { annotationUrls, applyAnnotations, comparePhotos, launchTime, toPhotos, whenKnown } from './adapter.js';
 import * as astro from './astro.js';
 import { createColorWheel } from './colorwheel.js';
 import { createMap } from './map2d.js';
 import { createPlaceSearch } from './placesearch.js';
 import { fmtKm } from './regionpasses.js';
 import { createShotPanel } from './shotpanel.js';
+import { rovingList } from './rovinglist.js';
 import { createScene, DEFAULT_DISTANCE } from './scene.js';
 import { createTimePicker, FAR_DAYS, offBy } from './timepick.js';
 
@@ -131,12 +132,12 @@ const TEMPLATE = `
 
   <div class="cg-views">
     <div class="cg-views-main" data-ref="viewsMain">
-      <div class="cg-seg cg-seg-view" role="group" aria-label="View" data-ref="views">
+      <div class="cg-seg cg-seg-view" role="group" aria-label="View. Arrow keys move between them." data-ref="views">
         <button type="button" data-view="globe" aria-pressed="true" title="Globe (M)">Globe</button>
         <button type="button" data-view="map" aria-pressed="false" title="Map (M)">Map</button>
       </div>
     </div>
-    <div class="cg-seg cg-seg-zoom" role="group" aria-label="Map zoom">
+    <div class="cg-seg cg-seg-zoom" role="group" aria-label="Map zoom. Arrow keys move between them." data-ref="zoom">
       <button type="button" data-ref="zoomOut" aria-label="Zoom out" title="Zoom out (−)">−</button>
       <button type="button" data-ref="zoomIn" aria-label="Zoom in" title="Zoom in (+)">+</button>
     </div>
@@ -176,12 +177,13 @@ const TEMPLATE = `
       <p class="cg-fine cg-tle" data-ref="tle"></p>
       </div>
     </section>
-    <details class="cg-keys">
+    <details class="cg-keys" data-ref="keys">
       <summary>Keys</summary>
       <dl>
         <div><dt><kbd>Space</kbd></dt><dd>Pause or play</dd></div>
         <div><dt><kbd>N</kbd></dt><dd>Back to now</dd></div>
         <div><dt><kbd>←</kbd> <kbd>→</kbd></dt><dd>One minute (with Shift, one hour)</dd></div>
+        <div><dt><kbd>↑</kbd> <kbd>↓</kbd></dt><dd>Move along a list or a row of buttons</dd></div>
         <div><dt><kbd>F</kbd></dt><dd>Follow the satellite</dd></div>
         <div><dt><kbd>T</kbd></dt><dd>Go to a date and time</dd></div>
         <div><dt><kbd>M</kbd></dt><dd>Switch between globe and map</dd></div>
@@ -200,7 +202,7 @@ const TEMPLATE = `
       <div class="cg-calgary-passes" data-ref="calgaryPasses">
         <p class="cg-fine cg-passes-note">Times in Calgary, for passes higher than ${PASS_MASK_DEG}°.</p>
         <p class="cg-status" data-ref="gs"></p>
-        <ol class="cg-list cg-passes" data-ref="passes"></ol>
+        <ol class="cg-list cg-passes" data-ref="passes" role="list" aria-label="Next passes over Calgary. Arrow keys move between them."></ol>
       </div>
     </section>
     <section class="cg-panel cg-panel-photos" data-panel="photos" aria-label="Pictures">
@@ -209,7 +211,7 @@ const TEMPLATE = `
         <span class="cg-fine" data-ref="photoCount"></span>
       </div>
       <button type="button" class="cg-btn cg-highlight" data-ref="highlight" hidden>Highlight photos taken by FrontierSat</button>
-      <ul class="cg-list cg-photos" data-ref="photos"></ul>
+      <ul class="cg-list cg-photos" data-ref="photos" role="list" aria-label="Pictures. Arrow keys move between them."></ul>
     </section>
   </div>
 
@@ -244,7 +246,7 @@ const TEMPLATE = `
     </button>
     <div class="cg-transport">
       <button type="button" class="cg-btn cg-icon-btn" data-ref="play" aria-label="Pause">${ICONS.pause}</button>
-      <div class="cg-speeds" role="group" aria-label="Speed" data-ref="speeds">
+      <div class="cg-speeds" role="group" aria-label="Speed. Arrow keys move between them." data-ref="speeds">
         ${SPEEDS.map((s) => `<button type="button" class="cg-btn" data-speed="${s}" aria-pressed="false">${s}×</button>`).join('')}
       </div>
       <button type="button" class="cg-btn cg-speed-cycle" data-ref="speedCycle" aria-label="Speed">1×</button>
@@ -356,6 +358,13 @@ export function mountGlobe(container, options = {}) {
   for (const node of root.querySelectorAll('[data-ref]')) el[node.dataset.ref] = node;
   const canvas = root.querySelector('.cg-canvas');
   const tip = root.querySelector('.cg-tip');
+
+  // one Tab stop each, with the arrow keys inside: see rovinglist.js
+  const passesList = rovingList(el.passes);
+  const photosList = rovingList(el.photos);
+  const speedsRow = rovingList(el.speeds, { axis: 'horizontal' });
+  const viewsRow = rovingList(el.views, { axis: 'horizontal' });
+  rovingList(el.zoom, { axis: 'horizontal' });
 
   const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
   const observer = astro.makeObserver(astro.CALGARY);
@@ -558,6 +567,8 @@ export function mountGlobe(container, options = {}) {
       inset.top = free.top + 8;
       inset.bottom = r.height - free.bottom;
       inset.right = r.width - free.right;
+      // the zoom buttons stand at the frame's lower right, unless a sheet below covers them
+      inset.labelRight = sheet?.width && free.bottom === sheet.top - r.top ? 0 : 64;
     } else {
       inset.top = pageTop(); // the map starts under the site nav, which sits on Space
       inset.bottom = r.bottom - clock.getBoundingClientRect().top + gap;
@@ -797,6 +808,10 @@ export function mountGlobe(container, options = {}) {
   }
 
   function paintPasses() {
+    passesList.repaint(buildPasses);
+  }
+
+  function buildPasses() {
     const ol = el.passes;
     ol.replaceChildren();
     const list = passes.list || [];
@@ -866,7 +881,7 @@ export function mountGlobe(container, options = {}) {
       p.placed = p.ms !== null && p.lat !== null && p.lon !== null;
     }
     // placed photos newest first, then the ones without a time
-    photos.sort((a, b) => (b.ms ?? -Infinity) - (a.ms ?? -Infinity));
+    photos.sort(comparePhotos);
     const pins = photos.filter((p) => p.placed).map((p) => ({ id: p.id, latDeg: p.lat, lonDeg: p.lon }));
     for (const v of [scene, map]) {
       v.setPins(pins);
@@ -884,6 +899,10 @@ export function mountGlobe(container, options = {}) {
   }
 
   function paintPhotoList() {
+    photosList.repaint(buildPhotoList);
+  }
+
+  function buildPhotoList() {
     const ul = el.photos;
     ul.replaceChildren();
     const placed = photos.filter((p) => p.placed).length;
@@ -896,13 +915,20 @@ export function mountGlobe(container, options = {}) {
       ul.appendChild(li);
       return;
     }
-    let unknownHeader = false;
+    const counts = { date: 0, none: 0 };
+    for (const p of photos) if (whenKnown(p) !== 'time') counts[whenKnown(p)]++;
+    const groupTitle = {
+      date: `${counts.date} not on the globe: only the date is known`,
+      none: `${counts.none} not on the globe: no date known`,
+    };
+    let group = 'time';
     for (const p of photos) {
-      if (p.ms === null && !unknownHeader) {
-        unknownHeader = true;
+      const known = whenKnown(p);
+      if (known !== group) {
+        group = known;
         const h = document.createElement('li');
         h.className = 'cg-list-sub cg-fine';
-        h.textContent = 'Not on the globe: only the date is known';
+        h.textContent = groupTitle[known];
         ul.appendChild(h);
       }
       const li = document.createElement('li');
@@ -928,7 +954,7 @@ export function mountGlobe(container, options = {}) {
       t.textContent = photoName(p);
       const m = document.createElement('span');
       m.className = 'cg-photo-meta cg-fine';
-      m.textContent = p.ms !== null ? utcWhen(p.ms) : 'Time not known';
+      m.textContent = p.ms !== null ? utcWhen(p.ms) : known === 'date' ? 'Time not known' : 'Date not known';
       b.append(thumb, t, m);
       b.addEventListener('click', () => {
         closeSheet();
@@ -1020,7 +1046,7 @@ export function mountGlobe(container, options = {}) {
     }
     el.cardImg.alt = p.title;
     if (p.ms === null) {
-      el.cardTime.textContent = p.captureDate ? `${utcDay(Date.parse(p.captureDate))}, time not known` : 'Time not known';
+      el.cardTime.textContent = p.captureDate ? `${utcDay(Date.parse(p.captureDate))}, time not known` : 'Date not known';
       el.cardPos.textContent = 'Not on the globe';
       el.cardLight.textContent = '';
       return;
@@ -1153,6 +1179,7 @@ export function mountGlobe(container, options = {}) {
     }
     el.speedCycle.textContent = `${state.speed}×`;
     el.speedCycle.setAttribute('aria-label', `Speed ${state.speed} times, tap to change`);
+    speedsRow.sync();
     el.now.setAttribute('aria-pressed', String(state.live));
     root.classList.toggle('cg-live', state.live);
   }
@@ -1174,6 +1201,14 @@ export function mountGlobe(container, options = {}) {
     sheetViewMoved = false;
     layout(); // the bottom bar changes height with a sheet open
     resizeMap();
+    if (picker.isOpen && sheetAlongBottom()) picker.close({ restoreFocus: false });
+  }
+
+  /** It wants the same space as the time picker: one at a time. A sheet at the
+   * side leaves room for both. */
+  function sheetAlongBottom() {
+    const sheet = state.tab ? root.querySelector(`[data-panel="${state.tab}"]`)?.getBoundingClientRect() : null;
+    return !!sheet?.width && sheet.left - root.getBoundingClientRect().left <= 1;
   }
 
   /** Side panels on wide screens; hidden leaves the globe, photo card and clock. */
@@ -1200,6 +1235,7 @@ export function mountGlobe(container, options = {}) {
     for (const b of el.views.querySelectorAll('[data-view]')) {
       b.setAttribute('aria-pressed', String(b.dataset.view === next));
     }
+    viewsRow.sync();
     map.setVisible(next === 'map');
     hideTip();
     if (changed) {
@@ -1273,10 +1309,17 @@ export function mountGlobe(container, options = {}) {
   listen(el.speedCycle, 'click', () => setSpeed(SPEEDS[(SPEEDS.indexOf(state.speed) + 1) % SPEEDS.length]));
   listen(el.follow, 'click', () => setFollow(!state.follow));
   listen(el.panels, 'click', () => setPanels(!state.panels));
+  // it opens at the foot of a column that may be full: bring it into view
+  listen(el.keys, 'toggle', () => {
+    if (el.keys.open) el.keys.scrollIntoView({ block: 'nearest', behavior: reducedMotionQuery.matches ? 'auto' : 'smooth' });
+  });
   for (const b of el.views.querySelectorAll('[data-view]')) listen(b, 'click', () => setView(b.dataset.view));
   listen(el.zoomIn, 'click', () => map.zoomBy(2));
   listen(el.zoomOut, 'click', () => map.zoomBy(0.5));
-  listen(el.timeBtn, 'click', () => picker.toggle(state.ms, el.timeBtn));
+  listen(el.timeBtn, 'click', () => {
+    if (!picker.isOpen && sheetAlongBottom()) closeSheet();
+    picker.toggle(state.ms, el.timeBtn);
+  });
   for (const b of root.querySelectorAll('[data-tab]')) listen(b, 'click', () => setTab(b.dataset.tab));
   listen(el.scrub, 'input', () => {
     state.ms = state.focusMs + Number(el.scrub.value) * MIN_MS;
@@ -1392,7 +1435,10 @@ export function mountGlobe(container, options = {}) {
         break;
       case 't':
       case 'T':
-        if (!picker.isOpen) picker.open(state.ms, el.timeBtn);
+        if (!picker.isOpen) {
+          if (sheetAlongBottom()) closeSheet();
+          picker.open(state.ms, el.timeBtn);
+        }
         break;
       case 'm':
       case 'M':

@@ -825,7 +825,7 @@ export function createMap(container, opts = {}) {
     for (const { lon, x } of lons) {
       const text = gridLabel(lon, 'lon');
       const tw = octx.measureText(text).width;
-      if (x + gap < i.left || x + gap + tw > view.w - i.right) continue;
+      if (x + gap < i.left || x + gap + tw > view.w - i.right - (i.labelRight || 0)) continue;
       if (x + gap < lastRight + gap) continue;
       halo(text, x + gap, baseY);
       lastRight = x + gap + tw;

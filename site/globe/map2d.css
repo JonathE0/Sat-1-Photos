@@ -46,6 +46,25 @@
   background: var(--cg-panel);
 }
 
+/* the same for the one line of the left column that has no panel behind it */
+.cg-mode-map:not(.cg-narrow) .cg-keys summary {
+  padding: calc(4 * var(--cg-u)) calc(8 * var(--cg-u));
+  background: var(--cg-panel);
+}
+
+/* zoomed in, the map would run up under the site's nav: keep the nav on Space */
+.cg-mode-map::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 1;
+  height: var(--cg-top, 0px);
+  background: var(--cg-bg);
+  pointer-events: none;
+}
+
 .cg[data-ui="compact"] .cg-views {
   display: none;
 }

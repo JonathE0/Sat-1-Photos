@@ -11,6 +11,26 @@
  * thumb and href are absolute URLs, or null.
  */
 
+/**
+ * How much is known of when a picture was taken: 'time', 'date' (only the
+ * day) or 'none' (not even that: some attitude-camera frames carry no date).
+ */
+export function whenKnown(p) {
+  const hasTime = p.ms !== undefined ? p.ms !== null : !!p.capturedAtUTC;
+  return hasTime ? 'time' : p.captureDate ? 'date' : 'none';
+}
+
+/** Newest first: those with a time, then those with only a date, then the rest. */
+export function comparePhotos(a, b) {
+  const order = { time: 0, date: 1, none: 2 };
+  const ka = whenKnown(a);
+  const kb = whenKnown(b);
+  if (ka !== kb) return order[ka] - order[kb];
+  if (ka === 'time') return (b.ms ?? Date.parse(b.capturedAtUTC)) - (a.ms ?? Date.parse(a.capturedAtUTC));
+  if (ka === 'date') return b.captureDate.localeCompare(a.captureDate);
+  return 0;
+}
+
 /** Records in an images.json payload: { images: [...] } or a bare array. */
 function records(json) {
   if (Array.isArray(json)) return json;

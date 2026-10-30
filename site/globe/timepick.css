@@ -190,11 +190,29 @@
   overflow-y: auto;
 }
 
+/* beside a sheet at the side, never under it */
+@media (min-width: 760px), (min-width: 480px) and (orientation: landscape) {
+  .cg-narrow:is([data-tab="sat"], [data-tab="passes"], [data-tab="photos"]) .cg-tp {
+    right: min(360px, 45%);
+  }
+}
+
 /* too short to sit above the bar (a phone on its side): cover it instead */
 @media (max-height: 600px) {
   .cg-narrow .cg-tp {
     bottom: 0;
     max-height: calc(100% - var(--cg-top, 0px));
+  }
+}
+
+/* the narrowest phones: just enough room to keep the calendar on the time's line */
+@media (max-width: 359px) {
+  .cg-narrow .cg-transport {
+    gap: 4px;
+  }
+
+  .cg-time-icon {
+    margin-left: 4px;
   }
 }
 
