@@ -35,7 +35,7 @@
   --cg-cw-size: calc(152 * var(--cg-u, 1px));
   --cg-cw-ring: calc(18 * var(--cg-u, 1px));
   position: absolute;
-  top: calc(var(--cg-gap, 16px) + var(--cg-btn-h, 32px) + 8 * var(--cg-u, 1px));
+  top: calc(var(--cg-top, 0px) + var(--cg-gap, 16px) + var(--cg-btn-h, 32px) + 8 * var(--cg-u, 1px));
   left: 50%;
   z-index: 4;
   width: calc(232 * var(--cg-u, 1px));
@@ -246,7 +246,7 @@
 }
 
 .cg-narrow .cg-cw {
-  top: calc(12px + 44px + 8px);
+  top: calc(var(--cg-top, 0px) + 12px + 44px + 8px);
   right: 12px;
   left: auto;
   transform: none;

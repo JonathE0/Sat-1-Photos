@@ -436,6 +436,8 @@ export function mountGlobe(container, options = {}) {
 
   const head = root.querySelector('.cg-head');
   let uiScale = 1;
+  /** Room the page keeps above the corners for its own nav (--cg-top, px). */
+  const pageTop = () => parseFloat(getComputedStyle(root).getPropertyValue('--cg-top')) || 0;
   // "Right now" folds to its heading where a selected picture's card needs
   // the room; its heading opens it again (until the card changes).
   let satFull = 0; // its height unfolded
@@ -476,7 +478,7 @@ export function mountGlobe(container, options = {}) {
     }
     if (!el.satPanel.hasAttribute('data-folded')) satFull = el.satPanel.offsetHeight;
     // the left column's room (globe.css .cg-col-left max-height) against what it holds
-    const room = h - 112 * uiScale - cardSpace;
+    const room = h - pageTop() - 112 * uiScale - cardSpace;
     const need = head.offsetHeight + 12 * uiScale + satFull;
     setSatFold(satFoldedByUser ?? (!el.card.hidden && need > room));
   };
@@ -495,6 +497,7 @@ export function mountGlobe(container, options = {}) {
       inset.top = head.getBoundingClientRect().bottom - r.top + 8;
       inset.bottom = el.dock.offsetHeight;
     } else {
+      inset.top = pageTop(); // the map starts under the site nav, which sits on Space
       inset.bottom = r.bottom - clock.getBoundingClientRect().top + gap;
       if (state.panels) {
         inset.left = colLeft.getBoundingClientRect().right - r.left + gap;

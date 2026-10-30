@@ -231,11 +231,12 @@
   scrollbar-color: var(--cg-raised) transparent;
 }
 
+/* --cg-top: room the page keeps above the globe's corners for its own nav */
 .cg-col-left {
-  top: var(--cg-gap);
+  top: calc(var(--cg-top, 0px) + var(--cg-gap));
   left: var(--cg-gap);
   width: var(--cg-left-w);
-  max-height: calc(100% - var(--cg-clock-h) - 3 * var(--cg-gap) - var(--cg-card-space, 0px));
+  max-height: calc(100% - var(--cg-top, 0px) - var(--cg-clock-h) - 3 * var(--cg-gap) - var(--cg-card-space, 0px));
   overflow-y: auto;
   pointer-events: none;
 }
@@ -253,10 +254,10 @@
 }
 
 .cg-col-right {
-  top: var(--cg-gap);
+  top: calc(var(--cg-top, 0px) + var(--cg-gap));
   right: var(--cg-gap);
   width: var(--cg-right-w);
-  max-height: calc(100% - var(--cg-clock-h) - 3 * var(--cg-gap));
+  max-height: calc(100% - var(--cg-top, 0px) - var(--cg-clock-h) - 3 * var(--cg-gap));
   pointer-events: none;
 }
 
@@ -852,7 +853,7 @@
 
 .cg-narrow .cg-head {
   position: absolute;
-  top: 12px;
+  top: calc(var(--cg-top, 0px) + 12px);
   right: 12px;
   left: 12px;
   padding: 0;
@@ -899,7 +900,7 @@
 }
 
 .cg-narrow .cg-card {
-  top: calc(20px + var(--cg-head-h, 44px));
+  top: calc(var(--cg-top, 0px) + 20px + var(--cg-head-h, 44px));
   right: 12px;
   bottom: auto;
   left: 12px;
