@@ -1,0 +1,191 @@
+{
+ "type": "FeatureCollection",
+ "features": [
+  {
+   "type": "Feature",
+   "bbox": [
+    -39.4112175,
+    -15.2604018,
+    -39.4112175,
+    -15.2604018
+   ],
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -39.4112175,
+     -15.2604018
+    ]
+   },
+   "properties": {
+    "eventtype": "FL",
+    "eventid": 1104216,
+    "episodeid": 8,
+    "eventname": "",
+    "glide": "",
+    "name": "Flood in Brazil",
+    "description": "Flood in Brazil",
+    "htmldescription": "Green Flood in Brazil from: 01 Oct 2026 01 to: 29 Oct 2026 01.",
+    "icon": "https://www.gdacs.org/images/gdacs_icons/maps/Green/FL.png",
+    "iconoverall": null,
+    "url": {
+     "geometry": "https://www.gdacs.org/gdacsapi/api/polygons/getgeometry?eventtype=FL&eventid=1104216&episodeid=8",
+     "report": "https://www.gdacs.org/report.aspx?eventid=1104216&episodeid=8&eventtype=FL",
+     "details": "https://www.gdacs.org/gdacsapi/api/events/geteventdata?eventtype=FL&eventid=1104216"
+    },
+    "alertlevel": "Green",
+    "alertscore": 1,
+    "episodealertlevel": "Green",
+    "episodealertscore": 0.5,
+    "istemporary": "false",
+    "iscurrent": "true",
+    "country": "Brazil",
+    "fromdate": "2026-10-01T01:00:00",
+    "todate": "2026-10-29T01:00:00",
+    "datemodified": "2026-10-29T09:52:08",
+    "iso3": "BRA",
+    "source": "GLOFAS",
+    "sourceid": "895c69d2-28f2-4a71-a03a-328a60e60864",
+    "polygonlabel": "Centroid",
+    "Class": "Point_Centroid",
+    "affectedcountries": [
+     {
+      "iso2": "BR",
+      "iso3": "BRA",
+      "countryname": "Brazil"
+     }
+    ],
+    "severitydata": {
+     "severity": 0.0,
+     "severitytext": "Magnitude 0 ",
+     "severityunit": ""
+    }
+   }
+  },
+  {
+   "type": "Feature",
+   "bbox": [
+    -39.53503455713545,
+    -14.778651196774533,
+    -39.53503455713545,
+    -14.778651196774533
+   ],
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -39.53503455713545,
+     -14.778651196774533
+    ]
+   },
+   "properties": {
+    "eventtype": "FL",
+    "eventid": 1104216,
+    "episodeid": 8,
+    "eventname": "",
+    "glide": "",
+    "name": "Flood in Brazil",
+    "description": "Flood in Brazil",
+    "htmldescription": "Green Flood in Brazil from: 01 Oct 2026 01 to: 29 Oct 2026 01.",
+    "icon": "https://www.gdacs.org/images/gdacs_icons/maps/Green/FL.png",
+    "iconoverall": null,
+    "url": {
+     "geometry": "https://www.gdacs.org/gdacsapi/api/polygons/getgeometry?eventtype=FL&eventid=1104216&episodeid=8",
+     "report": "https://www.gdacs.org/report.aspx?eventid=1104216&episodeid=8&eventtype=FL",
+     "details": "https://www.gdacs.org/gdacsapi/api/events/geteventdata?eventtype=FL&eventid=1104216"
+    },
+    "alertlevel": "Green",
+    "alertscore": 1,
+    "episodealertlevel": "Green",
+    "episodealertscore": 0.5,
+    "istemporary": "false",
+    "iscurrent": "true",
+    "country": "Brazil",
+    "fromdate": "2026-10-01T01:00:00",
+    "todate": "2026-10-29T01:00:00",
+    "datemodified": "2026-10-29T09:52:08",
+    "iso3": "BRA",
+    "source": "GLOFAS",
+    "sourceid": "895c69d2-28f2-4a71-a03a-328a60e60864",
+    "polygondate": "2026-10-29T01:00:00",
+    "polygonlabel": "Affected area",
+    "affectedcountries": [
+     {
+      "iso2": "BR",
+      "iso3": "BRA",
+      "countryname": "Brazil"
+     }
+    ],
+    "severitydata": {
+     "severity": 0.0,
+     "severitytext": "Magnitude 0 ",
+     "severityunit": ""
+    },
+    "Class": "Point_Affected",
+    "iconeventlink": "https://www.gdacs.org/images/gdacs_icons/maps/Green/FL.png",
+    "iconitemlink": "https://www.gdacs.org/images/gdacs_icons/maps/Green/FL.png"
+   }
+  },
+  {
+   "type": "Feature",
+   "bbox": [
+    -47.664324266649906,
+    -22.446985392154975,
+    -47.664324266649906,
+    -22.446985392154975
+   ],
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -47.664324266649906,
+     -22.446985392154975
+    ]
+   },
+   "properties": {
+    "eventtype": "FL",
+    "eventid": 1104216,
+    "episodeid": 8,
+    "eventname": "",
+    "glide": "",
+    "name": "Flood in Brazil",
+    "description": "Flood in Brazil",
+    "htmldescription": "Green Flood in Brazil from: 01 Oct 2026 01 to: 29 Oct 2026 01.",
+    "icon": "https://www.gdacs.org/images/gdacs_icons/maps/Green/FL.png",
+    "iconoverall": null,
+    "url": {
+     "geometry": "https://www.gdacs.org/gdacsapi/api/polygons/getgeometry?eventtype=FL&eventid=1104216&episodeid=8",
+     "report": "https://www.gdacs.org/report.aspx?eventid=1104216&episodeid=8&eventtype=FL",
+     "details": "https://www.gdacs.org/gdacsapi/api/events/geteventdata?eventtype=FL&eventid=1104216"
+    },
+    "alertlevel": "Green",
+    "alertscore": 1,
+    "episodealertlevel": "Green",
+    "episodealertscore": 0.5,
+    "istemporary": "false",
+    "iscurrent": "true",
+    "country": "Brazil",
+    "fromdate": "2026-10-01T01:00:00",
+    "todate": "2026-10-29T01:00:00",
+    "datemodified": "2026-10-29T09:52:08",
+    "iso3": "BRA",
+    "source": "GLOFAS",
+    "sourceid": "895c69d2-28f2-4a71-a03a-328a60e60864",
+    "polygondate": "2026-10-29T01:00:00",
+    "polygonlabel": "Global area",
+    "affectedcountries": [
+     {
+      "iso2": "BR",
+      "iso3": "BRA",
+      "countryname": "Brazil"
+     }
+    ],
+    "severitydata": {
+     "severity": 0.0,
+     "severitytext": "Magnitude 0 ",
+     "severityunit": ""
+    },
+    "Class": "Point_Global",
+    "iconeventlink": "https://www.gdacs.org/images/gdacs_icons/maps/Green/FL.png",
+    "iconitemlink": "https://www.gdacs.org/images/gdacs_icons/maps/Green/FL.png"
+   }
+  }
+ ]
+}

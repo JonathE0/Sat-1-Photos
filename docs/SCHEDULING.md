@@ -1,14 +1,21 @@
 # Scheduled updates
 
-Windows Task Scheduler keeps the gallery current by running plain Python every
-N minutes (30 by default). There is no AI in the loop: the task starts
+Windows Task Scheduler keeps the gallery current by running plain Python twice
+a day, at 10:00 and 22:00 local time by default (or every N minutes if you
+prefer). There is no AI in the loop: the task starts
 `scripts/scheduled_update.py`, which runs `python -m cts1_gallery update` once,
 records the result and exits.
 
+Pictures only arrive after the team commands a download and a ground station
+hears the pass, a few times a week, so most runs find nothing new; twice a day
+is plenty, with a picture showing up at most about 12 hours late. After a
+downlink you know about, run the update by hand (below) to see it at once.
+
 When the site is published on GitHub Pages, the repository's own workflow,
-`.github/workflows/publish.yml`, runs the same update on GitHub's servers
-every 30 minutes and publishes the result; see "Publishing" in the README.
-Use one schedule or the other, not both.
+`.github/workflows/publish.yml`, runs the same update on GitHub's servers twice
+a day (04:00 and 16:00 UTC, which is 10 PM and 10 AM in Calgary on daylight
+time and an hour earlier on standard time) and publishes the result; see
+"Publishing" in the README. Use one schedule or the other, not both.
 
 ## What one run does
 
@@ -51,16 +58,18 @@ The project venv has to exist first (Python 3.11 or newer):
 
 Then, from the repo root (no admin rights needed):
 
-    powershell -ExecutionPolicy Bypass -File scripts\install-schedule.ps1 [-IntervalMinutes 30] [-RunNow] [-Uninstall]
+    powershell -ExecutionPolicy Bypass -File scripts\install-schedule.ps1 [-At 10:00,22:00] [-IntervalMinutes N] [-RunNow] [-Uninstall]
 
-- Install: run it with no options for a 30-minute interval. The first run is a
-  minute later.
-- Change the interval: run it again with, say, `-IntervalMinutes 15` (1 to 1440).
-  Re-running replaces the task. The pipeline republishes about every 15
-  minutes, so shorter intervals gain nothing. Then set `refreshMinutes` in
-  `site/config.js` to the same number; the site footer shows it.
-- Run now: add `-RunNow` to start a run straight after registering; the
-  schedule then continues one interval later.
+- Install: run it with no options for a run every day at 10:00 and 22:00, local
+  time (it follows daylight saving).
+- Other times: `-At 08:00,20:00` (any number of HH:mm times). Re-running
+  replaces the task.
+- A fixed interval instead: `-IntervalMinutes 30` (1 to 1440); the first run is
+  a minute later. The pipeline republishes about every 15 minutes, so shorter
+  intervals gain nothing.
+- Then set `refreshSchedule` in `site/config.js` to match; the site footer
+  says it ("It is rebuilt twice a day, at 10 AM and 10 PM Calgary time…").
+- Run now: add `-RunNow` to start a run straight after registering.
 - Uninstall: `-Uninstall`.
 
 The task is called "CTS-SAT-1 Gallery Update" (`-TaskName` changes it). It runs
@@ -131,9 +140,9 @@ cron or from systemd.
 
 Run the same script from cron or systemd; the lock works the same way.
 
-crontab (`crontab -e`), every 30 minutes:
+crontab (`crontab -e`), every day at 10:00 and 22:00 local time:
 
-    */30 * * * * /path/to/repo/.venv/bin/python /path/to/repo/scripts/scheduled_update.py
+    0 10,22 * * * /path/to/repo/.venv/bin/python /path/to/repo/scripts/scheduled_update.py
 
 On macOS, cron needs Full Disk Access (System Settings > Privacy & Security) if
 the repo is under Desktop or Documents.
@@ -150,10 +159,10 @@ systemd user units. `~/.config/systemd/user/cts1-gallery-update.service`:
 `~/.config/systemd/user/cts1-gallery-update.timer`:
 
     [Unit]
-    Description=Run the CTS-SAT-1 gallery update every 30 minutes
+    Description=Run the CTS-SAT-1 gallery update at 10:00 and 22:00
 
     [Timer]
-    OnCalendar=*:0/30
+    OnCalendar=*-*-* 10,22:00:00
     Persistent=true
 
     [Install]

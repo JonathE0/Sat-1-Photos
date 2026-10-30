@@ -583,7 +583,7 @@ export function createScene(canvas, labelLayer, opts = {}) {
   earth.add(nadirLine);
 
   const COVERAGE_SEGMENTS = 128;
-  const coverageLine = new THREE.LineLoop(keep(trackGeometry(COVERAGE_SEGMENTS)), trackMaterial(INK, 0.35));
+  const coverageLine = new THREE.LineLoop(keep(trackGeometry(COVERAGE_SEGMENTS)), trackMaterial(BLUE, 0.5));
   coverageLine.geometry.attributes.fade.array.fill(1);
   coverageLine.geometry.setDrawRange(0, COVERAGE_SEGMENTS);
   coverageLine.frustumCulled = false;
@@ -781,6 +781,17 @@ export function createScene(canvas, labelLayer, opts = {}) {
     station.set(geoToScene(latDeg, lonDeg, PIN_RADIUS, tmp));
   }
 
+  /** The orbit's colour (the team blue unless a visitor picks another):
+   * the orbit line, ground track, nadir line, footprint and satellite. */
+  function setTrackColor(color) {
+    const c = new THREE.Color(color);
+    for (const line of [orbitLine, groundLine, nadirLine, coverageLine]) line.material.uniforms.color.value.copy(c);
+    const sat = satellite.points.geometry.attributes.aColor;
+    sat.array.set([c.r, c.g, c.b]);
+    sat.needsUpdate = true;
+    needsRender = true;
+  }
+
   function setSubsolar(latDeg, lonDeg) {
     subsolar.set(geoToScene(latDeg, lonDeg, PIN_RADIUS, tmp));
   }
@@ -946,6 +957,7 @@ export function createScene(canvas, labelLayer, opts = {}) {
     setTrack,
     setSatellite,
     setStation,
+    setTrackColor,
     setSubsolar,
     setCoverage,
     setPins,

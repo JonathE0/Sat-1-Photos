@@ -1,0 +1,266 @@
+{
+ "title": "EONET Events",
+ "description": "Natural events from EONET.",
+ "link": "https://eonet.gsfc.nasa.gov/api/v3/events",
+ "events": [
+  {
+   "id": "EONET_25728",
+   "title": "Super Typhoon In-fa",
+   "description": null,
+   "link": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_25728",
+   "closed": null,
+   "categories": [
+    {
+     "id": "severeStorms",
+     "title": "Severe Storms"
+    }
+   ],
+   "sources": [
+    {
+     "id": "JTWC",
+     "url": "https://www.metoc.navy.mil/jtwc/products/wp3026.tcw"
+    }
+   ],
+   "geometry": [
+    {
+     "magnitudeValue": 130.0,
+     "magnitudeUnit": "kts",
+     "date": "2026-10-28T12:00:00Z",
+     "type": "Point",
+     "coordinates": [
+      157.6,
+      15.4
+     ]
+    },
+    {
+     "magnitudeValue": 120.0,
+     "magnitudeUnit": "kts",
+     "date": "2026-10-28T18:00:00Z",
+     "type": "Point",
+     "coordinates": [
+      156.3,
+      15.6
+     ]
+    },
+    {
+     "magnitudeValue": 115.0,
+     "magnitudeUnit": "kts",
+     "date": "2026-10-29T00:00:00Z",
+     "type": "Point",
+     "coordinates": [
+      154.6,
+      15.9
+     ]
+    },
+    {
+     "magnitudeValue": 120.0,
+     "magnitudeUnit": "kts",
+     "date": "2026-10-29T06:00:00Z",
+     "type": "Point",
+     "coordinates": [
+      152.9,
+      16.3
+     ]
+    },
+    {
+     "magnitudeValue": 130.0,
+     "magnitudeUnit": "kts",
+     "date": "2026-10-29T12:00:00Z",
+     "type": "Point",
+     "coordinates": [
+      151.3,
+      16.6
+     ]
+    },
+    {
+     "magnitudeValue": 130.0,
+     "magnitudeUnit": "kts",
+     "date": "2026-10-29T18:00:00Z",
+     "type": "Point",
+     "coordinates": [
+      149.7,
+      17.1
+     ]
+    }
+   ]
+  },
+  {
+   "id": "EONET_25268",
+   "title": "Iceberg B52",
+   "description": null,
+   "link": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_25268",
+   "closed": null,
+   "categories": [
+    {
+     "id": "seaLakeIce",
+     "title": "Sea and Lake Ice"
+    }
+   ],
+   "sources": [
+    {
+     "id": "NATICE",
+     "url": "https://usicecenter.gov/pub/Iceberg_Tabular.csv"
+    }
+   ],
+   "geometry": [
+    {
+     "magnitudeValue": 48.88,
+     "magnitudeUnit": "NM^2",
+     "date": "2026-10-09T00:00:00Z",
+     "type": "Point",
+     "coordinates": [
+      -130.24,
+      -74.4
+     ]
+    }
+   ]
+  },
+  {
+   "id": "EONET_25730",
+   "title": "Tropical Storm Olana",
+   "description": null,
+   "link": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_25730",
+   "closed": null,
+   "categories": [
+    {
+     "id": "severeStorms",
+     "title": "Severe Storms"
+    }
+   ],
+   "sources": [
+    {
+     "id": "JTWC",
+     "url": "https://www.metoc.navy.mil/jtwc/products/cp0326.tcw"
+    },
+    {
+     "id": "NOAA_NHC",
+     "url": "https://www.nhc.noaa.gov/archive/2026/OLANA.shtml"
+    }
+   ],
+   "geometry": [
+    {
+     "magnitudeValue": 35.0,
+     "magnitudeUnit": "kts",
+     "date": "2026-10-25T18:00:00Z",
+     "type": "Point",
+     "coordinates": [
+      -178.5,
+      14.7
+     ]
+    },
+    {
+     "magnitudeValue": 40.0,
+     "magnitudeUnit": "kts",
+     "date": "2026-10-26T00:00:00Z",
+     "type": "Point",
+     "coordinates": [
+      -177.2,
+      15.1
+     ]
+    },
+    {
+     "magnitudeValue": 35.0,
+     "magnitudeUnit": "kts",
+     "date": "2026-10-26T06:00:00Z",
+     "type": "Point",
+     "coordinates": [
+      -176.9,
+      14.8
+     ]
+    },
+    {
+     "magnitudeValue": 30.0,
+     "magnitudeUnit": "kts",
+     "date": "2026-10-26T12:00:00Z",
+     "type": "Point",
+     "coordinates": [
+      -176.8,
+      14.1
+     ]
+    },
+    {
+     "magnitudeValue": 30.0,
+     "magnitudeUnit": "kts",
+     "date": "2026-10-26T18:00:00Z",
+     "type": "Point",
+     "coordinates": [
+      -176.7,
+      13.7
+     ]
+    },
+    {
+     "magnitudeValue": 25.0,
+     "magnitudeUnit": "kts",
+     "date": "2026-10-27T00:00:00Z",
+     "type": "Point",
+     "coordinates": [
+      -176.2,
+      13.2
+     ]
+    }
+   ]
+  },
+  {
+   "id": "EONET_25829",
+   "title": "Prescribed Fire Walker Hill 3 Piles RX, Coconino, Arizona",
+   "description": null,
+   "link": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_25829",
+   "closed": null,
+   "categories": [
+    {
+     "id": "wildfires",
+     "title": "Wildfires"
+    }
+   ],
+   "sources": [
+    {
+     "id": "IRWIN",
+     "url": "https://irwin.doi.gov/observer/incidents/2026-AZCOF-001563"
+    }
+   ],
+   "geometry": [
+    {
+     "magnitudeValue": 784.0,
+     "magnitudeUnit": "acres",
+     "date": "2026-10-28T11:22:00Z",
+     "type": "Point",
+     "coordinates": [
+      -111.835978,
+      35.259781
+     ]
+    }
+   ]
+  },
+  {
+   "id": "EONET_25827",
+   "title": "Wildfire South Tank Trail, Perry, Mississippi",
+   "description": null,
+   "link": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_25827",
+   "closed": null,
+   "categories": [
+    {
+     "id": "wildfires",
+     "title": "Wildfires"
+    }
+   ],
+   "sources": [
+    {
+     "id": "IRWIN",
+     "url": "https://irwin.doi.gov/observer/incidents/2026-MSMNF-000680"
+    }
+   ],
+   "geometry": [
+    {
+     "magnitudeValue": 1000.0,
+     "magnitudeUnit": "acres",
+     "date": "2026-10-28T18:02:00Z",
+     "type": "Point",
+     "coordinates": [
+      -89.097783,
+      31.085833
+     ]
+    }
+   ]
+  }
+ ]
+}

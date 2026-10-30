@@ -12,7 +12,10 @@
  */
 import { annotationUrls, applyAnnotations, launchTime, toPhotos } from './adapter.js';
 import * as astro from './astro.js';
+import { createColorWheel } from './colorwheel.js';
+import { createMap } from './map2d.js';
 import { createScene, DEFAULT_DISTANCE } from './scene.js';
+import { createTimePicker, FAR_DAYS, offBy } from './timepick.js';
 
 const MODULE_BASE = new URL('./', import.meta.url);
 const SITE_ROOT = new URL('../', import.meta.url);
@@ -109,6 +112,8 @@ const ICONS = {
     '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 2.5l7 7M9.5 2.5l-7 7" stroke="currentColor" stroke-width="1.3"/></svg>',
   chevron:
     '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.25L6 7.75l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>',
+  calendar:
+    '<svg class="cg-time-icon" viewBox="0 0 12 12" aria-hidden="true"><path d="M1.5 2.75h9v7.75h-9zM1.5 5.25h9M4 1v2.75M8 1v2.75" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>',
 };
 
 const TEMPLATE = `
@@ -117,6 +122,19 @@ const TEMPLATE = `
       aria-label="Globe showing CTS-SAT-1, its orbit, the ground station and where the pictures were taken"></canvas>
     <div class="cg-labels" aria-hidden="true"></div>
     <div class="cg-tip" hidden></div>
+  </div>
+
+  <div class="cg-views">
+    <div class="cg-views-main" data-ref="viewsMain">
+      <div class="cg-seg cg-seg-view" role="group" aria-label="View" data-ref="views">
+        <button type="button" data-view="globe" aria-pressed="true" title="Globe (M)">Globe</button>
+        <button type="button" data-view="map" aria-pressed="false" title="Map (M)">Map</button>
+      </div>
+    </div>
+    <div class="cg-seg cg-seg-zoom" role="group" aria-label="Map zoom">
+      <button type="button" data-ref="zoomOut" aria-label="Zoom out" title="Zoom out (−)">−</button>
+      <button type="button" data-ref="zoomIn" aria-label="Zoom in" title="Zoom in (+)">+</button>
+    </div>
   </div>
 
   <div class="cg-col cg-col-left">
@@ -155,6 +173,9 @@ const TEMPLATE = `
         <div><dt><kbd>N</kbd></dt><dd>Back to now</dd></div>
         <div><dt><kbd>←</kbd> <kbd>→</kbd></dt><dd>One minute (with Shift, one hour)</dd></div>
         <div><dt><kbd>F</kbd></dt><dd>Follow the satellite</dd></div>
+        <div><dt><kbd>T</kbd></dt><dd>Go to a date and time</dd></div>
+        <div><dt><kbd>M</kbd></dt><dd>Switch between globe and map</dd></div>
+        <div><dt><kbd>+</kbd> <kbd>−</kbd></dt><dd>Zoom the map</dd></div>
         <div><dt><kbd>P</kbd></dt><dd>Show or hide the panels</dd></div>
       </dl>
     </details>
@@ -201,10 +222,12 @@ const TEMPLATE = `
   </nav>
 
   <div class="cg-clock" role="group" aria-label="Clock">
-    <div class="cg-time">
-      <div class="cg-utc" data-ref="utc" aria-live="off">—</div>
-      <div class="cg-fine" data-ref="local"></div>
-    </div>
+    <button type="button" class="cg-time" data-ref="timeBtn" aria-haspopup="dialog" aria-expanded="false"
+      title="Go to a date and time (T)">
+      <span class="cg-vh">Go to a time. Showing </span>
+      <span class="cg-utc"><span data-ref="utc" aria-live="off">—</span>${ICONS.calendar}</span>
+      <span class="cg-fine" data-ref="local"></span>
+    </button>
     <div class="cg-transport">
       <button type="button" class="cg-btn cg-icon-btn" data-ref="play" aria-label="Pause">${ICONS.pause}</button>
       <div class="cg-speeds" role="group" aria-label="Speed" data-ref="speeds">
@@ -234,6 +257,7 @@ function noScene() {
   return {
     controls: { dragged: false, reducedMotion: false },
     setStation: nothing,
+    setTrackColor: nothing,
     setTime: nothing,
     setTrack: nothing,
     setSatellite: nothing,
@@ -254,14 +278,16 @@ function noScene() {
 }
 
 function ensureStylesheet() {
-  const href = new URL('globe.css', MODULE_BASE).href;
-  const present = [...document.querySelectorAll('link[rel="stylesheet"]')].some((l) => l.href === href);
-  if (present) return;
-  const link = document.createElement('link');
-  link.rel = 'stylesheet';
-  link.href = href;
-  link.dataset.cgGlobe = '';
-  document.head.appendChild(link);
+  for (const name of ['globe.css', 'map2d.css', 'timepick.css', 'colorwheel.css']) {
+    const href = new URL(name, MODULE_BASE).href;
+    const present = [...document.querySelectorAll('link[rel="stylesheet"]')].some((l) => l.href === href);
+    if (present) continue;
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = href;
+    link.dataset.cgGlobe = '';
+    document.head.appendChild(link);
+  }
 }
 
 /**
@@ -273,7 +299,8 @@ function ensureStylesheet() {
  * @param {string|number|Date} [options.time]  start at this UTC time (paused) instead of live
  * @param {object|Array} [options.images]  an images.json payload already in hand (skips the fetch)
  * @param {'full'|'compact'} [options.ui]  'compact' keeps only the clock and the photo card
- * @param {boolean} [options.hashState]  read and write #t=<iso>&photo=<id> (standalone page)
+ * @param {boolean} [options.hashState]  read and write #t=<iso>&photo=<id>&mode=map (standalone page)
+ * @param {'globe'|'map'} [options.view]  start on the 3D globe (default) or the flat map
  * @param {'global'|'focus'|false} [options.keyboard]  where shortcuts listen
  * @param {boolean} [options.wheelZoom]  wheel zooms; false needs Ctrl+wheel (for embeds in a scrolling page)
  * @param {string} [options.backHref]  show a "Gallery" link to this URL in the header
@@ -288,6 +315,7 @@ export function mountGlobe(container, options = {}) {
     time: null,
     images: null,
     ui: 'full',
+    view: 'globe',
     hashState: false,
     keyboard: 'focus',
     wheelZoom: true,
@@ -325,6 +353,7 @@ export function mountGlobe(container, options = {}) {
     follow: false,
     tab: null,
     panels: true,
+    view: 'globe', // or 'map'
     userMovedCamera: false,
   };
   let orbit = null;
@@ -363,8 +392,47 @@ export function mountGlobe(container, options = {}) {
     root.querySelector('.cg-stage').appendChild(msg);
     canvas.hidden = true;
     scene = noScene();
+    root.classList.add('cg-nogl-on');
   }
   scene.setStation(astro.CALGARY.latDeg, astro.CALGARY.lonDeg);
+
+  // The flat map shares the stage, under the labels and tooltip. It needs
+  // only canvas 2D, so without WebGL the page opens on it.
+  const map = createMap(root.querySelector('.cg-stage'), {
+    textureBase: opts.textureBase,
+    preferSmallTextures: Math.min(container.clientWidth || 1024, window.innerWidth) < 700,
+    reducedMotion: reducedMotionQuery.matches,
+    wheelZoom: opts.wheelZoom,
+    onUserMove(kind) {
+      state.userMovedCamera = true;
+      if (kind === 'pan' && state.follow) setFollow(false);
+      hideTip();
+    },
+  });
+  canvas.after(map.element);
+  map.setStation(astro.CALGARY.latDeg, astro.CALGARY.lonDeg);
+  const onMap = () => state.view === 'map';
+
+  // The orbit's colour: team blue unless this visitor has picked another.
+  function paintOrbit(hex) {
+    scene.setTrackColor(hex);
+    map.setTrackColor(hex);
+    root.style.setProperty('--cg-orbit', hex);
+  }
+  const wheel = createColorWheel({ onChange: paintOrbit });
+  el.viewsMain.appendChild(wheel.button);
+  root.appendChild(wheel.element);
+  paintOrbit(wheel.colour);
+
+  // Camera moves go to both views, so switching shows the same place.
+  function flyToGround(latDeg, lonDeg, o) {
+    scene.flyToGround(latDeg, lonDeg, o);
+    map.flyToGround(latDeg, lonDeg, o);
+  }
+  function flyToSatellite(o) {
+    scene.flyToSatellite(o);
+    map.flyToSatellite(o);
+  }
 
   const head = root.querySelector('.cg-head');
   let uiScale = 1;
@@ -412,9 +480,34 @@ export function mountGlobe(container, options = {}) {
     const need = head.offsetHeight + 12 * uiScale + satFull;
     setSatFold(satFoldedByUser ?? (!el.card.hidden && need > room));
   };
+  /** The map's free frame: the stage less what the columns, the header (narrow)
+   * and the clock bar cover. Its grid labels sit inside it and it centres there. */
+  const colLeft = root.querySelector('.cg-col-left');
+  const colRight = root.querySelector('.cg-col-right');
+  const clock = root.querySelector('.cg-clock');
+  function resizeMap() {
+    const r = root.getBoundingClientRect();
+    const gap = 16 * uiScale;
+    const inset = { top: 0, right: 0, bottom: 0, left: 0 };
+    if (opts.ui === 'compact') {
+      inset.bottom = r.bottom - clock.getBoundingClientRect().top + gap;
+    } else if (root.classList.contains('cg-narrow')) {
+      inset.top = head.getBoundingClientRect().bottom - r.top + 8;
+      inset.bottom = el.dock.offsetHeight;
+    } else {
+      inset.bottom = r.bottom - clock.getBoundingClientRect().top + gap;
+      if (state.panels) {
+        inset.left = colLeft.getBoundingClientRect().right - r.left + gap;
+        inset.right = r.right - colRight.getBoundingClientRect().left + gap;
+      }
+    }
+    map.resize(root.clientWidth || 800, root.clientHeight || 600, uiScale, inset);
+  }
+
   const resizeObserver = new ResizeObserver(() => {
     layout();
     scene.resize(root.clientWidth, root.clientHeight, uiScale);
+    resizeMap();
     paintTicks();
   });
   resizeObserver.observe(root);
@@ -424,6 +517,7 @@ export function mountGlobe(container, options = {}) {
   resizeObserver.observe(el.satPanel);
   layout();
   scene.resize(root.clientWidth || 800, root.clientHeight || 600, uiScale);
+  resizeMap();
 
   if (opts.backHref) {
     el.back.href = opts.backHref;
@@ -432,6 +526,7 @@ export function mountGlobe(container, options = {}) {
 
   listen(reducedMotionQuery, 'change', () => {
     scene.controls.reducedMotion = reducedMotionQuery.matches;
+    map.controls.reducedMotion = reducedMotionQuery.matches;
   });
 
   // ---- clock -----------------------------------------------------------------
@@ -470,7 +565,7 @@ export function mountGlobe(container, options = {}) {
     paintTicks();
     markDirty();
     pushScene(true);
-    if (fly) scene.flyToSatellite();
+    if (fly) flyToSatellite();
     writeHash();
   }
 
@@ -508,8 +603,14 @@ export function mountGlobe(container, options = {}) {
       lastScene = now;
       sceneDirty = false;
     }
-    if (state.follow) scene.follow();
-    scene.frame(now);
+    // only the view on screen draws
+    if (onMap()) {
+      if (state.follow) map.follow();
+      map.frame(now);
+    } else {
+      if (state.follow) scene.follow();
+      scene.frame(now);
+    }
     if (uiDirty || now - lastUi >= 100) {
       paintClock();
       if (uiDirty || now - lastUi >= 250) paintReadouts();
@@ -521,21 +622,45 @@ export function mountGlobe(container, options = {}) {
   // ---- scene state -----------------------------------------------------------
   let satState = null;
   let trackKey = null;
+  let mapTrackKey = null;
+
+  /** The map's ground track: about one orbit back and two ahead. */
+  function pushMapTrack(force) {
+    const ms = state.ms;
+    const key = satState.index;
+    if (!force && mapTrackKey && mapTrackKey.index === key && Math.abs(ms - mapTrackKey.ms) <= 10_000) return;
+    const stepMs = 30_000;
+    const n = Math.ceil((orbit.periodMinutes(ms) * MIN_MS) / stepMs);
+    const samples = [];
+    for (let i = -n; i <= 2 * n; i++) {
+      const t = ms + i * stepMs;
+      if (t < launchMs) continue;
+      const s = orbit.stateAt(t, key);
+      if (s) samples.push({ latDeg: s.latDeg, lonDeg: s.lonDeg, dtMin: (t - ms) / MIN_MS });
+    }
+    map.setTrack(samples);
+    mapTrackKey = { index: key, ms };
+  }
 
   function pushScene(forceTrack = false) {
     const ms = state.ms;
     const theta = astro.gmst(ms);
     const sun = astro.sunPosition(ms);
     scene.setTime(theta, sun);
+    map.setTime(ms);
     const ss = astro.subsolarPoint(ms);
     scene.setSubsolar(ss.latDeg, ss.lonDeg);
 
     satState = orbit && ms >= launchMs ? orbit.stateAt(ms) : null;
     scene.setSatellite(satState);
+    map.setSatellite(satState);
     if (!satState) {
       scene.setCoverage(null);
+      mapTrackKey = null;
       return;
     }
+    if (onMap()) pushMapTrack(forceTrack);
+    else mapTrackKey = null; // computed afresh when the map shows
     const key = satState.index;
     if (forceTrack || trackKey === null || trackKey.index !== key || Math.abs(ms - trackKey.ms) > 10_000) {
       const period = orbit.periodMinutes(ms);
@@ -629,7 +754,7 @@ export function mountGlobe(container, options = {}) {
       b.addEventListener('click', () => {
         closeSheet();
         jumpTo(p.maxMs);
-        scene.flyToGround(astro.CALGARY.latDeg, astro.CALGARY.lonDeg, { distance: 2.6 });
+        flyToGround(astro.CALGARY.latDeg, astro.CALGARY.lonDeg, { distance: 2.6 });
         setFollow(false);
         writeHash();
       });
@@ -656,8 +781,11 @@ export function mountGlobe(container, options = {}) {
     }
     // placed photos newest first, then the ones without a time
     photos.sort((a, b) => (b.ms ?? -Infinity) - (a.ms ?? -Infinity));
-    scene.setPins(photos.filter((p) => p.placed).map((p) => ({ id: p.id, latDeg: p.lat, lonDeg: p.lon })));
-    scene.setSelected(state.selectedId);
+    const pins = photos.filter((p) => p.placed).map((p) => ({ id: p.id, latDeg: p.lat, lonDeg: p.lon }));
+    for (const v of [scene, map]) {
+      v.setPins(pins);
+      v.setSelected(state.selectedId);
+    }
     paintPhotoList();
     paintTicks();
   }
@@ -750,13 +878,14 @@ export function mountGlobe(container, options = {}) {
     if (!p) return false;
     state.selectedId = p.id;
     scene.setSelected(p.id);
+    map.setSelected(p.id);
     if (p.ms !== null) {
       state.focusMs = p.ms;
       jumpTo(p.ms);
       pushScene(true);
       if (p.placed && fly) {
         setFollow(false);
-        scene.flyToGround(p.lat, p.lon, { immediate });
+        flyToGround(p.lat, p.lon, { immediate });
       }
     }
     paintCard();
@@ -769,6 +898,7 @@ export function mountGlobe(container, options = {}) {
   function clearSelection() {
     state.selectedId = null;
     scene.setSelected(null);
+    map.setSelected(null);
     paintCard();
     paintPhotoList();
     paintTicks();
@@ -892,11 +1022,11 @@ export function mountGlobe(container, options = {}) {
     const rev = orbit.revolutionAt(state.ms);
     put(el.orbit, rev === null ? dash : rev.toLocaleString('en-US'));
     const age = state.ms - s.tleEpochMs;
-    const stale = Math.abs(age) > 7 * DAY_MS;
+    const stale = Math.abs(age) > FAR_DAYS * DAY_MS;
     put(
       el.tle,
       `Worked out from orbital elements of ${utcDay(s.tleEpochMs, false)}, ${utcTime(s.tleEpochMs, false)} UTC ` +
-        `(${fmtAge(age)})${stale ? ', so the position may be off by tens of kilometres' : ''}.`,
+        `(${fmtAge(age)})${stale ? `, so the position may be off by ${offBy(age / DAY_MS)}` : ''}.`,
     );
     el.tle.classList.toggle('cg-warn', stale);
 
@@ -927,7 +1057,7 @@ export function mountGlobe(container, options = {}) {
   function setFollow(on) {
     state.follow = on;
     el.follow.setAttribute('aria-pressed', String(on));
-    if (on) scene.flyToSatellite();
+    if (on) flyToSatellite();
   }
 
   function setTab(tab) {
@@ -949,7 +1079,41 @@ export function mountGlobe(container, options = {}) {
     } catch {
       // storage blocked: the choice lasts until the page closes
     }
+    resizeMap();
   }
+
+  /** The 3D globe or the flat map. Time, speed, selection and follow carry
+   * over; each view keeps its own camera. */
+  function setView(view, { write = true } = {}) {
+    const next = view === 'map' ? 'map' : 'globe';
+    const changed = next !== state.view;
+    state.view = next;
+    root.classList.toggle('cg-mode-map', next === 'map');
+    for (const b of el.views.querySelectorAll('[data-view]')) {
+      b.setAttribute('aria-pressed', String(b.dataset.view === next));
+    }
+    map.setVisible(next === 'map');
+    hideTip();
+    if (changed) {
+      markDirty();
+      pushScene(true);
+      if (next === 'globe') scene.frame(performance.now(), true);
+    }
+    if (write) writeHash();
+  }
+
+  const picker = createTimePicker({
+    launchMs: astro.LAUNCH_MS,
+    getOrbit: () => orbit,
+    onPick(ms) {
+      state.focusMs = ms;
+      jumpTo(ms);
+      pushScene(true);
+      if (!state.follow) flyToSatellite();
+      writeHash();
+    },
+  });
+  root.appendChild(picker.element);
 
   /** On narrow screens, put the sheet away so the globe shows what was picked. */
   function closeSheet() {
@@ -965,6 +1129,10 @@ export function mountGlobe(container, options = {}) {
   listen(el.speedCycle, 'click', () => setSpeed(SPEEDS[(SPEEDS.indexOf(state.speed) + 1) % SPEEDS.length]));
   listen(el.follow, 'click', () => setFollow(!state.follow));
   listen(el.panels, 'click', () => setPanels(!state.panels));
+  for (const b of el.views.querySelectorAll('[data-view]')) listen(b, 'click', () => setView(b.dataset.view));
+  listen(el.zoomIn, 'click', () => map.zoomBy(2));
+  listen(el.zoomOut, 'click', () => map.zoomBy(0.5));
+  listen(el.timeBtn, 'click', () => picker.toggle(state.ms, el.timeBtn));
   for (const b of root.querySelectorAll('[data-tab]')) listen(b, 'click', () => setTab(b.dataset.tab));
   listen(el.scrub, 'input', () => {
     state.ms = state.focusMs + Number(el.scrub.value) * MIN_MS;
@@ -1005,21 +1173,31 @@ export function mountGlobe(container, options = {}) {
   listen(el.share, 'click', () => copyLink(el.share));
   listen(el.share2, 'click', () => copyLink(el.share2));
 
-  // pins: hover and click
+  // pins: hover and click, the same on the globe and the map
   function hideTip() {
     tip.hidden = true;
-    scene.setHover(null);
+    for (const v of [scene, map]) v.setHover(null);
     canvas.style.cursor = '';
+    map.canvas.style.cursor = '';
   }
-  listen(canvas, 'pointermove', (e) => {
+  const surfaces = [
+    [canvas, scene],
+    [map.canvas, map],
+  ];
+  for (const [surface, view] of surfaces) {
+    listen(surface, 'pointermove', (e) => onPointerMove(e, surface, view));
+    listen(surface, 'pointerleave', hideTip);
+    listen(surface, 'pointerup', (e) => onPointerUp(e, surface, view));
+  }
+  function onPointerMove(e, surface, view) {
     if (e.pointerType !== 'mouse' || e.buttons) return;
-    const r = canvas.getBoundingClientRect();
-    const hit = scene.pick(e.clientX - r.left, e.clientY - r.top, 12 * uiScale);
+    const r = surface.getBoundingClientRect();
+    const hit = view.pick(e.clientX - r.left, e.clientY - r.top, 12 * uiScale);
     if (!hit) {
-      if (!tip.hidden || canvas.style.cursor) hideTip();
+      if (!tip.hidden || surface.style.cursor) hideTip();
       return;
     }
-    scene.setHover(hit.type === 'photo' ? hit.id : null);
+    view.setHover(hit.type === 'photo' ? hit.id : null);
     if (hit.type === 'photo') {
       const p = findPhoto(hit.id);
       // "Antarctica, 25 Oct, 00:54 UTC"
@@ -1031,22 +1209,21 @@ export function mountGlobe(container, options = {}) {
     } else {
       tip.textContent = 'The Sun is overhead here';
     }
-    canvas.style.cursor = hit.type === 'photo' || hit.type === 'satellite' ? 'pointer' : '';
+    surface.style.cursor = hit.type === 'photo' || hit.type === 'satellite' ? 'pointer' : '';
     tip.hidden = false;
     tip.style.transform = `translate(${Math.round(hit.x)}px, ${Math.round(hit.y)}px)`;
-  });
-  listen(canvas, 'pointerleave', hideTip);
-  listen(canvas, 'pointerup', (e) => {
-    if (scene.controls.dragged) return;
-    const r = canvas.getBoundingClientRect();
-    const hit = scene.pick(e.clientX - r.left, e.clientY - r.top, (e.pointerType === 'mouse' ? 12 : 22) * uiScale);
+  }
+  function onPointerUp(e, surface, view) {
+    if (view.controls.dragged) return;
+    const r = surface.getBoundingClientRect();
+    const hit = view.pick(e.clientX - r.left, e.clientY - r.top, (e.pointerType === 'mouse' ? 12 : 22) * uiScale);
     if (hit?.type === 'photo') {
       closeSheet();
       focusPhoto(hit.id);
     } else if (hit?.type === 'satellite') {
       setFollow(true);
     }
-  });
+  }
 
   // keyboard
   function onKey(e) {
@@ -1068,6 +1245,25 @@ export function mountGlobe(container, options = {}) {
       case 'f':
       case 'F':
         setFollow(!state.follow);
+        break;
+      case 't':
+      case 'T':
+        if (!picker.isOpen) picker.open(state.ms, el.timeBtn);
+        break;
+      case 'm':
+      case 'M':
+        if (opts.ui === 'compact') return;
+        setView(onMap() ? 'globe' : 'map');
+        break;
+      case '+':
+      case '=':
+        if (!onMap()) return;
+        map.zoomBy(2);
+        break;
+      case '-':
+      case '−':
+        if (!onMap()) return;
+        map.zoomBy(0.5);
         break;
       case 'p':
       case 'P':
@@ -1097,15 +1293,17 @@ export function mountGlobe(container, options = {}) {
   function hashParams() {
     if (!opts.hashState) return {};
     const p = new URLSearchParams(location.hash.replace(/^#/, ''));
-    return { t: p.get('t'), photo: p.get('photo'), view: parseView(p.get('view')) };
+    return { t: p.get('t'), photo: p.get('photo'), view: parseView(p.get('view')), mode: p.get('mode') };
   }
 
-  /** #t=<iso>&photo=<id>, and with `view` the camera: &view=<lat>,<lon>,<distance>. */
+  /** #t=<iso>&photo=<id>&mode=map, and with `view` the globe's camera:
+   * &view=<lat>,<lon>,<distance>. */
   function stateParams({ view = false } = {}) {
     const p = new URLSearchParams();
     if (!state.live) p.set('t', isoUtc(state.ms));
     if (state.selectedId) p.set('photo', state.selectedId);
-    const v = view ? scene.viewPoint() : null;
+    if (onMap()) p.set('mode', 'map');
+    const v = view && !onMap() ? scene.viewPoint() : null;
     if (v) p.set('view', `${v.latDeg.toFixed(2)},${v.lonDeg.toFixed(2)},${v.distance.toFixed(2)}`);
     return p.toString().replace(/%3A/gi, ':').replace(/%2C/gi, ',');
   }
@@ -1133,11 +1331,12 @@ export function mountGlobe(container, options = {}) {
     if (!v) return;
     state.userMovedCamera = true;
     setFollow(false);
-    scene.flyToGround(v.lat, v.lon, { distance: v.distance, immediate: true });
+    flyToGround(v.lat, v.lon, { distance: v.distance, immediate: true });
   }
 
   function applyHash() {
     const h = hashParams();
+    setView(h.mode === 'map' ? 'map' : 'globe', { write: false });
     if (h.photo && h.photo !== state.selectedId) focusPhoto(h.photo, { immediate: false });
     if (h.t) {
       const ms = Date.parse(h.t);
@@ -1220,11 +1419,13 @@ export function mountGlobe(container, options = {}) {
     }
     if (panels === 'hidden') setPanels(false);
   }
+  const noGl = root.classList.contains('cg-nogl-on');
+  setView(hashParams().mode === 'map' || opts.view === 'map' || noGl ? 'map' : 'globe', { write: false });
   paintTransport();
   paintPhotoList();
   paintPasses();
   pushScene(true);
-  scene.flyToGround(astro.CALGARY.latDeg, astro.CALGARY.lonDeg, { distance: DEFAULT_DISTANCE, immediate: true });
+  flyToGround(astro.CALGARY.latDeg, astro.CALGARY.lonDeg, { distance: DEFAULT_DISTANCE, immediate: true });
 
   const hash = hashParams();
   const startPhoto = hash.photo || opts.photoId || null;
@@ -1247,6 +1448,7 @@ export function mountGlobe(container, options = {}) {
       placePhotos();
       trackKey = null;
       pushScene(true);
+      picker.refresh();
       paintPasses();
       // a link with a camera view keeps it rather than flying to the photo
       const wanted = pendingFocus || (startPhoto ? { id: startPhoto, fly: !hash.view, immediate: true } : null);
@@ -1265,7 +1467,7 @@ export function mountGlobe(container, options = {}) {
       }
       // nothing placed to look at: start on the satellite
       const onPhoto = focused && findPhoto(wanted.id)?.placed;
-      if (!onPhoto && !state.userMovedCamera) scene.flyToSatellite({ immediate: true });
+      if (!onPhoto && !state.userMovedCamera) flyToSatellite({ immediate: true });
       applyView(hash.view); // again, now the Earth is turned to the final time
       markDirty();
     })
@@ -1299,6 +1501,9 @@ export function mountGlobe(container, options = {}) {
       resizeObserver.disconnect();
       for (const off of cleanups) off();
       scene.dispose();
+      map.dispose();
+      picker.destroy();
+      wheel.destroy();
       root.remove();
     },
   };

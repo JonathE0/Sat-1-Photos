@@ -30,7 +30,8 @@ On macOS/Linux create the venv with a 3.11+ interpreter, e.g.
 about two seconds. It does not take the scheduler's lock, though, so once the
 task below is installed, run `.venv\Scripts\python.exe scripts\scheduled_update.py`
 by hand instead; it takes the lock and logs to `data/logs/update.log`. To
-have Windows run it every 30 minutes, with no AI or person in the loop:
+have Windows run it every day at 10:00 and 22:00, with no AI or person in the
+loop:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts\install-schedule.ps1
@@ -146,7 +147,8 @@ data/                local cache and logs (not committed)
 host, member edits are read-only.
 
 On GitHub, [`.github/workflows/publish.yml`](.github/workflows/publish.yml)
-does it for you. Every 30 minutes, and on every push to `main`, it runs the
+does it for you. Twice a day (04:00 and 16:00 UTC: 10 PM and 10 AM in Calgary
+on daylight time), and on every push to `main`, it runs the
 same `update` as the local schedule, commits any new pictures and site data
 back to the repository, and publishes `site/` to GitHub Pages. To turn it on,
 set Settings > Pages > Source to "GitHub Actions". The data cache is kept
@@ -159,8 +161,8 @@ With that workflow running, turn the local schedule off
 both would otherwise rewrite the same generated files. Set `repoUrl` in
 `site/config.js` to the repository's URL so public visitors get a "Suggest a
 correction" link that opens a GitHub issue. Elsewhere, a static copy is only
-as current as its last push, so set `refreshMinutes` to match (0 if it isn't
-refreshed on a schedule; the footer then makes no promise).
+as current as its last push, so set `refreshSchedule` to match ("" if it
+isn't refreshed on a schedule; the footer then makes no promise).
 
 To accept edits, run `serve.py` on a machine the team can reach, listening on
 the network and with an edit key:

@@ -9,6 +9,9 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { applyAnnotations, launchTime, toIsoUtc, toPhotos } from '../adapter.js';
 import * as astro from '../astro.js';
+import * as wheel from '../colorwheel.js';
+import * as map2d from '../map2d.js';
+import { elementsNote, FAR_DAYS, parseUtcInput, utcInputs, VERY_FAR_DAYS } from '../timepick.js';
 
 const read = (rel) => JSON.parse(readFileSync(fileURLToPath(new URL(rel, import.meta.url)), 'utf8'));
 const tles = read('../../data/tle.json');
@@ -237,6 +240,209 @@ check('compass points', astro.compassPoint(0) === 'N' && astro.compassPoint(355)
   check('annotation: new capture time drops the stale position', e['2026-10-11-082030z'].capturedAtUTC === '2026-10-11T08:21:00Z' && e['2026-10-11-082030z'].lat === null);
   check('annotation: lat/lon override', e['2026-10-22-150759z'].lat === 10 && e['2026-10-22-150759z'].lon === 20);
   check('annotation: untouched photos unchanged', e['2026-10-25005433z'] === byId['2026-10-25005433z']);
+}
+
+// ---- 2D map (map2d.js) -------------------------------------------------------------------
+{
+  const D = astro.DEG;
+  /** Angle between two ground points, radians. */
+  const between = (lat1, lon1, lat2, lon2) => surfaceKm(lat1, lon1, lat2, lon2) / 6371;
+
+  // projection: 1440 x 900 with the clock bar's 96 px at the bottom
+  const view = new map2d.MapView();
+  Object.assign(view, { w: 1440, h: 900, inset: { top: 0, right: 0, bottom: 96, left: 0 } });
+  view.k = view.minK;
+  view.clamp();
+  check(
+    'map: widest zoom puts the poles on the frame edges and 0 deg in the middle',
+    Math.abs(view.y(90)) < 1e-9 && Math.abs(view.y(-90) - 804) < 1e-9 && Math.abs(view.x(0) - 720) < 1e-9,
+    `k ${view.k.toFixed(3)} px/deg`,
+  );
+  check('map: x runs evenly from 180 W to 180 E', Math.abs(view.x(179.999) - view.x(-180) - 359.999 * view.k) < 1e-6);
+  view.cLon = -100;
+  view.k *= 3;
+  view.cLat = 40;
+  view.clamp();
+  let worst = 0;
+  for (let i = 0; i < 48; i++) {
+    const t = Date.UTC(2026, 9, 20) + i * 37 * 60_000;
+    const s = orbit.stateAt(t);
+    const x = view.x(s.lonDeg);
+    const y = view.y(s.latDeg);
+    worst = Math.max(worst, surfaceKm(view.latAt(y), map2d.wrapLon(view.lonAt(x)), s.latDeg, s.lonDeg));
+  }
+  check('map: satellite positions go to the map and back within 1 m', worst < 0.001, `${(worst * 1000).toFixed(6)} m`);
+  const xs = view.xs(-100, 0);
+  check('map: a point at the centre is drawn once when zoomed in', xs.length === 1 && Math.abs(xs[0] - view.cx) < 1e-9);
+  const wide = new map2d.MapView();
+  Object.assign(wide, { w: 3440, h: 600 });
+  wide.k = 4;
+  check('map: a canvas wider than the world draws a point in every copy', wide.xs(0, 0).length === 3, `${wide.xs(0, 0).length} copies`);
+
+  // the track crosses the antimeridian as one line
+  const t0 = Date.UTC(2026, 9, 25);
+  const period = orbit.periodMinutes(t0);
+  const samples = [];
+  for (let m = -period; m <= 2 * period; m += 0.5) samples.push(orbit.stateAt(t0 + m * 60_000));
+  const lons = map2d.unwrapLons(samples.map((s) => s.lonDeg));
+  let jump = 0;
+  let same = true;
+  for (let i = 0; i < lons.length; i++) {
+    if (i) jump = Math.max(jump, Math.abs(lons[i] - lons[i - 1]));
+    if (Math.abs(map2d.wrapLon(lons[i]) - map2d.wrapLon(samples[i].lonDeg)) > 1e-9) same = false;
+  }
+  const spanDeg = Math.abs(lons[lons.length - 1] - lons[0]);
+  check(
+    'map: three orbits of track unwrap with no jumps, the same places, across the antimeridian',
+    jump < 30 && same && spanDeg > 720,
+    `largest step ${jump.toFixed(2)} deg, ${spanDeg.toFixed(0)} deg of longitude`,
+  );
+
+  // terminator: the map's Sun angle is astro's, and the masks put day and night in the right cells
+  let elevErr = 0;
+  for (let i = 0; i < 200; i++) {
+    const lat = -89 + ((i * 47) % 179);
+    const lon = -180 + ((i * 113) % 360);
+    const t = astro.LAUNCH_MS + i * 13.7 * 3_600_000;
+    const mapEl = Math.asin(map2d.sunCosine(lat, lon, astro.sunDirectionEcef(t))) / D;
+    elevErr = Math.max(elevErr, Math.abs(mapEl - astro.sunElevationDeg(lat, lon, t)));
+  }
+  check('map: Sun elevation from the map equals astro.sunElevationDeg', elevErr < 1e-9, `max ${elevErr.toExponential(1)} deg`);
+  check(
+    'map: day picture fully shown 2 deg up, gone 6 deg down (as the globe shader)',
+    map2d.dayWeight(Math.sin(2.01 * D)) > 0.999 && map2d.dayWeight(Math.sin(-6.04 * D)) < 0.001,
+  );
+  const cols = 720;
+  const rows = 360;
+  const dim = new Uint8ClampedArray(cols * rows * 4);
+  const day = new Uint8ClampedArray(cols * rows * 4);
+  for (const t of [Date.UTC(2026, 5, 21, 12), Date.UTC(2026, 9, 29, 18, 30), Date.UTC(2026, 11, 21, 3)]) {
+    const sun = astro.sunDirectionEcef(t);
+    map2d.shadeMasks(sun, dim, day, cols, rows);
+    let wrong = 0;
+    let edgeOff = 0;
+    for (let j = 0; j < rows; j++) {
+      for (let i = 0; i < cols; i++) {
+        const { latDeg, lonDeg } = map2d.maskCell(i, j, cols, rows);
+        const el = astro.sunElevationDeg(latDeg, lonDeg, t);
+        const a = day[(j * cols + i) * 4 + 3];
+        if ((el > 2.1 && a !== 255) || (el < -6.1 && a !== 0)) wrong++;
+        // where day turns to night along a row, astro must put the Sun in the twilight band
+        if (i && (a >= 128) !== (day[(j * cols + i - 1) * 4 + 3] >= 128) && (el < -6.6 || el > 2.6)) edgeOff++;
+      }
+    }
+    const ss = astro.subsolarPoint(t);
+    const at = (lat, lon) => {
+      const i = Math.floor(((map2d.wrapLon(lon) + 180) / 360) * cols);
+      const j = Math.min(rows - 1, Math.floor(((90 - lat) / 180) * rows));
+      return { day: day[(j * cols + i) * 4 + 3], dim: dim[(j * cols + i) * 4 + 3] };
+    };
+    const noon = at(ss.latDeg, ss.lonDeg);
+    const midnight = at(-ss.latDeg, ss.lonDeg + 180);
+    check(
+      `map: day/night masks for ${new Date(t).toISOString().slice(0, 16)} match astro in all ${cols * rows} cells`,
+      wrong === 0 && edgeOff === 0 && noon.day === 255 && noon.dim === 0 && midnight.day === 0,
+      `${wrong} cells wrong, ${edgeOff} terminator cells off, subsolar day ${noon.day}, antisolar day ${midnight.day}`,
+    );
+  }
+
+  // footprint: every point of the ring is the footprint radius from the sub-point
+  for (const [lat, lon, alt] of [[51, -114, 510], [80, 170, 520], [-79, -179, 500], [0, 179.5, 498]]) {
+    const angle = astro.footprintAngle(alt);
+    const ring = map2d.footprintRing(lat, lon, angle);
+    let err = 0;
+    for (const p of ring) err = Math.max(err, Math.abs(between(lat, lon, p.latDeg, p.lonDeg) - angle));
+    const turn = Math.abs(ring[ring.length - 1].lonDeg - ring[0].lonDeg);
+    const polar = Math.abs(lat) + angle / D > 90;
+    check(
+      `map: footprint at ${lat}, ${lon} is a ${(angle / D).toFixed(2)} deg circle${polar ? ' round the pole' : ''}`,
+      err < 1e-6 && (polar ? Math.abs(turn - 360) < 1e-6 : turn < 1e-6),
+      `max error ${(err / D).toExponential(1)} deg, ends ${turn.toFixed(1)} deg from its start`,
+    );
+  }
+  check(
+    'map: grid labels',
+    map2d.gridLabel(30, 'lat') === '30° N' && map2d.gridLabel(-60, 'lat') === '60° S' && map2d.gridLabel(0, 'lat') === '0°' &&
+      map2d.gridLabel(-120, 'lon') === '120° W' && map2d.gridLabel(180, 'lon') === '180°' && map2d.gridLabel(390, 'lon') === '30° E',
+  );
+  check('map: grid every 30 deg at the widest zoom, finer closer in', map2d.gridStep(5.5) === 30 && map2d.gridStep(3.7) === 30 && map2d.gridStep(20) === 10);
+}
+
+// ---- time picker (timepick.js) --------------------------------------------------------------
+{
+  check(
+    'time picker: reads 24-hour times typed several ways',
+    parseUtcInput('2026-10-22', '15:07:59') === Date.UTC(2026, 9, 22, 15, 7, 59) &&
+      parseUtcInput('2026-10-22', '15:07') === Date.UTC(2026, 9, 22, 15, 7) &&
+      parseUtcInput('2026-10-22', '1507') === Date.UTC(2026, 9, 22, 15, 7) &&
+      parseUtcInput('2026-10-22', '150759') === Date.UTC(2026, 9, 22, 15, 7, 59) &&
+      parseUtcInput(' 2026-10-22 ', ' 9:05 ') === Date.UTC(2026, 9, 22, 9, 5),
+  );
+  check(
+    'time picker: rejects impossible dates and times',
+    [['2026-02-30', '12:00'], ['2026-10-22', '24:00'], ['2026-10-22', '12:60'], ['22/10/2026', '12:00'], ['2026-10-22', ''], ['', '12:00']]
+      .every(([d, t]) => Number.isNaN(parseUtcInput(d, t))),
+  );
+  const v = utcInputs(Date.UTC(2026, 4, 3, 6, 59, 7, 900));
+  check('time picker: fills the fields from a time', v.date === '2026-05-03' && v.time === '06:59:07' && parseUtcInput(v.date, v.time) === Date.UTC(2026, 4, 3, 6, 59, 7));
+  const last = orbit.lastEpochMs;
+  const day = 86_400_000;
+  const launch = elementsNote(astro.LAUNCH_MS + day, orbit);
+  const inside = elementsNote(orbit.items[10].epochMs + 3_600_000, orbit);
+  const soon = elementsNote(last + 3 * day, orbit);
+  const far = elementsNote(last + (FAR_DAYS + 1) * day, orbit);
+  const veryFar = elementsNote(last + (VERY_FAR_DAYS + 30) * day, orbit);
+  check('time picker: on launch day it says the elements are later and the position approximate', launch.level === 'ok' && /first orbital elements/.test(launch.text) && /approximate/.test(launch.text), launch.text);
+  check('time picker: inside the history it gives the elements and their age', inside.level === 'ok' && /\(1 hour old\)/.test(inside.text), inside.text);
+  check('time picker: 3 days past the newest elements is a forecast, plainly worded', soon.level === 'ok' && /^Forecast/.test(soon.text) && /3 days old/.test(soon.text), soon.text);
+  check(`time picker: more than ${FAR_DAYS} days past them it warns of tens of kilometres`, far.level === 'far' && /tens of kilometres/.test(far.text), far.text);
+  check(
+    `time picker: more than ${VERY_FAR_DAYS} days past them, hundreds of kilometres and a rough guess`,
+    veryFar.level === 'far' && /hundreds of kilometres/.test(veryFar.text) && /rough guess/.test(veryFar.text),
+    veryFar.text,
+  );
+}
+
+// ---- orbit colour (colorwheel.js) --------------------------------------------------------------
+{
+  const space = '#05070A';
+  check('colour: WCAG contrast of white on black is 21', Math.abs(wheel.contrast('#FFFFFF', '#000000') - 21) < 1e-9);
+  check('colour: the team blue is clear of the night side', wheel.contrast(wheel.TEAM_BLUE, space) > 6.9, wheel.contrast(wheel.TEAM_BLUE, space).toFixed(2));
+  let roundTrip = 0;
+  for (const hex of [wheel.TEAM_BLUE, '#F2B33D', '#05070A', '#E6EBF0', '#7F3FBF', '#00FF80']) {
+    const back = wheel.rgbToHex(wheel.hslToRgb(...Object.values(wheel.rgbToHsl(wheel.hexToRgb(hex)))));
+    const a = wheel.hexToRgb(hex);
+    const b = wheel.hexToRgb(back);
+    roundTrip = Math.max(roundTrip, Math.abs(a.r - b.r), Math.abs(a.g - b.g), Math.abs(a.b - b.b));
+  }
+  check('colour: hex to HSL and back is exact to the unit', roundTrip <= 1, `${roundTrip} at most`);
+  let worst = Infinity;
+  let worstHue = 0;
+  let lightest = 0;
+  for (let h = 0; h < 360; h++) {
+    for (const l of [0, wheel.LIGHTNESS.min, 60, wheel.LIGHTNESS.max, 100]) {
+      const hex = wheel.readableColour(h, l);
+      const c = wheel.contrast(hex, space);
+      if (c < worst) [worst, worstHue] = [c, h];
+      lightest = Math.max(lightest, wheel.rgbToHsl(wheel.hexToRgb(hex)).l);
+    }
+  }
+  check(
+    `colour: every hue at every lightness keeps ${wheel.MIN_CONTRAST}:1 on the night side, never white`,
+    worst >= wheel.MIN_CONTRAST && lightest < 96,
+    `lowest ${worst.toFixed(2)} at hue ${worstHue}, lightest ${lightest.toFixed(0)}%`,
+  );
+  check(
+    'colour: presets are distinct, usable and start with the team blue',
+    wheel.PRESETS[0].hex === wheel.TEAM_BLUE && new Set(wheel.PRESETS.map((p) => p.hex)).size === wheel.PRESETS.length &&
+      wheel.PRESETS.every((p) => wheel.usable(p.hex)),
+    wheel.PRESETS.map((p) => p.hex).join(' '),
+  );
+  check(
+    'colour: a stored value is only used when it is a clear hex colour',
+    wheel.usable('#3c9df5') && !wheel.usable('#101010') && !wheel.usable('red') && !wheel.usable('#3C9DF5; x') && !wheel.usable(null),
+  );
+  check('colour: hue names', wheel.hueName(208) === 'blue' && wheel.hueName(40) === 'amber' && wheel.hueName(359) === 'red' && wheel.hueName(-10) === 'red');
 }
 
 console.log(`\n${passed} passed, ${failures} failed`);

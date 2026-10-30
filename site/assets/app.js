@@ -11,7 +11,7 @@ import { createDetail, NAME_KEY } from './detail.js';
 import { mountJourney } from '../explore/journey.js';
 import { toDate, utcLong, plural } from './format.js';
 
-const config = { repoUrl: '', refreshMinutes: 30, ...(window.CTS1_CONFIG || {}) };
+const config = { repoUrl: '', ...(window.CTS1_CONFIG || {}) };
 
 const state = {
   data: null,
@@ -256,15 +256,20 @@ function renderSkipped() {
 
 function updateCounts() {
   const built = toDate(state.data?.generated_at);
-  const minutes = Number(config.refreshMinutes);
-  const every = Number.isFinite(minutes) && minutes > 0 ? `every ${plural(minutes, 'minute')}` : 'regularly';
   const updated = $('#foot-updated');
   updated.replaceChildren();
   append(updated, [
     built ? ['Picture list last changed ', mono(utcLong(built, false)), '. '] : '',
-    // refreshMinutes 0: a copy that is updated by hand makes no promise.
-    minutes === 0 ? '' : `It is rebuilt ${every} from the pipeline, which reprocesses SatNOGS observations about every 15 minutes.`,
+    // An empty schedule: a copy that is updated by hand makes no promise.
+    refreshText() ? `It is rebuilt ${refreshText()} from the pipeline, which reprocesses SatNOGS observations about every 15 minutes.` : '',
   ]);
+}
+
+// "twice a day, at …" from config.js; older configs give refreshMinutes instead.
+function refreshText() {
+  if (typeof config.refreshSchedule === 'string') return config.refreshSchedule.trim();
+  const minutes = Number(config.refreshMinutes);
+  return Number.isFinite(minutes) && minutes > 0 ? `every ${plural(minutes, 'minute')}` : '';
 }
 
 function loadErrorMessage(error) {

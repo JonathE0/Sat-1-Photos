@@ -1,0 +1,148 @@
+/* The orbit page's flat map (map2d.js) and the Globe / Map switch.
+   Same tokens as globe.css: flat Panel fills, no borders, the selected
+   choice in Ink, the blue only on the satellite and its track (drawn in
+   the canvas) and focus rings. */
+
+.cg-map {
+  position: absolute;
+  inset: 0;
+  background: var(--cg-bg, #05070A);
+}
+
+.cg-map canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.cg-map-over {
+  touch-action: none;
+  cursor: grab;
+  outline: none;
+}
+
+.cg-map-dragging .cg-map-over {
+  cursor: grabbing;
+}
+
+.cg-map-over:focus-visible {
+  outline: 2px solid var(--cg-accent, #3C9DF5);
+  outline-offset: -2px;
+}
+
+/* in map mode the 3D canvas and its labels step aside */
+.cg-mode-map .cg-canvas,
+.cg-mode-map .cg-labels,
+.cg-mode-map .cg-nogl {
+  visibility: hidden;
+}
+
+/* over the map the header's text would sit on ice and cloud: give it the
+   panels' flat ground (narrow screens start the map below it instead) */
+.cg-mode-map:not(.cg-narrow) .cg-head {
+  padding: var(--cg-pad);
+  background: var(--cg-panel);
+}
+
+.cg[data-ui="compact"] .cg-views {
+  display: none;
+}
+
+/* ---- Globe / Map, and the map's zoom ------------------------------------------ */
+
+.cg-views {
+  position: absolute;
+  top: var(--cg-gap, 16px);
+  left: 50%;
+  z-index: 2;
+  display: flex;
+  gap: calc(8 * var(--cg-u, 1px));
+  transform: translateX(-50%);
+}
+
+/* Globe / Map and the orbit colour swatch */
+.cg-views-main {
+  display: flex;
+  gap: calc(8 * var(--cg-u, 1px));
+}
+
+.cg-seg {
+  display: flex;
+  background: var(--cg-panel, #10151B);
+}
+
+.cg-seg button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--cg-btn-h, 32px);
+  min-width: var(--cg-btn-h, 32px);
+  padding: 0 calc(14 * var(--cg-u, 1px));
+  background: transparent;
+  border: 0;
+  font: 500 var(--cg-small, 13px)/1 var(--cg-sans);
+  color: var(--cg-muted, #8A96A3);
+  cursor: pointer;
+}
+
+.cg-seg button:hover {
+  background: var(--cg-raised, #1A2129);
+  color: var(--cg-text, #E6EBF0);
+}
+
+.cg-seg button[aria-pressed="true"] {
+  background: var(--cg-text, #E6EBF0);
+  color: var(--cg-bg, #05070A);
+}
+
+.cg-seg-zoom button {
+  padding: 0;
+  font-size: var(--cg-value, 16px);
+  color: var(--cg-text, #E6EBF0);
+}
+
+.cg-seg-zoom button:disabled {
+  color: var(--cg-muted, #8A96A3);
+  background: transparent;
+  cursor: default;
+  opacity: 0.5;
+}
+
+.cg:not(.cg-mode-map) .cg-seg-zoom {
+  display: none;
+}
+
+/* narrow: the switch top right, clear of the title on the left; zoom at the
+   right edge just above the bottom bar, under any open sheet */
+.cg-narrow .cg-views {
+  display: contents;
+}
+
+.cg-narrow .cg-views-main {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+}
+
+.cg-narrow .cg-seg-zoom {
+  position: absolute;
+  right: 12px;
+  bottom: calc(var(--cg-dock-h, 0px) + 12px);
+  z-index: 1;
+  flex-direction: column-reverse;
+}
+
+.cg-narrow .cg-seg button {
+  height: 44px;
+  min-width: 44px;
+}
+
+@media (pointer: coarse) {
+  .cg-seg button {
+    height: max(44px, var(--cg-btn-h, 32px));
+    min-width: 44px;
+  }
+}
