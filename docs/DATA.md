@@ -1,6 +1,6 @@
 # Data files
 
-The site is static: everything it shows comes from three JSON files in
+The site is static: everything it shows comes from four JSON files in
 `site/data/`, plus member edits served by `serve.py`.
 
 | File | Written by | Committed |
@@ -8,6 +8,7 @@ The site is static: everything it shows comes from three JSON files in
 | `site/data/images.json` | `python -m cts1_gallery update` | yes |
 | `site/data/tle.json` | `python -m cts1_gallery update` | yes |
 | `site/data/annotations.json` | `serve.py`, when members save edits | yes |
+| `site/data/watchlist.json` | `python -m cts1_gallery watch` | no: each publish run writes it |
 | `site/images/*.jpg` (main camera), `site/images/*.png` (attitude camera), `site/images/thumbs/*.jpg` | `python -m cts1_gallery update` | yes |
 
 ## `images.json`
@@ -119,6 +120,135 @@ by their downlink time.
 
 An array of `{ "epoch", "line1", "line2" }` (two-line elements, oldest
 first), used by the orbit globe.
+
+## `watchlist.json`
+
+Things happening on Earth worth photographing, and CTS-SAT-1's coming passes
+over each in the right light. Shown by `site/watchlist/`. Plain scheduled
+code (`cts1_gallery/watch.py`), no AI in the loop:
+
+```
+python -m cts1_gallery watch               # fetch the feeds (at most hourly) and rebuild
+python -m cts1_gallery watch --offline     # rebuild from the cached feed answers
+python -m cts1_gallery watch --max-km 300  # a different "close enough" (default 400)
+```
+
+The publish workflow runs it after `update`, so passes use the newest TLE.
+The file isn't committed: every run writes it into `site/` before the Pages
+upload, and a copy is kept in `data/cache/watch/` (with the feed answers)
+for the next run to compare against.
+
+**Sources**, all free and keyless, each credited on the page:
+
+| Feed | What it gives | Terms |
+|---|---|---|
+| [NASA EONET](https://eonet.gsfc.nasa.gov/) v3, open events of the last 30 days | wildfires, storms (with 6-hourly tracks), volcanoes, dust and haze, sea and lake ice, floods, snow, water colour, man-made | NASA; no licence or limit stated, "for visualization and general information purposes". Each event links the agency it came from (JTWC, NHC, US National Ice Center, IRWIN, ...). |
+| [GDACS](https://www.gdacs.org/) map feeds, `TC`, `FL`, `VO`, `WF` | tropical cyclones (track and forecast positions), floods, volcanoes, wildfires worldwide | UN and European Commission; RSS marked public domain, EC content CC BY 4.0 with credit. No limit stated. Answers 404 for a type with nothing current. |
+| [NOAA SWPC](https://www.swpc.noaa.gov/) 3-day Kp forecast and OVATION nowcast | geomagnetic activity, for aurora | US government, public domain; no endorsement implied. Polled no faster than the data changes. |
+
+Each feed is fetched at most every 55 minutes (the workflow runs every 30)
+and its answer cached. A feed that fails, or answers in a shape the parser
+doesn't know, keeps its last good answer: its events stay on the list and
+the file says how old they are. Only a missing `tle_history.parquet` stops
+the run (exit code 2), and the workflow then republishes the last list.
+
+**What's left out**: earthquakes, droughts and heat waves (not visible from
+orbit); prescribed burns, and wildfires under 2,000 hectares (20 km²);
+storms with no report for 48 hours. GDACS fire areas within 75 km of each
+other are one entry. A cyclone in both EONET and GDACS is one entry with
+EONET's name and both links.
+
+**Passes**: the gallery's own SGP4 (`orbit.Orbit`, newest TLE), sampled
+every 20 s from the start of the current hour (so runs within an hour write
+the same file) for `window` (3 days), each pass refined to well under a
+second. A pass counts when the point directly below the satellite comes
+within `max_km` of the event and the light is right:
+
+- daylight events: the sun at least 5° up at the event;
+- aurora: the ground below at least 12° past sunset, while NOAA's forecast
+  Kp is at least 4, with the satellite over the auroral oval (magnetic
+  latitude, from a tilted dipole, between `66.5 - 2.04 Kp` degrees and 12°
+  poleward of that: NOAA's rule of thumb for the oval's edge).
+
+`max_km` is a guess: the camera's footprint isn't documented. A 62° lens
+(the Raspberry Pi camera's) would see about 300 km either side of straight
+down from 500 km up; 400 km allows for some pointing.
+
+Storms move: their position at a pass is taken along GDACS's forecast track
+where there is one, else carried on along the great circle of their last
+day, for at most 24 h past the last report or forecast point. Passes later
+than that are dropped. Other events stay at their last reported position
+(icebergs drift a few km a day).
+
+Accuracy: SGP4 from a TLE a day or two old is good to a few seconds;
+older elements drift, by tens of seconds after a few days and a minute or
+more after a week (more when solar activity raises drag).
+
+```jsonc
+{
+  "generated_at": "2026-10-30T05:04:50Z",    // when the content last changed (a run with nothing new keeps it)
+  "window": { "from": "2026-10-30T05:00:00Z", "to": "2026-11-02T05:00:00Z" },
+  "max_km": 400.0,
+  "rules": { "day_sun_min_deg": 5.0, "dark_sun_max_deg": -12.0, "min_fire_ha": 2000.0, "aurora_kp": 4.0 },
+  "tle_epoch": "2026-10-27T22:38:42Z",       // the newest TLE, used for every pass
+  "sources": [
+    { "id": "gdacs", "name": "GDACS", "url": "https://www.gdacs.org/",
+      "status": "ok",                         // ok | stale (fetch failed; last good answer used) | down (nothing to show)
+      "fetched_at": "2026-10-30T05:04:17Z",   // when that answer was fetched; null when down
+      "error": null,                          // why the last fetch failed, e.g. "HTTP 503"
+      "events": 7 }                           // events from this feed, before merging
+  ],
+  "aurora": {                                 // null when SWPC has never answered
+    "threshold_kp": 4.0,
+    "max_kp": 5.0, "max_kp_at": "2026-10-31T00:00:00Z",  // highest Kp forecast in the window (3-hour slot start)
+    "ovation": { "forecast_at": "2026-10-30T06:09:00Z", "north_max_pct": 14, "south_max_pct": 13 }
+  },
+  "events": [                                 // by next pass (closest_at), then those with none, by title
+    {
+      "id": "eonet-eonet_25728",              // feed-qualified, stable while the feed lists it
+      "title": "Super Typhoon In-fa",
+      "category": "storm",                    // storm wildfire volcano flood dust ice water snow manmade aurora
+      "light": "day",                         // day | dark (aurora): the light a pass needs
+      "where": null,                          // place name when the feed's title lacks one (GDACS fires
+                                              // and floods: OpenStreetMap), else null
+      "size": "Winds up to 241 km/h",         // or "69,233 hectares burnt in 3 areas", "About 168 km²"
+      "alert": "Green",                       // GDACS alert level (Green | Orange | Red) or null
+      "lat": 17.8, "lon": 147.8,              // last reported position; null for aurora
+      "moving": true,                         // storms with a track: positions at passes are projected
+      "track": [ { "at": "2026-10-29T18:00:00Z", "lat": 17.1, "lon": 148.6 } ],    // recent reports (≤ 8)
+      "forecast": [ { "at": "2026-10-30T12:00:00Z", "lat": 18.6, "lon": 146.5 } ], // GDACS forecast points
+      "reported_at": "2026-10-30T00:00:00Z",  // the last reported (not forecast) position
+      "started_at": "2026-10-25T06:00:00Z",
+      "updated_at": "2026-10-30T01:52:06Z",   // the feed's last change (aurora: OVATION's observation time)
+      "sources": [ { "name": "NASA EONET", "url": "…" }, { "name": "GDACS", "url": "…" } ],
+      "next_at": "2026-10-31T00:49:53Z",      // earliest pass in the window (the page drops passes already over)
+      "opportunities": [                      // best first (quality), at most 12
+        {
+          "closest_at": "2026-10-31T00:49:53Z",
+          "closest_at_calgary": "2026-10-30T18:49:53-06:00",
+          "calgary_zone": "MDT",              // per the IANA tz database (Alberta stays at UTC-6 from 1 Nov 2026)
+          "window": { "from": "…", "to": "…" },  // while the point below is within max_km of the event
+          "distance_km": 184,                 // event to the point below the satellite, at closest; null for aurora
+          "off_nadir_deg": 19.6,              // how far off straight down the event is then; null for aurora
+          "target": { "lat": 21.27, "lon": 143.2,  // where the event was taken to be (aurora: the point below)
+                      "projected_h": 24.8,    // hours after the last report, for moving events
+                      "basis": "forecast" },  // reported | forecast | extrapolated, for moving events; else null
+          "satellite": { "lat": 22.6, "lon": 141.4, "alt_km": 503, "light": "sunlit" },  // sunlit | terminator | shadow
+          "sun_elevation_deg": 41.2,          // at the target
+          "light": "day",                     // day (sun ≥ 15°) | low sun | twilight | night (below -12°)
+          "tle_epoch": "2026-10-27T22:38:42Z",
+          "tle_age_days": 3.1,                // by the time of the pass
+          "accuracy": "fair",                 // good (< 2 days) | fair (< 5) | rough
+          "quality": 0.62,                    // 0..1: closeness × light × accuracy (aurora: Kp instead of closeness)
+          "kp": 5.0,                          // aurora only: Kp forecast for then
+          "magnetic_latitude_deg": 63.2,      // aurora only
+          "ground_track": [[20.1, 141.9], …]  // the point below, every 30 s for ±4 min (aurora: across the oval)
+        }
+      ]
+    }
+  ]
+}
+```
 
 ## Member edits: `annotations.json` and the API
 

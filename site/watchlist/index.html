@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Watchlist, CTS-SAT-1</title>
+  <meta name="description" content="Things happening on Earth worth photographing from orbit, and when CTS-SAT-1 (FrontierSat) next passes over each in the right light.">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#05070A">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="watchlist.css">
+  <script src="watchlist.js" defer></script>
+</head>
+<body>
+  <header class="top">
+    <nav class="nav" aria-label="Main">
+      <a class="brand" href="../" aria-label="CTS-SAT-1 pictures">
+        <img src="../assets/calgarytospace-logo.png" width="640" height="204" alt="">
+      </a>
+      <div class="nav-links">
+        <a href="../">Pictures</a>
+        <a href="../globe/">Orbit</a>
+        <a href="./" aria-current="page">Watchlist</a>
+      </div>
+    </nav>
+  </header>
+
+  <main class="page" id="main">
+    <div class="intro">
+      <h1>Watchlist</h1>
+      <p class="lead" id="lead">Things happening on Earth that <span class="name">CTS-SAT-1</span> will pass over soon, in the right light for a picture.</p>
+      <p class="status" id="status" aria-live="polite">Loading the watchlist.</p>
+      <div class="notes" id="notes"></div>
+    </div>
+
+    <div class="filters" id="filters" role="group" aria-label="Show" hidden></div>
+
+    <ol class="list" id="list" aria-label="Coming passes"></ol>
+    <p class="empty" id="empty" hidden></p>
+
+    <section class="later" id="later" hidden aria-labelledby="later-title">
+      <h2 id="later-title">No pass close enough yet</h2>
+      <p class="small" id="later-lead"></p>
+      <ul id="later-list"></ul>
+    </section>
+
+    <section class="how" aria-labelledby="how-title">
+      <h2 id="how-title">How this list is made</h2>
+      <div id="how">
+        <p>A scheduled job, with no person or AI in the loop, collects open events from public feeds and works out from the satellite's orbital elements when the ground below it next comes close to each one.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <p>Events: <a href="https://eonet.gsfc.nasa.gov/">NASA EONET</a> and the agencies it lists for each event, <a href="https://www.gdacs.org/">GDACS</a> (the United Nations and the European Commission), and the <a href="https://www.swpc.noaa.gov/">NOAA Space Weather Prediction Center</a>. They're shown here for planning only; follow the links for the sources' own reports.</p>
+    <p>Orbital elements: Space-Track.org. Maps: NASA Earth Observatory (Blue Marble and Black Marble). Places © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors.</p>
+  </footer>
+
+  <noscript><p class="nojs">The watchlist needs JavaScript. The data behind it is in <a href="../data/watchlist.json">data/watchlist.json</a>.</p></noscript>
+</body>
+</html>

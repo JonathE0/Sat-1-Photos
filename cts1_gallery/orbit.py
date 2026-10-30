@@ -97,6 +97,16 @@ class Orbit:
         )
 
 
+def sun_elevation(t: datetime, lat: float, lon: float) -> float:
+    """Degrees the sun's centre stands above the horizon at a point on the
+    ground (no refraction), by the same sun model as `Orbit.state`."""
+    jd, fr = jday(t.year, t.month, t.day, t.hour, t.minute, t.second + t.microsecond / 1e6)
+    sun = _rotate_z(_sun_direction(jd + fr), -gstime(jd + fr))
+    phi, lam = lat * _DEG, lon * _DEG
+    up = (math.cos(phi) * math.cos(lam), math.cos(phi) * math.sin(lam), math.sin(phi))
+    return math.degrees(math.asin(max(-1.0, min(1.0, _dot(up, sun)))))
+
+
 def _satrec(row: dict) -> Satrec:
     sat = Satrec()
     sat.sgp4init(

@@ -1,0 +1,174 @@
+/* The watchlist page. Tokens and type follow docs/design-direction.md:
+   one ground, one ink, the team blue only for the satellite's path and
+   focus rings; flat panels told apart by lightness; square corners;
+   nothing under 13px, no capitals or tracking. */
+
+:root {
+  --space: #05070A;
+  --panel: #10151B;
+  --raised: #1A2129;
+  --ink: #E6EBF0;
+  --muted: #8A96A3;
+  --blue: #3C9DF5;
+  --link-rest: color-mix(in srgb, var(--ink) 40%, transparent);
+  --margin: 16px;
+  --gutter: 16px;
+  --control: 36px;
+  --ease-out: cubic-bezier(.22, 1, .36, 1);
+  --t-hover: 180ms;
+  --sans: "Jost", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: dark;
+}
+
+@media (min-width: 600px) { :root { --margin: 24px; } }
+@media (min-width: 1100px) { :root { --margin: 32px; --gutter: 24px; } }
+@media (pointer: coarse) { :root { --control: 44px; } }
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--space);
+  color: var(--ink);
+  font: 400 16px/1.5 var(--sans);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: break-word;
+}
+
+a { color: var(--ink); text-decoration: underline; text-decoration-color: var(--link-rest); text-underline-offset: 3px; transition: text-decoration-color var(--t-hover) var(--ease-out); }
+a:hover { text-decoration-color: var(--ink); }
+:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+
+h1, h2, p, ol, ul { margin: 0; }
+ol, ul { padding: 0; list-style: none; }
+
+.small { font-size: 13px; line-height: 1.45; letter-spacing: .01em; color: var(--muted); }
+.name { white-space: nowrap; }
+
+/* -- nav ------------------------------------------------------------------ */
+
+.top { padding: 0 var(--margin); }
+.nav { display: flex; align-items: center; justify-content: space-between; gap: 16px; height: 64px; max-width: 1840px; margin: 0 auto; }
+.brand { display: inline-flex; align-items: center; min-height: 44px; }
+.brand img { display: block; height: 28px; width: auto; }
+.nav-links { display: flex; gap: 24px; }
+.nav-links a { display: inline-flex; align-items: center; min-height: 44px; font-weight: 500; text-decoration: none; border-bottom: 2px solid transparent; }
+.nav-links a:hover { border-bottom-color: var(--link-rest); }
+.nav-links a[aria-current="page"] { border-bottom-color: var(--ink); }
+@media (max-width: 599px) { .nav { height: 52px; } .nav-links { gap: 16px; } }
+
+/* -- intro ---------------------------------------------------------------- */
+
+.page { padding: 32px var(--margin) 96px; max-width: calc(1840px + 2 * var(--margin)); margin: 0 auto; }
+.intro { max-width: 62ch; }
+h1 { font-size: clamp(24px, 1rem + 1.2vw, 32px); font-weight: 500; line-height: 1.2; letter-spacing: -0.01em; }
+.lead { margin-top: 12px; font-size: 20px; line-height: 1.4; }
+.status { margin-top: 12px; font-size: 13px; line-height: 1.45; letter-spacing: .01em; color: var(--muted); }
+.notes:empty { display: none; }
+.notes { margin-top: 16px; display: grid; gap: 8px; }
+.notes p { max-width: 62ch; }
+.notes button { margin-top: 8px; }
+
+/* -- filters -------------------------------------------------------------- */
+
+.filters { display: flex; flex-wrap: wrap; gap: 4px; margin: 32px 0 24px; }
+.filters button, .btn {
+  height: var(--control);
+  padding: 0 14px;
+  border: 0;
+  border-radius: 0;
+  background: var(--panel);
+  color: var(--muted);
+  font: 500 16px/1 var(--sans);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: background-color var(--t-hover) var(--ease-out), color var(--t-hover) var(--ease-out);
+}
+.filters button:hover, .btn:hover { background: var(--raised); color: var(--ink); }
+.filters button[aria-pressed="true"] { background: var(--ink); color: var(--space); }
+.filters .n { margin-left: 6px; font-weight: 400; }
+.btn { color: var(--ink); }
+
+/* -- the list ------------------------------------------------------------- */
+
+.list { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 1680px) { .list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+.item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  padding: 16px;
+  background: var(--panel);
+}
+@media (min-width: 760px) {
+  .item { grid-template-columns: 280px minmax(0, 1fr); gap: var(--gutter); padding: 24px; }
+}
+
+.map { position: relative; aspect-ratio: 3 / 2; background: var(--space); }
+.map canvas { display: block; width: 100%; height: 100%; }
+
+.body { display: grid; gap: 16px; align-content: start; min-width: 0; }
+.item h2 { font-size: 16px; font-weight: 600; line-height: 1.4; }
+.meta { display: grid; gap: 2px; margin-top: 2px; }
+
+.facts { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 12px 16px; margin: 0; }
+.facts dt { font-size: 13px; line-height: 1.45; letter-spacing: .01em; color: var(--muted); padding-top: 2px; }
+.facts dd { margin: 0; min-width: 0; }
+.facts dd .small { display: block; }
+.facts .ink, .notes .ink { color: var(--ink); }
+@media (max-width: 599px) {
+  .facts { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+  .facts dd + dt { margin-top: 10px; }
+}
+
+.links { display: flex; flex-wrap: wrap; gap: 4px 20px; font-size: 13px; line-height: 1.45; letter-spacing: .01em; }
+.links a { display: inline-flex; align-items: center; min-height: 32px; font-weight: 500; }
+@media (pointer: coarse) { .links a { min-height: 44px; } }
+
+details.more summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: .01em;
+  cursor: pointer;
+  list-style: none;
+  text-decoration: underline;
+  text-decoration-color: var(--link-rest);
+  text-underline-offset: 3px;
+}
+details.more summary::-webkit-details-marker { display: none; }
+details.more summary:hover { text-decoration-color: var(--ink); }
+@media (pointer: coarse) { details.more summary { min-height: 44px; } }
+.passes { display: grid; gap: 10px; margin-top: 8px; }
+.passes li { display: grid; grid-template-columns: minmax(0, 15ch) minmax(0, 1fr); gap: 2px 16px; }
+.passes li .small { grid-column: 2; }
+@media (max-width: 599px) {
+  .passes li { grid-template-columns: minmax(0, 1fr); }
+  .passes li .small { grid-column: 1; }
+}
+
+.empty { max-width: 62ch; margin-top: 24px; font-size: 20px; line-height: 1.4; }
+.empty .btn { margin-top: 16px; }
+
+/* -- events with no pass, and the method -------------------------------- */
+
+.later, .how { margin-top: 64px; max-width: 62ch; }
+.later h2, .how h2 { font-size: 20px; font-weight: 600; line-height: 1.4; }
+.later .small { margin-top: 4px; }
+.later ul { display: grid; gap: 12px; margin-top: 16px; }
+.later li .small { display: block; }
+.how div { display: grid; gap: 12px; margin-top: 12px; }
+
+.foot { padding: 0 var(--margin) 48px; max-width: calc(1840px + 2 * var(--margin)); margin: 0 auto; display: grid; gap: 8px; }
+.foot p { max-width: 80ch; font-size: 13px; line-height: 1.45; letter-spacing: .01em; color: var(--muted); }
+
+.nojs { padding: 24px var(--margin); }
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}
