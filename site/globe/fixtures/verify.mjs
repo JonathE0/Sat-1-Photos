@@ -13,6 +13,7 @@ import * as wheel from '../colorwheel.js';
 import * as map2d from '../map2d.js';
 import * as region from '../../explore/journey-region.js';
 import * as rp from '../regionpasses.js';
+import * as shot from '../shotcamera.js';
 import { elementsNote, FAR_DAYS, parseUtcInput, utcInputs, VERY_FAR_DAYS } from '../timepick.js';
 
 const read = (rel) => JSON.parse(readFileSync(fileURLToPath(new URL(rel, import.meta.url)), 'utf8'));
@@ -516,6 +517,96 @@ check('compass points', astro.compassPoint(0) === 'N' && astro.compassPoint(355)
       pick([fake(900, 5), fake(20, -40)]) === 0 && rp.bestPass([]) === null,
   );
   check('passes: distances read as people would say them', rp.fmtKm(4) === 'under 10 km' && rp.fmtKm(1238) === '1,240 km');
+}
+
+// ---- the picam's geometry ---------------------------------------------------------
+{
+  const dot = (a, b) => a.x * b.x + a.y * b.y + a.z * b.z;
+  const ms = Date.parse('2026-10-22T15:07:52Z');
+  const state = orbit.stateAt(ms);
+  const nadir = shot.cameraAt(state);
+  const centre = shot.groundAtPixel(nadir, 320, 240);
+  check(
+    'picam: pointing straight down, the picture centre is the point under the satellite',
+    surfaceKm(centre.latDeg, centre.lonDeg, state.latDeg, state.lonDeg) < 0.01 && Math.abs(centre.rangeKm - state.altKm) < 0.01,
+    `${centre.latDeg.toFixed(4)}, ${centre.lonDeg.toFixed(4)}, ${centre.rangeKm.toFixed(1)} km away`,
+  );
+  const unit = (a) => Math.abs(dot(a, a) - 1) < 1e-9;
+  const handed = dot(
+    { x: nadir.right.y * nadir.down.z - nadir.right.z * nadir.down.y, y: nadir.right.z * nadir.down.x - nadir.right.x * nadir.down.z, z: nadir.right.x * nadir.down.y - nadir.right.y * nadir.down.x },
+    nadir.bore,
+  );
+  check(
+    'picam: the picture\'s axes are square and right-handed, so the frame is not mirrored',
+    unit(nadir.right) && unit(nadir.down) && unit(nadir.bore) && Math.abs(dot(nadir.right, nadir.down)) < 1e-9 && Math.abs(handed - 1) < 1e-9,
+  );
+  check('picam: the right of the picture is the direction of travel', dot(nadir.right, nadir.forward) > 0.9999999);
+  // a little later the satellite has moved toward the right of the picture
+  const later = shot.pixelOfGround(nadir, orbit.stateAt(ms + 10_000).latDeg, orbit.stateAt(ms + 10_000).lonDeg);
+  check(
+    'picam: the point under the satellite 10 s later is to the right of the centre, about 100 px',
+    later.u > 320 + 80 && later.u < 320 + 120 && Math.abs(later.v - 240) < 15,
+    `${later.u.toFixed(0)}, ${later.v.toFixed(0)}`,
+  );
+  let roundOk = true;
+  for (const [u, v] of [[1, 1], [639, 1], [1, 479], [639, 479], [175, 370]]) {
+    const g = shot.groundAtPixel(nadir, u, v);
+    const p = shot.pixelOfGround(nadir, g.latDeg, g.lonDeg);
+    if (Math.hypot(p.u - u, p.v - v) > 1e-6 || !p.visible) roundOk = false;
+  }
+  check('picam: ground to pixel and back, at the corners', roundOk);
+  const fov = shot.fieldOfView();
+  check(
+    'picam: the lens agrees with the team\'s 60 degree diagonal and the limb fits (60 to 64)',
+    fov.diagonalDeg > 60 && fov.diagonalDeg < 64,
+    `${fov.diagonalDeg.toFixed(1)} diagonal, ${fov.widthDeg.toFixed(1)} by ${fov.heightDeg.toFixed(1)}`,
+  );
+  const cover = shot.footprintKm(nadir);
+  check(
+    'picam: from 500 km the frame covers about 480 by 360 km, 0.74 km a pixel',
+    Math.abs(cover.widthKm - 473) < 15 && Math.abs(cover.heightKm - 354) < 15,
+    `${cover.widthKm.toFixed(0)} by ${cover.heightKm.toFixed(0)} km`,
+  );
+  // tipped forward, the centre looks ahead along the track by altitude x tan(pitch)
+  const tipped = shot.groundAtPixel(shot.cameraAt(state, { pitchDeg: 10 }), 320, 240);
+  const ahead = surfaceKm(tipped.latDeg, tipped.lonDeg, state.latDeg, state.lonDeg);
+  check('picam: pitched 10 degrees, the centre is about 88 km ahead', Math.abs(ahead - state.altKm * Math.tan(10 * astro.DEG)) < 2, `${ahead.toFixed(1)} km`);
+  const rolled = shot.cameraAt(state, { rollDeg: 5, yawDeg: 90 });
+  check(
+    'picam: rolling tips the view right of the track, and yaw turns the picture clockwise',
+    dot(rolled.bore, rolled.rightOfTrack) > 0.08 && dot(rolled.down, rolled.forward) < -0.99,
+  );
+  // the limb frames looked 60 degrees off nadir: the sky is in frame
+  const edge = shot.cameraAt(state, { pitchDeg: 60 });
+  check('picam: tipped 60 degrees forward, the frame holds both sky and ground, as the August frames do',
+    shot.groundAtPixel(edge, 640, 240) === null && shot.groundAtPixel(edge, 0, 240) !== null);
+
+  // the real frames: places read off the pictures come back within the fit's error
+  const within = (id, ms2, pointing, ties, limit) => {
+    const cam = shot.cameraAt(orbit.stateAt(ms2), pointing);
+    const errors = ties.map(([lat, lon, u, v]) => {
+      const p = shot.pixelOfGround(cam, lat, lon);
+      return Math.hypot(p.u - u, p.v - v);
+    });
+    const worst = Math.max(...errors);
+    check(`picam: ${id} lands within ${limit} px of its real picture`, worst < limit, `worst ${worst.toFixed(1)} px`);
+  };
+  within('the New Jersey shore, 22 Oct, at its fitted pointing', ms, { pitchDeg: 10.5, rollDeg: -5, yawDeg: 1 }, [
+    [38.93, -74.96, 10, 35], [40.46, -74.0, 221, 183], [39.95, -75.16, 186, 30], [40.5, -74.2, 240, 160],
+  ], 20);
+  within('Singapore at night, 22 Oct, straight down', Date.parse('2026-10-22T15:44:01Z'), shot.NOMINAL_POINTING, [
+    [1.416, 103.767, 362, 362], [1.097, 104.017, 412, 315], [0.917, 104.516, 433, 235], [2.066, 103.317, 275, 450], [3.764, 103.315, 40, 460],
+  ], 40);
+
+  // the frame is drawn in the inertial scene: the prime meridian at GMST 0 is +x, the pole is +y, and x y z stay right-handed
+  const a = shot.toScene({ x: 1, y: 0, z: 0 }, 0);
+  const b = shot.toScene({ x: 0, y: 1, z: 0 }, 0);
+  const pole = shot.toScene({ x: 0, y: 0, z: 1 }, 1.2);
+  const turned = shot.toScene({ x: 1, y: 0, z: 0 }, Math.PI / 2);
+  check(
+    'picam: Earth-fixed to the scene matches earth.js (x, z, -y), turned by GMST',
+    a.x === 1 && a.y === 0 && Math.abs(b.z + 1) < 1e-12 && pole.y === 1 && Math.abs(turned.z + 1) < 1e-12,
+  );
 }
 
 console.log(`\n${passed} passed, ${failures} failed`);

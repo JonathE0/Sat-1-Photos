@@ -16,6 +16,8 @@ import * as astro from './astro.js';
 import { createColorWheel } from './colorwheel.js';
 import { createMap } from './map2d.js';
 import { createPlaceSearch } from './placesearch.js';
+import { fmtKm } from './regionpasses.js';
+import { createShotPanel } from './shotpanel.js';
 import { createScene, DEFAULT_DISTANCE } from './scene.js';
 import { createTimePicker, FAR_DAYS, offBy } from './timepick.js';
 
@@ -285,7 +287,7 @@ function noScene() {
 }
 
 function ensureStylesheet() {
-  for (const name of ['globe.css', 'map2d.css', 'timepick.css', 'colorwheel.css', 'placesearch.css']) {
+  for (const name of ['globe.css', 'map2d.css', 'timepick.css', 'colorwheel.css', 'placesearch.css', 'shotpanel.css']) {
     const href = new URL(name, MODULE_BASE).href;
     const present = [...document.querySelectorAll('link[rel="stylesheet"]')].some((l) => l.href === href);
     if (present) continue;
@@ -1127,14 +1129,25 @@ export function mountGlobe(container, options = {}) {
       if (!state.follow) flyToSatellite();
       writeHash();
     },
+    onPreview: (ms) => shotPanel.open({ ms }),
   });
   root.appendChild(picker.element);
+
+  // What the camera would see at a moment, from the place search and the time picker.
+  const shotPanel = createShotPanel({ getOrbit: () => orbit });
+  root.appendChild(shotPanel.element);
 
   // Passes over another place: while one is chosen its passes stand in for
   // Calgary's in the Passes panel.
   const placeSearch = createPlaceSearch({
     getOrbit: () => orbit,
     getTime: () => state.ms,
+    onPreview(p, place) {
+      shotPanel.open({
+        ms: p.closestMs,
+        context: `This pass at its nearest to the middle of ${place.name}, ${fmtKm(p.closestKm)} from it.`,
+      });
+    },
     onJump(p) {
       closeSheet();
       jumpTo(p.closestMs);
@@ -1543,6 +1556,7 @@ export function mountGlobe(container, options = {}) {
       picker.destroy();
       wheel.destroy();
       placeSearch.destroy();
+      shotPanel.destroy();
       root.remove();
     },
   };

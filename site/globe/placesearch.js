@@ -60,8 +60,9 @@ let uid = 0;
  * @param {() => number} o.getTime         the time showing, ms
  * @param {(pass: object) => void} o.onJump        show this pass
  * @param {(place: object|null) => void} o.onPlace a place was chosen, or cleared
+ * @param {(pass: object, place: object) => void} [o.onPreview] offer "Preview picture" on each pass
  */
-export function createPlaceSearch({ getOrbit, getTime, onJump, onPlace = () => {} }) {
+export function createPlaceSearch({ getOrbit, getTime, onJump, onPlace = () => {}, onPreview = null }) {
   const n = ++uid;
   const root = document.createElement('div');
   root.className = 'cg-place';
@@ -266,6 +267,16 @@ export function createPlaceSearch({ getOrbit, getTime, onJump, onPlace = () => {
       onJump(p);
     });
     li.append(b);
+    if (onPreview) {
+      const place = found.place;
+      const shot = document.createElement('button');
+      shot.type = 'button';
+      shot.className = 'cg-btn cg-place-shot';
+      shot.textContent = 'Preview picture';
+      shot.setAttribute('aria-label', `Preview picture, ${calgary(p.closestMs)}`);
+      shot.addEventListener('click', () => onPreview(p, place));
+      li.append(shot);
+    }
     return li;
   }
 

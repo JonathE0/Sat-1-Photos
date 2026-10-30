@@ -1,0 +1,217 @@
+/* "Preview picture" (shotpanel.js): a flat Panel over the page, the frame on
+   Space at its natural size or smaller, facts beside it and under it on a
+   phone. Selected state in Ink, as everywhere on this page. The scale variable
+   doesn't touch the frame: 640 CSS pixels is as large as it gets. */
+
+.cg-shot {
+  width: min(calc(100vw - 32px), 1016px);
+  max-width: none;
+  max-height: calc(100dvh - 32px);
+  margin: auto;
+  padding: 0;
+  overflow: auto;
+  background: var(--cg-panel, #10151B);
+  border: 0;
+  border-radius: 0;
+  color: var(--cg-text, #E6EBF0);
+  font: 400 16px/1.4 var(--cg-sans, "Jost", system-ui, sans-serif);
+  font-variant-numeric: tabular-nums;
+}
+
+.cg-shot::backdrop {
+  background: rgba(5, 7, 10, 0.55);
+}
+
+.cg-shot-inner {
+  padding: 0 16px 16px;
+}
+
+/* stays in reach when the dialog scrolls on a small screen */
+.cg-shot-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  background: var(--cg-panel, #10151B);
+}
+
+.cg .cg-shot-title,
+.cg-shot-title {
+  margin: 0;
+  font: 600 16px/1.3 var(--cg-sans, "Jost", system-ui, sans-serif);
+}
+
+.cg-shot .cg-shot-close {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: var(--cg-btn-h, 32px);
+  height: var(--cg-btn-h, 32px);
+  margin-right: -8px;
+  padding: 0;
+  background: none;
+  border: 0;
+  color: var(--cg-muted, #8A96A3);
+  cursor: pointer;
+}
+
+.cg-shot .cg-shot-close:hover {
+  color: var(--cg-text, #E6EBF0);
+}
+
+.cg-shot .cg-shot-close svg {
+  display: block;
+  width: 12px;
+  height: 12px;
+}
+
+.cg-shot-body {
+  display: grid;
+  grid-template-columns: minmax(0, 640px) minmax(0, 1fr);
+  gap: 16px 24px;
+  align-items: start;
+}
+
+.cg-shot-frame {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  background: var(--cg-bg, #05070A);
+}
+
+.cg-shot-canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.cg .cg-shot-status,
+.cg-shot-status {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 16px;
+  font-size: 13px;
+  line-height: 1.45;
+  text-align: center;
+  color: var(--cg-muted, #8A96A3);
+}
+
+.cg-shot-status[hidden] {
+  display: none;
+}
+
+.cg-shot-sky {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.cg .cg-shot-context,
+.cg-shot-context {
+  margin: 0 0 12px;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.cg-shot-list {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+}
+
+.cg-shot-list dt {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--cg-muted, #8A96A3);
+}
+
+.cg-shot-list dd {
+  margin: 0;
+}
+
+.cg-shot-list [hidden] {
+  display: none;
+}
+
+.cg-shot-list .cg-shot-sub {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--cg-muted, #8A96A3);
+}
+
+.cg-shot-notes {
+  margin-top: 16px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--cg-muted, #8A96A3);
+}
+
+.cg .cg-shot-notes p,
+.cg-shot-notes p {
+  margin: 0 0 8px;
+}
+
+.cg-shot-notes [hidden] {
+  display: none;
+}
+
+.cg .cg-shot-notes .cg-shot-far,
+.cg-shot-notes .cg-shot-far {
+  color: var(--cg-text, #E6EBF0);
+}
+
+.cg-shot .cg-btn:focus-visible,
+.cg-shot .cg-shot-close:focus-visible {
+  outline: 2px solid var(--cg-accent, #3C9DF5);
+  outline-offset: 2px;
+}
+
+/* the frame's column and a sensible text column no longer fit: stack them */
+@media (max-width: 960px) {
+  .cg-shot {
+    width: min(calc(100vw - 32px), 672px);
+  }
+
+  .cg-shot-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* a phone: the whole screen */
+@media (max-width: 599px) {
+  .cg-shot {
+    width: 100vw;
+    max-height: 100dvh;
+    height: 100dvh;
+    margin: 0;
+    --cg-btn-h: 44px;
+  }
+
+  .cg-shot-sky .cg-btn {
+    flex: 1 1 auto;
+  }
+}
+
+@media (pointer: coarse) {
+  .cg-shot {
+    --cg-btn-h: 44px;
+  }
+}
+
+/* the button on each pass in the place search */
+.cg .cg-place-shot {
+  margin: calc(2 * var(--cg-u, 1px)) 0 calc(8 * var(--cg-u, 1px));
+}
+
+/* room for a third button in "Go to a time" */
+.cg-tp-actions {
+  flex-wrap: wrap;
+}

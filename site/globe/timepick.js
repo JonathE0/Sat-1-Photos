@@ -156,8 +156,9 @@ const CLOSE_ICON =
  * @param {() => object|null} o.getOrbit  the astro.Orbit, or null while loading
  * @param {(ms: number) => void} o.onPick
  * @param {() => void} [o.onClose]
+ * @param {(ms: number) => void} [o.onPreview]  offer "Preview picture" for the time in the form
  */
-export function createTimePicker({ launchMs, getOrbit, onPick, onClose = () => {} }) {
+export function createTimePicker({ launchMs, getOrbit, onPick, onClose = () => {}, onPreview = null }) {
   const form = document.createElement('form');
   form.className = 'cg-tp';
   form.hidden = true;
@@ -181,6 +182,7 @@ export function createTimePicker({ launchMs, getOrbit, onPick, onClose = () => {
     <p class="cg-fine cg-tp-note" data-tp="note" aria-live="polite"></p>
     <div class="cg-tp-actions">
       <button type="submit" class="cg-btn cg-tp-go" data-tp="go">Show this time</button>
+      <button type="button" class="cg-btn" data-tp="shot"${onPreview ? '' : ' hidden'}>Preview picture</button>
       <button type="button" class="cg-btn" data-tp="launch">Launch</button>
     </div>
   `;
@@ -190,6 +192,7 @@ export function createTimePicker({ launchMs, getOrbit, onPick, onClose = () => {
   const local = $('local');
   const note = $('note');
   const go = $('go');
+  const shot = $('shot');
   let trigger = null;
 
   function chosen() {
@@ -215,6 +218,7 @@ export function createTimePicker({ launchMs, getOrbit, onPick, onClose = () => {
       note.dataset.level = n.level;
     }
     go.disabled = !ok;
+    shot.disabled = !ok;
     return ok ? ms : NaN;
   }
 
@@ -258,6 +262,12 @@ export function createTimePicker({ launchMs, getOrbit, onPick, onClose = () => {
     }
   });
   $('close').addEventListener('click', () => close());
+  shot.addEventListener('click', () => {
+    const ms = paint();
+    if (!Number.isFinite(ms)) return;
+    close();
+    onPreview?.(ms);
+  });
   $('launch').addEventListener('click', () => {
     fill(launchMs);
     date.focus();
