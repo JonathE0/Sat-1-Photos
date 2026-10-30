@@ -1,6 +1,6 @@
 {
   "2026-07-20": {
-    "captured_at": "2026-07-20T17:39:45Z",
+    "captured_at": "2026-07-20T17:40:30Z",
     "history": [
       {
         "at": "2026-10-30T03:21:34Z",
@@ -27,20 +27,42 @@
             "Arctic Ocean"
           ]
         }
+      },
+      {
+        "at": "2026-10-30T03:29:02Z",
+        "by": "CTS-SAT-1 team",
+        "changes": {
+          "captured_at": [
+            "2026-07-20T17:39:45Z",
+            "2026-07-20T17:40:30Z"
+          ],
+          "lat": [
+            70.9998,
+            73.7083
+          ],
+          "lon": [
+            -127.7227,
+            -130.8042
+          ],
+          "notes": [
+            "Time and place from the team's CTS Pictures + Locations notes, which give 07:40:30 UTC. At that time the satellite was over the southern Indian Ocean; it passed over this point at 17:39:45 UTC, so 17:40:30 was most likely meant.",
+            "Time from the team's CTS Pictures + Locations notes, which give 07:40:30 UTC. The satellite was over the southern Indian Ocean then, and the notes' Arctic position fits 17:40:30, so that is used. The position is computed from the orbit at that time; the notes give 71.00° N, 127.72° W, about 320 km away."
+          ]
+        }
       }
     ],
-    "lat": 70.9998,
-    "lon": -127.7227,
-    "notes": "Time and place from the team's CTS Pictures + Locations notes, which give 07:40:30 UTC. At that time the satellite was over the southern Indian Ocean; it passed over this point at 17:39:45 UTC, so 17:40:30 was most likely meant.",
+    "lat": 73.7083,
+    "lon": -130.8042,
+    "notes": "Time from the team's CTS Pictures + Locations notes, which give 07:40:30 UTC. The satellite was over the southern Indian Ocean then, and the notes' Arctic position fits 17:40:30, so that is used. The position is computed from the orbit at that time; the notes give 71.00° N, 127.72° W, about 320 km away.",
     "people": [],
     "place": "Arctic Ocean",
     "tags": [],
     "title": null,
-    "updated_at": "2026-10-30T03:21:34Z",
+    "updated_at": "2026-10-30T03:29:02Z",
     "updated_by": "CTS-SAT-1 team"
   },
   "2026-08-06": {
-    "captured_at": "2026-08-06T18:08:32Z",
+    "captured_at": "2026-08-06T18:14:40Z",
     "history": [
       {
         "at": "2026-10-30T03:21:38Z",
@@ -67,20 +89,46 @@
             "North America"
           ]
         }
+      },
+      {
+        "at": "2026-10-30T03:29:06Z",
+        "by": "CTS-SAT-1 team",
+        "changes": {
+          "captured_at": [
+            "2026-08-06T18:08:32Z",
+            "2026-08-06T18:14:40Z"
+          ],
+          "lat": [
+            47.6133,
+            70.3202
+          ],
+          "lon": [
+            -121.4097,
+            -134.3172
+          ],
+          "notes": [
+            "Time and place from the team's CTS Pictures + Locations notes, which give 18:15:20 UTC. By its orbit the satellite passed over this point at 18:08:32 UTC, 6.8 minutes earlier, so that is the time used here. The camera's orientation is unknown: this is where the satellite was, not necessarily the area in the picture, which shows Earth's horizon.",
+            "Time from the team's CTS Pictures + Locations notes: 18:15:20 UTC by the satellite's clock, which ran about 40 s fast then, so 18:14:40 UTC. The position is computed from the orbit at that time; the notes give 47.61° N, 121.41° W (over North America), about 2,600 km away. The camera's orientation is unknown: the picture shows Earth's horizon, so the land in it may be far from the point below the satellite."
+          ],
+          "place": [
+            "North America",
+            "Arctic Ocean"
+          ]
+        }
       }
     ],
-    "lat": 47.6133,
-    "lon": -121.4097,
-    "notes": "Time and place from the team's CTS Pictures + Locations notes, which give 18:15:20 UTC. By its orbit the satellite passed over this point at 18:08:32 UTC, 6.8 minutes earlier, so that is the time used here. The camera's orientation is unknown: this is where the satellite was, not necessarily the area in the picture, which shows Earth's horizon.",
+    "lat": 70.3202,
+    "lon": -134.3172,
+    "notes": "Time from the team's CTS Pictures + Locations notes: 18:15:20 UTC by the satellite's clock, which ran about 40 s fast then, so 18:14:40 UTC. The position is computed from the orbit at that time; the notes give 47.61° N, 121.41° W (over North America), about 2,600 km away. The camera's orientation is unknown: the picture shows Earth's horizon, so the land in it may be far from the point below the satellite.",
     "people": [],
-    "place": "North America",
+    "place": "Arctic Ocean",
     "tags": [],
     "title": null,
-    "updated_at": "2026-10-30T03:21:38Z",
+    "updated_at": "2026-10-30T03:29:06Z",
     "updated_by": "CTS-SAT-1 team"
   },
   "2026-08-27": {
-    "captured_at": "2026-08-27T18:45:11Z",
+    "captured_at": null,
     "history": [
       {
         "at": "2026-10-30T03:21:36Z",
@@ -107,20 +155,46 @@
             "North Pacific Ocean"
           ]
         }
+      },
+      {
+        "at": "2026-10-30T03:29:04Z",
+        "by": "CTS-SAT-1 team",
+        "changes": {
+          "captured_at": [
+            "2026-08-27T18:45:11Z",
+            null
+          ],
+          "lat": [
+            19.1277,
+            null
+          ],
+          "lon": [
+            -124.2073,
+            null
+          ],
+          "notes": [
+            "Time and place from the team's CTS Pictures + Locations notes, which give 18:48:30 UTC. By its orbit the satellite passed over this point at 18:45:11 UTC, 3.3 minutes earlier, so that is the time used here.",
+            "The team's CTS Pictures + Locations notes give 18:48:30 UTC, the satellite clock's reading in the capture log; corrected for the clock that is the computed 18:48:20 UTC. The notes' position, 19.13° N, 124.21° W, is about 1,350 km from where the orbit puts the satellite then."
+          ],
+          "place": [
+            "North Pacific Ocean",
+            null
+          ]
+        }
       }
     ],
-    "lat": 19.1277,
-    "lon": -124.2073,
-    "notes": "Time and place from the team's CTS Pictures + Locations notes, which give 18:48:30 UTC. By its orbit the satellite passed over this point at 18:45:11 UTC, 3.3 minutes earlier, so that is the time used here.",
+    "lat": null,
+    "lon": null,
+    "notes": "The team's CTS Pictures + Locations notes give 18:48:30 UTC, the satellite clock's reading in the capture log; corrected for the clock that is the computed 18:48:20 UTC. The notes' position, 19.13° N, 124.21° W, is about 1,350 km from where the orbit puts the satellite then.",
     "people": [],
-    "place": "North Pacific Ocean",
+    "place": null,
     "tags": [],
     "title": null,
-    "updated_at": "2026-10-30T03:21:36Z",
+    "updated_at": "2026-10-30T03:29:04Z",
     "updated_by": "CTS-SAT-1 team"
   },
   "2026-09-03": {
-    "captured_at": "2026-09-03T18:11:27Z",
+    "captured_at": "2026-09-03T18:14:00Z",
     "history": [
       {
         "at": "2026-10-30T03:21:32Z",
@@ -147,20 +221,42 @@
             "Arctic Ocean"
           ]
         }
+      },
+      {
+        "at": "2026-10-30T03:28:59Z",
+        "by": "CTS-SAT-1 team",
+        "changes": {
+          "captured_at": [
+            "2026-09-03T18:11:27Z",
+            "2026-09-03T18:14:00Z"
+          ],
+          "lat": [
+            77.4296,
+            82.6382
+          ],
+          "lon": [
+            -148.3444,
+            160.4775
+          ],
+          "notes": [
+            "Time and place from the team's CTS Pictures + Locations notes, which give 18:14:00 UTC. By its orbit the satellite passed over this point at 18:11:27 UTC, 2.5 minutes earlier, so that is the time used here.",
+            "Time from the team's CTS Pictures + Locations notes: 18:14:00 UTC, when the satellite's clock was synced. The position is computed from the orbit at that time; the notes give 77.43° N, 148.34° W, about 1,090 km away."
+          ]
+        }
       }
     ],
-    "lat": 77.4296,
-    "lon": -148.3444,
-    "notes": "Time and place from the team's CTS Pictures + Locations notes, which give 18:14:00 UTC. By its orbit the satellite passed over this point at 18:11:27 UTC, 2.5 minutes earlier, so that is the time used here.",
+    "lat": 82.6382,
+    "lon": 160.4775,
+    "notes": "Time from the team's CTS Pictures + Locations notes: 18:14:00 UTC, when the satellite's clock was synced. The position is computed from the orbit at that time; the notes give 77.43° N, 148.34° W, about 1,090 km away.",
     "people": [],
     "place": "Arctic Ocean",
     "tags": [],
     "title": null,
-    "updated_at": "2026-10-30T03:21:32Z",
+    "updated_at": "2026-10-30T03:28:59Z",
     "updated_by": "CTS-SAT-1 team"
   },
   "2026-10-06": {
-    "captured_at": "2026-10-06T09:38:38Z",
+    "captured_at": "2026-10-06T09:38:21Z",
     "history": [
       {
         "at": "2026-10-30T03:21:30Z",
@@ -187,16 +283,42 @@
             "North Niger, Africa"
           ]
         }
+      },
+      {
+        "at": "2026-10-30T03:28:57Z",
+        "by": "CTS-SAT-1 team",
+        "changes": {
+          "captured_at": [
+            "2026-10-06T09:38:38Z",
+            "2026-10-06T09:38:21Z"
+          ],
+          "lat": [
+            22.7982,
+            21.6426
+          ],
+          "lon": [
+            12.9893,
+            12.8596
+          ],
+          "notes": [
+            "Time and place from the team's CTS Pictures + Locations notes, which give 09:38:21 UTC. The time here is when the satellite's orbit passes closest to that point, 17 seconds later.",
+            "Time from the team's CTS Pictures + Locations notes: 09:38:21 UTC, when the satellite's clock was synced. The position is computed from the orbit at that time; the notes give 22.80° N, 12.99° E, about 130 km away."
+          ],
+          "place": [
+            "North Niger, Africa",
+            "Agadez Region, Niger"
+          ]
+        }
       }
     ],
-    "lat": 22.7982,
-    "lon": 12.9893,
-    "notes": "Time and place from the team's CTS Pictures + Locations notes, which give 09:38:21 UTC. The time here is when the satellite's orbit passes closest to that point, 17 seconds later.",
+    "lat": 21.6426,
+    "lon": 12.8596,
+    "notes": "Time from the team's CTS Pictures + Locations notes: 09:38:21 UTC, when the satellite's clock was synced. The position is computed from the orbit at that time; the notes give 22.80° N, 12.99° E, about 130 km away.",
     "people": [],
-    "place": "North Niger, Africa",
+    "place": "Agadez Region, Niger",
     "tags": [],
     "title": null,
-    "updated_at": "2026-10-30T03:21:30Z",
+    "updated_at": "2026-10-30T03:28:57Z",
     "updated_by": "CTS-SAT-1 team"
   }
 }
