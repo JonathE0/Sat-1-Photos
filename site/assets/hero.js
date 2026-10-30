@@ -44,8 +44,9 @@ function altFor(p) {
 // The still picture is the one named in config.js (heroPicture), else the
 // newest detailed frame; the next detailed frames make up the reel.
 export function heroPicks(photos, stillId = '') {
-  const detailed = photos.filter(detailTest(photos));
-  const pool = detailed.length >= 2 ? detailed : photos.filter((p) => p.camera === 'picam');
+  const lit = photos.filter((p) => !p.dark);
+  const detailed = lit.filter(detailTest(lit));
+  const pool = detailed.length >= 2 ? detailed : lit.filter((p) => p.camera === 'picam');
   const still = photos.find((p) => p.id === stillId) || pool[0] || null;
   return { still, reel: pool.filter((p) => p !== still).slice(0, REEL_MAX) };
 }
