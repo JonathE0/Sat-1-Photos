@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>CTS-SAT-1 right now</title>
+  <meta name="description" content="Where CTS-SAT-1, Calgary To Space's first satellite, is right now, and where each of its pictures was taken.">
+  <meta name="theme-color" content="#05070A">
+  <link rel="icon" type="image/png" href="../assets/cubesat-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400&family=Jost:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="../assets/style.css">
+  <link rel="stylesheet" href="journey.css">
+  <!-- satellite.js imports "three" by name; this must come before any module script -->
+  <script type="importmap">{ "imports": { "three": "../globe/vendor/three.module.min.js" } }</script>
+  <style>
+    /* This page only: a nav laid over the stage. The page ends where the story ends. */
+    html, body { background: #05070A; }
+    body { display: block; min-height: 0; color: #E6EBF0; font-size: 16px; }
+    .x-nav {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      height: 64px;
+      padding: 0 var(--x-m, 32px);
+      font-size: 16px;
+      font-weight: 500;
+      pointer-events: none;
+    }
+    .x-nav > * { pointer-events: auto; }
+    .x-nav img { display: block; width: auto; height: 28px; }
+    .x-nav ul { display: flex; gap: 24px; margin: 0; padding: 0; list-style: none; }
+    .x-nav a, .x-nav button {
+      display: inline-flex;
+      align-items: center;
+      min-height: 44px;
+      border: 0;
+      padding: 0;
+      background: none;
+      color: #E6EBF0;
+      font: inherit;
+      cursor: pointer;
+    }
+    .x-nav a:hover, .x-nav button:hover { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 8px; }
+    .x-nav button[aria-expanded="true"] { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 8px; }
+    :root { --x-m: 16px; }
+    @media (min-width: 600px) { :root { --x-m: 24px; } }
+    @media (min-width: 1100px) { :root { --x-m: 32px; } }
+    @media (min-width: 2400px) { :root { --x-m: 48px; } }
+    @media (max-width: 599px) { .x-nav { height: 52px; } .x-nav ul { gap: 16px; } .x-nav img { height: 24px; } }
+  </style>
+</head>
+<body>
+  <nav class="x-nav" aria-label="Main">
+    <a href="../index.html#/" aria-label="CTS-SAT-1 pictures, by CalgaryToSpace"><img src="../assets/calgarytospace-logo.png" width="640" height="204" alt=""></a>
+    <ul>
+      <li><a href="../index.html#/">Pictures</a></li>
+      <li><a href="../globe/index.html">Orbit</a></li>
+      <li><a href="../index.html#/about">About</a></li>
+      <li><button type="button" id="credits" aria-expanded="false" aria-haspopup="dialog">Credits</button></li>
+    </ul>
+  </nav>
+
+  <main id="journey"></main>
+
+  <noscript><p style="padding: 96px 32px">This page needs JavaScript to show where the satellite is.</p></noscript>
+
+  <script type="module">
+    import { mountJourney } from './journey.js';
+    import { mergeAll } from '../assets/data.js';
+
+    const SITE = new URL('../', location.href);
+    const photoUrl = (id) => new URL(`index.html#/photo/${encodeURIComponent(id)}`, SITE).href;
+
+    // Put the page back exactly as it was when someone comes back with Back:
+    // the journey's state rides on this history entry.
+    if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+    const saved = history.state && typeof history.state === 'object' ? history.state.journey : null;
+
+    const journey = mountJourney(document.getElementById('journey'), {
+      tleUrl: new URL('data/tle.json', SITE).href,
+      siteRoot: SITE.href,
+      photoHref: photoUrl,
+      catalogueHref: new URL('index.html#/', SITE).href,
+      initialState: saved || null,
+      // ?motion=full or ?motion=reduced overrides prefers-reduced-motion (for testing)
+      motion: new URLSearchParams(location.search).get('motion'),
+      onOpenPhoto(id) {
+        remember();
+        location.href = photoUrl(id);
+      },
+      onOpenCatalogue() {
+        remember();
+        location.href = new URL('index.html#/', SITE).href;
+      },
+    });
+    // for checking things from the console (journey.getState(), journey.live())
+    window.journey = journey;
+
+    const credits = document.getElementById('credits');
+    credits.addEventListener('click', () => {
+      if (credits.getAttribute('aria-expanded') === 'true') journey.closeCredits();
+      else journey.openCredits(credits);
+    });
+
+    function remember() {
+      const base = history.state && typeof history.state === 'object' ? history.state : {};
+      history.replaceState({ ...base, journey: journey.getState() }, '');
+    }
+    addEventListener('pagehide', remember);
+
+    async function json(url) {
+      const res = await fetch(url, { cache: 'no-cache' });
+      if (!res.ok) throw new Error(`${res.status} for ${url}`);
+      return res.json();
+    }
+    async function annotations() {
+      // the team's published edits (the main site also asks serve.py's API)
+      try {
+        const a = await json(new URL('data/annotations.json', SITE).href);
+        if (a && typeof a === 'object' && !Array.isArray(a)) return a;
+      } catch { /* none */ }
+      return {};
+    }
+    try {
+      const [images, anns] = await Promise.all([json(new URL('data/images.json', SITE).href), annotations()]);
+      const list = Array.isArray(images?.images) ? images.images.filter((i) => i && typeof i.id === 'string') : [];
+      journey.setPhotos(mergeAll(list, anns));
+    } catch (err) {
+      console.warn('Explore: no picture list', err);
+    }
+  </script>
+</body>
+</html>

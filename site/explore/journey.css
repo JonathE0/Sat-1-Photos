@@ -1,0 +1,722 @@
+/* The landing's scroll story (journey.js). Tokens follow docs/design-direction.md
+   section 2; a page that defines --space, --panel, --raised, --ink, --muted
+   overrides them. */
+
+.jy-root {
+  --jy-space: var(--space, #05070A);
+  --jy-panel: var(--panel, #10151B);
+  --jy-raised: var(--raised, #1A2129);
+  --jy-ink: var(--ink, #E6EBF0);
+  --jy-muted: var(--muted, #8A96A3);
+  --jy-blue: #3C9DF5;
+  --jy-font: "Jost", "Futura", "Century Gothic", "Helvetica Neue", Arial, sans-serif;
+  --jy-underline: color-mix(in srgb, var(--jy-ink) 40%, transparent);
+
+  --jy-ease-out: cubic-bezier(.22, 1, .36, 1);
+  --jy-ease-exit: cubic-bezier(.55, .055, .675, .19);
+
+  /* Five sizes. Body and below grow a little on very wide screens and stop. */
+  --jy-display: clamp(60px, 10vw, 144px);
+  --jy-statement: clamp(24px, 1rem + 1.2vw, 32px);
+  --jy-lead: clamp(20px, 0.52vw + 10px, 24px);
+  --jy-body: clamp(16px, 0.42vw + 8px, 19px);
+  --jy-small: clamp(13px, 0.34vw + 6.5px, 15px);
+
+  --jy-m: 16px;          /* outer margin */
+  --jy-ctl: 36px;        /* control height */
+  --jy-top: 0px;         /* a sticky header above the stage, if the page has one */
+  --jy-nav: 64px;        /* room for a nav laid over the stage */
+  --jy-bottom: max(var(--jy-m), env(safe-area-inset-bottom));
+
+  display: block;
+  color: var(--jy-ink);
+  background: var(--jy-space);
+  font-family: var(--jy-font);
+  font-size: var(--jy-body);
+  line-height: 1.5;
+}
+
+@media (min-width: 600px) { .jy-root { --jy-m: 24px; } }
+@media (min-width: 1100px) { .jy-root { --jy-m: 32px; } }
+@media (min-width: 2400px) { .jy-root { --jy-m: 48px; --jy-ctl: 40px; } }
+@media (pointer: coarse) { .jy-root { --jy-ctl: 44px; } }
+
+.jy-root *, .jy-root *::before, .jy-root *::after { box-sizing: border-box; }
+.jy-root [hidden] { display: none !important; }
+.jy-root :focus-visible { outline: 2px solid var(--jy-blue); outline-offset: 2px; }
+.jy-root.jy-instant * { transition: none !important; }
+/* a drag on the globe never turns into a text selection */
+html.jy-dragging, html.jy-dragging * { -webkit-user-select: none !important; user-select: none !important; }
+html.jy-dragging { cursor: grabbing; }
+
+/* ---- section and stage ------------------------------------------------------ */
+
+/* held for 300svh; the page ends where the section ends */
+.jy {
+  position: relative;
+  height: calc(400vh - var(--jy-top));
+  height: calc(300svh + 100dvh - var(--jy-top));
+}
+/* the end of the story (and no WebGL): one screen, nothing left to scroll */
+.jy-root.jy-locked .jy,
+.jy-root[data-mode="still"] .jy {
+  height: calc(100vh - var(--jy-top));
+  height: calc(100dvh - var(--jy-top));
+}
+
+.jy-stage {
+  position: sticky;
+  top: var(--jy-top);
+  height: calc(100vh - var(--jy-top));
+  height: calc(100dvh - var(--jy-top));
+  min-height: 320px;
+  overflow: hidden;
+  background: var(--jy-space);
+}
+
+.jy-canvas {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 600ms linear;
+  /* during the story vertical swipes scroll the page and sideways drags turn the view */
+  touch-action: pan-y;
+  outline: none;
+}
+/* at the end there is nothing to scroll: every gesture is the globe's */
+.jy-locked .jy-canvas { touch-action: none; }
+.jy-earth-ready .jy-canvas { opacity: 1; }
+.jy-canvas:focus-visible { outline: 2px solid var(--jy-blue); outline-offset: -2px; }
+.jy-ui-on .jy-canvas { cursor: grab; }
+
+.jy-still { position: absolute; display: block; }
+
+/* ---- text: one anchor on the left margin ------------------------------------- */
+
+/* Only the words and the buttons take the pointer; the space around and
+   between the lines belongs to the globe. */
+.jy-text {
+  position: absolute;
+  z-index: 2;
+  left: var(--jy-m);
+  top: max(22vh, calc(var(--jy-nav) + 24px));
+  top: max(22svh, calc(var(--jy-nav) + 24px));
+  display: grid;
+  justify-items: start;
+  max-width: calc(100% - 2 * var(--jy-m));
+  pointer-events: none;
+}
+.jy-narrow .jy-text { top: 88px; }
+
+.jy-beat {
+  grid-area: 1 / 1;
+  align-self: start;
+  width: fit-content;
+  margin: 0;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(16px);
+  visibility: hidden;
+  /* exits run at 60% of the entrance */
+  transition: opacity 360ms var(--jy-ease-exit), transform 360ms var(--jy-ease-exit), visibility 0s linear 360ms;
+}
+.jy-beat.is-past { transform: translateY(-16px); }
+.jy-beat.is-on {
+  opacity: 1;
+  transform: none;
+  visibility: visible;
+  transition: opacity 600ms var(--jy-ease-out), transform 600ms var(--jy-ease-out), visibility 0s;
+}
+.jy-beat.is-on .jy-words,
+.jy-beat.is-on button,
+.jy-beat.is-on a { pointer-events: auto; }
+.jy-b3.is-on { transition-delay: 120ms; }
+.jy-b3.is-past {
+  transform: none;
+  transition: opacity 240ms var(--jy-ease-exit), visibility 0s linear 240ms;
+}
+
+.jy-h1 {
+  margin: 0;
+  font-size: var(--jy-display);
+  font-weight: 700;
+  line-height: 0.9;
+  letter-spacing: -0.03em;
+  white-space: nowrap;
+}
+
+.jy-lead {
+  max-width: 40ch;
+  margin: 16px 0 0;
+  font-size: var(--jy-lead);
+  font-weight: 400;
+  line-height: 1.4;
+}
+.jy-b1 .jy-h1 + .jy-lead { margin-top: 24px; }
+
+/* the live sentence joins the h1 block only at the end under reduced motion */
+.jy-live-lead { font-variant-numeric: tabular-nums; }
+.jy-root:not(.jy-composed) .jy-live-lead { display: none; }
+
+/* "Scroll to learn more": still, quiet, gone once the visitor scrolls */
+.jy-cue {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 40px 0 0;
+  color: var(--jy-muted);
+  font-size: var(--jy-body);
+  font-weight: 500;
+  transition: opacity 240ms var(--jy-ease-out);
+  outline: none;
+}
+.jy-root.jy-scrolled .jy-cue { opacity: 0; }
+.jy-composed .jy-cue { display: none; }
+
+.jy-statement {
+  max-width: 26ch;
+  font-size: var(--jy-statement);
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+/* room for the longest live sentence, so the end frame doesn't shift when the place changes */
+.jy-b2 { min-height: calc(5 * 1.2em); }
+.jy-narrow .jy-b2 { min-height: calc(6 * 1.2em); }
+
+/* ---- controls ----------------------------------------------------------------- */
+
+.jy-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  padding: 0 20px;
+  background: var(--jy-ink);
+  color: var(--jy-space);
+  font: 500 var(--jy-body) / 1.2 var(--jy-font);
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 180ms var(--jy-ease-out);
+}
+.jy-btn:hover { background: #FFFFFF; }
+
+.jy-textbtn {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin: 0;
+  border: 0;
+  padding: 0;
+  background: none;
+  color: var(--jy-ink);
+  font: 500 var(--jy-body) / 1.2 var(--jy-font);
+  white-space: nowrap;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+  text-decoration-color: var(--jy-underline);
+  cursor: pointer;
+}
+.jy-textbtn:hover { text-decoration-color: currentColor; }
+
+.jy-link {
+  color: var(--jy-ink);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+  text-decoration-color: var(--jy-underline);
+}
+.jy-link:hover { text-decoration-color: currentColor; }
+
+.jy-sq {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--jy-ctl);
+  height: var(--jy-ctl);
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  background: var(--jy-panel);
+  color: var(--jy-ink);
+  cursor: pointer;
+  transition: background-color 180ms var(--jy-ease-out);
+}
+.jy-sq:hover { background: var(--jy-raised); }
+.jy-sq:disabled { color: var(--jy-muted); opacity: 0.5; cursor: default; background: var(--jy-panel); }
+
+/* The end-state controls: hidden during the story. Their boxes pass the
+   pointer through; only the controls themselves take it. */
+.jy-time,
+.jy-corner,
+.jy-facts-slot {
+  position: absolute;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 150ms var(--jy-ease-exit), visibility 0s linear 150ms;
+}
+.jy-ui-on .jy-time,
+.jy-ui-on .jy-corner,
+.jy-locked .jy-facts-slot {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 240ms var(--jy-ease-out), visibility 0s;
+}
+.jy-time > *,
+.jy-corner > *,
+.jy-corner .jy-zoom > *,
+.jy-facts-slot > * { pointer-events: auto; }
+
+/* time: [clock] [1x 60x 600x] [Now], bottom left */
+.jy-time {
+  left: var(--jy-m);
+  bottom: var(--jy-bottom);
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+.jy-root[data-mode="still"] .jy-time { display: none; }
+
+/* on a flat Panel block: it often sits over bright cloud */
+.jy-clock {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 11.5em;
+  min-height: var(--jy-ctl);
+  margin: 0;
+  padding: 4px 12px;
+  background: var(--jy-panel);
+  line-height: 1.25;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.jy-clock-main { font-size: var(--jy-body); }
+.jy-clock-sub { font-size: var(--jy-small); color: var(--jy-muted); letter-spacing: 0.01em; }
+
+.jy-speed {
+  display: flex;
+  background: var(--jy-panel);
+}
+.jy-speed label { position: relative; display: block; cursor: pointer; }
+.jy-speed input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.jy-speed span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 52px;
+  height: 100%;
+  min-height: var(--jy-ctl);
+  padding: 0 12px;
+  color: var(--jy-muted);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  transition: background-color 180ms var(--jy-ease-out), color 180ms var(--jy-ease-out);
+}
+.jy-speed label:hover span { background: var(--jy-raised); color: var(--jy-ink); }
+.jy-speed input:checked + span { background: var(--jy-ink); color: var(--jy-space); }
+.jy-speed input:focus-visible + span { outline: 2px solid var(--jy-blue); outline-offset: 2px; }
+
+.jy-now { min-height: var(--jy-ctl); padding: 0 16px; }
+.jy-now[aria-disabled="true"] { background: var(--jy-panel); color: var(--jy-muted); cursor: default; }
+
+/* bottom right: [Play the intro again] [See all n pictures] [- +] */
+.jy-corner {
+  right: var(--jy-m);
+  bottom: var(--jy-bottom);
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+.jy-all { min-height: var(--jy-ctl); }
+/* a quiet secondary control on a flat Panel block, readable over bright cloud */
+.jy-again {
+  min-height: var(--jy-ctl);
+  padding: 0 16px;
+  background: var(--jy-panel);
+  text-decoration: none;
+  transition: background-color 180ms var(--jy-ease-out);
+}
+.jy-again:hover { background: var(--jy-raised); }
+.jy-zoom { display: flex; gap: 4px; }
+.jy-root[data-mode="still"] .jy-zoom { display: none; }
+
+/* the facts ticker (facts.js) sits above the time controls, at the end only */
+.jy-facts-slot {
+  left: var(--jy-m);
+  bottom: calc(var(--jy-bottom) + var(--jy-ctl) + 16px);
+  width: min(34em, calc(100% - 2 * var(--jy-m)));
+}
+.jy-facts-slot:empty { display: none; }
+.jy-panel-open .jy-facts-slot { opacity: 0; visibility: hidden; }
+
+@media (max-width: 1099px) and (min-width: 700px) {
+  /* the corner row goes above the time row so the two never meet */
+  .jy-root:not(.jy-narrow) .jy-corner { bottom: calc(var(--jy-bottom) + var(--jy-ctl) + 12px); }
+  .jy-root:not(.jy-narrow) .jy-facts-slot { bottom: calc(var(--jy-bottom) + 2 * var(--jy-ctl) + 28px); }
+}
+
+/* ---- marks over the canvas: pins and the satellite -------------------------------- */
+
+.jy-marks {
+  position: absolute;
+  inset: 0;
+  z-index: 1; /* its own layer: pins never cover the text, the card or the panels */
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 150ms var(--jy-ease-exit), visibility 0s linear 150ms;
+}
+.jy-ui-on .jy-marks {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 240ms var(--jy-ease-out), visibility 0s;
+}
+
+.jy-pin {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: block;
+  width: calc(32px * var(--jy-ui, 1) + 4px);
+  height: calc(24px * var(--jy-ui, 1) + 4px);
+  border: 2px solid var(--jy-ink);
+  background: var(--jy-space);
+  pointer-events: auto;
+  will-change: transform;
+}
+.jy-pin.jy-pin-square { width: calc(24px * var(--jy-ui, 1) + 4px); }
+.jy-narrow .jy-pin { width: 28px; height: 22px; }
+.jy-narrow .jy-pin.jy-pin-square { width: 22px; }
+/* a touch target bigger than the picture */
+@media (pointer: coarse) { .jy-pin::before { content: ""; position: absolute; inset: -12px; } }
+.jy-pin img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.jy-pin.is-off { visibility: hidden; }
+.jy-pin.in-pile { pointer-events: none; }
+
+.jy-pile-count {
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: var(--jy-ink);
+  font-size: var(--jy-small);
+  font-weight: 500;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* the satellite and its label are one button; the label sits 12px right of the model */
+.jy-sat {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  min-width: 44px;
+  height: 44px;
+  margin: -22px 0 0 -22px;
+  border: 0;
+  padding: 0 4px 0 calc(22px + var(--jy-sat-off, 32px));
+  background: none;
+  color: var(--jy-ink);
+  cursor: pointer;
+  pointer-events: auto;
+  opacity: 0;
+  transition: opacity 240ms var(--jy-ease-out);
+}
+.jy-sat.is-shown { opacity: 1; }
+.jy-sat-label {
+  font-size: var(--jy-small);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+/* hover card for a pin (or the list for a pile) */
+.jy-card {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 3;
+  max-width: calc(100% - 16px);
+  padding: 12px;
+  background: var(--jy-panel);
+  opacity: 0;
+  transition: opacity 180ms var(--jy-ease-out);
+}
+.jy-card.is-on { opacity: 1; }
+.jy-card-item { display: block; color: var(--jy-ink); text-decoration: none; }
+.jy-card-item img {
+  display: block;
+  width: 160px;
+  height: 120px;
+  object-fit: contain;
+  background: var(--jy-space);
+}
+.jy-card-item img.is-square { width: 120px; }
+.jy-card-place { display: block; margin-top: 8px; font-size: var(--jy-body); font-weight: 500; line-height: 1.3; }
+.jy-card-time { display: block; color: var(--jy-muted); font-size: var(--jy-small); font-variant-numeric: tabular-nums; }
+.jy-card-item:hover .jy-card-place { text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
+.jy-card.is-list { display: grid; gap: 8px; max-height: 60%; overflow: auto; }
+.jy-card.is-list .jy-card-item { display: grid; grid-template-columns: 64px minmax(0, 1fr); column-gap: 12px; align-items: center; }
+.jy-card.is-list .jy-card-item img { grid-row: 1 / 3; width: 64px; height: 48px; }
+.jy-card.is-list .jy-card-item img.is-square { width: 48px; }
+.jy-card.is-list .jy-card-place { margin-top: 0; }
+
+/* ---- the status panel and the credits panel: top right ------------------------------- */
+
+.jy-panel,
+.jy-credits {
+  position: absolute;
+  top: max(96px, calc(var(--jy-nav) + 32px));
+  right: var(--jy-m);
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  width: clamp(360px, 18vw, 420px);
+  max-width: calc(100% - 2 * var(--jy-m));
+  /* down to just above the bottom-right controls */
+  max-height: calc(100% - max(96px, calc(var(--jy-nav) + 32px)) - var(--jy-bottom) - var(--jy-ctl) - 24px);
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--jy-raised) transparent;
+  padding: 24px;
+  background: var(--jy-panel);
+  opacity: 0;
+  transform: translateX(16px);
+  transition: opacity 150ms var(--jy-ease-exit), transform 150ms var(--jy-ease-exit);
+}
+.jy-panel.is-on,
+.jy-credits.is-on {
+  opacity: 1;
+  transform: none;
+  transition: opacity 240ms var(--jy-ease-out), transform 240ms var(--jy-ease-out);
+}
+.jy-credits { z-index: 5; }
+.jy-panel p,
+.jy-credits p { margin: 0; }
+/* an open status panel waits out the story: shown again when the visitor comes back down */
+.jy-root:not(.jy-ui-on) .jy-panel { visibility: hidden; opacity: 0; }
+
+.jy-grab { display: none; }
+.jy-more { display: none; }
+
+.jy-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: -10px;
+}
+.jy-panel-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.4;
+  outline: none;
+}
+.jy-panel-tools { display: flex; gap: 16px; }
+
+.jy-small { font-size: var(--jy-small); line-height: 1.45; letter-spacing: 0.01em; }
+.jy-muted { color: var(--jy-muted); }
+.jy-over { margin-top: 12px !important; max-width: none; }
+.jy-panel-zoom { margin-top: 4px !important; }
+
+.jy-facts {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  gap: 10px 16px;
+  margin: 16px 0 0;
+}
+.jy-facts dt { color: var(--jy-muted); font-size: var(--jy-small); line-height: 1.5; padding-top: 0.15em; }
+.jy-facts dd { margin: 0; font-variant-numeric: tabular-nums; }
+.jy-elements { margin-top: 16px !important; }
+.jy-elements:not(.jy-muted) { color: var(--jy-ink); }
+.jy-retry { margin-top: 12px !important; }
+
+.jy-bar {
+  display: inline-block;
+  max-width: 100%;
+  height: 0.9em;
+  vertical-align: -0.1em;
+  background: var(--jy-raised);
+}
+
+.jy-latest { margin-top: 32px; }
+.jy-latest-title { margin: 0 0 12px; font-size: var(--jy-body); font-weight: 600; }
+.jy-latest-frame {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background: var(--jy-space);
+}
+.jy-latest-frame img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.jy-latest-failed {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 4px;
+  aspect-ratio: 4 / 3;
+  padding: 16px;
+  background: var(--jy-space);
+  font-size: var(--jy-small);
+}
+.jy-latest-place { margin-top: 12px !important; font-weight: 500; }
+.jy-latest .jy-link { display: inline-block; margin-top: 12px; }
+
+/* credits */
+.jy-credits { gap: 12px; font-size: var(--jy-small); line-height: 1.5; letter-spacing: 0.01em; color: var(--jy-muted); }
+.jy-credits .jy-panel-head { margin-bottom: 4px; color: var(--jy-ink); }
+.jy-credits .jy-link { text-underline-offset: 3px; }
+.jy-credits-logo { display: block; align-self: flex-start; width: auto; height: 28px; margin: 4px 0; }
+.jy-credits-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 24px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--jy-body);
+}
+.jy-credits-links .jy-link { display: inline-flex; align-items: center; min-height: 44px; }
+.jy-news-slot:empty { display: none; }
+
+/* ---- narrow screens: the bottom sheet, the control rows -------------------------------- */
+
+.jy-narrow .jy-time {
+  right: var(--jy-m);
+  justify-content: space-between;
+  gap: 4px;
+}
+.jy-narrow .jy-clock { min-width: 0; flex: 1; padding: 4px 8px; }
+.jy-narrow .jy-speed span { min-width: 44px; padding: 0 4px; }
+.jy-narrow .jy-now { padding: 0 10px; }
+
+/* above the time row: [Play the intro again] / [See all n pictures] [- +] */
+.jy-narrow .jy-corner {
+  left: var(--jy-m);
+  bottom: calc(var(--jy-bottom) + var(--jy-ctl) + 8px);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "again again" "all zoom";
+  gap: 4px 8px;
+  align-items: center;
+}
+.jy-narrow .jy-again { grid-area: again; justify-self: start; }
+.jy-narrow .jy-all { grid-area: all; justify-self: start; }
+.jy-narrow .jy-zoom { grid-area: zoom; }
+.jy-narrow .jy-facts-slot { bottom: calc(var(--jy-bottom) + 3 * var(--jy-ctl) + 32px); }
+.jy-narrow.jy-panel-open .jy-time,
+.jy-narrow.jy-panel-open .jy-corner,
+.jy-narrow.jy-credits-open .jy-facts-slot { opacity: 0; visibility: hidden; }
+
+.jy-narrow .jy-panel {
+  top: auto;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: auto;
+  max-width: none;
+  max-height: 120px;
+  overflow: hidden;
+  padding: 0 16px calc(16px + env(safe-area-inset-bottom));
+  transform: translateY(16px);
+}
+.jy-narrow .jy-panel.is-on { transform: none; }
+.jy-narrow .jy-panel.is-open { max-height: 85%; overflow: auto; }
+.jy-narrow .jy-grab {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 20px;
+  margin: 0;
+  border: 0;
+  padding: 0;
+  background: none;
+  cursor: grab;
+  touch-action: none;
+}
+.jy-narrow .jy-grab span { display: block; width: 36px; height: 4px; background: var(--jy-muted); }
+.jy-narrow .jy-more { display: inline-flex; }
+.jy-narrow .jy-panel-head { margin-top: 0; }
+.jy-narrow .jy-panel-tools { gap: 14px; }
+.jy-narrow .jy-over { order: 1; margin-top: 0 !important; }
+.jy-narrow .jy-panel [data-ref="aka"] { order: 2; margin-top: 8px; }
+.jy-narrow .jy-panel-body { order: 3; }
+.jy-narrow .jy-facts { grid-template-columns: 112px minmax(0, 1fr); }
+
+.jy-narrow .jy-credits {
+  top: calc(var(--jy-nav) - 4px);
+  left: var(--jy-m);
+  right: var(--jy-m);
+  width: auto;
+  max-height: calc(100% - var(--jy-nav) - var(--jy-bottom));
+  padding: 16px;
+  transform: translateY(-8px);
+}
+.jy-narrow .jy-credits.is-on { transform: none; }
+
+/* ---- short screens (laptops with a small window, phones on their side) ------------------ */
+
+@media (max-height: 640px) and (min-width: 700px) {
+  .jy-root { --jy-display: clamp(48px, 12svh, 96px); }
+  .jy-text { top: max(16vh, calc(var(--jy-nav) + 16px)); top: max(16svh, calc(var(--jy-nav) + 16px)); }
+  .jy-b1 .jy-h1 + .jy-lead { margin-top: 16px; }
+  .jy-cue { margin-top: 24px; }
+}
+@media (max-height: 480px) {
+  /* the reduced-motion block keeps the name and the live sentence */
+  .jy-root.jy-composed .jy-intro-lead { display: none; }
+  .jy-root.jy-composed .jy-live-lead { margin-top: 12px; }
+}
+/* on a phone the reduced-motion block keeps the name and the live sentence, so the globe fits */
+.jy-narrow.jy-composed .jy-intro-lead { display: none; }
+
+/* ---- reduced motion: opacity only, 200ms or less --------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .jy-root .jy-beat,
+  .jy-root .jy-beat.is-past {
+    transform: none !important;
+    transition: opacity 200ms linear, visibility 0s linear 200ms !important;
+  }
+  .jy-root .jy-beat.is-on { transform: none !important; transition: opacity 200ms linear !important; }
+  .jy-root .jy-panel,
+  .jy-root .jy-panel.is-on,
+  .jy-root .jy-credits,
+  .jy-root .jy-credits.is-on { transform: none !important; transition: opacity 150ms linear !important; }
+  .jy-root .jy-canvas { transition: opacity 200ms linear !important; }
+  .jy-root .jy-time,
+  .jy-root .jy-corner,
+  .jy-root .jy-facts-slot,
+  .jy-root .jy-marks,
+  .jy-root .jy-card,
+  .jy-root .jy-cue,
+  .jy-root .jy-sat { transition: opacity 150ms linear !important; }
+}

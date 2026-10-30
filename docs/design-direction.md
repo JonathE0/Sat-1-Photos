@@ -394,8 +394,16 @@ was it taken?** So the picture is the largest thing, and its place is the larges
 - Nav 64px, as on the landing ("Pictures" is the current page; the team's "Your name" control
   lives here only).
 - Grid: viewer (1fr) | info (400px), gutter 24, margins 32.
-- **Viewer.** The picture as large as fits above the browse dock (at 900px tall about 848 × 636 for
-  4:3), on Space, aligned to the column's top-left edge, no frame, never cropped.
+- **Viewer.** (Updated at checkpoint 1.) A picture is never drawn larger than its own size (640 × 480,
+  attitude camera 512 × 512): enlarged, it goes grainy. The viewer is a Panel stage, as tall as fits
+  above the browse dock (up to 720px), with the picture centred on it at 1× or smaller, never
+  cropped. The stage keeps the edges of night and black-edged frames visible. Two and Four use the
+  same stage at the same height, with their pictures centred on it as a group and each caption
+  directly under its picture.
+- **Dark frames** (`dark: true`: black, noise, or the Sun as a single dot) are left out of the strip
+  by default. In the dock row, after the count, in Small: "7 dark frames hidden: nothing but black,
+  sensor noise or the Sun as a single dot." and the text button "Show them" / "Hide them". A
+  direct link to a dark frame opens it with them shown.
 - **Info column**, top aligned with the picture:
   - h1 (Statement): the place, "Alberta, Canada". With no place, the date: "24 Oct 2026".
   - Body Muted: "24 Oct 2026, 17:37 UTC" and, on the next line, "11:37 MDT in Calgary".
