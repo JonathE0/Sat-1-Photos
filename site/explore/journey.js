@@ -18,20 +18,21 @@
  *
  * Scroll, always: the container gets a section 300svh + 100dvh tall with a
  * sticky stage, so the stage is held for 300svh and progress p runs 0..1
- * over it. Native scroll only; nothing plays on a timer. The camera follows
- * p through a light damped lerp (none under reduced motion). Nothing is
- * rendered after the section: the page ends with the story.
+ * over it. Native scroll only; nothing plays on a timer. The camera and the
+ * beats follow p through a critically damped spring (about 0.4 s); under
+ * reduced motion through a 30 ms exponential with no momentum. Nothing is
+ * rendered after the section: the page ends with the story. Every fresh
+ * mount starts at beat 1, whatever the motion setting.
  *   0    - 0.12  beat 1, the Earth facing Calgary, h1 block, "Scroll to learn more"
  *   0.14 - 0.60  the swing (the only travelling camera move)
  *   0.52 - 0.74  beat 2, the live sentence
  *   0.62 - 0.68  satellite and orbit fade in (scrubbed)
- *   0.74 -       beat 3, the instruction (until the first drag or click)
+ *   0.74 -       the h1 block again, with the live sentence and how to use it
  *   0.80 -       pins, time, zoom, "See all n pictures"; drag enabled
  *   1, at rest   the end locks: the section collapses to one screen, the
- *                wheel over the globe zooms, "Play the intro again" undoes it;
- *                remembered for the browser session (sessionStorage)
- * Under prefers-reduced-motion the page opens locked at the end, with the
- * h1 block and the live sentence in the sky.
+ *                wheel over the globe zooms, "Play the intro again" undoes it.
+ *                The lock lasts for the life of the page (hide/show keep it;
+ *                a reload starts over; initialState can restore it).
  *
  * Frames (as site/globe/scene.js): three.js y-up, ECI (x, y, z) drawn at
  * (x, z, -y), 1 unit = the mean Earth radius; the Earth turns by GMST, the
@@ -134,22 +135,6 @@ let uid = 0;
 const ICON_MINUS = '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M3 8h10" stroke="currentColor" stroke-width="1.6"/></svg>';
 const ICON_PLUS = '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M3 8h10M8 3v10" stroke="currentColor" stroke-width="1.6"/></svg>';
 const ICON_DOWN = '<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M2 4.5l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>';
-
-/** Set for the rest of the browser session once the story has been scrolled to its end. */
-const LOCK_KEY = 'cts1-journey-ended';
-const sessionGet = (k) => {
-  try {
-    return window.sessionStorage.getItem(k);
-  } catch {
-    return null;
-  }
-};
-const sessionSet = (k, v) => {
-  try {
-    if (v === null) window.sessionStorage.removeItem(k);
-    else window.sessionStorage.setItem(k, v);
-  } catch { /* storage blocked: the lock just isn't remembered */ }
-};
 
 function template(id, siteRoot) {
   const logo = new URL('assets/calgarytospace-logo.png', siteRoot).href;
@@ -936,12 +921,12 @@ export function mountJourney(container, options = {}) {
    * the section collapses to the stage's own height, so there is nothing
    * left to scroll and the globe stays. The page is put at the section's
    * top in the same frame, which is exactly where the stage already sits on
-   * screen, so nothing jumps. Remembered for the browser session.
+   * screen, so nothing jumps. It lasts for the life of the page (hide/show
+   * keep it); a reload starts the story over.
    */
   function lock({ landing = false } = {}) {
     if (state.mode !== 'story') return;
     state.locked = true;
-    sessionSet(LOCK_KEY, '1');
     if (landing) root.classList.add('jy-instant');
     root.classList.add('jy-locked');
     scrollWindow(sectionTop());
@@ -990,6 +975,23 @@ export function mountJourney(container, options = {}) {
     lock();
   }
 
+  /**
+   * A fresh mount: beat 1, the Earth alone. If the page is already scrolled
+   * into the story (a browser restoring the scroll on reload), go back to its
+   * top; the visitor's scrolling takes it from there.
+   */
+  function startAtBeginning() {
+    if (state.mode !== 'story') return;
+    if (section.offsetParent !== null) {
+      const top = sectionTop();
+      if (window.scrollY > top + 1) scrollWindow(top);
+    }
+    state.pTarget = 0;
+    readScroll();
+    state.pSmooth = state.pTarget;
+    state.pVel = 0;
+  }
+
   /** "Play the intro again": back to the top of the story, which the visitor's scrolling drives. */
   function playAgain() {
     stopTicker();
@@ -997,7 +999,6 @@ export function mountJourney(container, options = {}) {
     closePanel();
     hideCard();
     state.locked = false;
-    sessionSet(LOCK_KEY, null);
     state.hintDismissed = false;
     state.live = true;
     state.speed = 1;
@@ -2207,8 +2208,7 @@ export function mountJourney(container, options = {}) {
     if (state.locked && s.locked === false) {
       // a state from mid-story: open the story up again
       state.locked = false;
-      sessionSet(LOCK_KEY, null);
-      root.classList.remove('jy-locked');
+        root.classList.remove('jy-locked');
       stopTicker();
     }
     state.saved = {
@@ -2381,13 +2381,9 @@ export function mountJourney(container, options = {}) {
   paintText(performance.now());
   if (opts.initialState && applyState(opts.initialState)) {
     restoreScroll();
-  } else if (state.mode === 'story' && (reducedMotion() || sessionGet(LOCK_KEY) === '1')) {
-    // reduced motion, or the story already finished in this session: the finished globe
-    lock({ landing: true });
   } else {
-    readScroll();
-    state.pSmooth = state.pTarget;
-    state.pVel = 0;
+    // a fresh page always opens on beat 1, the Earth alone, whatever the motion setting
+    startAtBeginning();
   }
   loadTicker();
   syncLoop();
