@@ -131,10 +131,16 @@ html.jy-dragging { cursor: grabbing; }
   visibility: visible;
   transition: opacity 600ms var(--jy-ease-out), transform 600ms var(--jy-ease-out), visibility 0s;
 }
-.jy-beat.is-on .jy-words,
-.jy-beat.is-on button,
-.jy-beat.is-on a { pointer-events: auto; }
-.jy-beat.is-on .jy-hint.is-off .jy-words { pointer-events: none; }
+/* The text is see-through to the pointer and can't be selected, at every
+   beat: a drag or the wheel anywhere over it, words included, reaches the
+   globe. (No links or buttons live in it; one added later would need
+   pointer-events: auto.) */
+.jy-text,
+.jy-text * {
+  pointer-events: none !important;
+  -webkit-user-select: none;
+  user-select: none;
+}
 
 .jy-h1 {
   margin: 0;

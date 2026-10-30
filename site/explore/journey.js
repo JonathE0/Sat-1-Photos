@@ -98,7 +98,7 @@ const CHASE_BEHIND_KM = 1400;
  * The end view's heading, radians off the track. Straight behind, the camera
  * sits in the orbit's plane and the 3U shows only its end; this side sends
  * the coming track off toward the text column on the left (the composition
- * the user chose), and the line is cut short of the text (TEXT_GAP).
+ * the user chose); the line is cut only where it would cross words (TEXT_GAP).
  */
 const CHASE_YAW = 0.52;
 /** Close up, the camera levels out to this pitch so the limb sits behind the satellite. */
@@ -114,9 +114,13 @@ const SCROLL_SPRING = 14;
 const SCROLL_LAG_REDUCED_S = 0.03;
 const ZOOM_LAG_S = 0.14;
 const BLEND_MS = 600;
-/** The orbit line stops this far (CSS px) short of the text, then fades in over FEATHER. */
-const TEXT_GAP = 48;
-const TEXT_FEATHER = 32;
+/**
+ * Around each line of words (not the text block as a whole) the orbit line
+ * is transparent within TEXT_GAP px and fades back in over TEXT_FEATHER px;
+ * between lines, past the end of a short line and everywhere else it shows.
+ */
+const TEXT_GAP = 12;
+const TEXT_FEATHER = 12;
 
 const SPACE = '#05070A';
 const BLUE = '#3C9DF5';
@@ -640,23 +644,32 @@ export function mountJourney(container, options = {}) {
   }
 
   /**
-   * Text on screen now, including a block still fading out: the orbit line
-   * stops TEXT_GAP px short of it, and pins hide under it.
+   * The words on screen now (including a block still fading out), one
+   * rectangle per line of text: the orbit line is cut only around these,
+   * and pins hide under them. The block itself is see-through and takes no
+   * pointer, so the globe shows, and turns, everywhere else.
    */
   const leaving = new Map(); // block -> time it started fading out
   function measureText() {
     const s = stageRect();
     const now = performance.now();
-    const boxes = [];
+    const lines = [];
     for (const el of [ref.b1, ref.b2]) {
       const fading = leaving.has(el) && now - leaving.get(el) < 650;
       if (!el.classList.contains('is-on') && !fading) continue;
-      const b = boxOf(el, s);
-      if (b) boxes.push(b);
+      for (const words of el.querySelectorAll('.jy-words')) {
+        // skip lines that are laid out but not showing (the dismissed hint, the faded cue)
+        if (words.closest('.jy-hint.is-off')) continue;
+        if (words.closest('.jy-cue') && root.classList.contains('jy-scrolled')) continue;
+        for (const r of words.getClientRects()) {
+          if (!r.width || !r.height) continue;
+          lines.push({ left: r.left - s.left, top: r.top - s.top, right: r.right - s.left, bottom: r.bottom - s.top });
+        }
+      }
     }
-    frame.textBoxes = boxes;
-    frame.textNow = boxes.map((b) => ({ left: b.left - 16, top: b.top - 16, right: b.right + 16, bottom: b.bottom + 16 }));
-    orbitLine.setKeepOut(boxes, { gap: TEXT_GAP, feather: TEXT_FEATHER });
+    frame.textBoxes = lines;
+    frame.textNow = lines.map((b) => ({ left: b.left - 8, top: b.top - 8, right: b.right + 8, bottom: b.bottom + 8 }));
+    orbitLine.setKeepOut(lines, { gap: TEXT_GAP, feather: TEXT_FEATHER });
   }
 
   function resize() {
@@ -1104,9 +1117,14 @@ export function mountJourney(container, options = {}) {
       // hidden, not removed: the block keeps its size, so the framing doesn't move
       ref.hint.classList.toggle('is-off', !hint);
       ref.hint.setAttribute('aria-hidden', String(!hint));
+      changed = true;
     }
     // "Scroll to learn more" goes as soon as the visitor starts scrolling
-    root.classList.toggle('jy-scrolled', still || p > 0.01);
+    const scrolled = still || p > 0.01;
+    if (root.classList.contains('jy-scrolled') !== scrolled) {
+      root.classList.toggle('jy-scrolled', scrolled);
+      changed = true; // the cue's line no longer cuts the orbit
+    }
     const ui = still || p >= P.ui;
     if (beatShown.ui !== ui) {
       beatShown.ui = ui;
@@ -1534,11 +1552,12 @@ export function mountJourney(container, options = {}) {
 
   // ---- text ----------------------------------------------------------------------------------
   const shownText = new Map();
+  /** Set a node's text if it differs; true when it changed. */
   const put = (node, text) => {
-    if (shownText.get(node) !== text) {
-      node.textContent = text;
-      shownText.set(node, text);
-    }
+    if (shownText.get(node) === text) return false;
+    node.textContent = text;
+    shownText.set(node, text);
+    return true;
   };
   const bar = (node, ch) => {
     if (shownText.get(node) === `bar${ch}`) return;
@@ -1702,9 +1721,11 @@ export function mountJourney(container, options = {}) {
   function paintText(now) {
     if (uiDirty || now - lastSentence > 1000) {
       const text = liveSentence();
-      put(ref.b2t, text);
-      put(ref.liveLead, text);
-      put(ref.hintText, hintText());
+      const a = put(ref.b2t, text);
+      const b = put(ref.liveLead, text);
+      const c = put(ref.hintText, hintText());
+      // the words moved: the orbit line's cut-outs follow them
+      if (a || b || c) measureText();
       paintClock();
       lastSentence = now;
     }
