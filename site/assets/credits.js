@@ -37,7 +37,8 @@ function build() {
     <p>Earth: NASA Blue Marble, Black Marble and cloud imagery. Orbital elements:
       <a href="https://www.space-track.org/">Space-Track.org</a>. Packets: the
       <a href="https://network.satnogs.org/">SatNOGS network</a> and the CalgaryToSpace ground station.
-      Place names: © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>.</p>
+      Place names: © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>.
+      Country borders: <a href="https://www.naturalearthdata.com/">Natural Earth</a> (public domain).</p>
     <p>CubeSat model: NASA IceCube, a 3U like CTS-SAT-1, by NASA/Christopher R. Meaney (NASA 3D Resources,
       public domain); drawn far larger than life.</p>
     <ul class="credits-links">

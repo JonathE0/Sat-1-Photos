@@ -321,3 +321,219 @@ export function regionAt(latDeg, lonDeg) {
   if (name === 'the Atlantic') return latDeg >= 0 ? 'the North Atlantic Ocean' : 'the South Atlantic Ocean';
   return name;
 }
+
+// ---- countries and place search (the Orbit page) ---------------------------------
+//
+// Countries come from Natural Earth's 1:110m Admin 0 outlines (public domain),
+// in countries-110m.json next to this file (scripts/make_countries.mjs). They
+// load on request, so the front page's regionAt costs nothing extra. Small
+// islands and microstates are not in the 1:110m set.
+
+/** Every name regionAt can give, sea first. */
+export const REGION_NAMES = Object.freeze([
+  'the North Pacific Ocean', 'the South Pacific Ocean', 'the North Atlantic Ocean', 'the South Atlantic Ocean',
+  'the Indian Ocean', 'the Southern Ocean', 'the Arctic Ocean', 'the Mediterranean Sea', 'the Caribbean Sea',
+  'the Gulf of Mexico', 'the North Sea', 'the Baltic Sea', 'the Black Sea', 'the Caspian Sea', 'the Red Sea',
+  'the Persian Gulf', 'Hudson Bay', 'the Sea of Japan', 'the Yellow Sea', 'the East China Sea', 'the South China Sea',
+  'the Sea of Okhotsk', 'the Bering Sea', 'the Arafura Sea', 'the Gulf of Carpentaria', 'the Gulf of Thailand',
+  'Southeast Asia', 'Africa', 'Asia', 'Europe', 'North America', 'South America', 'Oceania', 'Australia',
+  'Antarctica', 'Greenland', 'Iceland', 'New Zealand', 'Madagascar', 'New Guinea', 'Hawaii',
+]);
+
+let countries = null;
+let countriesLoading = null;
+
+/** Use already-parsed country data (countries-110m.json's object). */
+export function setCountries(data) {
+  countries = Array.isArray(data?.countries) ? data.countries : null;
+  places = null;
+  return !!countries;
+}
+
+/** Load the country outlines once; resolves to true when they are in. */
+export function loadCountries(url = new URL('countries-110m.json', import.meta.url).href) {
+  if (countries) return Promise.resolve(true);
+  if (!countriesLoading) {
+    countriesLoading = fetch(url)
+      .then((res) => (res.ok ? res.json() : Promise.reject(new Error(`${res.status} for ${url}`))))
+      .then(setCountries)
+      .catch((err) => {
+        countriesLoading = null;
+        console.warn('Places: no country outlines', err);
+        return false;
+      });
+  }
+  return countriesLoading;
+}
+
+/** Even-odd test against every ring of a country, so holes stay holes. */
+function insideRings(rings, lat, lon) {
+  let inside = false;
+  for (const r of rings) {
+    for (let i = 0, j = r.length - 2; i < r.length; j = i, i += 2) {
+      const yi = r[i + 1];
+      const yj = r[j + 1];
+      if (yi > lat !== yj > lat && lon < ((r[j] - r[i]) * (lat - yi)) / (yj - yi) + r[i]) inside = !inside;
+    }
+  }
+  return inside;
+}
+
+function countryContains(c, lat, lon) {
+  const [w, s, e, n] = c.bbox;
+  return lat >= s && lat <= n && lon >= w && lon <= e && insideRings(c.rings, lat, lon);
+}
+
+/** The country under a point, or null (sea, a place too small for the
+ * 1:110m outlines, or the outlines not loaded yet). */
+export function countryAt(latDeg, lonDeg) {
+  if (!countries || !Number.isFinite(latDeg) || !Number.isFinite(lonDeg)) return null;
+  const lon = ((((lonDeg + 180) % 360) + 360) % 360) - 180;
+  return countries.find((c) => countryContains(c, latDeg, lon))?.name ?? null;
+}
+
+/** The country under a point if there is one, else regionAt's sea or
+ * continent: "Canada", "the North Pacific Ocean". */
+export function placeAt(latDeg, lonDeg) {
+  return countryAt(latDeg, lonDeg) ?? regionAt(latDeg, lonDeg);
+}
+
+/** Lower case, no accents, no "the", punctuation as spaces. */
+export function normalise(text) {
+  return String(text ?? '')
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/['’.]/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+    .replace(/^the /, '');
+}
+
+/** Edits (insert, delete, change, swap two neighbours) between two short strings. */
+function edits(a, b) {
+  const d = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array(b.length).fill(0)]);
+  for (let j = 1; j <= b.length; j++) d[0][j] = j;
+  for (let i = 1; i <= a.length; i++) {
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + cost);
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1);
+    }
+  }
+  return d[a.length][b.length];
+}
+
+let places = null;
+
+/** Countries (when loaded) and regionAt's seas and continents, one list. */
+function placeList() {
+  if (places) return places;
+  const list = [];
+  for (const c of countries || []) {
+    list.push({ id: `country:${c.name}`, kind: 'country', name: c.name, label: c.name, keys: [c.name, ...c.also], country: c });
+  }
+  const have = new Set(list.map((p) => normalise(p.name)));
+  for (const name of REGION_NAMES) {
+    const label = name.replace(/^the /, '');
+    if (have.has(normalise(label))) continue; // Australia, Iceland ... are countries too
+    const kind = /Ocean|Sea|Gulf|Bay/.test(name) ? 'sea' : 'land';
+    list.push({ id: `region:${name}`, kind, name, label: label.charAt(0).toUpperCase() + label.slice(1), keys: [label] });
+  }
+  for (const p of list) {
+    // two- and three-letter codes count only when typed exactly
+    p.match = p.keys.map((k) => ({ text: normalise(k), code: /^[A-Z]{2,3}$/.test(k) }));
+  }
+  places = list;
+  return list;
+}
+
+/** How well a typed query fits a place: 0 exact, 1 its start, 2 a word's
+ * start, 3+ with typos; Infinity when it doesn't. */
+function fit(q, p) {
+  let best = Infinity;
+  const typos = q.length <= 3 ? 0 : q.length <= 6 ? 1 : 2;
+  for (const { text, code } of p.match) {
+    if (text === q) return 0;
+    if (code) continue;
+    if (text.startsWith(q)) best = Math.min(best, 1);
+    const words = text.split(' ');
+    // word by word: "s korea" for South Korea, "n mariana" ...
+    const qWords = q.split(' ');
+    if (qWords.length > 1 && qWords.length <= words.length && qWords.every((w, i) => words[i].startsWith(w))) {
+      best = Math.min(best, 1);
+    }
+    if (words.some((w, i) => i > 0 && words.slice(i).join(' ').startsWith(q))) best = Math.min(best, 2);
+    if (typos) {
+      for (const start of [text, ...words.map((_, i) => words.slice(i).join(' ')).slice(1)]) {
+        // the same length, or one more for a dropped letter ("jpan" for "japan")
+        const e = Math.min(edits(q, start.slice(0, q.length)), edits(q, start.slice(0, q.length + 1)));
+        if (e <= typos) best = Math.min(best, 3 + e);
+      }
+    }
+  }
+  return best;
+}
+
+/**
+ * Places for a typed query, best first: [{ id, kind, name, label }].
+ * Prefix matching that forgives a typo or two ("jpan", "Austrailia").
+ */
+export function findPlaces(query, limit = 6) {
+  const q = normalise(query);
+  if (!q) return [];
+  return placeList()
+    .map((p) => ({ p, score: fit(q, p) }))
+    .filter((x) => x.score < Infinity)
+    .sort((a, b) => a.score - b.score || (a.p.kind === 'country' ? 0 : 1) - (b.p.kind === 'country' ? 0 : 1) ||
+      a.p.label.length - b.p.label.length || a.p.label.localeCompare(b.p.label))
+    .slice(0, limit)
+    .map(({ p }) => ({ id: p.id, kind: p.kind, name: p.name, label: p.label }));
+}
+
+const regionShapes = new Map();
+
+/** Box and middle of one of regionAt's names, from its one-degree cells. */
+function regionShape(name) {
+  if (regionShapes.has(name)) return regionShapes.get(name);
+  let [w, s, e, n] = [180, 90, -180, -90];
+  let x = 0;
+  let y = 0;
+  let z = 0;
+  for (let lat = -89.5; lat < 90; lat += 1) {
+    const c = Math.cos(lat * (Math.PI / 180));
+    for (let lon = -179.5; lon < 180; lon += 1) {
+      if (regionAt(lat, lon) !== name) continue;
+      w = Math.min(w, lon - 0.5);
+      e = Math.max(e, lon + 0.5);
+      s = Math.min(s, lat - 0.5);
+      n = Math.max(n, lat + 0.5);
+      x += c * Math.cos(lon * (Math.PI / 180));
+      y += c * Math.sin(lon * (Math.PI / 180));
+      z += Math.sin(lat * (Math.PI / 180));
+    }
+  }
+  const middle = [Math.atan2(y, x) * (180 / Math.PI), Math.atan2(z, Math.hypot(x, y)) * (180 / Math.PI)];
+  const shape = { bbox: [w, s, e, n], middle };
+  regionShapes.set(name, shape);
+  return shape;
+}
+
+/**
+ * A place to test points against: { id, kind, name, label, bbox: [w, s, e, n],
+ * middle: [lon, lat], contains(lat, lon) }. `middle` is Natural Earth's label
+ * point for a country, the centre of the cells for a sea or continent.
+ */
+export function getPlace(id) {
+  const p = placeList().find((x) => x.id === id);
+  if (!p) return null;
+  const wrap = (lon) => ((((lon + 180) % 360) + 360) % 360) - 180;
+  if (p.country) {
+    const c = p.country;
+    return { id, kind: p.kind, name: p.name, label: p.label, bbox: c.bbox, middle: c.middle,
+      contains: (lat, lon) => countryContains(c, lat, wrap(lon)) };
+  }
+  const shape = regionShape(p.name);
+  return { id, kind: p.kind, name: p.name, label: p.label, bbox: shape.bbox, middle: shape.middle,
+    contains: (lat, lon) => regionAt(lat, lon) === p.name };
+}
