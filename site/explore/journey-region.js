@@ -392,10 +392,135 @@ export function countryAt(latDeg, lonDeg) {
   return countries.find((c) => countryContains(c, latDeg, lon))?.name ?? null;
 }
 
-/** The country under a point if there is one, else regionAt's sea or
+// ---- places the 1:110m set leaves out ------------------------------------------------
+//
+// Small countries and territories: [name, lat, lon, km from the middle to the coast or
+// border, other names]. Then a few provinces and states people will look for, Alberta
+// first, as coarse outlines ([lon, lat, ...]) drawn by hand: right to within a few tens
+// of kilometres, which is about the satellite's own precision over a place this size.
+// Other names stay long or are codes (which count only typed in full): "Alta" would be
+// a typo away from "Malta", and "Man" from "Oman".
+
+const SMALL_PLACES = [
+  ['Singapore', 1.35, 103.82, 25], ['Malta', 35.9, 14.4, 20], ['Bahrain', 26.05, 50.55, 25],
+  ['Mauritius', -20.3, 57.55, 35], ['Maldives', 3.2, 73.22, 250], ['Seychelles', -4.68, 55.49, 30],
+  ['Barbados', 13.19, -59.54, 20], ['Cape Verde', 15.1, -23.6, 150, ['Cabo Verde']], ['Comoros', -11.9, 43.87, 100],
+  ['Samoa', -13.76, -172.1, 60], ['Tonga', -21.18, -175.2, 60], ['Monaco', 43.73, 7.42, 3], ['Andorra', 42.55, 1.6, 15],
+  ['Liechtenstein', 47.16, 9.55, 12], ['San Marino', 43.94, 12.46, 6], ['Vatican City', 41.9, 12.45, 1, ['The Vatican']],
+];
+const SMALL_TERRITORIES = [
+  ['Hong Kong', 22.32, 114.17, 30, ['HK']], ['Macau', 22.16, 113.55, 10, ['Macao']], ['Bermuda', 32.3, -64.78, 15],
+  ['Guam', 13.44, 144.79, 30], ['Reunion', -21.11, 55.53, 35, ['La Reunion']],
+];
+/** A search needs something to find: the smallest of these count as this wide for passes. */
+const SMALL_PLACE_MIN_KM = 40;
+
+const OUTLINES = [
+  ['Alberta', ['AB'], [-120, 60, -110, 60, -110, 49, -114.06, 49, -114.7, 50, -115.7, 51, -117, 52, -118.5, 53, -120, 54]],
+  ['British Columbia', ['BC'], [-139, 60, -120, 60, -120, 54, -118.5, 53, -117, 52, -115.7, 51, -114.7, 50, -114.06, 49,
+    -123.3, 49, -125.5, 48.3, -128.5, 50.5, -133.5, 53, -133.5, 54.6, -130, 54.7, -130, 56, -135, 59.4]],
+  ['Saskatchewan', ['SK'], [-110, 60, -102, 60, -101.4, 49, -110, 49]],
+  ['Manitoba', ['MB'], [-102, 60, -94.8, 60, -88.9, 56.85, -95.15, 52.85, -95.15, 49, -101.4, 49]],
+  ['Ontario', ['ON'], [-95.15, 52.85, -88.9, 56.85, -82.2, 55.1, -79.5, 51.5, -79.5, 47.5, -74.4, 45.3, -76.2, 43.6,
+    -79, 43.2, -79.3, 42.7, -83, 41.7, -83.2, 43, -82.4, 45.3, -84.7, 46.5, -89.5, 48, -95.15, 49]],
+  ['Quebec', ['QC', 'PQ'], [-79.5, 51.5, -79, 55, -78.5, 58.7, -77.5, 62.5, -70, 61, -64.5, 60.3, -67.5, 54, -60, 52, -57.1, 51.4,
+    -64.5, 49.9, -64.2, 48.8, -67, 47.9, -70, 46.7, -71.5, 45, -74.4, 45, -74.4, 45.3, -79.5, 47.5]],
+  ['New Brunswick', ['NB'], [-69, 47.4, -67, 47.9, -64.2, 47.9, -64, 46, -66, 45, -67.5, 45.2]],
+  ['Nova Scotia', ['NS'], [-66.4, 43.4, -64, 44, -60, 45.2, -59.7, 46.2, -60.5, 47.1, -61.5, 45.8, -64, 45.9, -66.3, 44.5]],
+  ['Prince Edward Island', ['PEI', 'PE'], [-64.5, 46.7, -63.8, 47.1, -62, 46.5, -62.5, 45.9, -64, 46.2]],
+  ['Newfoundland and Labrador', ['NL', 'Newfoundland', 'Labrador'], [-64.5, 60.3, -55.6, 53, -52.5, 47.5, -53.5, 46.6, -59.5, 47.6,
+    -57.1, 51.4, -60, 52, -67.5, 54]],
+  ['Yukon', ['YT', 'Yukon Territory'], [-141, 69.7, -134, 69.3, -124, 60, -141, 60]],
+  ['Northwest Territories', ['NT', 'NWT'], [-124, 60, -134, 69.3, -125, 71, -120, 75, -110, 78, -110, 70, -120, 69.4, -110, 65.5, -102, 64.2, -102, 60]],
+  ['Nunavut', ['NU'], [-102, 60, -102, 64.2, -110, 65.5, -120, 69.4, -110, 70, -110, 78, -100, 83, -61, 83, -60, 66, -65, 61, -78, 62.5, -82, 68, -90, 63, -94.8, 60]],
+  ['Alaska', ['AK'], [-168.5, 65.5, -162, 71, -156, 71.5, -141, 69.7, -141, 60, -130, 55, -133, 54.7, -150, 59, -165, 54, -158, 58.5, -166, 60]],
+  ['California', ['CA'], [-124.5, 42, -120, 42, -120, 39, -114.6, 35, -114.5, 32.7, -117.1, 32.5, -120.6, 34.5, -122.5, 37, -124.3, 40.3]],
+  ['Texas', ['TX'], [-106.65, 32, -103, 32, -103, 36.5, -100, 36.5, -100, 34.6, -94.1, 33.6, -93.6, 29.8, -97.2, 27.5, -97.3, 25.9, -99.5, 27.5, -101.4, 29.8, -103.2, 29, -104.9, 30.6, -106.65, 31.7]],
+  ['Florida', ['FL'], [-87.6, 31, -85, 31, -82, 30.7, -81.3, 30.7, -80, 26.8, -80.2, 25.2, -81.7, 25.1, -82.9, 28, -84, 30, -87.6, 30.3]],
+  ['New York', ['NY', 'New York State'], [-79.8, 42.3, -79, 43.3, -76.3, 43.6, -75, 45, -73.3, 45, -73.5, 42, -71.9, 41, -74, 40.5, -75.3, 42]],
+].map(([name, also, ring]) => ({ name, also, ring }));
+
+const kmBetween = (lat1, lon1, lat2, lon2) => {
+  const k = Math.PI / 180;
+  const a = Math.sin(((lat2 - lat1) * k) / 2) ** 2 + Math.cos(lat1 * k) * Math.cos(lat2 * k) * Math.sin(((lon2 - lon1) * k) / 2) ** 2;
+  return 2 * 6371 * Math.asin(Math.min(1, Math.sqrt(a)));
+};
+
+function smallPlaceAt(lat, lon) {
+  for (const list of [SMALL_PLACES, SMALL_TERRITORIES]) {
+    for (const [name, pLat, pLon, km] of list) {
+      if (Math.abs(lat - pLat) < 3 && kmBetween(lat, lon, pLat, pLon) <= km) return name;
+    }
+  }
+  return null;
+}
+
+/** Kilometres from a point to a country's outline; flat near the point, which is fine this close. */
+function kmToOutline(c, lat, lon) {
+  const k = Math.cos((lat * Math.PI) / 180) * 111.2;
+  let best = Infinity;
+  for (const r of c.rings) {
+    for (let i = 0, j = r.length - 2; i < r.length; j = i, i += 2) {
+      const ax = (r[j] - lon) * k;
+      const ay = (r[j + 1] - lat) * 111.2;
+      const dx = (r[i] - r[j]) * k;
+      const dy = (r[i + 1] - r[j + 1]) * 111.2;
+      const t = Math.max(0, Math.min(1, -(ax * dx + ay * dy) / (dx * dx + dy * dy || 1)));
+      best = Math.min(best, Math.hypot(ax + t * dx, ay + t * dy));
+    }
+  }
+  return best;
+}
+
+/** The closest country within `km` of a point, or null. */
+function countryNear(lat, lon, km) {
+  const dLat = km / 111.2;
+  const dLon = dLat / Math.max(0.1, Math.cos((lat * Math.PI) / 180));
+  let best = null;
+  let bestKm = km;
+  for (const c of countries) {
+    const [w, s, e, n] = c.bbox;
+    if (lat < s - dLat || lat > n + dLat || lon < w - dLon || lon > e + dLon) continue;
+    const d = kmToOutline(c, lat, lon);
+    if (d < bestKm) {
+      best = c.name;
+      bestKm = d;
+    }
+  }
+  return best;
+}
+
+/**
+ * The 1:110m outlines cut corners, so a point can fall just outside its country.
+ * Where the coarse answer is land ("Asia") or vague ("Southeast Asia"), a country in
+ * reach is better. Where it is a named sea, the reach is short, so real water off a
+ * coast stays water.
+ */
+const NEAR_FROM_LAND_KM = 100;
+const NEAR_FROM_SEA_KM = 25;
+
+/** What's under a point: a small place or country if there is one, else regionAt's sea or
  * continent: "Canada", "the North Pacific Ocean". */
 export function placeAt(latDeg, lonDeg) {
-  return countryAt(latDeg, lonDeg) ?? regionAt(latDeg, lonDeg);
+  const coarse = regionAt(latDeg, lonDeg);
+  if (!countries || !Number.isFinite(latDeg) || !Number.isFinite(lonDeg)) return coarse;
+  const lon = ((((lonDeg + 180) % 360) + 360) % 360) - 180;
+  return smallPlaceAt(latDeg, lon)
+    ?? countryAt(latDeg, lon)
+    ?? countryNear(latDeg, lon, /Ocean|Sea|Gulf|Bay/.test(coarse) ? NEAR_FROM_SEA_KM : NEAR_FROM_LAND_KM)
+    ?? coarse;
+}
+
+const NEEDS_THE = new Set(['Bahamas', 'Central African Republic', 'Czech Republic', 'Democratic Republic of the Congo',
+  'Dominican Republic', 'Falkland Islands', 'French Southern and Antarctic Lands', 'Maldives', 'Netherlands', 'Philippines',
+  'Republic of the Congo', 'Seychelles', 'Solomon Islands', 'United Arab Emirates', 'United Kingdom', 'United States',
+  'Vatican City']);
+
+/** A place's name as it reads after "over": "the United States", "the Gambia", "Canada". */
+export function placeInSentence(name) {
+  if (!name) return name;
+  if (name.startsWith('The ')) return `the ${name.slice(4)}`;
+  return NEEDS_THE.has(name) ? `the ${name}` : name;
 }
 
 /** Lower case, no accents, no "the", punctuation as spaces. */
@@ -440,6 +565,14 @@ function placeList() {
     const kind = /Ocean|Sea|Gulf|Bay/.test(name) ? 'sea' : 'land';
     list.push({ id: `region:${name}`, kind, name, label: label.charAt(0).toUpperCase() + label.slice(1), keys: [label] });
   }
+  const addSmall = (kind) => ([name, lat, lon, km, also = []]) => {
+    list.push({ id: `place:${name}`, kind, name, label: name, keys: [name, ...also], circle: { lat, lon, km } });
+  };
+  SMALL_PLACES.forEach(addSmall('country'));
+  SMALL_TERRITORIES.forEach(addSmall('land'));
+  for (const o of OUTLINES) {
+    list.push({ id: `place:${o.name}`, kind: 'land', name: o.name, label: o.name, keys: [o.name, ...o.also], outline: o.ring });
+  }
   for (const p of list) {
     // two- and three-letter codes count only when typed exactly
     p.match = p.keys.map((k) => ({ text: normalise(k), code: /^[A-Z]{2,3}$/.test(k) }));
@@ -452,7 +585,8 @@ function placeList() {
  * start, 3+ with typos; Infinity when it doesn't. */
 function fit(q, p) {
   let best = Infinity;
-  const typos = q.length <= 3 ? 0 : q.length <= 6 ? 1 : 2;
+  // two typos in a short word make it a different word ("alberta" is two from "algeria")
+  const typos = q.length <= 3 ? 0 : q.length <= 8 ? 1 : 2;
   for (const { text, code } of p.match) {
     if (text === q) return 0;
     if (code) continue;
@@ -532,6 +666,36 @@ export function getPlace(id) {
     const c = p.country;
     return { id, kind: p.kind, name: p.name, label: p.label, bbox: c.bbox, middle: c.middle,
       contains: (lat, lon) => countryContains(c, lat, wrap(lon)) };
+  }
+  if (p.circle) {
+    const { lat, lon } = p.circle;
+    const km = Math.max(p.circle.km, SMALL_PLACE_MIN_KM);
+    const dLat = km / 111.2;
+    const dLon = dLat / Math.cos((lat * Math.PI) / 180);
+    return { id, kind: p.kind, name: p.name, label: p.label, bbox: [lon - dLon, lat - dLat, lon + dLon, lat + dLat], middle: [lon, lat],
+      contains: (la, lo) => kmBetween(la, wrap(lo), lat, lon) <= km };
+  }
+  if (p.outline) {
+    const r = p.outline;
+    const lons = r.filter((_, i) => i % 2 === 0);
+    const lats = r.filter((_, i) => i % 2 === 1);
+    const bbox = [Math.min(...lons), Math.min(...lats), Math.max(...lons), Math.max(...lats)];
+    // the middle of its widest stretch at mid latitude, which always lies inside
+    const midLat = (bbox[1] + bbox[3]) / 2;
+    const crossings = [];
+    for (let i = 0, j = r.length - 2; i < r.length; j = i, i += 2) {
+      if (r[i + 1] > midLat !== r[j + 1] > midLat) crossings.push(((r[j] - r[i]) * (midLat - r[i + 1])) / (r[j + 1] - r[i + 1]) + r[i]);
+    }
+    crossings.sort((a, b) => a - b);
+    let middle = [(bbox[0] + bbox[2]) / 2, midLat];
+    for (let i = 0, widest = 0; i + 1 < crossings.length; i += 2) {
+      if (crossings[i + 1] - crossings[i] > widest) {
+        widest = crossings[i + 1] - crossings[i];
+        middle = [(crossings[i] + crossings[i + 1]) / 2, midLat];
+      }
+    }
+    return { id, kind: p.kind, name: p.name, label: p.label, bbox, middle,
+      contains: (lat, lon) => insideRings([r], lat, wrap(lon)) };
   }
   const shape = regionShape(p.name);
   return { id, kind: p.kind, name: p.name, label: p.label, bbox: shape.bbox, middle: shape.middle,

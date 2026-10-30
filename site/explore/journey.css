@@ -53,6 +53,14 @@ html.jy-dragging { cursor: grabbing; }
 
 /* ---- section and stage ------------------------------------------------------ */
 
+/* No page scrollbar on the story (the main site's Explore view, or explore/index.html):
+   it would vanish when the end locks, and everything would jump by its width. A kept
+   gutter would stop the jump too, but leave a blank strip beside the Earth. */
+html:has(body[data-view="explore"]),
+html:has(> body > main#journey) { scrollbar-width: none; }
+html:has(body[data-view="explore"])::-webkit-scrollbar,
+html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
+
 /* held for 300svh; the page ends where the section ends */
 .jy {
   position: relative;
@@ -775,7 +783,7 @@ html.jy-dragging { cursor: grabbing; }
 /* the facts, when the end view has no room for their banner */
 .jy-details-facts { margin-top: 16px; }
 .jy-details-facts:empty { display: none; }
-.jy-details-facts .cf { max-width: none; padding: 0; background: none; }
+.jy-details-facts .cf { max-width: none; padding: 0 8px 0 0; background: none; }
 
 .jy-facts {
   display: grid;
@@ -822,6 +830,19 @@ html.jy-dragging { cursor: grabbing; }
 }
 .jy-latest-place { margin-top: 12px !important; font-weight: 500; }
 .jy-latest .jy-link { display: inline-block; margin-top: 12px; }
+/* on touch a taller place to tap than the words, with nothing about them moved */
+@media (pointer: coarse) {
+  .jy-latest .jy-link { position: relative; }
+  .jy-latest .jy-link::after {
+    content: "";
+    position: absolute;
+    left: -8px;
+    right: -8px;
+    top: 50%;
+    height: 44px;
+    margin-top: -22px;
+  }
+}
 
 /* credits */
 .jy-credits { gap: 12px; font-size: var(--jy-small); line-height: 1.5; letter-spacing: 0.01em; color: var(--jy-muted); }

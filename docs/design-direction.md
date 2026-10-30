@@ -176,7 +176,7 @@ paragraphs.
 | 0 – 0.12 | Beat 1 | h1 block |
 | 0.12 | | h1 block leaves (360ms, rises 16px, `--ease-exit`) |
 | 0.14 – 0.60 | **The swing** (below) | none |
-| 0.52 | arriving | Beat 2 statement enters (600ms, from 16px below) |
+| 0.58 | arriving | Beat 2 statement enters (600ms, from 16px below), once the swing has cleared the sky for it (updated 30 Oct 2026: on a long swing the Earth is still behind the words at 0.56) |
 | 0.62 – 0.68 | holds | Satellite and orbit line fade in (opacity, scrubbed) |
 | 0.74 | | Beat 2 leaves; beat 3 enters 120ms later |
 | 0.80 | | Pins and time controls fade in (240ms); drag is enabled |

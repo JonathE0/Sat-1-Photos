@@ -25,14 +25,16 @@
  * mount starts at beat 1, whatever the motion setting.
  *   0    - 0.12  beat 1, the Earth facing Calgary, h1 block, "Scroll to learn more"
  *   0.14 - 0.60  the swing (the only travelling camera move)
- *   0.52 - 0.74  beat 2, the live sentence
+ *   0.58 - 0.74  beat 2, the live sentence, once the swing has cleared the sky for it
  *   0.62 - 0.68  satellite and orbit fade in (scrubbed)
  *   0.74 -       the h1 block again, with the live sentence and how to use it
  *   0.80 -       pins, time, zoom, "See all n pictures"; drag enabled
  *   1, at rest   the end locks: the section collapses to one screen, the
  *                wheel over the globe zooms, "Play the intro again" undoes it.
  *                The lock lasts for the life of the page (hide/show keep it;
- *                a reload starts over; initialState can restore it).
+ *                initialState can restore it), and for the tab: coming back
+ *                from another page opens at the end. A reload or a new tab
+ *                starts over.
  *
  * Frames (as site/globe/scene.js): three.js y-up, ECI (x, y, z) drawn at
  * (x, z, -y), 1 unit = the mean Earth radius; the Earth turns by GMST, the
@@ -72,7 +74,7 @@ import {
   statusLine,
   utcShort,
 } from './journey-parts.js';
-import { regionAt } from './journey-region.js';
+import { loadCountries, placeAt, placeInSentence } from './journey-region.js';
 
 const MODULE_BASE = new URL('./', import.meta.url);
 const SITE_ROOT = new URL('../', import.meta.url);
@@ -87,7 +89,9 @@ const P = {
   h1Out: 0.12,
   swingStart: 0.14,
   swingEnd: 0.6,
-  beat2In: 0.52,
+  // the camera has almost arrived by here; on a long swing the Earth can still be
+  // behind the words at 0.56
+  beat2In: 0.58,
   satIn: 0.62,
   satFull: 0.68,
   beat2Out: 0.74,
@@ -117,6 +121,23 @@ const SAT_UNDER_LIMB = 0.06;
 /** journey.css data-fit: what the end view gives up when short of room (see endRoom). */
 const FIT_NO_FACTS = 2;
 const FIT_MOST = 4;
+/** Set in this tab once the story has been finished, so coming back doesn't mean scrolling it again. */
+const STORY_FINISHED_KEY = 'cts-story-finished';
+const storyFinished = {
+  get() {
+    try {
+      return sessionStorage.getItem(STORY_FINISHED_KEY) === '1';
+    } catch {
+      return false;
+    }
+  },
+  set(on) {
+    try {
+      if (on) sessionStorage.setItem(STORY_FINISHED_KEY, '1');
+      else sessionStorage.removeItem(STORY_FINISHED_KEY);
+    } catch { /* no storage: the story just plays again */ }
+  },
+};
 /** Screens with room for the picture viewfinder; keep in step with .jy-vf-slot in journey.css. */
 const VIEWFINDER_MEDIA = '(min-width: 1360px) and (min-height: 760px) and (min-aspect-ratio: 4/5)';
 /** Close up, the camera levels out to this pitch so the limb sits behind the satellite. */
@@ -177,7 +198,7 @@ function template(id, siteRoot) {
           <p class="jy-lead jy-intro-only"><span class="jy-words">Calgary To Space\u2019s first satellite, built by University of Calgary students and in orbit since ${launchDate}.</span></p>
           <p class="jy-cue jy-intro-only" data-ref="cue" tabindex="-1"><span class="jy-words">Scroll to learn more</span> ${ICON_DOWN}</p>
           <p class="jy-lead jy-live-lead jy-end-only"><span class="jy-words" data-ref="liveLead"></span> <span class="jy-words jy-lead-more" data-ref="liveMore"></span></p>
-          <p class="jy-tip jy-end-only"><span class="jy-words" data-ref="satTip"></span></p>
+          <p class="jy-tip jy-end-only" data-ref="tip"><span class="jy-words" data-ref="satTip"></span></p>
           <p class="jy-hint jy-end-only" data-ref="hint"><span class="jy-words" data-ref="hintText"></span></p>
         </div>
         <p class="jy-beat jy-statement jy-b2" data-ref="b2"><span class="jy-words" data-ref="b2t"></span></p>
@@ -267,7 +288,7 @@ function template(id, siteRoot) {
           <section class="jy-latest" data-ref="latest" hidden>
             <h3 class="jy-latest-title">Latest picture</h3>
             <a class="jy-latest-frame" data-ref="latestFrame"><img data-ref="latestImg" alt="" decoding="async"></a>
-            <p class="jy-latest-failed" data-ref="latestFailed" hidden>The picture didn\u2019t load.
+            <p class="jy-latest-failed" data-ref="latestFailed" hidden>This picture didn\u2019t load.
               <button type="button" class="jy-textbtn" data-ref="latestRetry">Try again</button></p>
             <p class="jy-latest-place" data-ref="latestPlace"></p>
             <p class="jy-small jy-muted" data-ref="latestTime"></p>
@@ -376,6 +397,7 @@ export function mountJourney(container, options = {}) {
     lastScrollAt: 0,
     offsetPx: 0, // page scroll relative to the section's top
     sectionPx: 0,
+    holdSeen: 0, // how long the story's scroll was when last read
     saved: null, // { progress, offset, height } kept while hidden, or from initialState
   };
   let photos = [];
@@ -475,6 +497,7 @@ export function mountJourney(container, options = {}) {
       earthReady = true;
       stage.classList.add('jy-earth-ready');
       for (const pin of pins) loadPinPicture(pin.el.querySelector('img'));
+      loadPlaceNames();
     };
     // fade in once the full maps are uploaded (the upload itself can stall a
     // frame, so not mid-fade); on a very slow line, show the previews anyway
@@ -538,6 +561,8 @@ export function mountJourney(container, options = {}) {
     loadEarth();
     loadSky();
     loadSatellite();
+  } else {
+    loadPlaceNames();
   }
 
   // ---- orbit data ----------------------------------------------------------------
@@ -854,6 +879,7 @@ export function mountJourney(container, options = {}) {
     camera.updateProjectionMatrix();
     root.classList.toggle('jy-narrow', frame.narrow);
     if (!webgl) layoutStill();
+    readScroll(); // the story may be a different length now
     needsFrame = true;
   }
 
@@ -1091,6 +1117,16 @@ export function mountJourney(container, options = {}) {
     }
     const hold = holdPx();
     if (hold <= 0) return;
+    // The story got longer or shorter (a phone turned, a window resized): keep the
+    // place in it, not the pixels, which might now be past its end and lock it.
+    if (state.holdSeen && Math.abs(hold - state.holdSeen) > 1) {
+      state.holdSeen = hold;
+      scrollWindow(sectionTop() + state.pTarget * hold);
+      state.offsetPx = -section.getBoundingClientRect().top;
+      state.lastScrollAt = performance.now();
+      return;
+    }
+    state.holdSeen = hold;
     state.pTarget = clamp(-rect.top / hold, 0, 1);
   }
 
@@ -1100,11 +1136,12 @@ export function mountJourney(container, options = {}) {
    * left to scroll and the globe stays. The page is put at the section's
    * top in the same frame, which is exactly where the stage already sits on
    * screen, so nothing jumps. It lasts for the life of the page (hide/show
-   * keep it); a reload starts the story over.
+   * keep it) and for the tab (storyFinished); a reload starts the story over.
    */
   function lock({ landing = false } = {}) {
     if (state.mode !== 'story') return;
     state.locked = true;
+    storyFinished.set(true);
     if (landing) root.classList.add('jy-instant');
     root.classList.add('jy-locked');
     scrollWindow(sectionTop());
@@ -1177,6 +1214,7 @@ export function mountJourney(container, options = {}) {
     closePanel();
     hideCard();
     state.locked = false;
+    storyFinished.set(false);
     state.hintDismissed = false;
     state.live = true;
     state.speed = 1;
@@ -1352,6 +1390,7 @@ export function mountJourney(container, options = {}) {
       img.alt = '';
       img.decoding = 'async';
       img.dataset.src = new URL(p.thumb || p.src, siteRoot).href;
+      img.addEventListener('error', () => { img.hidden = true; }); // an empty pin, not a broken icon
       if (earthReady) loadPinPicture(img);
       a.appendChild(img);
       const count = document.createElement('span');
@@ -1490,6 +1529,7 @@ export function mountJourney(container, options = {}) {
     const img = document.createElement('img');
     img.alt = '';
     img.decoding = 'async';
+    img.addEventListener('error', () => { img.hidden = true; }); // the place and time still say what it is
     img.src = new URL(big ? photo.src || photo.thumb : photo.thumb || photo.src, siteRoot).href;
     if (isSquare(photo)) img.classList.add('is-square');
     const place = document.createElement('span');
@@ -1703,12 +1743,13 @@ export function mountJourney(container, options = {}) {
   listen(ref.follow, 'click', () => setFollow(!state.follow));
   listen(ref.zoomSat, 'click', () => zoomToSatellite());
   listen(ref.retry, 'click', () => loadOrbit());
+  // no broken icon: the message takes the frame's place, and "Open in the catalogue" stays under it
   listen(ref.latestImg, 'error', () => {
-    ref.latestImg.hidden = true;
+    ref.latestFrame.hidden = true;
     ref.latestFailed.hidden = false;
   });
   listen(ref.latestImg, 'load', () => {
-    ref.latestImg.hidden = false;
+    ref.latestFrame.hidden = false;
     ref.latestFailed.hidden = true;
     // the frame ends where the data did; the picture is anchored to its top (journey.css)
     if (latest) ref.latestFrame.style.aspectRatio = `${ref.latestImg.naturalWidth} / ${rowsWithData(ref.latestImg, latest)}`;
@@ -1716,7 +1757,7 @@ export function mountJourney(container, options = {}) {
   listen(ref.latestRetry, 'click', () => {
     if (!latest) return;
     ref.latestFailed.hidden = true;
-    ref.latestImg.hidden = false;
+    ref.latestFrame.hidden = false;
     const src = new URL(latest.src || latest.thumb, siteRoot).href;
     ref.latestImg.src = `${src}${src.includes('?') ? '&' : '?'}retry=${Date.now()}`;
   });
@@ -1859,7 +1900,7 @@ export function mountJourney(container, options = {}) {
       }
       put(ref.elements, '');
     } else {
-      const place = regionAt(s.latDeg, s.lonDeg);
+      const place = placeNow(s);
       put(ref.over, place ? `Over ${place}` : `Over ${fmtLatShort(s.latDeg)}, ${fmtLonShort(s.lonDeg)}`);
       put(ref.fAlt, `${Math.round(s.altKm)} km`);
       put(ref.fSpeed, `${s.speedKmS.toFixed(2)} km/s`);
@@ -1901,7 +1942,7 @@ export function mountJourney(container, options = {}) {
       ref.latestOpen.href = href;
       const ratio = latest.width && latest.height ? latest.width / latest.height : 4 / 3;
       ref.latestFrame.style.aspectRatio = String(ratio);
-      ref.latestImg.hidden = false;
+      ref.latestFrame.hidden = false;
       ref.latestFailed.hidden = true;
       ref.latestImg.src = new URL(latest.src || latest.thumb, siteRoot).href;
       const place = placeOf(latest);
@@ -1914,12 +1955,33 @@ export function mountJourney(container, options = {}) {
     }
   }
 
-  /** The bar's words after the name: "over Africa, 501 km up". */
+  /**
+   * Place names are the Orbit page's (placeAt), from country outlines that load
+   * once the Earth is up. Until then the words say it's still working rather than
+   * name a continent and correct it a moment later; on a line so slow that the
+   * outlines take a long time, the coarse name is better than nothing after 2 s.
+   */
+  let placeNamesReady = false;
+  const placeNamesArrived = () => {
+    placeNamesReady = true;
+    uiDirty = true;
+  };
+  const placeNamesWait = setTimeout(placeNamesArrived, 2000);
+  function loadPlaceNames() {
+    loadCountries().then(() => {
+      clearTimeout(placeNamesWait);
+      placeNamesArrived();
+    });
+  }
+  /** "the United States", "the North Pacific Ocean", or null where nothing has a name. */
+  const placeNow = (s) => placeInSentence(placeAt(s.latDeg, s.lonDeg));
+
+  /** The bar's words after the name: "over Burkina Faso, 501 km up". */
   function summaryWhere() {
     const s = sat.state;
     if (!s) return orbitStatus === 'failed' ? 'position unavailable' : '';
-    const place = regionAt(s.latDeg, s.lonDeg);
-    return `over ${place || `${fmtLatShort(s.latDeg)}, ${fmtLonShort(s.lonDeg)}`}, ${Math.round(s.altKm)} km up`;
+    if (!placeNamesReady) return '';
+    return `over ${placeNow(s) || `${fmtLatShort(s.latDeg)}, ${fmtLonShort(s.lonDeg)}`}, ${Math.round(s.altKm)} km up`;
   }
 
   /** The live sentence's first half, which stays when the end view is short of room. */
@@ -1930,16 +1992,17 @@ export function mountJourney(container, options = {}) {
         ? 'Its position can\u2019t be worked out right now: the orbital elements didn\u2019t load.'
         : 'Working out where it is right now.';
     }
+    if (!placeNamesReady) return 'Working out where it is right now.';
     const when = state.live ? 'Right now' : `At ${calgaryTime(state.simMs).time} in Calgary`;
     const alt = Math.round(s.altKm);
-    const place = regionAt(s.latDeg, s.lonDeg);
+    const place = placeNow(s);
     return place
       ? `${when} it\u2019s over ${place}, ${alt} km up.`
       : `${when} it\u2019s ${alt} km above ${fmtLatShort(s.latDeg)}, ${fmtLonShort(s.lonDeg)}.`;
   }
 
   function liveMore() {
-    if (!sat.state) return '';
+    if (!sat.state || !placeNamesReady) return '';
     const period = Math.round(orbit.periodMinutes(state.simMs));
     return `It completes one orbit of the Earth every ${period} minutes, on a near-polar path.`;
   }
@@ -1950,7 +2013,12 @@ export function mountJourney(container, options = {}) {
   }
 
   // on a big screen the latest picture is already up in the viewfinder, and the satellite opens its details
-  const satTipText = () => `${touchQuery.matches ? 'Tap' : 'Click'} on the satellite to see ${bigQuery.matches ? 'where it is now' : 'its latest image'}!`;
+  /** What to do with the satellite, or why the Earth is still; nothing if there is no satellite to press. */
+  function satTipText() {
+    if (!webgl) return 'This browser can’t draw the 3D globe, so the Earth here is a still picture.';
+    if (orbitStatus === 'failed') return '';
+    return `${touchQuery.matches ? 'Tap' : 'Click'} on the satellite to see ${bigQuery.matches ? 'where it is now' : 'its latest image'}!`;
+  }
 
   function atNow() {
     return state.live && state.speed === 1 && state.follow && !state.custom;
@@ -1988,7 +2056,9 @@ export function mountJourney(container, options = {}) {
       const b = put(ref.liveLead, where);
       const c = put(ref.liveMore, more);
       const d = put(ref.hintText, hintText());
-      const e = put(ref.satTip, satTipText());
+      const tip = satTipText();
+      const e = put(ref.satTip, tip);
+      ref.tip.hidden = !tip;
       if (e) ref.sat.setAttribute('aria-label', `CTS-SAT-1: where it is now${bigQuery.matches ? '' : ' and its latest picture'}`);
       // the words moved: where pins hide follows them
       if (a || b || c || d || e) measureText();
@@ -2134,12 +2204,18 @@ export function mountJourney(container, options = {}) {
   });
   listen(canvas, 'pointermove', (e) => {
     const p = pointers.get(e.pointerId);
-    if (!p) return;
+    if (!p || p.pageSwipe) return;
     const dx = e.clientX - p.x;
     const dy = e.clientY - p.y;
     p.x = e.clientX;
     p.y = e.clientY;
     if (!dragged && Math.hypot(p.x - p.x0, p.y - p.y0) > 4) {
+      // through the story a finger going up or down is scrolling the page (touch-action:
+      // pan-y), and the browser will soon take it over: it never was a drag on the globe
+      if (e.pointerType !== 'mouse' && !state.locked && Math.abs(p.y - p.y0) >= Math.abs(p.x - p.x0)) {
+        p.pageSwipe = true;
+        return;
+      }
       dragged = true;
       dismissHint();
       hideCard();
@@ -2155,12 +2231,13 @@ export function mountJourney(container, options = {}) {
     }
   });
   const endPointer = (e) => {
+    const pageSwipe = pointers.get(e.pointerId)?.pageSwipe;
     if (!pointers.delete(e.pointerId)) return;
     try {
       canvas.releasePointerCapture?.(e.pointerId);
     } catch { /* never captured */ }
     if (pointers.size < 2) pinch = null;
-    if (e.type === 'pointerup' && !dragged && pointers.size === 0) {
+    if (e.type === 'pointerup' && !dragged && !pageSwipe && pointers.size === 0) {
       hideCard();
       closeCredits();
       if (hitsSatellite(e.clientX, e.clientY)) {
@@ -2571,7 +2648,7 @@ export function mountJourney(container, options = {}) {
       altKm: s ? s.altKm : null,
       latDeg: s ? s.latDeg : null,
       lonDeg: s ? s.lonDeg : null,
-      placeName: s ? regionAt(s.latDeg, s.lonDeg) : null,
+      placeName: s && placeNamesReady ? placeNow(s) : null,
       orbitsSinceLaunch: s ? liveRev.value : null,
       daysInOrbit: ms >= LAUNCH_MS ? (ms - LAUNCH_MS) / DAY_MS : null,
       pictures: photos.length || null,
@@ -2736,8 +2813,13 @@ export function mountJourney(container, options = {}) {
   resetCamera();
   updateSatellite(state.simMs, gmstAt(state.simMs));
   paintText(performance.now());
+  // a reload is the visitor asking to start again, and a new tab has no flag
+  if (performance.getEntriesByType?.('navigation')[0]?.type === 'reload') storyFinished.set(false);
   if (opts.initialState && applyState(opts.initialState)) {
     restoreScroll();
+  } else if (state.mode === 'story' && storyFinished.get()) {
+    // finished earlier in this tab: back at the end, with no story to scroll through again
+    lock({ landing: true });
   } else {
     // a fresh page always opens on beat 1, the Earth alone, whatever the motion setting
     startAtBeginning();

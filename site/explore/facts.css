@@ -26,6 +26,8 @@
   padding: 12px 16px 4px;
   background: var(--cf-panel);
   color: var(--cf-ink);
+  /* the words slide within the block, never out over whatever is beside it */
+  overflow: hidden;
   font-size: 16px;
   font-weight: 400;
   line-height: 1.45;
@@ -123,6 +125,17 @@
 
 @media (pointer: coarse) {
   .cf-btn { min-height: 44px; min-width: 44px; }
+  /* the source link: a taller place to tap than the words, with nothing about them moved */
+  .cf .cf-link { position: relative; }
+  .cf .cf-link::after {
+    content: "";
+    position: absolute;
+    left: -8px;
+    right: -8px;
+    top: 50%;
+    height: 44px;
+    margin-top: -22px;
+  }
 }
 
 /* a phone: the source line and the buttons may need two rows */
