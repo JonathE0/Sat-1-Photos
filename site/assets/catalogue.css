@@ -18,18 +18,20 @@
   --thumb-h: 72px;
   --info-w: 400px;
   --back-h: 0px;
-  --dock-h: 190px;    /* the dock under the picture: row, strip, month labels */
+  --dock-h: 190px;    /* the dock under the picture; catalogue.js measures it */
 
   /* Pictures are never shown larger than their own size (640 x 480, or
-     512 x 512 for the attitude camera): grainy when enlarged. The viewer is
-     a dark mat as tall as fits above the dock, up to 720px, with the picture
-     centred in it at 1x or smaller. The whole catalogue is capped at a width
-     where two pictures side by side still fit at 1x, so on a wide screen it
-     stays one composition instead of spreading. */
+     512 x 512 for the attitude camera): grainy when enlarged. The stage is
+     one Panel area, as tall as fits above the dock (up to 720px), the same
+     in One, Two and Four so the dock never moves, with the pictures centred
+     on it at 1x or smaller. The whole catalogue is capped at a width where
+     two pictures side by side still fit at 1x. */
   --view-max: 720px;
   --view-h: clamp(240px, calc(100svh - var(--nav-h, 60px) - var(--back-h) - var(--dock-h) - 48px), var(--view-max));
   --content-max: 1720px;
 
+  /* The catalogue's ground reaches the bottom of the screen. */
+  min-height: calc(100svh - var(--nav-h, 60px));
   background: var(--c-ground);
   color: var(--c-ink);
   font-family: var(--sans);
@@ -40,9 +42,7 @@
 
 .cat.has-back { --back-h: 56px; }
 
-/* Four at once: on a tall screen the viewer grows until all four pictures
-   reach their own size (two rows of 480 plus captions). */
-.cat[data-size="4"] { --view-max: 1100px; }
+.cat-nobr { white-space: nowrap; }
 
 @media (max-width: 1099px) { .cat { --m: 24px; } }
 @media (max-width: 599px) { .cat { --m: 16px; --gutter: 16px; --thumb-h: 56px; } }
@@ -173,16 +173,18 @@
   align-items: start;
 }
 
+/* The stage: one Panel area for One, Two and Four, the same height in all. */
 .cat-viewer {
   grid-area: viewer;
   min-width: 0;
   width: 100%;
   height: var(--view-h);
+  background: var(--c-panel);
 }
 
-/* One picture, whole, centred in the mat. The img carries the picture's own
-   width and height, so it is never drawn larger than that; it shrinks (and
-   keeps its shape, object-fit) only when the mat is smaller. */
+/* One picture, whole, centred on the stage. The img carries the picture's
+   own width and height, so it is never drawn larger than that; it shrinks
+   (and keeps its shape, object-fit) only when the stage is smaller. */
 
 .cat-frame {
   position: relative;
@@ -191,12 +193,10 @@
   justify-content: center;
   width: 100%;
   height: 100%;
-  background: var(--c-panel);
   touch-action: pan-y pinch-zoom;
 }
 
-.cat-img,
-.cat-cell-pick img {
+.cat-img {
   display: block;
   max-width: 100%;
   max-height: 100%;
@@ -219,46 +219,66 @@
 .cat-fail-text { margin: 0; }
 .cat-frame.is-failed .cat-img { visibility: hidden; }
 
-/* Compare: two side by side, or two by two. Each picture keeps its ratio,
-   with its caption right under it. */
+/* Compare: two side by side, or two by two, centred on the stage as a group,
+   each caption directly under its picture and starting at its left edge.
+   No per-cell mats. A cell is as wide as the smallest of: the picture's own
+   width (--nat-w), its share of the stage's width (--stage-w, measured by
+   catalogue.js), and what the row's height allows (--cell-h x --ratio). */
 
 .cat-compare {
+  --pad-s: 24px;
+  --col-gap: 24px;
+  --cols: 2;
+  --cap-h: 80px;      /* place; time and Remove; the status when not whole */
+  --cell-h: calc(var(--view-h) - 2 * var(--pad-s) - var(--cap-h) - 1px);
   display: grid;
+  grid-template-columns: repeat(var(--cols), auto);
+  align-content: safe center;
+  justify-content: safe center;
+  gap: 16px var(--col-gap);
   height: 100%;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  grid-auto-rows: minmax(0, 1fr);
-  gap: 16px;
+  padding: var(--pad-s);
+}
+.cat-compare[data-size="4"] {
+  --cell-h: calc((var(--view-h) - 2 * var(--pad-s) - 16px) / 2 - var(--cap-h) - 1px);
 }
 
 .cat-cell {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  justify-items: start;
+  align-content: start;
   min-width: 0;
-  min-height: 0;
 }
 
-/* Each cell is a 4:3 mat no larger than the camera's frame, the picture
-   centred in it at 1x or smaller. */
 .cat-cell-pick {
+  --cell-w: calc((var(--stage-w, 640px) - 2 * var(--pad-s) - (var(--cols) - 1) * var(--col-gap)) / var(--cols));
   position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: 0 1 auto;
-  width: 100%;
-  max-width: 640px;
-  min-height: 0;
-  aspect-ratio: 4 / 3;
+  display: block;
+  width: min(var(--nat-w, 640px), var(--cell-w), var(--cell-h) * var(--ratio, 1.3333));
+  aspect-ratio: var(--ratio, 4 / 3);
   border: 0;
   border-radius: 0;
   padding: 0;
-  background: var(--c-panel);
+  background: none;
   color: inherit;
   cursor: pointer;
 }
 .cat-cell.is-active .cat-cell-pick { cursor: default; }
 
-.cat-cell.is-empty .cat-cell-pick { padding: 16px; }
+.cat-cell-pick img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* An empty cell: a main-camera frame in Raised, so it reads on the stage. */
+.cat-cell.is-empty .cat-cell-pick {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: var(--c-raised);
+}
 
 .cat-cell-empty {
   color: var(--c-muted);
@@ -268,14 +288,17 @@
   text-align: center;
 }
 
+/* width 0 / min-width 100%: the caption takes its picture's width and
+   never widens the column. */
 .cat-cell-cap {
   position: relative;
-  flex: none;
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
   column-gap: 16px;
-  min-height: 62px;   /* two lines, so filled and empty cells keep equal mats */
+  width: 0;
+  min-width: 100%;
+  min-height: var(--cap-h);
   padding: 8px 0 11px;
 }
 /* The active cell, the one the next pick fills: a 3px Ink bar under its caption. */
@@ -304,6 +327,7 @@
   letter-spacing: 0.01em;
 }
 .cat-cell-time { color: var(--c-muted); }
+.cat-cell-status { order: 3; flex: 1 0 100%; }
 .cat-cell-remove { min-height: 0; font-size: 13px; letter-spacing: 0.01em; }
 
 @media (pointer: coarse) {
@@ -357,24 +381,28 @@
   gap: 20px;
 }
 
+/* The count and the dark-frame switch on the left, Filters on the right;
+   on its own line when the row is full. */
 .cat-dock-end {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: 4px 20px;
-  margin-left: auto;
+  justify-content: space-between;
+  gap: 4px 24px;
+  flex: 1 1 340px;
+  min-width: 0;
 }
 
 .cat-count {
-  display: flex;
-  align-items: center;
-  gap: 16px;
   margin: 0;
+  max-width: 62ch;
   color: var(--c-muted);
   font-size: 13px;
+  line-height: 1.45;
   letter-spacing: 0.01em;
 }
-.cat-count .cat-text-btn { letter-spacing: 0; }
+.cat-count-text { color: var(--c-ink); }
+.cat-count .cat-inline-btn { color: var(--c-ink); white-space: nowrap; }
+.cat-filter-toggle { flex: none; }
 
 .cat-filter-toggle[aria-expanded="true"] { text-decoration-color: currentColor; }
 
@@ -414,7 +442,7 @@
 }
 
 .cat .cat-filters .filter select {
-  height: 40px;
+  height: var(--ctl-h);
   max-width: 14em;
   padding: 0 30px 0 10px;
   background-color: var(--c-panel);
@@ -428,9 +456,12 @@
 .cat .cat-filters .filter select:disabled { color: var(--c-muted); background-color: var(--c-panel); }
 
 .cat .cat-filters .search { flex: 1 1 200px; max-width: 360px; }
+/* style.css gives the input flex: 1, which in this column would size it
+   from its content (23px) instead of the control height. */
 .cat .cat-filters .search input,
 .cat .cat-filters .search input.is-set {
-  height: 40px;
+  flex: none;
+  height: var(--ctl-h);
   padding: 0 10px;
   border: 0;
   background: var(--c-panel);
@@ -505,8 +536,13 @@
   height: 3px;
 }
 .cat-thumb:hover::after { background: var(--c-under); }
-.cat-thumb[aria-current="true"]::after,
-.cat-thumb[aria-pressed="true"]::after { background: var(--c-ink); }
+.cat-thumb[aria-current="true"]::after { background: var(--c-ink); }
+
+/* Compare: the active cell's picture has the full bar, the others in cells
+   have it at 40%, and hover shows nothing (it would read as a cell). */
+.cat:not([data-size="1"]) .cat-thumb:hover::after { background: none; }
+.cat:not([data-size="1"]) .cat-thumb[aria-pressed="true"]::after { background: var(--c-under); }
+.cat:not([data-size="1"]) .cat-thumb.is-target::after { background: var(--c-ink); }
 
 .cat-thumb-ghost {
   display: block;
@@ -515,21 +551,6 @@
   margin: 4px 0 7px;
   background: var(--c-panel);
 }
-
-.cat-strip-end {
-  flex: 0 0 auto;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: flex-start;
-  max-width: 13em;
-  padding: 20px 0 7px 16px;
-  color: var(--c-muted);
-  font-size: 13px;
-  line-height: 1.45;
-  letter-spacing: 0.01em;
-}
-.cat-strip-end .cat-text-btn { letter-spacing: 0; }
 
 .cat-strip-note {
   display: flex;
@@ -610,12 +631,14 @@
 }
 .cat-notes .cat-small { margin: 4px 0 0; }
 
-.cat-actions {
+/* The primary on its own line, then one row of text buttons. */
+.cat-actions { margin-top: 32px; }
+.cat-actions-row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px 20px;
-  margin-top: 32px;
+  gap: 0 20px;
+  margin-top: 8px;
 }
 
 .cat-ghost {
@@ -642,8 +665,10 @@
   .cat-viewer { height: auto; }
   .cat-frame { aspect-ratio: 4 / 3; height: auto; max-height: 560px; }
 
-  .cat-compare { height: auto; grid-auto-rows: auto; }
-  .cat-compare[data-size="2"] { grid-template-columns: minmax(0, 1fr); }
+  /* The stage grows with its cells here: no height to share out. */
+  .cat-compare,
+  .cat-compare[data-size="4"] { --cell-h: 10000px; height: auto; }
+  .cat-compare[data-size="2"] { --cols: 1; }
 
   .cat-info { margin-top: 32px; }
 
@@ -666,6 +691,26 @@
   .cat-facts dt { padding-top: 12px; }
   .cat-facts dt:first-child { padding-top: 0; }
 
-  .cat-compare { gap: 12px; }
+  /* 24px between rows, so the active bar doesn't read as a divider. */
+  .cat-compare { --pad-s: 12px; --col-gap: 12px; row-gap: 24px; }
   .cat-compare[data-size="4"] .cat-cell-time { display: none; }
+}
+
+/* Tall, wide screens: the dock spans both columns and the strip becomes a
+   contact sheet, so the pictures themselves fill the screen under the stage;
+   the stage (all three modes alike) may grow to 1100px, which lets Two and
+   Four come close to 1x. */
+@media (min-width: 1800px) and (min-height: 1100px) {
+  .cat { --thumb-h: 96px; --view-max: 1100px; }
+  .cat-grid {
+    grid-template-rows: auto auto;
+    grid-template-areas:
+      "viewer info"
+      "dock dock";
+  }
+  .cat-strip {
+    flex-wrap: wrap;
+    overflow: visible;
+    row-gap: 8px;
+  }
 }

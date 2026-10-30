@@ -44,8 +44,8 @@
     if (images.status === 'rejected') {
       catalogue.showError(["Couldn't load the picture list (data/images.json)."]);
     } else {
-      // Test hook until the build marks dark frames: ?dark=<id>,<id> on this
-      // page (not in the hash) marks those pictures dark.
+      // Test hook: ?dark=<id>,<id> on this page (not in the hash) marks those
+      // pictures dark as well as the ones the build already marks.
       const fakeDark = new URLSearchParams(location.search).get('dark');
       if (fakeDark) {
         const ids = new Set(fakeDark.split(','));

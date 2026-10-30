@@ -10,6 +10,18 @@ import { filterOptions } from './data.js';
 
 const CAMERA_ORDER = ['picam', 'adcs'];
 
+// The same words as the picture's facts, not the pipeline's.
+const CAMERA_WORDS = { picam: 'Main camera', adcs: 'Attitude camera' };
+const STATUS_WORDS = {
+  verified: 'Checked',
+  complete: 'Complete, unchecked',
+  partial: 'Partly missing',
+  truncated: 'Cut short on board',
+};
+
+export const cameraLabel = (camera) => CAMERA_WORDS[camera] || cameraShort(camera);
+export const statusLabel = (status) => STATUS_WORDS[status] || statusWord(status);
+
 export function createFilterForm({
   onChange,
   idPrefix = 'filter',
@@ -85,23 +97,21 @@ export function createFilterForm({
       const ia = CAMERA_ORDER.indexOf(a); const ib = CAMERA_ORDER.indexOf(b);
       return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
     });
-    fillSelect(selects.camera, [['', 'All'], ...cameras.map((c) => [c, cameraShort(c)])], filters.camera);
+    fillSelect(selects.camera, [['', 'All'], ...cameras.map((c) => [c, cameraLabel(c)])], filters.camera);
     const statusOrder = STATUSES.map(([s]) => s);
     const statuses = [...options.statuses].sort((a, b) => statusOrder.indexOf(a) - statusOrder.indexOf(b));
-    fillSelect(selects.status, [['', 'All'], ...statuses.map((s) => [s, statusWord(s)])], filters.status);
+    fillSelect(selects.status, [['', 'All'], ...statuses.map((s) => [s, statusLabel(s)])], filters.status);
     fillSelect(selects.month, [['', 'All'], ...options.months.map((m) => [m, monthLabel(m)])], filters.month);
 
-    const memberEntries = options.members.length || filters.member
-      ? [['', 'Anyone'], ...options.members.map((m) => [m, m])]
-      : [['', 'No names yet']];
-    fillSelect(selects.member, memberEntries, filters.member);
-    selects.member.disabled = !options.members.length && !filters.member;
+    // Member and Tag stay out of sight until someone has named a person or
+    // tagged a picture (or a link asks for one).
+    const hasMembers = Boolean(options.members.length || filters.member);
+    fillSelect(selects.member, [['', 'Anyone'], ...options.members.map((m) => [m, m])], filters.member);
+    fields.member.hidden = !hasMembers;
 
-    const tagEntries = options.tags.length || filters.tag
-      ? [['', 'Any'], ...options.tags.map((t) => [t, t])]
-      : [['', 'No tags yet']];
-    fillSelect(selects.tag, tagEntries, filters.tag);
-    selects.tag.disabled = !options.tags.length && !filters.tag;
+    const hasTags = Boolean(options.tags.length || filters.tag);
+    fillSelect(selects.tag, [['', 'Any'], ...options.tags.map((t) => [t, t])], filters.tag);
+    fields.tag.hidden = !hasTags;
 
     if (document.activeElement !== search) search.value = filters.q;
   }
@@ -123,11 +133,11 @@ export function createFilterForm({
   };
 }
 
-// The active filters in words, for a summary line: "PiCAM, Sep 2026, tagged clouds".
+// The active filters in words, for a summary line: "Main camera, Sep 2026, tagged clouds".
 export function describeFilters(filters) {
   const words = [];
-  if (filters.camera) words.push(cameraShort(filters.camera));
-  if (filters.status) words.push(statusWord(filters.status));
+  if (filters.camera) words.push(cameraLabel(filters.camera));
+  if (filters.status) words.push(statusLabel(filters.status).toLowerCase());
   if (filters.month) words.push(monthLabel(filters.month));
   if (filters.member) words.push(`with ${filters.member}`);
   if (filters.tag) words.push(`tagged ${filters.tag}`);

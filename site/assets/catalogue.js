@@ -13,9 +13,12 @@
 // Every step uses history.replaceState, so Back leaves the catalogue instead
 // of walking back through each picture that was looked at.
 //
-// Dark frames (images.json "dark": black, nothing to see) are left out of the
-// strip and the stepping until the control at the end of the strip brings
-// them in. A link straight to one still opens it, with them brought in.
+// Dark frames (images.json "dark": black, noise, or the Sun as a lone dot)
+// are left out of the strip and the stepping until the control after the
+// count brings them in. A link straight to one still opens it, with them in.
+//
+// With no id in the URL it opens on the newest picture that isn't dark and
+// is at least half there; the strip still starts with the newest.
 
 import { h, append, announce, copyText } from './dom.js';
 import { CAMERAS, clock, dayMonthYear, latLon, percent, plural, toDate } from './format.js';
@@ -25,13 +28,26 @@ import { createFilterForm, describeFilters } from './filters.js';
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
 const SIZES = [[1, 'One'], [2, 'Two'], [4, 'Four']];
+const NARROWING = FILTER_KEYS.filter((key) => key !== 'dark'); // the filters proper
 const MAX_CELLS = 4;
 const EAGER_THUMBS = 16;
 const DAY_MS = 24 * 3600 * 1000;
 
 /* Words for one picture */
 
-export const isDark = (p) => Boolean(p && p.raw && p.raw.dark === true);
+export const isDark = (p) => Boolean(p && (p.dark === true || (p.raw && p.raw.dark === true)));
+
+const DARK_WHY = 'nothing but black, sensor noise or the Sun as a single dot';
+
+// Keeps a date, a time or a range on one line: lines break only between them.
+function nobr(text) {
+  return h('span', { class: 'cat-nobr' }, text);
+}
+
+// "24 Oct 2026, 17:37:32 UTC" with the date and the time each kept whole.
+function utcParts(d, seconds = false) {
+  return [nobr(dayMonthYear(d)), ', ', nobr(`${clock(d, seconds)} UTC`)];
+}
 
 function sameTime(a, b) {
   if (a == null || b == null) return a == null && b == null;
@@ -82,7 +98,8 @@ function whenShort(p) {
 
 let calgaryFormat = null;
 
-// "18:54 MDT on 24 Oct in Calgary" (the date only when it differs from UTC's).
+// "18:54 MDT on 24 Oct in Calgary" (the date only when it differs from UTC's),
+// as nodes with the time and the date each kept on one line.
 function calgaryLine(d) {
   try {
     calgaryFormat ||= new Intl.DateTimeFormat('en-US', {
@@ -98,7 +115,11 @@ function calgaryLine(d) {
     const parts = {};
     for (const part of calgaryFormat.formatToParts(d)) parts[part.type] = part.value;
     const otherDay = `${parts.day} ${parts.month} ${parts.year}` !== dayMonthYear(d);
-    return `${parts.hour}:${parts.minute} ${parts.timeZoneName}${otherDay ? ` on ${parts.day} ${parts.month}` : ''} in Calgary`;
+    return [
+      nobr(`${parts.hour}:${parts.minute} ${parts.timeZoneName}`),
+      otherDay ? [' on ', nobr(`${parts.day} ${parts.month}`)] : '',
+      ' in Calgary',
+    ];
   } catch {
     return null;
   }
@@ -110,55 +131,101 @@ function agoText(ms) {
   return `${Math.round(min / 60)} h`;
 }
 
-// The status in a few words, for labels and announcements: "partial: 70% came down".
-// A main-camera picture's completeness is how much of it can be shown, not
-// how much arrived: its JPEG can't be decoded past the first gap.
-export function statusShort(p) {
-  if (p.status === 'partial') {
-    const pct = percent(p.raw?.completeness);
-    if (p.camera === 'picam') return pct ? `partial: about ${pct} can be shown` : 'partial: shown down to the first gap';
-    return pct ? `partial: about ${pct} came down` : 'partial: some of it never came down';
-  }
-  if (p.status === 'truncated') return 'cut short on board';
-  if (p.status === 'verified') return 'verified';
-  if (p.status === 'complete') return 'complete, no checksum';
-  return p.status ? String(p.status) : 'status unknown';
-}
-
-// The status sentence under the time, only for a picture that is not
-// checked and whole (design direction §4, "States and copy").
-function statusLine(p) {
-  const raw = p.raw || {};
-  const pct = percent(raw.completeness);
-  if (p.status === 'partial') {
-    const last = toDate(raw.downlink?.last);
-    const since = last ? Date.now() - last.getTime() : Infinity;
-    if (since >= 0 && since < DAY_MS) {
-      return `Still coming down: ${pct || 'part'} so far. Last packet ${agoText(since)} ago.`;
-    }
-    if (p.camera === 'picam') {
-      return pct
-        ? `Part of this picture never came down, and the camera’s JPEG can’t be read past the first gap: about ${pct} of it can be shown.`
-        : 'Part of this picture never came down, and the camera’s JPEG can’t be read past the first gap.';
-    }
-    return pct ? `Grey bands are rows that never came down. About ${pct} of it did.` : 'Grey bands are rows that never came down.';
-  }
-  if (p.status === 'truncated') {
-    const m = /lines\s+(\d+)\s*[–-]\s*(\d+)\s+of\s+(?:the\s+)?(\d+)/i.exec(String(raw.status_note || ''));
-    const whole = checksumMatches(p);
-    if (m) {
-      return `The satellite stopped this capture early: it saved lines ${m[1]}–${m[2]} of ${m[3]}${whole ? ', and all of that came down' : ''}.`;
-    }
-    return 'The satellite stopped this capture early and saved only the top part of the frame.';
-  }
-  if (p.status === 'complete') return 'Complete, but there’s no checksum to check it against.';
-  return null;
-}
-
 function checksumMatches(p) {
   const a = p.raw?.sha256;
   const b = p.raw?.sha256_expected;
   return typeof a === 'string' && typeof b === 'string' && a && a.toLowerCase() === b.toLowerCase();
+}
+
+// Numbers from the build's status note: "lines 0–499 of the 1210 … and 367 of those arrived".
+function noteNumbers(p) {
+  const note = String(p.raw?.status_note || '');
+  const lines = /lines\s+(\d+)\s*[–-]\s*(\d+)\s+of\s+(?:the\s+)?(\d+)/i.exec(note);
+  const arrived = /(\d[\d,]*)\s+of\s+those\s+arrived/i.exec(note);
+  return {
+    lines: lines ? { from: Number(lines[1]), to: Number(lines[2]), of: Number(lines[3]) } : null,
+    arrived: arrived ? Number(arrived[1].replace(/,/g, '')) : null,
+  };
+}
+
+// Part of the file is still missing: a partial picture, or one the satellite
+// cut short whose saved lines haven't all come down.
+function linesMissing(p) {
+  if (p.status === 'partial') return true;
+  if (p.status !== 'truncated' || checksumMatches(p)) return false;
+  const { lines, arrived } = noteNumbers(p);
+  if (lines && arrived != null) return arrived < lines.to - lines.from + 1;
+  return Boolean(p.raw?.sha256_expected);
+}
+
+// "last packet 1 h ago" while a picture with lines missing is still arriving.
+function stillComing(p) {
+  if (!linesMissing(p)) return null;
+  const last = toDate(p.raw?.downlink?.last);
+  const since = last ? Date.now() - last.getTime() : Infinity;
+  return since >= 0 && since < DAY_MS ? `Still coming down: last packet ${agoText(since)} ago.` : null;
+}
+
+// The status in a few words, for labels, cells and announcements.
+// A main-camera picture's completeness is how much of it can be shown, not
+// how much arrived: its JPEG can't be decoded past the first gap.
+export function statusShort(p) {
+  const pct = percent(p.raw?.completeness);
+  if (p.status === 'partial') {
+    if (p.camera === 'picam') return pct ? `partly missing: only the top ${pct} is shown` : 'partly missing';
+    return pct ? `partly missing: about ${pct} came down` : 'partly missing';
+  }
+  if (p.status === 'truncated') {
+    return linesMissing(p) && pct ? `cut short on board, and only the top ${pct} is shown` : 'cut short on board';
+  }
+  if (p.status === 'verified') return 'checked';
+  if (p.status === 'complete') return 'complete, unchecked';
+  return p.status ? String(p.status) : 'status unknown';
+}
+
+// The status sentence under the time, only for a picture that is not
+// checked and whole (design direction §4, "States and copy"), as nodes.
+function statusLine(p) {
+  const raw = p.raw || {};
+  const pct = percent(raw.completeness);
+  const coming = stillComing(p);
+  let text = null;
+  if (p.status === 'partial') {
+    const never = coming ? 'hasn’t come down yet' : 'never came down';
+    if (p.camera === 'picam') {
+      text = [`Part of this picture ${never}. Nothing below the first gap can be read`,
+        pct ? [', so only the top ', nobr(pct), ' is shown.'] : '.'];
+    } else {
+      text = [`Grey bands are rows that ${coming ? 'haven’t come down yet' : 'never came down'}.`,
+        pct ? [` About ${pct} of it ${coming ? 'has so far' : 'did'}.`] : ''];
+    }
+  } else if (p.status === 'truncated') {
+    const { lines, arrived } = noteNumbers(p);
+    const saved = lines
+      ? ['saved lines ', nobr(`${lines.from}–${lines.to}`), ` of ${lines.of}`]
+      : ['saved only the top part of the frame'];
+    if (!linesMissing(p)) {
+      text = ['The satellite stopped this capture early: it ', saved, checksumMatches(p) ? ', and all of that came down.' : '.'];
+    } else {
+      const sofar = lines && arrived != null
+        ? `${arrived.toLocaleString('en-US')} of those have come down so far`
+        : 'Not all of those have come down yet';
+      const gap = Number(raw.completeness) < 0.25 ? 'a gap near the top' : 'a gap';
+      text = ['The satellite stopped this capture early and ', saved, `. ${sofar}, but ${gap} means `,
+        pct ? ['only the top ', nobr(pct), ' can be shown.'] : 'only part of it can be shown.'];
+    }
+  } else if (p.status === 'complete') {
+    text = ['Complete, but there’s no checksum to check it against.'];
+  }
+  if (coming) text = text ? [text, ' ', coming] : [coming];
+  return text;
+}
+
+// The first picture to show when the URL names none: the newest that isn't
+// dark and is at least half there. Grey slabs are for the strip, not the stage.
+function isWorthOpening(p) {
+  const c = Number(p.raw?.completeness);
+  return !isDark(p) && (!Number.isFinite(c) || c >= 0.5);
 }
 
 function altText(p) {
@@ -328,7 +395,16 @@ export function createCatalogue(root, {
   olderBtn.addEventListener('click', () => { if (olderBtn.getAttribute('aria-disabled') !== 'true') step(1, 'button'); });
   const steps = h('div', { class: 'cat-steps' }, newerBtn, olderBtn);
 
-  const count = h('p', { class: 'cat-count' });
+  // "23 pictures. 7 dark frames hidden: … Show them", in Small, after the
+  // count, so the numbers agree with the strip and the dark frames are a
+  // click away at any width.
+  const countText = h('span', { class: 'cat-count-text' });
+  const darkText = h('span', { class: 'cat-dark-text' });
+  const darkBtn = h('button', { type: 'button', class: 'cat-inline-btn cat-dark-toggle' });
+  darkBtn.addEventListener('click', () => toggleDark());
+  const clearBtn = h('button', { type: 'button', class: 'cat-inline-btn', hidden: true }, 'Clear filters');
+  clearBtn.addEventListener('click', () => clearFilters());
+  const count = h('p', { class: 'cat-count' }, countText, ' ', darkText, ' ', darkBtn, ' ', clearBtn);
   const filterToggle = h('button', {
     type: 'button', class: 'cat-text-btn cat-filter-toggle', 'aria-expanded': 'false', 'aria-controls': 'cat-filters',
   }, 'Filters');
@@ -346,10 +422,6 @@ export function createCatalogue(root, {
 
   const strip = h('ol', { class: 'cat-strip', 'aria-label': 'Pictures, newest first' });
   const stripNote = h('p', { class: 'cat-strip-note', hidden: true });
-  const darkText = h('span', { class: 'cat-dark-text' });
-  const darkBtn = h('button', { type: 'button', class: 'cat-text-btn cat-dark-toggle' });
-  darkBtn.addEventListener('click', () => toggleDark());
-  const darkItem = h('li', { class: 'cat-strip-end' }, darkText, darkBtn);
   const dock = h('div', { class: 'cat-dock' }, dockRow, filterUi.form, strip, stripNote);
 
   /* Info column */
@@ -386,8 +458,10 @@ export function createCatalogue(root, {
   });
   const detailsName = h('span', { class: 'vh' });
   const detailsLink = h('a', { class: 'cat-text-btn' }, 'All details', detailsName);
+  // The one primary on its own line, then one row of text buttons.
   const actions = h('div', { class: 'cat-actions' },
-    globeLink, globeOff, compareBtn, download, copyBtn, detailsLink);
+    h('div', { class: 'cat-actions-primary' }, globeLink, globeOff),
+    h('div', { class: 'cat-actions-row' }, compareBtn, download, copyBtn, detailsLink));
   const emptyNote = h('p', { class: 'cat-empty-note', hidden: true });
   const info = h('div', { class: 'cat-info' }, title, when, status, emptyNote, facts, notes, actions, globeWhy);
 
@@ -398,6 +472,22 @@ export function createCatalogue(root, {
   const el = h('div', { class: 'cat', 'data-size': '1', 'data-state': 'loading' }, inner);
   root.append(el);
   drawLoading();
+
+  // The stage is as tall as fits above the dock, whatever the dock holds
+  // (filters open, a count that wraps, a contact sheet on a big screen), and
+  // compare cells are sized from the stage's width: both measured here.
+  // Measured after every render too, so it never waits for a paint.
+  function measure() {
+    if (!isVisible(el)) return;
+    const dockH = `${Math.ceil(dock.getBoundingClientRect().height)}px`;
+    const stageW = `${Math.floor(viewer.getBoundingClientRect().width)}px`;
+    if (el.style.getPropertyValue('--dock-h') !== dockH) el.style.setProperty('--dock-h', dockH);
+    if (el.style.getPropertyValue('--stage-w') !== stageW) el.style.setProperty('--stage-w', stageW);
+  }
+  const sizer = new ResizeObserver(() => measure());
+  sizer.observe(dock);
+  sizer.observe(viewer);
+  window.addEventListener('resize', () => measure());
 
   /* Loading: the layout at its real size, values as flat bars */
 
@@ -422,7 +512,7 @@ export function createCatalogue(root, {
     const id = size > 1 ? slots[active] : currentId;
     if (id) params.set('id', id);
     if (size > 1) params.set('compare', slots.map((s) => s || '').join(','));
-    for (const key of FILTER_KEYS) {
+    for (const key of NARROWING) {
       const value = String(filters[key] || '').trim();
       if (value) params.set(key, value);
     }
@@ -446,7 +536,8 @@ export function createCatalogue(root, {
   }
 
   function applyParams(params) {
-    filters = readFilters(params);
+    // The dark switch is the catalogue's own (showDark), not a filter.
+    filters = { ...readFilters(params), dark: '' };
     readFrom(params);
     const id = (params.get('id') || '').trim();
     missingId = id && !byId.has(id) ? id : null;
@@ -480,9 +571,12 @@ export function createCatalogue(root, {
 
   /* Filters and dark frames */
 
+  // While the filters are open the stage gives up their row's height, so
+  // the strip stays on screen (measure() picks up the taller dock).
   function setFiltersOpen(open) {
     filterUi.form.hidden = !open;
     filterToggle.setAttribute('aria-expanded', String(open));
+    measure();
   }
 
   function setFilter(key, value) {
@@ -496,7 +590,7 @@ export function createCatalogue(root, {
   function clearFilters() {
     const before = document.activeElement;
     const refocus = dock.contains(before) && !filterUi.form.contains(before);
-    filters = readFilters(new URLSearchParams());
+    filters = { ...readFilters(new URLSearchParams()), dark: '' };
     filterUi.sync(filters);
     render();
     writeUrl();
@@ -505,8 +599,13 @@ export function createCatalogue(root, {
   }
 
   function summaryText() {
-    if (!hasFilters(filters)) return plural(photos.length, 'picture');
-    return `${shown.length} of ${plural(photos.length, 'picture')} shown: ${describeFilters(filters)}`;
+    if (!hasFilters(filters)) return plural(shown.length, 'picture');
+    return `${shown.length} of ${plural(totalCount(), 'picture')} shown: ${describeFilters(filters)}`;
+  }
+
+  // Every picture the strip could hold with no filters set.
+  function totalCount() {
+    return showDark ? photos.length : photos.filter((p) => !isDark(p)).length;
   }
 
   function clearButton() {
@@ -517,8 +616,8 @@ export function createCatalogue(root, {
     showDark = !showDark;
     keepFocus(() => render());
     writeUrl();
-    // The strip was rebuilt around the button: keep focus on it.
-    if (isVisible(darkBtn)) darkBtn.focus({ preventScroll: true });
+    // From the no-match note, whose button goes away: on to the one in the dock.
+    if (!isVisible(document.activeElement) && isVisible(darkBtn)) darkBtn.focus({ preventScroll: true });
     const n = matched.filter(isDark).length;
     announce(showDark ? `${plural(n, 'dark frame')} brought into the strip.` : `${plural(n, 'dark frame')} hidden.`);
   }
@@ -762,17 +861,25 @@ export function createCatalogue(root, {
     if (!ready) return;
     el.dataset.state = 'ready';
     loadingText.hidden = true;
-    matched = applyFilters(photos, filters);
+    // data.js leaves dark frames out unless asked; the catalogue asks, and
+    // makes its own split so it can count them.
+    matched = applyFilters(photos, { ...filters, dark: '1' });
     shown = showDark ? matched : matched.filter((p) => !isDark(p));
-    // With nothing to show, the viewer keeps the last picture.
-    if (size === 1 && shown.length && !shown.some((p) => p.id === currentId)) currentId = nearestShown(currentId);
-    if (size === 1 && !byId.has(currentId)) currentId = shown[0]?.id || photos[0]?.id || null;
+    if (size === 1) {
+      if (!byId.has(currentId)) {
+        // No picture named: the newest that is worth opening.
+        currentId = (shown.find(isWorthOpening) || shown[0] || photos[0])?.id || null;
+      } else if (shown.length && !shown.some((p) => p.id === currentId)) {
+        currentId = nearestShown(currentId);
+      }
+      // With nothing shown at all, the viewer keeps the last picture.
+    }
     filterUi.markActive(filters);
     backRow.hidden = !canGoBack();
     el.classList.toggle('has-back', canGoBack());
     missing.hidden = !missingId;
     if (missingId) {
-      missing.textContent = `There is no picture with the id “${missingId}”; it may have been renamed when the list was rebuilt. Showing ${size > 1 ? 'the others' : 'the newest'} instead.`;
+      missing.textContent = `There is no picture with the id “${missingId}”; it may have been renamed when the list was rebuilt. Showing ${size > 1 ? 'the others' : 'another picture'} instead.`;
     }
     if (!photos.length) {
       showNotice(['No pictures yet. The list is empty until the first image has been reassembled.']);
@@ -783,18 +890,32 @@ export function createCatalogue(root, {
     renderDock();
     renderStrip();
     renderView();
+    measure();
   }
 
   function renderDock() {
     for (const button of modeButtons) {
       button.setAttribute('aria-pressed', String(Number(button.dataset.size) === size));
     }
-    const n = FILTER_KEYS.filter((key) => String(filters[key] || '').trim()).length;
+    const n = NARROWING.filter((key) => String(filters[key] || '').trim()).length;
     filterToggle.textContent = n ? `Filters (${n})` : 'Filters';
-    count.replaceChildren(hasFilters(filters)
-      ? `${shown.length} of ${plural(photos.length, 'picture')}`
-      : plural(photos.length, 'picture'));
-    if (hasFilters(filters)) count.append(clearButton());
+    // Counted from what the strip holds, so the numbers agree with it.
+    const narrowed = hasFilters(filters);
+    countText.textContent = narrowed
+      ? `${shown.length} of ${plural(totalCount(), 'picture')}.`
+      : `${plural(shown.length, 'picture')}.`;
+    const darkN = matched.filter(isDark).length;
+    darkText.hidden = !darkN;
+    darkBtn.hidden = !darkN;
+    if (darkN) {
+      const why = narrowed ? '.' : `: ${DARK_WHY}.`;
+      darkText.textContent = showDark
+        ? `Showing ${plural(darkN, 'dark frame')}${why}`
+        : `${plural(darkN, 'dark frame')} hidden${why}`;
+      darkBtn.textContent = showDark ? 'Hide them' : 'Show them';
+      darkBtn.setAttribute('aria-label', `${showDark ? 'Hide' : 'Show'} the ${plural(darkN, 'dark frame')}`);
+    }
+    clearBtn.hidden = !narrowed;
   }
 
   function renderView() {
@@ -866,6 +987,10 @@ export function createCatalogue(root, {
       cell.empty.hidden = Boolean(p);
       cell.place.hidden = !p;
       cell.time.hidden = !p;
+      // The cell is sized in CSS from the picture's own size and the stage:
+      // never past 1x, an empty cell as a main-camera frame.
+      cell.pick.style.setProperty('--nat-w', `${p ? p.width : 640}px`);
+      cell.pick.style.setProperty('--ratio', String(p ? p.width / p.height : 4 / 3));
       if (!p) {
         cell.image.removeAttribute('src');
         cell.pick.setAttribute('aria-label', `Cell ${i + 1}, empty${isActive ? '' : ': make it the one the strip fills'}`);
@@ -897,17 +1022,20 @@ export function createCatalogue(root, {
     for (const part of [when, facts, notes, actions]) part.hidden = false;
     title.textContent = headline(p);
     const d = toDate(p.capturedAt);
+    whenUtc.replaceChildren();
+    whenLocal.replaceChildren();
     if (d) {
-      whenUtc.textContent = `${dayMonthYear(d)}, ${clock(d)} UTC`;
-      whenLocal.textContent = calgaryLine(d) || '';
-      whenLocal.hidden = !whenLocal.textContent;
+      append(whenUtc, utcParts(d));
+      const local = calgaryLine(d);
+      if (local) append(whenLocal, local);
+      whenLocal.hidden = !local;
     } else {
       whenUtc.textContent = p.captureDate ? 'Time of day unknown' : 'Date and time unknown';
-      whenLocal.textContent = '';
       whenLocal.hidden = true;
     }
     const line = statusLine(p);
-    status.textContent = line || '';
+    status.replaceChildren();
+    if (line) append(status, line);
     status.hidden = !line;
     facts.replaceChildren(...factRows(p));
     notesText.textContent = p.notes || 'No notes yet.';
@@ -964,17 +1092,18 @@ export function createCatalogue(root, {
       const second = p.edited.captured_at
         ? `Corrected by ${p.edited.captured_at}`
         : (BASIS[p.raw.capture_basis] || (p.raw.capture_basis ? `From the ${p.raw.capture_basis}` : null));
-      return [`${dayMonthYear(d)}, ${clock(d, true)} UTC`, second];
+      return [utcParts(d, true), second];
     }
-    if (p.captureDate) return [dateText(p), 'Only the date is known'];
+    if (p.captureDate) return [nobr(dateText(p)), 'Only the date is known'];
     return ['Not known', 'Neither the file name nor the logs give a time'];
   }
 
   function whereValue(p) {
     const pos = p.position;
     if (pos && !positionIsStale(p)) {
-      const alt = Number.isFinite(pos.alt_km) ? `, ${Math.round(pos.alt_km)} km up` : '';
-      return [`${latLon(pos.lat, pos.lon)}${alt}`, p.edited.position ? `Set by ${p.edited.position}` : 'Worked out from orbital elements'];
+      const [lat, lon] = latLon(pos.lat, pos.lon).split(', ');
+      const alt = Number.isFinite(pos.alt_km) ? [', ', nobr(`${Math.round(pos.alt_km)} km up`)] : '';
+      return [[nobr(lat), ', ', nobr(lon), alt], p.edited.position ? `Set by ${p.edited.position}` : 'Worked out from orbital elements'];
     }
     if (positionIsStale(p)) return ['Not worked out for the corrected time', 'The globe works it out from the corrected time'];
     if (p.capturedAt) return ['Not known', 'No orbital elements cover this time'];
@@ -1007,30 +1136,34 @@ export function createCatalogue(root, {
     const first = toDate(dl.first);
     const last = toDate(dl.last);
     const short = (d) => dayMonthYear(d).replace(/ \d{4}$/, '');
-    let range = '';
-    if (first && last && short(first) === short(last)) range = `${short(first)}, ${clock(first)} to ${clock(last)} UTC`;
-    else if (first && last) range = `${short(first)} ${clock(first)} to ${short(last)} ${clock(last)} UTC`;
-    else if (first || last) range = `${short(first || last)}, ${clock(first || last)} UTC`;
-    const packets = Number.isFinite(dl.packets) ? plural(dl.packets, 'packet') : '';
-    const value = [packets, range].filter(Boolean).join(', ');
-    return value ? [value] : null;
+    // Lines break only at " to " and after commas, never inside a date.
+    let range = null;
+    if (first && last && short(first) === short(last)) {
+      range = [nobr(short(first)), ', ', nobr(clock(first)), ' to ', nobr(`${clock(last)} UTC`)];
+    } else if (first && last) {
+      range = [nobr(`${short(first)} ${clock(first)}`), ' to ', nobr(`${short(last)} ${clock(last)} UTC`)];
+    } else if (first || last) {
+      range = [nobr(short(first || last)), ', ', nobr(`${clock(first || last)} UTC`)];
+    }
+    const packets = Number.isFinite(dl.packets) ? nobr(plural(dl.packets, 'packet')) : null;
+    if (!packets && !range) return null;
+    return [[packets, packets && range ? ', ' : '', range]];
   }
 
   function checkValue(p) {
     if (checksumMatches(p)) {
       return ['Matches the satellite’s checksum', p.status === 'truncated' ? 'For the shortened file it saved' : null];
     }
-    if (p.raw.sha256_expected) {
-      return p.status === 'partial'
-        ? ['Can’t match the satellite’s checksum', 'Part of the file never came down']
-        : ['Doesn’t match the satellite’s checksum'];
-    }
+    // Lines still missing: the file can't be checked, which isn't the same as wrong.
+    if (linesMissing(p)) return ['Can’t check yet', 'Part of the file hasn’t come down.'];
+    if (p.raw.sha256_expected) return ['Doesn’t match the satellite’s checksum'];
     return ['No checksum from the satellite'];
   }
 
   function fileValue(p) {
     if (!p.raw.file) return null;
-    const size = Number.isFinite(p.raw.file_size) ? `, ${Math.max(1, Math.round(p.raw.file_size / 1024))} KB` : '';
+    const size = Number.isFinite(p.raw.file_size)
+      ? [', ', nobr(`${Math.max(1, Math.round(p.raw.file_size / 1024))} KB`)] : '';
     return [[code(p.raw.file), size]];
   }
 
@@ -1096,13 +1229,7 @@ export function createCatalogue(root, {
       stripKey = '';
       return;
     }
-    const darkN = matched.filter(isDark).length;
-    if (darkN) {
-      darkText.textContent = `${plural(darkN, 'dark frame')} ${showDark ? 'shown.' : 'hidden.'}`;
-      darkBtn.textContent = showDark ? 'Hide them' : 'Show them';
-      darkBtn.setAttribute('aria-label', `${showDark ? 'Hide' : 'Show'} the ${plural(darkN, 'dark frame')}`);
-    }
-    const key = `${shown.map((p) => p.id).join('\n')}|${darkN ? 'dark' : ''}`;
+    const key = shown.map((p) => p.id).join('\n');
     if (key === stripKey) return;
     stripKey = key;
     const newestYear = (shown.find((p) => /^\d{4}/.test(p.month)) || {}).month?.slice(0, 4) || '';
@@ -1116,7 +1243,7 @@ export function createCatalogue(root, {
         h('span', { class: 'cat-month', 'aria-hidden': 'true' }, label),
         thumbFor(p, i));
     });
-    strip.replaceChildren(...items, ...(darkN ? [darkItem] : []));
+    strip.replaceChildren(...items);
   }
 
   function markStrip() {
@@ -1134,6 +1261,9 @@ export function createCatalogue(root, {
         if (p.id === currentId) button.setAttribute('aria-current', 'true');
         else button.removeAttribute('aria-current');
       }
+      // In compare, the active cell's picture keeps the full bar; the others
+      // in cells get it at 40%.
+      button.classList.toggle('is-target', size > 1 && cell >= 0 && cell === active);
       button.tabIndex = p.id === focusId ? 0 : -1;
       button.setAttribute('aria-label', `${thumbLabel(p)}${cell >= 0 ? `. In cell ${cell + 1}` : ''}`);
     }
