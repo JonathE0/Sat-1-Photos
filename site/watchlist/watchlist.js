@@ -2,12 +2,14 @@
 // `python -m cts1_gallery watch`, format in docs/DATA.md) and lists each
 // event by its next pass that hasn't happened yet. Every time and age is
 // worked out against the visitor's clock, so a list made an hour ago still
-// drops the passes that are over.
+// drops the passes that are over. Each event is one compact row, a button
+// that opens the rest: in place, or from 1680 px wide in a panel beside the
+// list (watchlist.css). Maps are drawn only for open rows.
 (() => {
   'use strict';
 
   const DATA_URL = '../data/watchlist.json';
-  const ORBIT_URL = '../globe/';
+  const ORBIT_URL = '../globe/index.html';
   const TZ = 'America/Edmonton';
   const STALE_HOURS = 3; // the list is rebuilt about once an hour
 
@@ -37,10 +39,12 @@
     return n;
   };
   const small = (text, cls = '') => el('span', { class: `small ${cls}`.trim(), text });
+  const announce = (text) => { $('announce').textContent = text; };
 
   // -- formatting -----------------------------------------------------------
 
   const calgaryFmt = new Intl.DateTimeFormat('en-GB', { timeZone: TZ, weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+  const weekdayFmt = new Intl.DateTimeFormat('en-GB', { timeZone: TZ, weekday: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
   const utcFmt = new Intl.DateTimeFormat('en-GB', { timeZone: 'UTC', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
   const zoneFmt = new Intl.DateTimeFormat('en-US', { timeZone: TZ, timeZoneName: 'short' });
   const zone = (ms) => (zoneFmt.formatToParts(ms).find((p) => p.type === 'timeZoneName') || {}).value || '';
@@ -90,6 +94,7 @@
     if (kind === 'dark') return `Night, sun ${num(-e)}° below the horizon`;
     return e >= 15 ? `Daylight, sun ${num(e)}° up` : `Low sun, ${num(e)}° up`;
   }
+  const shortLight = (o, kind) => (kind === 'dark' ? `Night, sun ${num(-o.sun_elevation_deg)}° below` : groundLight(o, kind));
 
   const satelliteLight = {
     sunlit: 'Satellite in sunlight',
@@ -122,6 +127,7 @@
       return;
     }
     render();
+    announce(`Watchlist loaded. ${shownCounts()}`);
   }
 
   function showMissing(err) {
@@ -129,18 +135,19 @@
     $('filters').hidden = true;
     $('list').replaceChildren();
     $('later').hidden = true;
+    $('pane-hint').hidden = true;
     const box = $('empty');
     box.hidden = false;
     const missing = /^404$/.test(err && err.message);
-    box.replaceChildren(
-      missing
-        ? "There's no watchlist yet. The site's scheduled update makes one about once an hour."
-        : "The watchlist didn't load.",
-      el('br'),
-      el('button', { class: 'btn', type: 'button', text: 'Try again' }),
-    );
+    const text = missing
+      ? "There's no watchlist yet. The site's scheduled update makes one about once an hour."
+      : "The watchlist didn't load.";
+    box.replaceChildren(text, el('br'), el('button', { class: 'btn', type: 'button', text: 'Try again' }));
     box.querySelector('button').addEventListener('click', load);
+    announce(text);
   }
+
+  const shownCounts = () => `${$('list').children.length} with a pass coming, ${$('later-list').children.length} without.`;
 
   // Each event's passes still to come, the next first.
   function upcoming(event, now) {
@@ -183,9 +190,18 @@
     renderFilters(withPasses, without);
     const shown = (x) => filter === 'all' || x.e.category === filter;
 
+    // Redrawing the list mustn't throw keyboard users back to the top of the page.
+    const focused = document.activeElement && document.activeElement.closest ? document.activeElement.closest('.item') : null;
+    const focusedId = focused ? focused.dataset.id : null;
+
     const list = withPasses.filter(shown);
+    $('list').style.setProperty('--rows', String(Math.ceil(list.length / 2)));
     $('list').replaceChildren(...list.map(({ e, ops }) => item(e, ops, now)));
-    drawMaps();
+    syncOpen();
+    if (focusedId) {
+      const back = [...$('list').children].find((li) => li.dataset.id === focusedId);
+      if (back) back.querySelector('.row').focus({ preventScroll: true });
+    }
 
     const empty = $('empty');
     empty.hidden = list.length > 0;
@@ -234,19 +250,72 @@
     const box = $('filters');
     box.hidden = order.length < 2;
     const button = (key, label, n) => {
-      const b = el('button', { type: 'button', 'aria-pressed': String(filter === key) }, label, el('span', { class: 'n', text: String(n) }));
+      const b = el('button', { type: 'button', 'data-filter': key, 'aria-pressed': String(filter === key) }, label, el('span', { class: 'n', text: String(n) }));
       b.addEventListener('click', () => {
         filter = key;
+        closedByHand = false;
         try { sessionStorage.setItem('watchlist-filter', key); } catch { /* storage blocked */ }
         render();
+        announce(`Showing ${key === 'all' ? 'all events' : label}. ${shownCounts()}`);
+        // Picked from far down the list, start the new list at its top.
+        if ($('list').getBoundingClientRect().top < box.getBoundingClientRect().bottom) $('list').scrollIntoView({ block: 'start' });
       });
       return b;
     };
+    const focusKey = document.activeElement && document.activeElement.dataset ? document.activeElement.dataset.filter : null;
     box.replaceChildren(
       button('all', 'All', withPasses.length + without.length),
       ...order.map((c) => button(c, CATEGORIES[c][1], counts.get(c))),
     );
+    if (focusKey) {
+      const back = box.querySelector(`[data-filter="${focusKey}"]`) || box.querySelector('button');
+      if (back) back.focus({ preventScroll: true });
+    }
   }
+
+  // -- which rows are open ----------------------------------------------------
+  // In place, as many as you like. Side by side (watchlist.css) the panel
+  // holds one, the first to begin with, so the space is never blank.
+
+  const sideBySide = window.matchMedia('(min-width: 1680px)');
+  const openIds = new Set();
+  let closedByHand = false; // side by side: the visitor closed it, so don't reopen the first
+
+  function syncOpen() {
+    const items = [...$('list').children];
+    if (sideBySide.matches) {
+      const current = items.find((li) => openIds.has(li.dataset.id)) || (closedByHand ? null : items[0]);
+      openIds.clear();
+      if (current) openIds.add(current.dataset.id);
+    }
+    for (const li of items) {
+      const on = openIds.has(li.dataset.id);
+      const was = li.classList.contains('open');
+      li.classList.toggle('open', on);
+      li.querySelector('.row').setAttribute('aria-expanded', String(on));
+      li.querySelector('.detail').hidden = !on;
+      if (on && !was) draw(li.querySelector('canvas'));
+    }
+    $('pane-hint').hidden = !(sideBySide.matches && items.length && !openIds.size);
+  }
+
+  function toggle(li) {
+    const id = li.dataset.id;
+    const opening = !openIds.has(id);
+    if (sideBySide.matches) {
+      openIds.clear();
+      closedByHand = !opening;
+    }
+    if (opening) openIds.add(id); else openIds.delete(id);
+    syncOpen();
+    if (opening && !sideBySide.matches) li.scrollIntoView({ block: 'nearest' });
+  }
+
+  sideBySide.addEventListener('change', () => {
+    closedByHand = false;
+    if (data) syncOpen();
+    redrawOpen();
+  });
 
   function describe(e) {
     const kind = CATEGORIES[e.category] ? CATEGORIES[e.category][0] : 'Event';
@@ -257,24 +326,56 @@
 
   // -- one event --------------------------------------------------------------
 
+  // A cell of the compact row: its value and a quieter note under it. The
+  // hidden commas and stops make the button read as sentences.
+  const cell = (name, main, note) => el('span', { class: `cell ${name}` },
+    el('span', { class: 'main', text: main }),
+    note && el('span', { class: 'vh', text: ', ' }),
+    note && (typeof note === 'string' ? small(note) : note),
+    el('span', { class: 'vh', text: '. ' }));
+
+  // A better pass to come is always shown; "this is the best" only where there's room.
+  function bestNote(next, best, ops) {
+    if (best !== next) {
+      const what = best.distance_km == null ? `Kp ${num(best.kp, 1)}` : `${num(best.distance_km)} km`;
+      return small(`Best: ${what}, ${weekdayFmt.format(Date.parse(best.closest_at))}`);
+    }
+    return small(ops.length > 1 ? `Best of ${ops.length} passes` : 'Only pass', 'spare');
+  }
+
   function item(e, ops, now) {
+    const aurora = e.category === 'aurora';
     const next = ops[0];
     const best = ops.reduce((a, b) => (b.quality > a.quality ? b : a), next);
     const t = Date.parse(next.closest_at);
     const from = Date.parse(next.window.from), to = Date.parse(next.window.to);
+    const panelId = `detail-${e.id}`;
 
-    const meta = el('div', { class: 'meta' }, small(describe(e)));
+    const row = el('button', { class: 'row', type: 'button', 'aria-expanded': 'false', 'aria-controls': panelId },
+      el('span', { class: 'icon', 'aria-hidden': 'true' }),
+      cell('what', e.title, aurora ? 'Aurora' : describe(e)),
+      cell('when', calgary(t), el('span', { class: 'small' }, el('span', { class: 'utc', text: `${utc(t)}, ` }), relative(t, now, from, to))),
+      cell('close', aurora ? 'Over the oval' : `${num(next.distance_km)} km away`, bestNote(next, best, ops)),
+      cell('light', shortLight(next, e.light)));
+
+    // One link, beside the row where there's room, else first in what opens.
+    const orbit = el('a', { class: 'orbit', href: `${ORBIT_URL}#t=${next.closest_at}`, 'aria-label': `Show ${e.title} on the Orbit page, at its next pass` },
+      el('span', {}, el('span', { class: 'long', text: 'Show on the ' }), 'Orbit', el('span', { class: 'long', text: ' page' })));
+
+    const meta = el('div', { class: 'meta' }, small(describe(e), aurora ? '' : 'pane-only'));
     const sizeLine = [e.size, e.alert && e.alert !== 'Green' ? `${e.alert} alert from GDACS` : null].filter(Boolean).join('. ');
     if (sizeLine) meta.append(small(sizeLine));
-    if (e.updated_at) meta.append(small(`${e.category === 'aurora' ? 'NOAA data as of' : 'Last reported'} ${utc(Date.parse(e.updated_at))}`));
+    if (e.updated_at) meta.append(small(`${aurora ? 'NOAA data as of' : 'Last reported'} ${utc(Date.parse(e.updated_at))}`));
 
     const facts = el('dl', { class: 'facts' });
-    const fact = (label, value, ...notes) => facts.append(el('dt', { text: label }), el('dd', {}, value, ...notes));
+    const fact = (label, value, ...notes) => facts.append(
+      el('div', { class: label === 'Next pass' ? 'fact fact-next' : 'fact' }, el('dt', { text: label }), el('dd', {}, value, ...notes)));
 
+    // Where the row above shows all of this, the stylesheet hides it.
     const whenLine = small(`${utc(t)}, `);
     whenLine.append(relative(t, now, from, to));
     fact('Next pass', calgary(t), whenLine);
-    if (e.category === 'aurora') {
+    if (aurora) {
       fact('Where', `Over the oval at ${num(Math.abs(next.magnetic_latitude_deg))}° magnetic latitude`,
         small(`${place(next.target.lat, next.target.lon)}, for ${duration((to - from) / 1000)}`));
       fact('Activity', `Kp ${num(next.kp, 1)} forecast for then`, small(`The list waits for Kp ${num(data.rules.aurora_kp, 1)} or more.`));
@@ -299,8 +400,7 @@
       fact('Best pass', calgary(bt), small(passSummary(best, e)));
     }
 
-    const links = el('div', { class: 'links' },
-      el('a', { href: `${ORBIT_URL}#t=${next.closest_at}`, text: 'Show on the Orbit page' }));
+    const links = el('div', { class: 'links' });
     const seen = new Map();
     for (const s of e.sources) {
       const n = (seen.get(s.name) || 0) + 1;
@@ -308,15 +408,12 @@
       links.append(el('a', { href: s.url, rel: 'noopener', text: n > 1 ? `${s.name}, report ${n}` : s.name }));
     }
 
-    const body = el('div', { class: 'body' },
-      el('div', {}, el('h2', { text: e.title }), meta),
-      facts,
-      links);
+    const body = el('div', { class: 'body' }, meta, facts, links);
 
     if (ops.length > 1) {
       const rest = ops.slice(1);
-      body.append(el('details', { class: 'more' },
-        el('summary', { text: rest.length === 1 ? '1 more pass' : `${rest.length} more passes` }),
+      body.append(el('div', { class: 'more' },
+        el('h3', { text: rest.length === 1 ? 'One more pass' : `${rest.length} more passes` }),
         el('ol', { class: 'passes' }, rest.map((o) => {
           const ot = Date.parse(o.closest_at);
           const line = small(`${utc(ot)}, `);
@@ -331,7 +428,15 @@
     const canvas = el('canvas', { role: 'img', 'aria-label': mapLabel(e, next) });
     const map = el('div', { class: 'map' }, canvas);
     canvas._map = { e, o: next };
-    return el('li', { class: 'item' }, map, body);
+    const detail = el('div', { class: 'detail', id: panelId, hidden: true },
+      el('h3', { class: 'detail-title pane-only', text: e.title }), map, body);
+
+    const li = el('li', { class: 'item', 'data-id': e.id },
+      el('div', { class: 'row-line' },
+        el('div', { class: 'row-grid' }, el('h2', { class: 'row-h' }, row), orbit)),
+      detail);
+    row.addEventListener('click', () => toggle(li));
+    return li;
   }
 
   function passSummary(o, e) {
@@ -347,6 +452,7 @@
   // -- maps -------------------------------------------------------------------
   // An equirectangular crop of NASA's Blue Marble (Black Marble for night
   // events), the ground track in the team blue and the event as a square.
+  // Drawn when a row opens, so the textures only load once one does.
 
   const textures = {};
   function texture(kind) {
@@ -362,18 +468,8 @@
     return textures[kind];
   }
 
-  const observer = 'IntersectionObserver' in window
-    ? new IntersectionObserver((entries) => {
-      for (const x of entries) {
-        if (x.isIntersecting) { observer.unobserve(x.target); draw(x.target); }
-      }
-    }, { rootMargin: '400px 0px' })
-    : null;
-
-  function drawMaps() {
-    for (const c of document.querySelectorAll('.map canvas')) {
-      if (observer) observer.observe(c); else draw(c);
-    }
+  function redrawOpen() {
+    for (const c of document.querySelectorAll('.item.open canvas')) draw(c);
   }
 
   async function draw(canvas) {
@@ -401,7 +497,7 @@
       const left = ((-180 - lon0 + lonSpan / 2) / lonSpan) * w;
       const top = y(90);
       ctx.imageSmoothingQuality = 'high';
-      for (const k of [-1, 0, 1]) ctx.drawImage(img, left + k * worldW, top, worldW, worldH);
+      for (const k of [-1, 0, 1]) ctx.drawImage(img, left + k * worldW, top, worldW + 1, worldH); // +1: no seam at 180°
     }
 
     // the ground track: one 2px line, broken where it wraps round the map
@@ -433,8 +529,15 @@
   let resizeTimer = 0;
   window.addEventListener('resize', () => {
     clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(() => { for (const c of document.querySelectorAll('.map canvas')) draw(c); }, 150);
+    resizeTimer = setTimeout(redrawOpen, 150);
   });
+
+  // The sticky filter bar's height, for what scrolls into view under it (watchlist.css).
+  if ('ResizeObserver' in window) {
+    new ResizeObserver(() => {
+      document.documentElement.style.setProperty('--filters-measured', `${$('filters').offsetHeight}px`);
+    }).observe($('filters'));
+  }
 
   // -- the method, from the file's own numbers --------------------------------
 
@@ -455,8 +558,7 @@
   }
 
   // Passes slip into the past while the page is open: keep the "in 5 h"
-  // times current, and redraw the list only when a pass drops off it (so
-  // an open "more passes" list stays open).
+  // times current, and redraw the list only when a pass drops off it.
   function tick() {
     if (!data) return;
     const now = Date.now();
