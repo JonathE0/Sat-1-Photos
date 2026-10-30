@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Globe embed test</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Urbanist:wght@400;500;600&display=swap">
+  <style>
+    body {
+      margin: 0;
+      padding: 24px 16px 64px;
+      background: #0B0F13;
+      color: #C9D3DB;
+      font: 13px/1.5 "Urbanist", system-ui, sans-serif;
+    }
+
+    h1 {
+      margin: 0 0 4px;
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    p {
+      max-width: 680px;
+      margin: 0 0 12px;
+    }
+
+    code {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 12px;
+    }
+
+    .frame {
+      max-width: 960px;
+      height: 420px;
+      margin: 16px 0;
+      border: 1px solid #3A4855;
+    }
+
+    button {
+      height: 28px;
+      margin: 0 6px 6px 0;
+      padding: 0 10px;
+      background: transparent;
+      border: 1px solid #3A4855;
+      color: inherit;
+      font: 12px "IBM Plex Mono", monospace;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>Globe embed test</h1>
+  <p>
+    The detail-page embed: <code>mountGlobe(box, { photoId, ui: 'compact', wheelZoom: false })</code>
+    in a 420&nbsp;px box. Wheel zoom needs Ctrl here so the page still scrolls.
+  </p>
+  <div class="frame" id="box"></div>
+  <p>
+    <button type="button" id="focus">focusPhoto('2026-10-11-082030z')</button>
+    <button type="button" id="time">setTime('2026-10-22T15:44:08Z')</button>
+    <button type="button" id="destroy">destroy()</button>
+    <button type="button" id="mount">mount again</button>
+  </p>
+  <script type="module">
+    import { mountGlobe } from '../globe.js';
+
+    const box = document.getElementById('box');
+    let globe = null;
+    const mount = () => {
+      globe?.destroy();
+      globe = mountGlobe(box, { photoId: '2026-09-17-071148z', ui: 'compact', wheelZoom: false });
+    };
+    mount();
+    document.getElementById('focus').onclick = () => globe?.focusPhoto('2026-10-11-082030z');
+    document.getElementById('time').onclick = () => globe?.setTime('2026-10-22T15:44:08Z');
+    document.getElementById('destroy').onclick = () => {
+      globe?.destroy();
+      globe = null;
+    };
+    document.getElementById('mount').onclick = mount;
+  </script>
+</body>
+</html>

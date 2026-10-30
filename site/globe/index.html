@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Orbit globe · CTS-SAT-1</title>
+  <meta name="description" content="Where CTS-SAT-1 (FrontierSat) is now, where it was when each photo was taken, and when it next passes over Calgary.">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#0B0F13">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Urbanist:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="globe.css">
+  <link rel="modulepreload" href="globe.js">
+  <link rel="modulepreload" href="vendor/three.module.min.js">
+  <link rel="modulepreload" href="vendor/satellite.es.js">
+  <style>
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+      background: #0B0F13;
+    }
+
+    /* viewport-fit=cover lets the narrow dock pad for the home indicator;
+       keep the whole globe clear of a landscape phone's notch. */
+    #globe {
+      position: fixed;
+      inset: 0;
+      padding: 0 env(safe-area-inset-right, 0px) 0 env(safe-area-inset-left, 0px);
+    }
+
+    .nojs {
+      margin: 0;
+      padding: 24px;
+      font: 13px/1.5 "Urbanist", system-ui, sans-serif;
+      color: #C9D3DB;
+    }
+  </style>
+</head>
+<body>
+  <main id="globe" aria-label="CTS-SAT-1 orbit globe"></main>
+  <noscript><p class="nojs">The orbit globe needs JavaScript and WebGL.</p></noscript>
+  <script>
+    // Browsers won't load ES modules or JSON from file:// pages.
+    if (location.protocol === 'file:') {
+      document.getElementById('globe').innerHTML =
+        '<p class="nojs">Open this page through a web server, e.g. run ' +
+        '<code>python -m http.server</code> in the site folder and visit /globe/.</p>';
+    }
+  </script>
+  <script type="module">
+    import { mountGlobe } from './globe.js';
+
+    // ?photo=<id> focuses that photo; #t=<iso>&photo=<id> restores a shared view.
+    const params = new URLSearchParams(location.search);
+    mountGlobe(document.getElementById('globe'), {
+      photoId: params.get('photo'),
+      hashState: true,
+      keyboard: 'global',
+      backHref: '../',
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+
+# Downloaded and derived data (rebuilt by `python -m cts1_gallery update`)
+data/cache/
+data/logs/
+data/update.lock
+
+# Partial writes
+*.tmp
+*.part
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

@@ -1,0 +1,12 @@
+Unmodified copies, fetched from jsDelivr (npm):
+
+three.module.min.js      three@0.170.0       https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js
+                         sha256 08fd7545d13d2c7fb65ab691530a802dafefd638596501854f267d0fb13c39e7
+three.LICENSE            MIT                 https://cdn.jsdelivr.net/npm/three@0.170.0/LICENSE
+
+satellite.es.js          satellite.js@6.0.2  https://cdn.jsdelivr.net/npm/satellite.js@6.0.2/dist/satellite.es.js
+                         sha256 34f95ebd07f6ae947e73b441ad23e0c93693f1d610530a8bcf18fabb9c8e189f
+satellite.js.LICENSE.md  MIT                 https://cdn.jsdelivr.net/npm/satellite.js@6.0.2/LICENSE.md
+
+The globe uses satellite.js for SGP4 only (twoline2satrec, propagate, gstime
+and the frame transforms); the Sun position is computed in ../astro.js.

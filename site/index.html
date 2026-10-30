@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pictures from orbit · CTS-SAT-1</title>
+  <meta name="description" content="Every picture downlinked from CTS-SAT-1 (FrontierSat) that could be rebuilt, from Calgary To Space's first student-built satellite.">
+  <meta name="theme-color" content="#FF4F00">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%23FF4F00'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Jost:wght@700;800&family=Urbanist:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="assets/style.css">
+  <script src="config.js"></script>
+  <script type="module" src="assets/app.js"></script>
+</head>
+<body data-view="gallery">
+  <a class="skip" href="#main" data-skip>Skip to content</a>
+
+  <header class="site-head">
+    <nav class="nav" aria-label="Main">
+      <div class="nav-side nav-left">
+        <a href="#/" data-nav="gallery">Pictures</a>
+        <a href="globe/index.html">Orbit</a>
+      </div>
+      <a class="wordmark" href="#/" aria-label="CTS-SAT-1, all pictures">CTS-SAT-1</a>
+      <div class="nav-side nav-right">
+        <a href="#/about" data-nav="about">About</a>
+        <div class="name-ctl" hidden>
+          <button type="button" class="name-btn" aria-expanded="false" aria-controls="name-form">Your name</button>
+          <form class="name-form" id="name-form" hidden>
+            <label for="name-input">Your name, shown next to your edits</label>
+            <input id="name-input" name="name" autocomplete="name" maxlength="60" spellcheck="false">
+            <div class="name-actions">
+              <button type="submit" class="btn">Save</button>
+              <button type="button" class="linkish" data-cancel>Cancel</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </nav>
+
+    <div class="band">
+      <h1 class="headline">Pictures from orbit</h1>
+      <div class="band-foot">
+        <p class="intro">These are the images downlinked from CTS-SAT-1 (FrontierSat), Calgary To Space's first student-built satellite, launched on 3&nbsp;May 2026 and heard through the SatNOGS ground-station network.</p>
+        <p class="count" id="count">Loading pictures…</p>
+      </div>
+    </div>
+  </header>
+
+  <main id="main" tabindex="-1">
+    <section class="view view-gallery" id="view-gallery" aria-label="Pictures"></section>
+    <section class="view view-detail" id="view-detail" hidden></section>
+    <section class="view view-about" id="view-about" hidden>
+      <div class="about">
+        <h1 class="about-title" tabindex="-1">About</h1>
+        <p>CTS-SAT-1, also called FrontierSat, is the first satellite built by the students of Calgary To Space. It launched on 3 May 2026. It carries two cameras: PiCAM, the main camera, which takes 640 × 480 frames, and the camera of the attitude determination and control system (ADCS), which takes 512 × 512 frames.</p>
+
+        <h2>How a picture gets here</h2>
+        <p>The satellite stores each picture as a file and sends it down in small packets, often over several passes. Amateur ground stations in the SatNOGS network record the passes, the CalgaryToSpace ground-station pipeline decodes the packets, and this gallery puts each file back together.</p>
+
+        <h2>What the status means</h2>
+        <dl class="about-list">
+          <dt>verified</dt>
+          <dd>Every byte arrived, and the file's checksum (sha256) matches the one the satellite reported.</dd>
+          <dt>complete</dt>
+          <dd>The whole picture arrived, but the file can't be checked against the satellite: it reported no checksum, or a few bytes outside the picture are missing.</dd>
+          <dt>partial</dt>
+          <dd>Part of the file never came down. A main-camera picture is shown only down to its first missing line, because its JPEG can't be decoded past a gap. An attitude-camera picture shows grey bands where rows are missing.</dd>
+          <dt>cut short on board</dt>
+          <dd>The satellite stored only part of the frame because the capture stopped early, so the top of the picture is all there is. The copy here can still match the satellite's checksum for that shortened file.</dd>
+        </dl>
+
+        <div id="about-skipped" hidden>
+          <h2>Files that couldn't be shown</h2>
+          <p>These image files are known from the satellite's logs or packets, but none of the picture can be shown.</p>
+          <ul class="about-skipped-list"></ul>
+        </div>
+
+        <h2>Times and positions</h2>
+        <p>The capture time comes from the file name, the camera's capture log, the capture command's own record, the attitude camera's file list, or the satellite's reply to the capture command. Some pictures only have a date. Most of these are readings of the satellite's own clock, which has run up to a couple of minutes fast; where the data shows how far off it was, the time is corrected for it. Positions are estimates: the point below the satellite at the capture time, computed with SGP4 from the most recent orbital elements (TLE) published before the capture. Place names come from OpenStreetMap (Nominatim).</p>
+
+        <h2>Edits from the team</h2>
+        <p>Team members can give a picture a title, notes, a place, the people involved and tags, and can correct its time or position. Edits are made on the team's own copy of the gallery and appear here when that copy is next published. The computed values are never overwritten, and every edited value is marked with the name of the person who changed it.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-foot">
+    <div class="foot-col">
+      <h2>Data</h2>
+      <p>Packets from the <a href="https://network.satnogs.org/">SatNOGS network</a>, decoded by the CalgaryToSpace ground-station pipeline at <a href="https://frontiersat.mooo.com/">frontiersat.mooo.com</a>. Place names © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>, via Nominatim. Orbital elements: USSPACECOM, via <a href="https://www.space-track.org/">Space-Track.org</a>. Globe imagery: NASA Earth Observatory.</p>
+    </div>
+    <div class="foot-col">
+      <h2>Updated</h2>
+      <p id="foot-updated">The picture list is rebuilt automatically from the pipeline.</p>
+    </div>
+    <div class="foot-col">
+      <h2>Links</h2>
+      <ul class="foot-links">
+        <li><a href="https://github.com/CalgaryToSpace">github.com/CalgaryToSpace</a></li>
+        <li><a href="https://db.satnogs.org/">db.satnogs.org</a></li>
+      </ul>
+    </div>
+  </footer>
+
+  <p class="vh" id="announce" aria-live="polite"></p>
+  <noscript><p class="noscript">This gallery needs JavaScript to show the pictures.</p></noscript>
+</body>
+</html>

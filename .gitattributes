@@ -1,0 +1,4 @@
+# Text files are stored and checked out with LF endings, as the update tool
+# writes them on every platform, so a rebuild on Windows or on GitHub's Linux
+# runners never shows up as a change.
+* text=auto eol=lf
