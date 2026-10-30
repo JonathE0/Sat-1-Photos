@@ -18,7 +18,7 @@
   --cg-clock-h: 64px;
   --cg-dock-h: 0px;
   --cg-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  --cg-sans: "Urbanist", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --cg-sans: "Jost", system-ui, -apple-system, "Segoe UI", sans-serif;
   position: relative;
   width: 100%;
   height: 100%;

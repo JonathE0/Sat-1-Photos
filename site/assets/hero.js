@@ -29,6 +29,12 @@ function where(p) {
   return p.position ? latLon(p.position.lat, p.position.lon, 1) : '';
 }
 
+// When on the first line, where (if known) on the second.
+function caption(el, p) {
+  const place = where(p);
+  el.replaceChildren(h('span', { class: 'shot-when' }, when(p)), place ? h('span', null, place) : '');
+}
+
 function altFor(p) {
   const camera = CAMERAS[p.camera]?.alt || 'Camera';
   const place = where(p);
@@ -152,7 +158,7 @@ export function createHero(root, { stillId = '' } = {}) {
     outgoing.dataset.state = first ? '' : 'leave';
     front = 1 - front;
     reelLink.href = `#/photo/${encodeURIComponent(p.id)}`;
-    reelCap.textContent = [when(p), where(p)].filter(Boolean).join(' · ');
+    caption(reelCap, p);
     indexEl.textContent = pad2(index + 1);
     restartFill();
   }
@@ -183,7 +189,7 @@ export function createHero(root, { stillId = '' } = {}) {
       stillImg.src = picks.still.src;
       stillImg.alt = altFor(picks.still);
       still.href = `#/photo/${encodeURIComponent(picks.still.id)}`;
-      stillCap.textContent = [when(picks.still), where(picks.still)].filter(Boolean).join(' · ');
+      caption(stillCap, picks.still);
       shots.append(still);
 
       reel = picks.reel;

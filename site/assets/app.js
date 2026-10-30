@@ -208,9 +208,13 @@ function renderSkipped() {
 
 function updateCounts() {
   const built = toDate(state.data?.generated_at);
-  $('#count').textContent = state.photos.length.toLocaleString('en-US');
-  $('#stat-verified').textContent = state.photos.filter((p) => p.status === 'verified').length.toLocaleString('en-US');
-  $('#stat-updated').replaceChildren(built ? mono(`${dayMonthYear(built).replace(/ \d{4}$/, '')}, ${clock(built)} UTC`) : '–');
+  const verified = state.photos.filter((p) => p.status === 'verified').length;
+  const count = $('#count');
+  count.replaceChildren();
+  append(count, [
+    `${plural(state.photos.length, 'picture')} so far, ${verified.toLocaleString('en-US')} of them verified against the satellite's checksum.`,
+    built ? [' Last updated ', mono(`${dayMonthYear(built)}, ${clock(built)} UTC`), '.'] : '',
+  ]);
   const minutes = Number(config.refreshMinutes);
   const every = Number.isFinite(minutes) && minutes > 0 ? `every ${plural(minutes, 'minute')}` : 'regularly';
   const updated = $('#foot-updated');

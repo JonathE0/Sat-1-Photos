@@ -9,7 +9,7 @@
   <link rel="icon" type="image/png" href="assets/cubesat-icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Jost:wght@700;800&family=Urbanist:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Jost:wght@400;500;600;700;800&display=swap">
   <link rel="stylesheet" href="assets/style.css">
   <script src="config.js"></script>
   <script type="module" src="assets/app.js"></script>
@@ -59,6 +59,7 @@
         <div class="hero-about">
           <h2>About the pictures</h2>
           <p class="intro">These are the images downlinked from CTS-SAT-1 (FrontierSat) since its launch on 3&nbsp;May 2026, heard by the SatNOGS ground-station network and rebuilt here from the satellite's radio packets.</p>
+          <p class="tally" id="count">Loading pictures…</p>
           <div class="reel-bar" hidden>
             <span class="mono reel-index">01</span>
             <span class="reel-track" aria-hidden="true"><span class="reel-fill"></span></span>
@@ -68,13 +69,6 @@
           </div>
         </div>
       </div>
-
-      <dl class="hero-stats">
-        <div><dt>Pictures</dt><dd id="count">Loading…</dd></div>
-        <div><dt>Verified</dt><dd id="stat-verified">–</dd></div>
-        <div><dt>Launched</dt><dd>3 May 2026</dd></div>
-        <div><dt>List updated</dt><dd id="stat-updated">–</dd></div>
-      </dl>
     </div>
   </header>
 
