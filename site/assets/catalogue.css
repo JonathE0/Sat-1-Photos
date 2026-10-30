@@ -381,28 +381,24 @@
   gap: 20px;
 }
 
-/* The count and the dark-frame switch on the left, Filters on the right;
-   on its own line when the row is full. */
+/* The count and its switches: a full-width row of their own under the
+   controls, so each line stays one line on a desktop. */
 .cat-dock-end {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 4px 24px;
-  flex: 1 1 340px;
+  flex: 1 1 100%;
   min-width: 0;
 }
 
+/* The count, then one line per tucked-away kind (dark, mostly missing). */
 .cat-count {
-  margin: 0;
-  max-width: 62ch;
   color: var(--c-muted);
   font-size: 13px;
   line-height: 1.45;
   letter-spacing: 0.01em;
 }
+.cat-count-line { display: block; }
 .cat-count-text { color: var(--c-ink); }
 .cat-count .cat-inline-btn { color: var(--c-ink); white-space: nowrap; }
-.cat-filter-toggle { flex: none; }
+.cat-filter-toggle { flex: none; margin-left: auto; }
 
 .cat-filter-toggle[aria-expanded="true"] { text-decoration-color: currentColor; }
 
@@ -685,7 +681,6 @@
 
 @media (max-width: 599px) {
   .cat-dock-row { gap: 4px 16px; }
-  .cat-dock-end { width: 100%; margin-left: 0; justify-content: space-between; }
 
   .cat-facts { grid-template-columns: minmax(0, 1fr); row-gap: 0; }
   .cat-facts dt { padding-top: 12px; }

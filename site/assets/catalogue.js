@@ -9,26 +9,30 @@
 //   #/pictures?id=<a>&compare=<a>,,,          four, three cells still empty
 //   ...&camera=picam&month=2026-09&q=clouds   the filters (FILTER_KEYS in data.js)
 //   ...&dark=1                                dark frames shown in the strip too
+//   ...&missing=1                             mostly missing pictures (under a fifth) too
 //   ...&from=globe                            opened from the globe: offer the way back
 // Every step uses history.replaceState, so Back leaves the catalogue instead
 // of walking back through each picture that was looked at.
 //
 // Dark frames (images.json "dark": black, noise, or the Sun as a lone dot)
-// are left out of the strip and the stepping until the control after the
-// count brings them in. A link straight to one still opens it, with them in.
+// and mostly missing pictures (less than a fifth can be shown) are left out
+// of the strip and the stepping until their switch after the count brings
+// them in. A link straight to one still opens it, with its switch on.
 //
 // With no id in the URL it opens on the newest picture that isn't dark and
 // is at least half there; the strip still starts with the newest.
 
 import { h, append, announce, copyText } from './dom.js';
 import { CAMERAS, clock, dayMonthYear, latLon, percent, plural, toDate } from './format.js';
-import { applyFilters, FILTER_KEYS, hasFilters, readFilters } from './data.js';
+import { applyFilters, FILTER_KEYS, readFilters } from './data.js';
 import { createFilterForm, describeFilters } from './filters.js';
 
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
 const SIZES = [[1, 'One'], [2, 'Two'], [4, 'Four']];
-const NARROWING = FILTER_KEYS.filter((key) => key !== 'dark'); // the filters proper
+// The filters proper: dark and missing are switches, not filters.
+const SWITCHES = ['dark', 'missing'];
+const NARROWING = FILTER_KEYS.filter((key) => !SWITCHES.includes(key));
 const MAX_CELLS = 4;
 const EAGER_THUMBS = 16;
 const DAY_MS = 24 * 3600 * 1000;
@@ -37,7 +41,14 @@ const DAY_MS = 24 * 3600 * 1000;
 
 export const isDark = (p) => Boolean(p && (p.dark === true || (p.raw && p.raw.dark === true)));
 
+// Less than a fifth of the picture can be shown. data.js sets p.mostlyMissing
+// (on main); until that lands here, the same rule from completeness.
+export const isMostlyMissing = (p) => Boolean(p && (typeof p.mostlyMissing === 'boolean'
+  ? p.mostlyMissing
+  : Number(p.raw?.completeness) < 0.2));
+
 const DARK_WHY = 'nothing but black, sensor noise or the Sun as a single dot';
+const MISSING_WHY = 'less than a fifth of the picture can be shown';
 
 // Keeps a date, a time or a range on one line: lines break only between them.
 function nobr(text) {
@@ -298,7 +309,8 @@ export function createCatalogue(root, {
   let filters = readFilters(new URLSearchParams());
   let matched = []; // the pictures the filters let through
   let shown = []; // the same without dark frames, unless they are brought in
-  let showDark = false;
+  // Tucked away unless switched on: dark frames, and pictures mostly missing.
+  const show = { dark: false, missing: false };
   let ready = false;
   let pending = null; // params from show() before the data arrived
   let currentId = null; // one-picture view; in compare, the last picture placed or stepped
@@ -395,22 +407,35 @@ export function createCatalogue(root, {
   olderBtn.addEventListener('click', () => { if (olderBtn.getAttribute('aria-disabled') !== 'true') step(1, 'button'); });
   const steps = h('div', { class: 'cat-steps' }, newerBtn, olderBtn);
 
-  // "23 pictures. 7 dark frames hidden: … Show them", in Small, after the
-  // count, so the numbers agree with the strip and the dark frames are a
-  // click away at any width.
+  // In Small, after the count, one line each (they stack):
+  //   "21 pictures."
+  //   "7 dark frames hidden: nothing but black, … Show them"
+  //   "2 mostly missing pictures hidden: less than a fifth … Show them"
+  // so the numbers agree with the strip and what is tucked away is a click
+  // away at any width.
   const countText = h('span', { class: 'cat-count-text' });
-  const darkText = h('span', { class: 'cat-dark-text' });
-  const darkBtn = h('button', { type: 'button', class: 'cat-inline-btn cat-dark-toggle' });
-  darkBtn.addEventListener('click', () => toggleDark());
   const clearBtn = h('button', { type: 'button', class: 'cat-inline-btn', hidden: true }, 'Clear filters');
   clearBtn.addEventListener('click', () => clearFilters());
-  const count = h('p', { class: 'cat-count' }, countText, ' ', darkText, ' ', darkBtn, ' ', clearBtn);
+  const makeSwitch = (kind) => {
+    const text = h('span', { class: 'cat-switch-text' });
+    const btn = h('button', { type: 'button', class: 'cat-inline-btn', 'data-switch': kind });
+    btn.addEventListener('click', () => toggleSwitch(kind));
+    const line = h('span', { class: 'cat-count-line cat-switch-line', hidden: true }, text, ' ', btn);
+    return { text, btn, line };
+  };
+  const switches = { dark: makeSwitch('dark'), missing: makeSwitch('missing') };
+  const count = h('div', { class: 'cat-count' },
+    h('span', { class: 'cat-count-line' }, countText, ' ', clearBtn),
+    switches.dark.line,
+    switches.missing.line);
   const filterToggle = h('button', {
     type: 'button', class: 'cat-text-btn cat-filter-toggle', 'aria-expanded': 'false', 'aria-controls': 'cat-filters',
   }, 'Filters');
   filterToggle.addEventListener('click', () => setFiltersOpen(filterUi.form.hidden));
-  const dockEnd = h('div', { class: 'cat-dock-end' }, count, filterToggle);
-  const dockRow = h('div', { class: 'cat-dock-row' }, modes, steps, dockEnd);
+  // Controls on one row (Filters at its right), the count and the switches
+  // on their own full-width row under it, one line each.
+  const dockEnd = h('div', { class: 'cat-dock-end' }, count);
+  const dockRow = h('div', { class: 'cat-dock-row' }, modes, steps, filterToggle, dockEnd);
 
   const filterUi = createFilterForm({
     onChange: (key, value) => setFilter(key, value),
@@ -516,7 +541,8 @@ export function createCatalogue(root, {
       const value = String(filters[key] || '').trim();
       if (value) params.set(key, value);
     }
-    if (showDark) params.set('dark', '1');
+    if (show.dark) params.set('dark', '1');
+    if (show.missing) params.set('missing', '1');
     if (from) params.set('from', from);
     // Commas between ids read better than %2C, and URLSearchParams reads both.
     return params.toString().replace(/%2C/gi, ',');
@@ -536,8 +562,8 @@ export function createCatalogue(root, {
   }
 
   function applyParams(params) {
-    // The dark switch is the catalogue's own (showDark), not a filter.
-    filters = { ...readFilters(params), dark: '' };
+    // The dark and missing switches are the catalogue's own (show), not filters.
+    filters = { ...readFilters(params), dark: '', missing: '' };
     readFrom(params);
     const id = (params.get('id') || '').trim();
     missingId = id && !byId.has(id) ? id : null;
@@ -563,10 +589,19 @@ export function createCatalogue(root, {
       active = 0;
       currentId = byId.has(id) ? id : null;
     }
-    // A link straight to a dark frame opens it, with dark frames brought in.
-    showDark = params.get('dark') === '1'
-      || isDark(byId.get(currentId))
-      || slots.some((s) => isDark(byId.get(s)));
+    // A link straight to a tucked-away picture opens it, with its kind shown.
+    const named = [currentId, ...slots].filter(Boolean).map((s) => byId.get(s));
+    show.dark = params.get('dark') === '1' || named.some(isDark);
+    show.missing = params.get('missing') === '1' || named.some(isMostlyMissing);
+  }
+
+  // Left out of the strip and the stepping until its switch is on.
+  function isTucked(p) {
+    return (!show.dark && isDark(p)) || (!show.missing && isMostlyMissing(p));
+  }
+
+  function narrowed() {
+    return NARROWING.some((key) => String(filters[key] || '').trim());
   }
 
   /* Filters and dark frames */
@@ -590,7 +625,7 @@ export function createCatalogue(root, {
   function clearFilters() {
     const before = document.activeElement;
     const refocus = dock.contains(before) && !filterUi.form.contains(before);
-    filters = { ...readFilters(new URLSearchParams()), dark: '' };
+    filters = { ...readFilters(new URLSearchParams()), dark: '', missing: '' };
     filterUi.sync(filters);
     render();
     writeUrl();
@@ -599,27 +634,34 @@ export function createCatalogue(root, {
   }
 
   function summaryText() {
-    if (!hasFilters(filters)) return plural(shown.length, 'picture');
+    if (!narrowed()) return plural(shown.length, 'picture');
     return `${shown.length} of ${plural(totalCount(), 'picture')} shown: ${describeFilters(filters)}`;
   }
 
   // Every picture the strip could hold with no filters set.
   function totalCount() {
-    return showDark ? photos.length : photos.filter((p) => !isDark(p)).length;
+    return photos.filter((p) => !isTucked(p)).length;
   }
 
   function clearButton() {
     return h('button', { type: 'button', class: 'cat-text-btn', onclick: clearFilters }, 'Clear filters');
   }
 
-  function toggleDark() {
-    showDark = !showDark;
+  const SWITCH_WORDS = {
+    dark: { test: isDark, one: 'dark frame', many: 'dark frames' },
+    missing: { test: isMostlyMissing, one: 'mostly missing picture', many: 'mostly missing pictures' },
+  };
+
+  function toggleSwitch(kind, on = !show[kind]) {
+    show[kind] = on;
     keepFocus(() => render());
     writeUrl();
     // From the no-match note, whose button goes away: on to the one in the dock.
-    if (!isVisible(document.activeElement) && isVisible(darkBtn)) darkBtn.focus({ preventScroll: true });
-    const n = matched.filter(isDark).length;
-    announce(showDark ? `${plural(n, 'dark frame')} brought into the strip.` : `${plural(n, 'dark frame')} hidden.`);
+    const btn = switches[kind].btn;
+    if (!isVisible(document.activeElement) && isVisible(btn)) btn.focus({ preventScroll: true });
+    const words = SWITCH_WORDS[kind];
+    const n = matched.filter(words.test).length;
+    announce(`${plural(n, words.one, words.many)} ${on ? 'brought into the strip' : 'hidden'}.`);
   }
 
   // People and tags in the facts filter the strip to their pictures; the
@@ -861,10 +903,11 @@ export function createCatalogue(root, {
     if (!ready) return;
     el.dataset.state = 'ready';
     loadingText.hidden = true;
-    // data.js leaves dark frames out unless asked; the catalogue asks, and
-    // makes its own split so it can count them.
-    matched = applyFilters(photos, { ...filters, dark: '1' });
-    shown = showDark ? matched : matched.filter((p) => !isDark(p));
+    // data.js leaves dark frames (and, on main, mostly missing ones) out
+    // unless asked; the catalogue asks, and makes its own split so it can
+    // count them.
+    matched = applyFilters(photos, { ...filters, dark: '1', missing: '1' });
+    shown = matched.filter((p) => !isTucked(p));
     if (size === 1) {
       if (!byId.has(currentId)) {
         // No picture named: the newest that is worth opening.
@@ -900,22 +943,25 @@ export function createCatalogue(root, {
     const n = NARROWING.filter((key) => String(filters[key] || '').trim()).length;
     filterToggle.textContent = n ? `Filters (${n})` : 'Filters';
     // Counted from what the strip holds, so the numbers agree with it.
-    const narrowed = hasFilters(filters);
-    countText.textContent = narrowed
+    const isNarrowed = narrowed();
+    countText.textContent = isNarrowed
       ? `${shown.length} of ${plural(totalCount(), 'picture')}.`
       : `${plural(shown.length, 'picture')}.`;
-    const darkN = matched.filter(isDark).length;
-    darkText.hidden = !darkN;
-    darkBtn.hidden = !darkN;
-    if (darkN) {
-      const why = narrowed ? '.' : `: ${DARK_WHY}.`;
-      darkText.textContent = showDark
-        ? `Showing ${plural(darkN, 'dark frame')}${why}`
-        : `${plural(darkN, 'dark frame')} hidden${why}`;
-      darkBtn.textContent = showDark ? 'Hide them' : 'Show them';
-      darkBtn.setAttribute('aria-label', `${showDark ? 'Hide' : 'Show'} the ${plural(darkN, 'dark frame')}`);
+    clearBtn.hidden = !isNarrowed;
+    // One line per kind that the filters let through; the reason only when
+    // no filter is set, to keep the dock short.
+    for (const [kind, why] of [['dark', DARK_WHY], ['missing', MISSING_WHY]]) {
+      const { text, btn, line } = switches[kind];
+      const words = SWITCH_WORDS[kind];
+      const n = matched.filter(words.test).length;
+      line.hidden = !n;
+      if (!n) continue;
+      const what = plural(n, words.one, words.many);
+      const tail = isNarrowed ? '.' : `: ${why}.`;
+      text.textContent = show[kind] ? `Showing ${what}${tail}` : `${what} hidden${tail}`;
+      btn.textContent = show[kind] ? 'Hide them' : 'Show them';
+      btn.setAttribute('aria-label', `${show[kind] ? 'Hide' : 'Show'} the ${what}`);
     }
-    clearBtn.hidden = !narrowed;
   }
 
   function renderView() {
@@ -1209,13 +1255,22 @@ export function createCatalogue(root, {
     return button;
   }
 
-  // What to say when nothing is shown: maybe only dark frames match.
+  // What to say when nothing is shown: maybe only tucked-away pictures match.
   function noMatchContent() {
-    const darkN = matched.filter(isDark).length;
-    if (!darkN || showDark) return ['No pictures match these filters. ', clearButton()];
-    const show = h('button', { type: 'button', class: 'cat-text-btn', onclick: () => toggleDark() }, 'Show them');
-    return [darkN === 1 ? 'Only a dark frame matches these filters. ' : `Only ${darkN} dark frames match these filters. `,
-      show, ' ', clearButton()];
+    const tucked = matched.filter(isTucked);
+    if (!tucked.length) return ['No pictures match these filters. ', clearButton()];
+    const kinds = ['dark', 'missing'].filter((kind) => !show[kind] && tucked.some(SWITCH_WORDS[kind].test));
+    const what = kinds.map((kind) => {
+      const words = SWITCH_WORDS[kind];
+      return plural(tucked.filter(words.test).length, words.one, words.many);
+    }).join(' and ');
+    const verb = kinds.length === 1 && tucked.filter(SWITCH_WORDS[kinds[0]].test).length === 1 ? 'matches' : 'match';
+    const showAll = h('button', {
+      type: 'button',
+      class: 'cat-text-btn',
+      onclick: () => { for (const kind of kinds) toggleSwitch(kind, true); },
+    }, 'Show them');
+    return [`Only ${what} ${verb} these filters. `, showAll, ' ', clearButton()];
   }
 
   function renderStrip() {
