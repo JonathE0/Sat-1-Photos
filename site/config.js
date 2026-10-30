@@ -4,7 +4,7 @@ window.CTS1_CONFIG = {
   // The gallery's GitHub repository. When it is set, copies of the site that
   // run without serve.py (where editing is off) show a "Suggest a correction"
   // link on each picture, which opens a prefilled GitHub issue. "" hides it.
-  repoUrl: "https://github.com/JonathE0/cts-sat-1-pictures",
+  repoUrl: "https://github.com/JonathE0/Sat-1-Photos",
 
   // How often the scheduled update rebuilds the picture list, in minutes.
   // Shown in the footer. Keep it in step with the schedule that publishes

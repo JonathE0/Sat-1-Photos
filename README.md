@@ -179,3 +179,8 @@ address; add `--allow-host NAME` to use another name, or set an edit key.
 - Orbital elements: Space-Track.org, via the team pipeline.
 - Place names: © OpenStreetMap contributors, via Nominatim.
 - Globe imagery: NASA Blue Marble and Black Marble (see `site/globe/textures/`).
+
+## Licence
+
+The code is under the MIT licence; see [LICENSE](LICENSE). The sources above
+keep their own terms.
