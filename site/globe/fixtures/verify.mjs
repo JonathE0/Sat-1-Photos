@@ -609,5 +609,22 @@ check('compass points', astro.compassPoint(0) === 'N' && astro.compassPoint(355)
   );
 }
 
+// ---- the page's first paint (index.html) ---------------------------------------------------------
+{
+  const html = readFileSync(fileURLToPath(new URL('../index.html', import.meta.url)), 'utf8');
+  const head = html.slice(0, html.indexOf('</head>'));
+  const line = html.indexOf('class="orbit-loading"');
+  const firstSheet = html.indexOf('<link rel="stylesheet"');
+  check(
+    'page: the loading line is in the HTML ahead of every stylesheet, none of which can hold it back',
+    line > head.length && firstSheet > line && !head.includes('<link rel="stylesheet"'),
+  );
+  check(
+    'page: the globe replaces the line, a failed load changes it, and it stays away without JavaScript',
+    html.includes(".orbit-loading')?.remove()") && /<script type="module" onerror=/.test(html) &&
+      /<noscript><style>\.orbit-loading \{ display: none; \}/.test(head),
+  );
+}
+
 console.log(`\n${passed} passed, ${failures} failed`);
 process.exitCode = failures ? 1 : 0;

@@ -7,15 +7,9 @@
   <meta name="description" content="Where CTS-SAT-1 (FrontierSat) is now, where it was when each photo was taken, and when it next passes over Calgary.">
   <meta name="color-scheme" content="dark">
   <meta name="theme-color" content="#05070A">
+  <link rel="icon" type="image/png" href="../assets/cubesat-icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600&display=swap">
-  <link rel="stylesheet" href="globe.css">
-  <link rel="stylesheet" href="map2d.css">
-  <link rel="stylesheet" href="timepick.css">
-  <link rel="stylesheet" href="colorwheel.css">
-  <link rel="stylesheet" href="placesearch.css">
-  <link rel="stylesheet" href="shotpanel.css">
   <link rel="modulepreload" href="globe.js">
   <link rel="modulepreload" href="vendor/three.module.min.js">
   <link rel="modulepreload" href="vendor/satellite.es.js">
@@ -169,7 +163,22 @@
       font: 16px/1.5 "Jost", system-ui, sans-serif;
       color: #E6EBF0;
     }
+
+    /* Shows with the HTML, before anything else has loaded; the globe replaces it. */
+    .orbit-loading {
+      position: absolute;
+      inset: var(--nav-h) 0 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0;
+      padding: 24px;
+      font: 16px/1.5 "Jost", system-ui, -apple-system, "Segoe UI", sans-serif;
+      text-align: center;
+      color: #E6EBF0;
+    }
   </style>
+  <noscript><style>.orbit-loading { display: none; }</style></noscript>
 </head>
 <body>
   <nav class="site-nav" aria-label="Main">
@@ -185,7 +194,7 @@
       <button type="button" class="nav-btn" id="credits">Credits</button>
     </div>
   </nav>
-  <main id="globe" aria-label="CTS-SAT-1 orbit globe"></main>
+  <main id="globe" aria-label="CTS-SAT-1 orbit globe"><p class="orbit-loading" role="status">Loading the globe…</p></main>
   <noscript><p class="nojs">The orbit globe needs JavaScript and WebGL.</p></noscript>
   <script>
     // Browsers won't load ES modules or JSON from file:// pages.
@@ -195,7 +204,17 @@
         '<code>python -m http.server</code> in the site folder and visit /globe/.</p>';
     }
   </script>
-  <script type="module">
+  <!-- Here rather than in the head: the nav and the loading line above carry
+       their own styles, so they show without waiting for any of these. The
+       module below still waits for them, so the globe never appears unstyled. -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="globe.css">
+  <link rel="stylesheet" href="map2d.css">
+  <link rel="stylesheet" href="timepick.css">
+  <link rel="stylesheet" href="colorwheel.css">
+  <link rel="stylesheet" href="placesearch.css">
+  <link rel="stylesheet" href="shotpanel.css">
+  <script type="module" onerror="var l=document.querySelector('.orbit-loading');if(l)l.textContent='The globe couldn’t load. Check your connection and reload the page.';">
     import { mountGlobe } from './globe.js';
     import { mountCredits } from '../assets/credits.js';
 
@@ -209,6 +228,7 @@
       hashState: true,
       keyboard: 'global',
     });
+    document.querySelector('.orbit-loading')?.remove();
   </script>
 </body>
 </html>
