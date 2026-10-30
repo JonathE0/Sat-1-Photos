@@ -150,6 +150,41 @@ function describeChange(changes) {
   return shown ? `${verb} the ${field} to ${shown}` : `${verb} the ${field}`;
 }
 
+// Opened from the orbit globe: #/photo/<id>?globe=<the globe's link state>
+// (t, photo, view). The way back only ever leads to the site's own globe page.
+function globeHref() {
+  const hash = location.hash;
+  const qi = hash.indexOf('?');
+  const state = qi < 0 ? null : new URLSearchParams(hash.slice(qi + 1)).get('globe');
+  return state && /^[\w.:,=&%+-]+$/.test(state) ? `globe/index.html#${state}` : null;
+}
+
+function backToGlobe(href) {
+  // Came straight from the globe in this tab: step back, so it returns just as it was left.
+  let from = null;
+  try { from = new URL(document.referrer); } catch { /* no referrer */ }
+  const target = new URL(href, location.href);
+  if (history.length > 1 && from && from.origin === target.origin && from.pathname === target.pathname) history.back();
+  else location.assign(target.href);
+}
+
+// The picture's own address, without the way back to someone's globe view.
+function pictureUrl(p) {
+  return new URL(`#/photo/${encodeURIComponent(p.id)}`, location.href).href;
+}
+
+function globeLink(href, attrs, ...children) {
+  return h('a', {
+    ...attrs,
+    href,
+    onclick: (e) => {
+      if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      e.preventDefault();
+      backToGlobe(href);
+    },
+  }, ...children);
+}
+
 export function createDetail(root, ctx) {
   let currentId = null;
   let form = null; // { dirty(), setName(name), focusSave() } for the open edit form
@@ -174,7 +209,7 @@ export function createDetail(root, ctx) {
     return link;
   }
 
-  function stage(p, prev, next) {
+  function stage(p, prev, next, globe) {
     const note = shotNote(p);
     return h('div', { class: 'stage-wrap' },
       h('div', { class: 'stage' },
@@ -191,6 +226,7 @@ export function createDetail(root, ctx) {
           note && h('figcaption', { class: 'shot-note' }, note)),
         h('nav', { class: 'stepper', 'aria-label': 'Browse pictures' },
           stepLink(prev, 'prev'),
+          globe && globeLink(globe, { class: 'step step-globe' }, 'Back to globe'),
           stepLink(next, 'next'))));
   }
 
@@ -356,7 +392,7 @@ export function createDetail(root, ctx) {
     const copy = h('button', { type: 'button', class: 'linkish' }, 'Copy link');
     let timer = 0;
     copy.addEventListener('click', async () => {
-      const ok = await copyText(location.href);
+      const ok = await copyText(pictureUrl(p));
       copy.textContent = ok ? 'Link copied' : 'Copy failed';
       announce(ok ? 'Link copied' : 'Could not copy the link');
       window.clearTimeout(timer);
@@ -378,7 +414,7 @@ export function createDetail(root, ctx) {
         `Picture: ${p.title}`,
         `ID: ${p.id}`,
         `File: ${p.raw.file || ''}`,
-        `Link: ${location.href}`,
+        `Link: ${pictureUrl(p)}`,
         '',
         'What should change? (title, notes, place, people, tags, capture time or position)',
         '',
@@ -727,18 +763,21 @@ export function createDetail(root, ctx) {
     const prev = index > 0 ? list[index - 1] : null;
     const next = index >= 0 && index < list.length - 1 ? list[index + 1] : null;
     document.title = `${p.title} · CTS-SAT-1`;
+    const globe = globeHref();
 
     const scrollY = window.scrollY;
     const panel = h('article', { class: 'panel', 'aria-labelledby': 'detail-title' },
       h('div', { class: 'panel-top' },
-        h('a', {
-          href: ctx.backHref(),
-          onclick: (e) => {
-            if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-            e.preventDefault();
-            ctx.close();
-          },
-        }, '← All pictures'),
+        h('span', { class: 'panel-links' },
+          globe && globeLink(globe, null, '← Back to the globe'),
+          h('a', {
+            href: ctx.backHref(),
+            onclick: (e) => {
+              if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+              e.preventDefault();
+              ctx.close();
+            },
+          }, globe ? 'All pictures' : '← All pictures')),
         index >= 0 && h('span', { class: 'mono' }, `${index + 1} of ${list.length}`)),
       h('h1', { class: 'detail-title', id: 'detail-title', tabindex: '-1' }, p.title),
       p.edited.title && h('p', { class: 'title-note' }, `Title edited by ${p.edited.title}`),
@@ -748,7 +787,7 @@ export function createDetail(root, ctx) {
       ctx.editable() ? editSection(p, flash) : readonlyLine(p),
       historySection(p));
 
-    root.replaceChildren(h('div', { class: 'detail' }, stage(p, prev, next), panel));
+    root.replaceChildren(h('div', { class: 'detail' }, stage(p, prev, next, globe), panel));
 
     if (keepScroll) window.scrollTo(0, scrollY);
     const heading = root.querySelector('#detail-title');
@@ -775,7 +814,9 @@ export function createDetail(root, ctx) {
       if (target && target.closest('input, textarea, select, [contenteditable]')) return;
       if (e.key === 'Escape') {
         e.preventDefault();
-        ctx.close();
+        const globe = globeHref();
+        if (globe) backToGlobe(globe);
+        else ctx.close();
         return;
       }
       if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;

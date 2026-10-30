@@ -684,6 +684,7 @@ body[data-view="gallery"] .wordmark { display: none; }
 .step-next { right: 12px; }
 .step.is-off { color: #2E3A46; }
 .step-text { display: none; }
+.step-globe { display: none; } /* phones: "Back to globe" between Previous and Next */
 
 .panel {
   min-width: 0;
@@ -702,6 +703,7 @@ body[data-view="gallery"] .wordmark { display: none; }
 }
 .panel-top a:hover { text-decoration: underline; text-underline-offset: 3px; }
 .panel-top .mono { color: var(--label); }
+.panel-links { display: flex; flex-wrap: wrap; gap: 4px 16px; }
 
 .detail-title {
   margin: 22px 0 0;
@@ -967,6 +969,7 @@ body[data-view="gallery"] .wordmark { display: none; }
     font-weight: 500;
   }
   .step-text { display: inline; }
+  .step-globe { display: flex; }
   .panel { padding: 14px var(--pad) 48px; }
   .detail-title { font-size: 24px; margin-top: 18px; }
 }

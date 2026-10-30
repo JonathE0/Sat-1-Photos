@@ -76,6 +76,13 @@ function safeHref(url) {
   return typeof url === 'string' && /^https?:\/\//i.test(url) ? url : null;
 }
 
+/** view=<lat>,<lon>,<distance> from a link: the camera's ground point and distance. */
+function parseView(text) {
+  const [lat, lon, distance] = String(text || '').split(',').map(Number);
+  if (![lat, lon, distance].every(Number.isFinite) || Math.abs(lat) > 90 || Math.abs(lon) > 180) return null;
+  return { lat, lon, distance };
+}
+
 const ICONS = {
   play: '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 1.8v8.4L10.2 6z" fill="currentColor"/></svg>',
   pause:
@@ -210,6 +217,7 @@ function noScene() {
     setHover: nothing,
     flyToGround: nothing,
     flyToSatellite: nothing,
+    viewPoint: () => null,
     follow: nothing,
     pick: () => null,
     resize: nothing,
@@ -733,6 +741,20 @@ export function mountGlobe(container, options = {}) {
   });
   listen(el.cardClose, 'click', clearSelection);
 
+  // Opening the picture keeps the way back to this exact view: its page gets
+  // our link state as #/photo/<id>?globe=<state>, and so does this page's own
+  // URL, for the browser's Back button.
+  function linkBack(e) {
+    const p = state.selectedId ? findPhoto(state.selectedId) : null;
+    const href = p ? safeHref(p.href) : null;
+    if (!href || !/#\/photo\/[^?]*$/.test(href)) return;
+    e.currentTarget.href = `${href}?globe=${encodeURIComponent(stateParams({ view: true }))}`;
+    if (e.type === 'click') writeHash({ view: true });
+  }
+  for (const a of [el.cardLink, el.cardThumbLink]) {
+    for (const type of ['pointerdown', 'focus', 'click']) listen(a, type, linkBack);
+  }
+
   // ---- readouts --------------------------------------------------------------
   const shown = new Map();
   function put(node, text) {
@@ -993,21 +1015,26 @@ export function mountGlobe(container, options = {}) {
   function hashParams() {
     if (!opts.hashState) return {};
     const p = new URLSearchParams(location.hash.replace(/^#/, ''));
-    return { t: p.get('t'), photo: p.get('photo') };
+    return { t: p.get('t'), photo: p.get('photo'), view: parseView(p.get('view')) };
   }
 
-  function stateParams() {
+  /** #t=<iso>&photo=<id>, and with `view` the camera: &view=<lat>,<lon>,<distance>. */
+  function stateParams({ view = false } = {}) {
     const p = new URLSearchParams();
     if (!state.live) p.set('t', isoUtc(state.ms));
     if (state.selectedId) p.set('photo', state.selectedId);
-    return p.toString().replace(/%3A/gi, ':');
+    const v = view ? scene.viewPoint() : null;
+    if (v) p.set('view', `${v.latDeg.toFixed(2)},${v.lonDeg.toFixed(2)},${v.distance.toFixed(2)}`);
+    return p.toString().replace(/%3A/gi, ':').replace(/%2C/gi, ',');
   }
 
-  function writeHash() {
+  // Routine updates leave the camera out: it moves without telling us, so a
+  // stale view would win over the photo on a reload.
+  function writeHash({ view = false } = {}) {
     if (!opts.hashState || destroyed) return;
     const url = new URL(location.href);
     url.searchParams.delete('photo');
-    const params = stateParams();
+    const params = stateParams({ view });
     url.hash = params ? `#${params}` : '';
     const next = url.href.replace(/#$/, '');
     if (next !== location.href) history.replaceState(history.state, '', next);
@@ -1015,8 +1042,16 @@ export function mountGlobe(container, options = {}) {
 
   function shareUrl() {
     const url = new URL('index.html', MODULE_BASE);
-    const params = stateParams();
+    const params = stateParams({ view: true });
     return params ? `${url.href}#${params}` : url.href;
+  }
+
+  /** Put the camera back where a link's view had it (at the current time). */
+  function applyView(v) {
+    if (!v) return;
+    state.userMovedCamera = true;
+    setFollow(false);
+    scene.flyToGround(v.lat, v.lon, { distance: v.distance, immediate: true });
   }
 
   function applyHash() {
@@ -1029,6 +1064,7 @@ export function mountGlobe(container, options = {}) {
         jumpTo(ms);
       }
     }
+    applyView(h.view);
   }
   if (opts.hashState) listen(window, 'hashchange', applyHash);
 
@@ -1118,6 +1154,7 @@ export function mountGlobe(container, options = {}) {
       jumpTo(ms);
     }
   }
+  applyView(hash.view);
   raf = requestAnimationFrame(frame);
 
   Promise.all([loadOrbit(), loadPhotos()])
@@ -1129,7 +1166,8 @@ export function mountGlobe(container, options = {}) {
       trackKey = null;
       pushScene(true);
       paintPasses();
-      const wanted = pendingFocus || (startPhoto ? { id: startPhoto, fly: true, immediate: true } : null);
+      // a link with a camera view keeps it rather than flying to the photo
+      const wanted = pendingFocus || (startPhoto ? { id: startPhoto, fly: !hash.view, immediate: true } : null);
       pendingFocus = null;
       const focused = wanted ? focusPhoto(wanted.id, { fly: wanted.fly, immediate: wanted.immediate }) : false;
       if (wanted && !focused) {
@@ -1146,6 +1184,7 @@ export function mountGlobe(container, options = {}) {
       // nothing placed to look at: start on the satellite
       const onPhoto = focused && findPhoto(wanted.id)?.placed;
       if (!onPhoto && !state.userMovedCamera) scene.flyToSatellite({ immediate: true });
+      applyView(hash.view); // again, now the Earth is turned to the final time
       markDirty();
     })
     .catch((err) => {

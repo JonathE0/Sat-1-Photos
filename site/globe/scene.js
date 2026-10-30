@@ -833,6 +833,19 @@ export function createScene(canvas, labelLayer, opts = {}) {
     needsRender = true;
   }
 
+  /** Where the camera looks (or is flying to): the ground point under the
+   * view centre at the current Earth rotation, and the camera distance. */
+  function viewPoint() {
+    const c = controls.flight ? controls.flight.to : controls;
+    const s = Math.sin(c.phi);
+    const v = spin(tmp.set(s * Math.sin(c.theta), Math.cos(c.phi), s * Math.cos(c.theta)), -gmstNow);
+    return {
+      latDeg: Math.asin(THREE.MathUtils.clamp(v.y, -1, 1)) / DEG,
+      lonDeg: Math.atan2(-v.z, v.x) / DEG,
+      distance: c.distance,
+    };
+  }
+
   function flyToSatellite({ distance, immediate } = {}) {
     if (!satellite.points.visible) return;
     controls.flyTo(satellite.position.clone(), distance ?? controls.distance, { immediate });
@@ -938,6 +951,7 @@ export function createScene(canvas, labelLayer, opts = {}) {
     setHover,
     flyToGround,
     flyToSatellite,
+    viewPoint,
     follow,
     pick,
     resize,
