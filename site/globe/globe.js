@@ -206,6 +206,7 @@ const TEMPLATE = `
         <h2>Pictures</h2>
         <span class="cg-fine" data-ref="photoCount"></span>
       </div>
+      <button type="button" class="cg-btn cg-highlight" data-ref="highlight" hidden>Highlight photos taken by FrontierSat</button>
       <ul class="cg-list cg-photos" data-ref="photos"></ul>
     </section>
   </div>
@@ -275,6 +276,7 @@ function noScene() {
     setSubsolar: nothing,
     setCoverage: nothing,
     setPins: nothing,
+    highlightPins: nothing,
     setSelected: nothing,
     setHover: nothing,
     flyToGround: nothing,
@@ -460,6 +462,13 @@ export function mountGlobe(container, options = {}) {
   listen(el.fold, 'click', () => {
     satFoldedByUser = el.fold.getAttribute('aria-expanded') === 'true';
     setSatFold(satFoldedByUser);
+  });
+
+  // Red waves from every picture's pin for a couple of seconds (ripple.js).
+  listen(el.highlight, 'click', () => {
+    closeSheet(); // on a phone the pictures' sheet would cover half of them
+    scene.highlightPins();
+    map.highlightPins();
   });
 
   // The header folds to the name, with the choice kept for the next visit.
@@ -838,6 +847,7 @@ export function mountGlobe(container, options = {}) {
     ul.replaceChildren();
     const placed = photos.filter((p) => p.placed).length;
     el.photoCount.textContent = photos.length ? `${photos.length}, ${placed} on the globe` : '';
+    el.highlight.hidden = !placed;
     if (!photos.length) {
       const li = document.createElement('li');
       li.className = 'cg-empty';

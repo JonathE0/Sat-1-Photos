@@ -11,6 +11,7 @@
  */
 import * as THREE from './vendor/three.module.min.js';
 import { DEG, EARTH_RADIUS_KM } from './astro.js';
+import { RIPPLE_COLOR, RIPPLE_GAP_S, RIPPLE_RADIUS_PX, RIPPLE_S, RIPPLE_WAVES, RIPPLE_WAVE_S } from './ripple.js';
 
 const BLUE = '#3C9DF5'; // the satellite and its path, nothing else
 const INK = '#E6EBF0';
@@ -167,6 +168,42 @@ const MARKER_FS = /* glsl */ `
       alpha = cover;
     }
     gl_FragColor = vec4(color, alpha);
+    #include <colorspace_fragment>
+  }
+`;
+
+// The red waves from the picture pins (ripple.js), hidden behind the Earth like the pins.
+const RIPPLE_VS = /* glsl */ `
+  uniform float pixelRatio;
+  uniform float size;
+  void main() {
+    vec4 world = modelMatrix * vec4(position, 1.0);
+    vec3 d = world.xyz - cameraPosition;
+    float len = length(d);
+    d /= len;
+    float b = dot(cameraPosition, d);
+    float h = b * b - (dot(cameraPosition, cameraPosition) - 0.999);
+    bool hidden = h > 0.0 && (-b - sqrt(h)) > 0.0 && (-b - sqrt(h)) < len;
+    gl_Position = projectionMatrix * viewMatrix * world;
+    gl_PointSize = hidden ? 0.0 : size * pixelRatio;
+  }
+`;
+
+const RIPPLE_FS = /* glsl */ `
+  uniform vec3 color;
+  uniform float seconds;
+  void main() {
+    float r = length(gl_PointCoord * 2.0 - 1.0);
+    if (r >= 1.0) discard;
+    float a = 0.0;
+    for (int i = 0; i < ${RIPPLE_WAVES}; i++) {
+      float w = (seconds - float(i) * ${RIPPLE_GAP_S.toFixed(3)}) / ${RIPPLE_WAVE_S.toFixed(3)};
+      if (w < 0.0 || w > 1.0) continue;
+      float radius = 0.06 + 0.88 * (1.0 - (1.0 - w) * (1.0 - w));
+      float ring = (r - radius) / 0.075;
+      a += exp(-ring * ring) * (1.0 - w) * (1.0 - w);
+    }
+    gl_FragColor = vec4(color, min(a, 1.0));
     #include <colorspace_fragment>
   }
 `;
@@ -604,12 +641,34 @@ export function createScene(canvas, labelLayer, opts = {}) {
   const subsolar = makeMarker('sun', '#E9E4D4', 13, earth);
 
   // ---- photo pins ----------------------------------------------------------
-  let pins = { points: null, ids: [], positions: [], geometry: null };
+  let pins = { points: null, ripple: null, ids: [], positions: [], geometry: null };
   let selectedId = null;
   let hoverId = null;
   const pinColor = new THREE.Color(MUTED);
   const pinSelected = new THREE.Color(INK);
   const pinMaterial = markerMaterial('square');
+  const rippleMaterial = keep(
+    new THREE.ShaderMaterial({
+      uniforms: {
+        pixelRatio: { value: renderer.getPixelRatio() },
+        size: { value: RIPPLE_RADIUS_PX * 2 },
+        color: { value: new THREE.Color(RIPPLE_COLOR) },
+        seconds: { value: 0 },
+      },
+      vertexShader: RIPPLE_VS,
+      fragmentShader: RIPPLE_FS,
+      transparent: true,
+      depthTest: false,
+      depthWrite: false,
+    }),
+  );
+  let rippleStart = null;
+
+  function highlightPins() {
+    rippleStart = performance.now();
+    if (pins.ripple) pins.ripple.visible = true;
+    needsRender = true;
+  }
 
   function paintPins() {
     if (!pins.geometry) return;
@@ -627,10 +686,10 @@ export function createScene(canvas, labelLayer, opts = {}) {
 
   function setPins(list) {
     if (pins.points) {
-      earth.remove(pins.points);
+      earth.remove(pins.points, pins.ripple);
       pins.geometry.dispose();
     }
-    pins = { points: null, ids: [], positions: [], geometry: null };
+    pins = { points: null, ripple: null, ids: [], positions: [], geometry: null };
     if (!list.length) {
       needsRender = true;
       return;
@@ -646,8 +705,13 @@ export function createScene(canvas, labelLayer, opts = {}) {
     const points = new THREE.Points(geometry, pinMaterial);
     points.frustumCulled = false;
     points.renderOrder = 3;
-    earth.add(points);
+    const ripple = new THREE.Points(geometry, rippleMaterial);
+    ripple.frustumCulled = false;
+    ripple.renderOrder = 2.5; // under the pins
+    ripple.visible = rippleStart !== null;
+    earth.add(ripple, points);
     pins.points = points;
+    pins.ripple = ripple;
     pins.geometry = geometry;
     paintPins();
   }
@@ -961,6 +1025,7 @@ export function createScene(canvas, labelLayer, opts = {}) {
     setSubsolar,
     setCoverage,
     setPins,
+    highlightPins,
     setSelected,
     setHover,
     flyToGround,
@@ -972,6 +1037,16 @@ export function createScene(canvas, labelLayer, opts = {}) {
     satelliteLabel: satLabel,
     /** Render if anything changed; returns true if a frame was drawn. */
     frame(now, force = false) {
+      if (rippleStart !== null) {
+        const seconds = (now - rippleStart) / 1000;
+        if (seconds >= RIPPLE_S) {
+          rippleStart = null;
+          if (pins.ripple) pins.ripple.visible = false;
+        } else {
+          rippleMaterial.uniforms.seconds.value = Math.max(0, seconds);
+        }
+        needsRender = true;
+      }
       const moved = controls.update(now);
       if (!(moved || needsRender || force)) return false;
       renderer.render(scene, camera);

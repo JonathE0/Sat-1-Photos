@@ -21,6 +21,7 @@
  * fixtures/verify.mjs checks them against astro.js under Node.
  */
 import { DEG, clamp, footprintAngle, sunDirectionEcef, subsolarPoint } from './astro.js';
+import { RIPPLE_COLOR, RIPPLE_GAP_S, RIPPLE_RADIUS_PX, RIPPLE_S, RIPPLE_WAVES, RIPPLE_WAVE_S } from './ripple.js';
 
 const BLUE = '#3C9DF5'; // the satellite and its path, nothing else
 const INK = '#E6EBF0';
@@ -870,6 +871,33 @@ export function createMap(container, opts = {}) {
 
   const pinSize = (id) => (id === selectedId ? 12 : id === hoverId ? 10 : 8) * scale;
 
+  // the red waves from the pins when "Highlight photos" is pressed (ripple.js)
+  let rippleStart = null;
+  let rippleSeconds = 0;
+
+  function drawRipples() {
+    const reach = RIPPLE_RADIUS_PX * scale;
+    octx.save();
+    octx.strokeStyle = RIPPLE_COLOR;
+    octx.shadowColor = RIPPLE_COLOR;
+    octx.shadowBlur = 8 * scale * ratio; // not scaled by the canvas transform
+    octx.lineWidth = 2 * scale;
+    for (const p of pins) {
+      const y = view.y(p.latDeg);
+      for (const x of view.xs(p.lonDeg, reach)) {
+        for (let i = 0; i < RIPPLE_WAVES; i++) {
+          const w = (rippleSeconds - i * RIPPLE_GAP_S) / RIPPLE_WAVE_S;
+          if (w < 0 || w > 1) continue;
+          octx.globalAlpha = (1 - w) * (1 - w);
+          octx.beginPath();
+          octx.arc(x, y, reach * (0.06 + 0.88 * (1 - (1 - w) * (1 - w))), 0, 2 * Math.PI);
+          octx.stroke();
+        }
+      }
+    }
+    octx.restore();
+  }
+
   function drawOverlay() {
     octx.setTransform(ratio, 0, 0, ratio, 0, 0);
     octx.clearRect(0, 0, view.w, view.h);
@@ -896,6 +924,8 @@ export function createMap(container, opts = {}) {
     for (const x of view.xs(subsolar.lonDeg, m)) sunMark(x, view.y(subsolar.latDeg), 13 * scale);
     const stationXs = station ? view.xs(station.lonDeg, m) : [];
     for (const x of stationXs) diamond(x, view.y(station.latDeg), 10 * scale, INK);
+
+    if (rippleStart !== null) drawRipples();
 
     const order = pins.filter((p) => p.id !== selectedId && p.id !== hoverId);
     for (const id of [hoverId, selectedId]) {
@@ -993,6 +1023,10 @@ export function createMap(container, opts = {}) {
     setStation,
     setTrackColor,
     setPins,
+    highlightPins() {
+      rippleStart = performance.now();
+      overDirty = true;
+    },
     setSelected,
     setHover,
     flyToGround,
@@ -1008,6 +1042,11 @@ export function createMap(container, opts = {}) {
     /** Draw whatever changed; returns true if anything was drawn. */
     frame(now) {
       if (!visible) return false;
+      if (rippleStart !== null) {
+        rippleSeconds = Math.max(0, (now - rippleStart) / 1000);
+        if (rippleSeconds >= RIPPLE_S) rippleStart = null;
+        overDirty = true;
+      }
       stepFlight(now);
       sizeWorld();
       const drawWorld = worldDirty;

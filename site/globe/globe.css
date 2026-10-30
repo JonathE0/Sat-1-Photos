@@ -456,6 +456,16 @@
   flex-direction: column;
 }
 
+.cg-highlight {
+  flex: none;
+  width: 100%;
+  margin-bottom: calc(12 * var(--cg-u));
+}
+
+.cg-highlight[hidden] {
+  display: none;
+}
+
 .cg-photos {
   min-height: 0;
   margin: 0 calc(-1 * var(--cg-pad)) calc(-1 * var(--cg-pad));
