@@ -27,17 +27,25 @@ export function utcShort(ms) {
 
 const calgaryClock = new Intl.DateTimeFormat('en-US', {
   timeZone: 'America/Edmonton',
+  day: 'numeric',
+  month: 'short',
   hour: '2-digit',
   minute: '2-digit',
   hourCycle: 'h23',
   timeZoneName: 'short',
 });
 
-/** { time: "21:58", zone: "MDT" } in Calgary. */
+/** { time: "18:54", zone: "MDT", date: "24 Oct", otherDay: true } in Calgary; otherDay is
+ * whether that date differs from the UTC date, which is what most lines already show. */
 export function calgaryTime(ms) {
   const parts = {};
   for (const p of calgaryClock.formatToParts(ms)) parts[p.type] = p.value;
-  return { time: `${parts.hour}:${parts.minute}`, zone: parts.timeZoneName || '' };
+  return {
+    time: `${parts.hour}:${parts.minute}`,
+    zone: parts.timeZoneName || '',
+    date: `${parts.day} ${parts.month}`,
+    otherDay: Number(parts.day) !== new Date(ms).getUTCDate(),
+  };
 }
 
 /** "2 h 14 min", "45 min", "3 d 4 h" */

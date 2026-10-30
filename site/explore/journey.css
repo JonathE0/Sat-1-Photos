@@ -610,6 +610,19 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
 .jy-pin.is-off { visibility: hidden; }
 .jy-pin.in-pile,
 .jy-pin.is-under { pointer-events: none; }
+/* A dark frame (black, noise, or the Sun as a dot) has nothing to show at this size: a
+   small dim square rather than a black thumbnail in a frame. It still takes a pointer
+   over a fair area, and its card shows the picture. */
+.jy-marks .jy-pin.jy-pin-dark {
+  width: 10px;
+  height: 10px;
+  border: 1px solid color-mix(in srgb, var(--jy-ink) 55%, transparent);
+  background: color-mix(in srgb, var(--jy-space) 60%, transparent);
+}
+.jy-marks .jy-pin.jy-pin-dark::before { content: ""; position: absolute; inset: -10px; }
+@media (pointer: coarse) { .jy-marks .jy-pin.jy-pin-dark::before { inset: -18px; } }
+.jy-marks .jy-pin.jy-pin-dark:hover,
+.jy-marks .jy-pin.jy-pin-dark:focus-visible { border-color: var(--jy-ink); }
 
 .jy-pile-count {
   position: absolute;
@@ -921,6 +934,11 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
 }
 .jy-narrow .jy-panel.is-on { transform: none; }
 .jy-narrow .jy-panel.is-open { max-height: 85%; overflow: auto; }
+/* The peek has nothing of its own to scroll, so a swipe on it during the story scrolls the
+   page. At the end there is no page to scroll: its swipes are its own (journey.js opens it
+   on one going up). */
+.jy-narrow .jy-panel:not(.is-open) { overscroll-behavior: auto; }
+.jy-narrow.jy-locked .jy-panel:not(.is-open) { touch-action: none; }
 .jy-narrow .jy-grab {
   display: flex;
   flex: none;

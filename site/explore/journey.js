@@ -121,6 +121,9 @@ const SAT_UNDER_LIMB = 0.06;
 /** journey.css data-fit: what the end view gives up when short of room (see endRoom). */
 const FIT_NO_FACTS = 2;
 const FIT_MOST = 4;
+/** The satellite's light in the Earth's shadow: enough to find it, well under the Sun's 3.2. */
+const SAT_SHADOW_AMBIENT = 0.8;
+const SAT_SHADOW_FILL = 0.2;
 /** Set in this tab once the story has been finished, so coming back doesn't mean scrolling it again. */
 const STORY_FINISHED_KEY = 'cts-story-finished';
 const storyFinished = {
@@ -180,80 +183,9 @@ function template(id, siteRoot) {
   return `
   <section class="jy" aria-label="CTS-SAT-1 right now">
     <div class="jy-stage">
-      <canvas class="jy-canvas" tabindex="-1"
-        aria-label="The Earth and CTS-SAT-1. Drag or use the arrow keys to look around; plus and minus zoom."></canvas>
-      <canvas class="jy-still" hidden aria-hidden="true"></canvas>
-      <div class="jy-marks"></div>
-      <canvas class="jy-over-canvas" aria-hidden="true"></canvas>
-      <div class="jy-marks jy-marks-sat" data-ref="satMarks">
-        <button type="button" class="jy-sat" data-ref="sat" hidden
-          aria-label="CTS-SAT-1: where it is now and its latest picture"><span class="jy-sat-label" aria-hidden="true">CTS-SAT-1</span></button>
-      </div>
-      <div class="jy-card" data-ref="card" hidden></div>
-
-      <div class="jy-text">
-        <div class="jy-beat jy-b1" data-ref="b1">
-          <h1 class="jy-h1"><span class="jy-words">CTS-SAT-1</span></h1>
-          <p class="jy-sub"><span class="jy-words">Interactive picture visualizer</span></p>
-          <p class="jy-lead jy-intro-only"><span class="jy-words">Calgary To Space\u2019s first satellite, built by University of Calgary students and in orbit since ${launchDate}.</span></p>
-          <p class="jy-cue jy-intro-only" data-ref="cue" tabindex="-1"><span class="jy-words">Scroll to learn more</span> ${ICON_DOWN}</p>
-          <p class="jy-lead jy-live-lead jy-end-only"><span class="jy-words" data-ref="liveLead"></span> <span class="jy-words jy-lead-more" data-ref="liveMore"></span></p>
-          <p class="jy-tip jy-end-only" data-ref="tip"><span class="jy-words" data-ref="satTip"></span></p>
-          <p class="jy-hint jy-end-only" data-ref="hint"><span class="jy-words" data-ref="hintText"></span></p>
-        </div>
-        <p class="jy-beat jy-statement jy-b2" data-ref="b2"><span class="jy-words" data-ref="b2t"></span></p>
-      </div>
-
-      <div class="jy-time" data-ref="time" role="group" aria-label="Time">
-        <p class="jy-clock"><span class="jy-clock-main" data-ref="clockMain"></span><span class="jy-clock-sub" data-ref="clockSub"></span></p>
-        <div class="jy-speed" role="radiogroup" aria-label="Speed">
-          ${SPEEDS.map((s) => `<label><input type="radio" name="jy-speed-${id}" value="${s}"${s === 1 ? ' checked' : ''}><span>${s}\u00d7</span></label>`).join('')}
-        </div>
-        <button type="button" class="jy-btn jy-now" data-ref="now">Now</button>
-      </div>
-
-      <div class="jy-corner" data-ref="corner">
-        <button type="button" class="jy-textbtn jy-again" data-ref="again">Play the intro again</button>
-        <button type="button" class="jy-textbtn jy-details" data-ref="details" aria-expanded="false"
-          aria-controls="jy-panel-${id}">Satellite details</button>
-        <a class="jy-btn jy-all" data-ref="all"></a>
-        <div class="jy-zoom" role="group" aria-label="Zoom">
-          <button type="button" class="jy-sq" data-ref="zoomOut" aria-label="Zoom out">${ICON_MINUS}</button>
-          <button type="button" class="jy-sq" data-ref="zoomIn" aria-label="Zoom in">${ICON_PLUS}</button>
-        </div>
-      </div>
-
-      <section class="jy-credits" id="jy-credits-${id}" data-ref="credits" hidden role="dialog" aria-modal="false"
-        aria-labelledby="jy-credits-title-${id}">
-        <div class="jy-panel-head">
-          <h2 class="jy-panel-title" id="jy-credits-title-${id}" tabindex="-1">Credits</h2>
-          <button type="button" class="jy-textbtn" data-ref="creditsClose">Close</button>
-        </div>
-        <img class="jy-credits-logo" src="${logo}" width="640" height="204" alt="CalgaryToSpace">
-        <ul class="jy-credits-links">
-          <li><a class="jy-link" href="https://www.calgarytospace.ca/">calgarytospace.ca</a></li>
-          <li><a class="jy-link" href="https://frontiersat.mooo.com/">FrontierSat dashboard</a></li>
-          <li><a class="jy-link" href="https://github.com/CalgaryToSpace">github.com/CalgaryToSpace</a></li>
-        </ul>
-        <p>Website designed by Jonathan Eng and Claude <span aria-hidden="true">\u{1F6F0}️</span></p>
-        <p>Thank you to the mission operations team, who do a great job of keeping FrontierSat running and getting its
-          pictures down to Earth. None of this would be possible without them.</p>
-        <p>That thanks extends to the whole CalgaryToSpace team, whose work designing, building and testing the
-          satellite put it in orbit in the first place.</p>
-        <p>Earth: NASA Blue Marble, Black Marble and cloud imagery. Orbital elements:
-          <a class="jy-link" href="https://www.space-track.org/">Space-Track.org</a>. Packets: the
-          <a class="jy-link" href="https://network.satnogs.org/">SatNOGS network</a> and the team's own ground station.
-          Place names: © <a class="jy-link" href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>.</p>
-        <p>Sky: the <a class="jy-link" href="http://tdc-www.harvard.edu/catalogs/bsc5.html">Yale Bright Star Catalogue</a>
-          (Hoffleit and Warren, 1991) and the Moon from NASA's Scientific Visualization Studio
-          (<a class="jy-link" href="https://svs.gsfc.nasa.gov/4720">CGI Moon Kit</a>).</p>
-        <p>CubeSat model: NASA IceCube, a 3U like CTS-SAT-1, by NASA/Christopher R. Meaney (NASA 3D Resources,
-          public domain); drawn far larger than life.</p>
-        <div class="jy-news-slot" data-ref="newsSlot"></div>
-      </section>
-
-      <div class="jy-facts-slot" data-ref="factsSlot"></div>
-
+      <!-- This order is the tab order and the reading order: what is on screen, from the top.
+           How things stack is z-index in journey.css, not this. resize() swaps the last two when
+           the corner row sits above the time row. -->
       <div class="jy-dock">
         <button type="button" class="jy-summary" data-ref="summary" aria-expanded="false" aria-controls="jy-panel-${id}"
           aria-label="CTS-SAT-1: where it is now"><span class="jy-summary-text"><span class="jy-summary-name">CTS-SAT-1</span> <span data-ref="summaryWhere"></span></span>${ICON_DOWN}</button>
@@ -297,6 +229,80 @@ function template(id, siteRoot) {
           </section>
         </div>
       </aside>
+      </div>
+
+      <section class="jy-credits" id="jy-credits-${id}" data-ref="credits" hidden role="dialog" aria-modal="false"
+        aria-labelledby="jy-credits-title-${id}">
+        <div class="jy-panel-head">
+          <h2 class="jy-panel-title" id="jy-credits-title-${id}" tabindex="-1">Credits</h2>
+          <button type="button" class="jy-textbtn" data-ref="creditsClose">Close</button>
+        </div>
+        <img class="jy-credits-logo" src="${logo}" width="640" height="204" alt="CalgaryToSpace">
+        <ul class="jy-credits-links">
+          <li><a class="jy-link" href="https://www.calgarytospace.ca/">calgarytospace.ca</a></li>
+          <li><a class="jy-link" href="https://frontiersat.mooo.com/">FrontierSat dashboard</a></li>
+          <li><a class="jy-link" href="https://github.com/CalgaryToSpace">github.com/CalgaryToSpace</a></li>
+        </ul>
+        <p>Website designed by Jonathan Eng and Claude <span aria-hidden="true">\u{1F6F0}️</span></p>
+        <p>Thank you to the mission operations team, who do a great job of keeping FrontierSat running and getting its
+          pictures down to Earth. None of this would be possible without them.</p>
+        <p>That thanks extends to the whole CalgaryToSpace team, whose work designing, building and testing the
+          satellite put it in orbit in the first place.</p>
+        <p>Earth: NASA Blue Marble, Black Marble and cloud imagery. Orbital elements:
+          <a class="jy-link" href="https://www.space-track.org/">Space-Track.org</a>. Packets: the
+          <a class="jy-link" href="https://network.satnogs.org/">SatNOGS network</a> and the team's own ground station.
+          Place names: © <a class="jy-link" href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>.</p>
+        <p>Sky: the <a class="jy-link" href="http://tdc-www.harvard.edu/catalogs/bsc5.html">Yale Bright Star Catalogue</a>
+          (Hoffleit and Warren, 1991) and the Moon from NASA's Scientific Visualization Studio
+          (<a class="jy-link" href="https://svs.gsfc.nasa.gov/4720">CGI Moon Kit</a>).</p>
+        <p>CubeSat model: NASA IceCube, a 3U like CTS-SAT-1, by NASA/Christopher R. Meaney (NASA 3D Resources,
+          public domain); drawn far larger than life.</p>
+        <div class="jy-news-slot" data-ref="newsSlot"></div>
+      </section>
+
+      <div class="jy-text">
+        <div class="jy-beat jy-b1" data-ref="b1">
+          <h1 class="jy-h1"><span class="jy-words">CTS-SAT-1</span></h1>
+          <p class="jy-sub"><span class="jy-words">Interactive picture visualizer</span></p>
+          <p class="jy-lead jy-intro-only"><span class="jy-words">Calgary To Space\u2019s first satellite, built by University of Calgary students and in orbit since ${launchDate}.</span></p>
+          <p class="jy-cue jy-intro-only" data-ref="cue" tabindex="-1"><span class="jy-words">Scroll to learn more</span> ${ICON_DOWN}</p>
+          <p class="jy-lead jy-live-lead jy-end-only"><span class="jy-words" data-ref="liveLead"></span> <span class="jy-words jy-lead-more" data-ref="liveMore"></span></p>
+          <p class="jy-tip jy-end-only" data-ref="tip"><span class="jy-words" data-ref="satTip"></span></p>
+          <p class="jy-hint jy-end-only" data-ref="hint"><span class="jy-words" data-ref="hintText"></span></p>
+        </div>
+        <p class="jy-beat jy-statement jy-b2" data-ref="b2"><span class="jy-words" data-ref="b2t"></span></p>
+      </div>
+
+      <canvas class="jy-canvas" tabindex="-1"
+        aria-label="The Earth and CTS-SAT-1. Drag or use the arrow keys to look around; plus and minus zoom."></canvas>
+      <canvas class="jy-still" hidden aria-hidden="true"></canvas>
+      <div class="jy-marks"></div>
+      <canvas class="jy-over-canvas" aria-hidden="true"></canvas>
+      <div class="jy-marks jy-marks-sat" data-ref="satMarks">
+        <button type="button" class="jy-sat" data-ref="sat" hidden
+          aria-label="CTS-SAT-1: where it is now and its latest picture"><span class="jy-sat-label" aria-hidden="true">CTS-SAT-1</span></button>
+      </div>
+      <div class="jy-card" data-ref="card" hidden></div>
+
+      <div class="jy-facts-slot" data-ref="factsSlot"></div>
+
+      <div class="jy-time" data-ref="time" role="group" aria-label="Time">
+        <p class="jy-clock"><span class="jy-clock-main" data-ref="clockMain"></span><span class="jy-clock-sub" data-ref="clockSub"></span></p>
+        <div class="jy-speed" role="radiogroup" aria-label="Speed">
+          ${SPEEDS.map((s) => `<label><input type="radio" name="jy-speed-${id}" value="${s}"${s === 1 ? ' checked' : ''}><span>${s}\u00d7</span></label>`).join('')}
+        </div>
+        <button type="button" class="jy-btn jy-now" data-ref="now">Now</button>
+      </div>
+
+      <div class="jy-corner" data-ref="corner">
+        <button type="button" class="jy-textbtn jy-again" data-ref="again">Play the intro again</button>
+        <button type="button" class="jy-textbtn jy-details" data-ref="details" aria-expanded="false"
+          aria-controls="jy-panel-${id}">Satellite details</button>
+        <a class="jy-btn jy-all" data-ref="all"></a>
+        <div class="jy-zoom" role="group" aria-label="Zoom">
+          <button type="button" class="jy-sq" data-ref="zoomOut" aria-label="Zoom out">${ICON_MINUS}</button>
+          <button type="button" class="jy-sq" data-ref="zoomIn" aria-label="Zoom in">${ICON_PLUS}</button>
+        </div>
       </div>
     </div>
   </section>`;
@@ -498,6 +504,7 @@ export function mountJourney(container, options = {}) {
       stage.classList.add('jy-earth-ready');
       for (const pin of pins) loadPinPicture(pin.el.querySelector('img'));
       loadPlaceNames();
+      needsFrame = true;
     };
     // fade in once the full maps are uploaded (the upload itself can stall a
     // frame, so not mid-fade); on a very slow line, show the previews anyway
@@ -652,6 +659,9 @@ export function mountJourney(container, options = {}) {
     ui: 1,
     endText: null, // the text column at the end of the story, stage px
     textNow: [], // text on screen now, stage px
+    covers: [], // controls and panels on screen now, stage px: pins don't show half under them
+    pinHalf: { x: 18, y: 14 }, // half a pin, px
+    stacked: false, // the corner row sits above the time row
   };
 
   function stageRect() {
@@ -828,6 +838,7 @@ export function mountJourney(container, options = {}) {
     const h = sat.state ? sat.state.altKm / EARTH_RADIUS_KM : 500 / EARTH_RADIUS_KM;
     frame.a = solveChaseHeight(delta, frame.b, h);
     frame.satPx = (narrow ? 36 : 44) * frame.ui;
+    frame.pinHalf = narrow ? { x: 14, y: 11 } : { x: 16 * frame.ui + 2, y: 12 * frame.ui + 2 };
     stage.style.setProperty('--jy-ui', String(frame.ui));
     measureText();
   }
@@ -858,6 +869,18 @@ export function mountJourney(container, options = {}) {
     }
     frame.textBoxes = lines;
     frame.textNow = lines.map((b) => ({ left: b.left - 8, top: b.top - 8, right: b.right + 8, bottom: b.bottom + 8 }));
+    // the controls and panels showing now
+    const covers = [];
+    const cover = (el) => {
+      const b = boxOf(el, s);
+      if (b && getComputedStyle(el).visibility !== 'hidden') covers.push(b);
+    };
+    for (const el of [...ref.time.children, ...ref.corner.children, ...ref.factsSlot.children, ref.summary]) cover(el);
+    // the viewfinder's fade out would still count as showing, so go by what took its place
+    if (state.panel) cover(ref.panel);
+    else if (state.creditsOpen) cover(ref.credits);
+    else cover(ref.viewfinderSlot);
+    frame.covers = covers;
   }
 
   function resize() {
@@ -878,6 +901,13 @@ export function mountJourney(container, options = {}) {
     camera.fov = frame.vfov;
     camera.updateProjectionMatrix();
     root.classList.toggle('jy-narrow', frame.narrow);
+    // tab order follows the screen: when the corner row sits above the time row it comes first
+    const stacked = frame.narrow || W < 1100;
+    if (stacked !== frame.stacked) {
+      frame.stacked = stacked;
+      if (stacked) ref.corner.after(ref.time);
+      else ref.time.after(ref.corner);
+    }
     if (!webgl) layoutStill();
     readScroll(); // the story may be a different length now
     needsFrame = true;
@@ -1342,7 +1372,10 @@ export function mountJourney(container, options = {}) {
       if (!ui) hideCard();
       changed = true;
     }
-    ref.again.hidden = !state.locked;
+    if (ref.again.hidden !== !state.locked) {
+      ref.again.hidden = !state.locked;
+      changed = true; // the end's controls are up: where pins hide follows them
+    }
     if (changed) measureText();
   }
 
@@ -1361,10 +1394,17 @@ export function mountJourney(container, options = {}) {
   }
 
   const underText = (x, y) => frame.textNow.some((r) => x > r.left && x < r.right && y > r.top && y < r.bottom);
+  /** A pin at x, y would be at least partly under a control; `pad` px further out counts too. */
+  const underControl = (x, y, pad) => {
+    const hx = frame.pinHalf.x + pad;
+    const hy = frame.pinHalf.y + pad;
+    return frame.covers.some((r) => x + hx > r.left && x - hx < r.right && y + hy > r.top && y - hy < r.bottom);
+  };
 
   /** Pins wait for the Earth: on a slow line their pictures would hold up its textures, and they show only at the end. */
   function loadPinPicture(img) {
-    if (img.dataset.src) img.src = img.dataset.src;
+    if (!img?.dataset.src) return;
+    img.src = img.dataset.src;
     delete img.dataset.src;
   }
 
@@ -1386,13 +1426,17 @@ export function mountJourney(container, options = {}) {
       const place = placeOf(p);
       a.setAttribute('aria-label', `${place ? `${place}, ` : ''}${photoTime(p)}`);
       a.classList.toggle('jy-pin-square', !!isSquare(p));
-      const img = document.createElement('img');
-      img.alt = '';
-      img.decoding = 'async';
-      img.dataset.src = new URL(p.thumb || p.src, siteRoot).href;
-      img.addEventListener('error', () => { img.hidden = true; }); // an empty pin, not a broken icon
-      if (earthReady) loadPinPicture(img);
-      a.appendChild(img);
+      // a dark frame has nothing to show at this size: a small dim mark, and its picture in the card
+      a.classList.toggle('jy-pin-dark', !!p.dark);
+      if (!p.dark) {
+        const img = document.createElement('img');
+        img.alt = '';
+        img.decoding = 'async';
+        img.dataset.src = new URL(p.thumb || p.src, siteRoot).href;
+        img.addEventListener('error', () => { img.hidden = true; }); // an empty pin, not a broken icon
+        if (earthReady) loadPinPicture(img);
+        a.appendChild(img);
+      }
       const count = document.createElement('span');
       count.className = 'jy-pile-count';
       count.hidden = true;
@@ -1442,9 +1486,14 @@ export function mountJourney(container, options = {}) {
         if (!hiddenByEarth(camera.position, pinWorld, 0.998)) {
           const s = toScreen(pinWorld);
           if (s && s.x > -40 && s.x < W + 40 && s.y > -40 && s.y < H + 40 && !underText(s.x, s.y)) {
-            pin.x = s.x;
-            pin.y = s.y;
-            vis = true;
+            // half under a control a pin is neither readable nor tappable. It stays hidden
+            // until it's a little way clear, so it can't flicker at the edge as the Earth turns.
+            pin.blocked = underControl(s.x, s.y, pin.blocked ? 6 : 0);
+            if (!pin.blocked) {
+              pin.x = s.x;
+              pin.y = s.y;
+              vis = true;
+            }
           }
         }
       }
@@ -1676,11 +1725,17 @@ export function mountJourney(container, options = {}) {
     paintPanel(true);
     reframe();
     syncViewfinder();
+    measureSettled();
     if (focus) {
       // the bar stays right above the details; a phone's sheet has its own title
       const target = frame.narrow ? ref.panel.querySelector('.jy-panel-title') : ref.summary;
       target.focus({ preventScroll: true });
     }
+  }
+
+  /** A panel slides in: where pins hide follows where it lands, not where it starts. */
+  function measureSettled() {
+    setTimeout(() => !destroyed && measureText(), 280);
   }
 
   /** The panel opened or closed: ease the satellite clear of it (or back). */
@@ -1714,6 +1769,7 @@ export function mountJourney(container, options = {}) {
     ref.panel.classList.toggle('is-open', open);
     ref.more.setAttribute('aria-expanded', String(open));
     ref.more.textContent = open ? 'Less' : 'More';
+    measureText();
   }
 
   /** A click on the satellite: the panel; a double click: fly in close. */
@@ -1787,6 +1843,25 @@ export function mountJourney(container, options = {}) {
     sheetDrag = null;
   });
 
+  // On a phone's peek, a swipe up anywhere on the sheet opens it. Only once the story has
+  // locked (journey.css gives the sheet its touches then): before that the same swipe
+  // scrolls the page, and an open sheet keeps its own scrolling.
+  let peekSwipeY = null;
+  listen(ref.panel, 'pointerdown', (e) => {
+    const peeking = frame.narrow && state.locked && !state.sheetOpen;
+    peekSwipeY = peeking && e.pointerType !== 'mouse' && !e.target.closest('.jy-grab') ? e.clientY : null;
+  });
+  listen(ref.panel, 'pointermove', (e) => {
+    if (peekSwipeY === null || peekSwipeY - e.clientY < 24) return;
+    peekSwipeY = null;
+    setSheet(true);
+  });
+  for (const type of ['pointerup', 'pointercancel']) {
+    listen(ref.panel, type, () => {
+      peekSwipeY = null;
+    });
+  }
+
   function setFollow(on) {
     if (on === state.follow && !(on && state.custom)) return;
     startBlend();
@@ -1818,6 +1893,7 @@ export function mountJourney(container, options = {}) {
     creditsOpener?.setAttribute?.('aria-expanded', 'true');
     requestAnimationFrame(() => ref.credits.classList.add('is-on'));
     syncViewfinder();
+    measureSettled();
     ref.credits.querySelector('.jy-panel-title').focus({ preventScroll: true });
   }
   function closeCredits({ restoreFocus = false } = {}) {
@@ -1827,6 +1903,7 @@ export function mountJourney(container, options = {}) {
     ref.credits.hidden = true;
     root.classList.remove('jy-credits-open');
     syncViewfinder();
+    measureText();
     creditsOpener?.setAttribute?.('aria-expanded', 'false');
     if (restoreFocus && creditsOpener?.isConnected) creditsOpener.focus({ preventScroll: true });
     creditsOpener = null;
@@ -2457,11 +2534,14 @@ export function mountJourney(container, options = {}) {
       sunDir.set(sun.x, sun.z, -sun.y).normalize();
       const s = sat.state;
       const light = s ? satelliteLight(s.eci, sun) : 'sunlit';
-      sunLight.intensity = light === 'sunlit' ? 3.2 : light === 'terminator' ? 1.6 : 0;
-      sunLight.position.copy(sat.S).addScaledVector(sunDir, 5);
+      sunLight.intensity = light === 'sunlit' ? 3.2 : light === 'terminator' ? 1.6 : SAT_SHADOW_FILL;
+      sunLight.position.copy(sat.S);
+      // in the Earth's shadow there is no Sun to place: a dim light from the viewer's side
+      // keeps its shape findable while the line says to click it, plainly dimmer than daylight
+      if (light === 'shadow') sunLight.position.add(tmpA.copy(camera.position).sub(sat.S).normalize().multiplyScalar(5));
+      else sunLight.position.addScaledVector(sunDir, 5);
       sunLight.target.position.copy(sat.S);
-      // in the Earth's shadow it goes dark, but never so dark it can't be found
-      ambient.intensity = light === 'shadow' ? 0.5 : 0.05;
+      ambient.intensity = light === 'shadow' ? SAT_SHADOW_AMBIENT : 0.05;
       if (s && satellite.setEarthshine) {
         const ground = sunElevationDeg(s.latDeg, s.lonDeg, ms);
         satellite.setEarthshine(lerp(0.9, 1, smoothstep(-8, 4, ground)));
