@@ -187,7 +187,7 @@ const TEMPLATE = `
     <div class="cg-card-body">
       <p class="cg-card-pos" data-ref="cardPos"></p>
       <p data-ref="cardLight"></p>
-      <a class="cg-card-link" data-ref="cardLink">Open in the catalogue</a>
+      <a class="cg-card-link" data-ref="cardLink">Open picture</a>
     </div>
     <button type="button" class="cg-icon-btn cg-card-close" data-ref="cardClose" aria-label="Close">${ICONS.close}</button>
   </section>
