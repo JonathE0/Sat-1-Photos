@@ -214,6 +214,7 @@ export function mergePhoto(img, ann) {
     tags: values.tags,
     camera: img.camera,
     status: img.status,
+    dark: img.dark === true, // nothing to see: black, noise, or the Sun as a lone dot
     src: img.src || img.thumb,
     thumb: img.thumb || img.src,
     width,
@@ -251,9 +252,11 @@ export function mergeAll(images, annotations) {
   return photos;
 }
 
-/* Filters. They live in the URL, e.g. #/?camera=picam&month=2026-09&q=clouds */
+/* Filters. They live in the URL, e.g. #/?camera=picam&month=2026-09&q=clouds
+   Dark frames are left out unless dark=1; that switch is not counted as a filter. */
 
-export const FILTER_KEYS = ['camera', 'status', 'month', 'member', 'tag', 'q'];
+export const FILTER_KEYS = ['camera', 'status', 'month', 'member', 'tag', 'q', 'dark'];
+const NARROWING_KEYS = FILTER_KEYS.filter((key) => key !== 'dark');
 
 export function readFilters(params) {
   const f = {};
@@ -268,14 +271,15 @@ export function filtersToQuery(f) {
 }
 
 export function hasFilters(f) {
-  return FILTER_KEYS.some((key) => f[key]);
+  return NARROWING_KEYS.some((key) => f[key]);
 }
 
 export function applyFilters(photos, f) {
   const terms = fold(f.q).split(/\s+/).filter(Boolean);
   const member = fold(f.member);
   const tag = fold(f.tag);
-  return photos.filter((p) => (!f.camera || p.camera === f.camera)
+  return photos.filter((p) => (f.dark || !p.dark)
+    && (!f.camera || p.camera === f.camera)
     && (!f.status || p.status === f.status)
     && (!f.month || p.month === f.month)
     && (!member || p.people.some((x) => fold(x) === member))

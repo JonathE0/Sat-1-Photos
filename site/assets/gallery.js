@@ -11,6 +11,7 @@ import { justifyRows, mosaicSettings, layoutRatio } from './layout.js';
 import { createFilterForm } from './filters.js';
 
 const EAGER_TILES = 8;
+const THUMB_WIDTH = 480; // cts1_gallery/build.py THUMB_WIDTH
 
 function gridAlt(p) {
   const camera = CAMERAS[p.camera]?.alt || 'Camera';
@@ -66,7 +67,8 @@ export function createGallery(root, { onQueryChange }) {
 
   const notice = h('div', { class: 'notice', role: 'status' }, 'Loading pictures…');
   const list = h('ul', { class: 'mosaic', 'aria-label': 'Pictures, newest first' });
-  const wrap = h('div', { class: 'mosaic-wrap' }, list);
+  const darkNote = h('p', { class: 'dark-note', hidden: true });
+  const wrap = h('div', { class: 'mosaic-wrap' }, list, darkNote);
   root.append(form, notice, wrap);
 
   const observer = new ResizeObserver(() => layout());
@@ -120,8 +122,23 @@ export function createGallery(root, { onQueryChange }) {
         h('button', { type: 'button', class: 'linkish', onclick: clearFilters }, 'Clear filters'),
       );
     }
+    // Frames with nothing to see stay out of the grid until asked for.
+    const dark = applyFilters(photos, { ...filters, dark: '1' }).filter((p) => p.dark).length;
+    const toggleDark = () => setFilter('dark', filters.dark ? '' : '1');
+    darkNote.hidden = !dark;
+    darkNote.replaceChildren(
+      filters.dark
+        ? `Showing ${plural(dark, 'dark frame')}: nothing but black, sensor noise or the Sun as a single dot.`
+        : `${plural(dark, 'dark frame')} hidden: nothing but black, sensor noise or the Sun as a single dot.`,
+      h('button', { type: 'button', class: 'linkish', onclick: toggleDark }, filters.dark ? 'Hide them' : 'Show them'),
+    );
     if (!photos.length) {
       showNotice(['No pictures yet. The list is empty until the first image has been reassembled.']);
+    } else if (!shown.length && dark && !filters.dark) {
+      showNotice([
+        `Only dark frames match these filters (${dark}).`,
+        h('button', { type: 'button', class: 'linkish', onclick: toggleDark }, 'Show them'),
+      ]);
     } else if (!shown.length) {
       showNotice([
         'No pictures match these filters.',
@@ -149,6 +166,9 @@ export function createGallery(root, { onQueryChange }) {
     const ratio = layoutRatio(p.width, p.height);
     const img = h('img', {
       src: p.thumb,
+      // Tiles wider than a thumbnail (featured rows) load the full picture
+      // rather than stretching the thumbnail; layout() sets `sizes`.
+      srcset: p.src !== p.thumb && p.width > THUMB_WIDTH ? `${p.thumb} ${THUMB_WIDTH}w, ${p.src} ${p.width}w` : null,
       width: p.width,
       height: p.height,
       alt: gridAlt(p),
@@ -198,6 +218,7 @@ export function createGallery(root, { onQueryChange }) {
         li.style.flex = row.ragged
           ? `0 0 ${(ratios[i] * row.height).toFixed(2)}px`
           : `${ratios[i].toFixed(4)} 1 0px`;
+        li.querySelector('img').sizes = `${Math.ceil(ratios[i] * row.height)}px`;
         frag.append(li);
       }
     });

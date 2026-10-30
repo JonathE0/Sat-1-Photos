@@ -94,7 +94,7 @@ export function mosaicSettings(width) {
     gap,
     targetHeight: Math.min(300, Math.max(170, width / 5.2)),
     featureEvery: 4,
-    featureScale: 1.8,
+    featureScale: 1.6, // featured rows near the pictures' own 480 px height, not past it
     maxPerRow: 9,
   };
 }

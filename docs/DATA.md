@@ -38,6 +38,9 @@ The site is static: everything it shows comes from three JSON files in
       "status": "verified",       // verified | complete | partial | truncated
       "status_note": "Bit-exact: matches the sha256 the satellite sent.",
       "completeness": 1.0,        // share of the picture that can be shown, 0..1
+      "dark": false,              // nothing to see: nearly black with at most one bright spot
+                                  // (empty frame, sensor noise, the Sun as a dot); the gallery
+                                  // tucks these away. Night frames with city lights are false.
       "unnamed": false,           // true when the file's name never reached the ground
       "file_size": 42087,         // bytes of the on-board file
       "sha256": "…",              // of the reassembled file

@@ -339,7 +339,9 @@ body[data-view="gallery"] .wordmark { display: none; }
   grid-column: 2;
   grid-row: 1 / 3;
   display: grid;
-  grid-template-rows: minmax(0, 1fr) auto;
+  /* The pictures stop growing near their own height (480 px), so the small
+     frames aren't blown up on tall screens; the About text takes the rest. */
+  grid-template-rows: minmax(0, 540px) 1fr;
   min-height: 0;
   background: var(--surface);
   border-left: 1px solid var(--hair);
@@ -619,6 +621,9 @@ body[data-view="gallery"] .wordmark { display: none; }
 .notice code { font-family: var(--mono); font-size: 0.9em; }
 .notice .linkish { margin-left: 0.3em; }
 
+.dark-note { max-width: 48em; margin: 20px 0 0; color: var(--label); font-size: 13px; }
+.dark-note .linkish { margin-left: 0.4em; color: var(--fg); }
+
 /* Detail */
 
 .detail {
@@ -649,8 +654,8 @@ body[data-view="gallery"] .wordmark { display: none; }
   margin: 0;
 }
 
-/* Scaled up to fill the stage, never past twice its own size; the image
-   keeps its shape inside the box. */
+/* Shown at its own size, smaller only when the stage is (detail.js sets
+   max-width to the picture's width); the image keeps its shape. */
 .shot img {
   width: 100%;
   height: auto;

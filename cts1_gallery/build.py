@@ -92,6 +92,9 @@ def build(paths: dict[str, Path], site: Path, cache_dir: Path, *, log=print, for
             info = _write_image(image_id, r, images_dir, site)
             info["key"] = key
             rendered_count += 1
+        if "dark" not in info:  # rendered before the flag existed
+            with Image.open(site / info["src"]) as im:
+                info = {**info, "dark": _is_dark(im)}
         new_manifest[image_id] = info
 
         cap = captures[a.path]
@@ -130,6 +133,7 @@ def build(paths: dict[str, Path], site: Path, cache_dir: Path, *, log=print, for
                 "status": info["status"],
                 "status_note": info["note"],
                 "completeness": info["completeness"],
+                "dark": info["dark"],
                 "file_size": a.size,
                 "sha256": a.sha256,
                 "sha256_expected": sha_expected[-1] if sha_expected else None,
@@ -307,6 +311,7 @@ def _write_image(image_id: str, r: Rendered, images_dir: Path, site: Path) -> di
     _write_bytes(src, r.image)
     with Image.open(io.BytesIO(r.image)) as im:
         width, height = im.size
+        dark = _is_dark(im)
         t = im.convert("RGB")
         if t.width > THUMB_WIDTH:
             t = t.resize((THUMB_WIDTH, round(t.height * THUMB_WIDTH / t.width)), Image.LANCZOS)
@@ -321,7 +326,39 @@ def _write_image(image_id: str, r: Rendered, images_dir: Path, site: Path) -> di
         "status": r.status,
         "note": r.note,
         "completeness": round(r.completeness, 4),
+        "dark": dark,
     }
+
+
+def _is_dark(im: Image.Image) -> bool:
+    """True for a frame with nothing to see: nearly black, with at most one
+    bright spot (an empty frame, flat sensor noise, or the Sun as a lone dot).
+    A night frame with city lights has several separate spots and is kept.
+    The flat grey of parts that never arrived is left out of the count."""
+    rgb = np.asarray(im.convert("RGB"), dtype=np.int16)
+    missing = np.abs(rgb - _GRAY).max(axis=2) <= 3
+    lum = rgb @ np.array([0.2126, 0.7152, 0.0722])
+    seen = lum[~missing]
+    if seen.size < 0.05 * lum.size:
+        return False  # too little arrived to tell
+    floor = float(np.median(seen))
+    if floor > 30:
+        return False
+    ys, xs = np.nonzero((lum > floor + 15) & ~missing)
+    cells = {(y // 16, x // 16) for y, x in zip(ys.tolist(), xs.tolist())}
+    spots = 0
+    while cells:  # count groups of touching 16-pixel cells
+        spots += 1
+        stack = [cells.pop()]
+        while stack:
+            cy, cx = stack.pop()
+            for n in [(cy + dy, cx + dx) for dy in (-1, 0, 1) for dx in (-1, 0, 1)]:
+                if n in cells:
+                    cells.remove(n)
+                    stack.append(n)
+        if spots > 1:
+            return False
+    return True
 
 
 def _render_key(a: Assembled, jpeg_template: bytes | None, bmp_template: bytes | None) -> str:

@@ -48,6 +48,27 @@ def fake_jpeg(n_bytes: int, seed: int) -> bytes:
     return b"\xff\xd8\xff\xdb" + bytes(rng.randrange(256) for _ in range(n_bytes - 4))
 
 
+class DarkFrames(unittest.TestCase):
+    @staticmethod
+    def frame(spots=(), base=0, missing_rows=0):
+        a = np.full((480, 640, 3), base, np.uint8)
+        a[:missing_rows] = build._GRAY  # parts that never arrived
+        for y, x in spots:
+            a[y : y + 4, x : x + 4] = 230
+        return Image.fromarray(a)
+
+    def test_black_noise_and_a_lone_sun_are_dark(self):
+        self.assertTrue(build._is_dark(self.frame()))
+        self.assertTrue(build._is_dark(self.frame(base=14)))
+        self.assertTrue(build._is_dark(self.frame([(400, 200)])))
+        self.assertTrue(build._is_dark(self.frame([(400, 200)], missing_rows=300)))
+
+    def test_city_lights_and_daylight_are_not(self):
+        self.assertFalse(build._is_dark(self.frame([(100, 100), (300, 420)])))
+        self.assertFalse(build._is_dark(self.frame(base=120)))
+        self.assertFalse(build._is_dark(self.frame(missing_rows=470)))  # too little arrived to tell
+
+
 class PicamFormat(unittest.TestCase):
     def test_sizes_round_trip(self):
         f = picam_file(fake_jpeg(28 * 50, 1))
