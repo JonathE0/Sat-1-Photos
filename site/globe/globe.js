@@ -194,7 +194,7 @@ const TEMPLATE = `
   <div class="cg-col cg-col-right">
     <section class="cg-panel" data-panel="passes" data-ref="passesPanel" aria-label="Passes over Calgary">
       <div class="cg-panel-head">
-        <h2 data-ref="passesTitle">Passes over Calgary</h2>
+        <h2 data-ref="passesTitle" tabindex="-1">Passes over Calgary</h2>
       </div>
       <div data-ref="placeSlot"></div>
       <div class="cg-calgary-passes" data-ref="calgaryPasses">
@@ -229,7 +229,7 @@ const TEMPLATE = `
 
   <div class="cg-dock" data-ref="dock">
   <nav class="cg-tabs" aria-label="Panels">
-    <button type="button" data-tab="sat" aria-pressed="false">Right now</button>
+    <button type="button" data-tab="sat" data-ref="satTab" aria-pressed="false">Right now</button>
     <button type="button" data-tab="passes" aria-pressed="false">Passes</button>
     <button type="button" data-tab="photos" aria-pressed="false">Pictures</button>
     <button type="button" data-ref="share2" class="cg-share">Copy link</button>
@@ -271,6 +271,8 @@ function noScene() {
   return {
     controls: { dragged: false, reducedMotion: false },
     setStation: nothing,
+    setViewCentre: nothing,
+    satelliteScreen: () => null,
     setTrackColor: nothing,
     setTime: nothing,
     setTrack: nothing,
@@ -375,6 +377,7 @@ export function mountGlobe(container, options = {}) {
   let photos = [];
   let launchMs = astro.LAUNCH_MS;
   let loaded = false;
+  let photosFailed = false;
   let pendingFocus = null;
   let destroyed = false;
   const ac = new AbortController();
@@ -394,6 +397,7 @@ export function mountGlobe(container, options = {}) {
       wheelZoom: opts.wheelZoom,
       onUserMove(kind) {
         state.userMovedCamera = true;
+        sheetViewMoved = true;
         if (kind === 'rotate' && state.follow) setFollow(false);
         hideTip();
       },
@@ -420,6 +424,7 @@ export function mountGlobe(container, options = {}) {
     wheelZoom: opts.wheelZoom,
     onUserMove(kind) {
       state.userMovedCamera = true;
+      sheetViewMoved = true;
       if (kind === 'pan' && state.follow) setFollow(false);
       hideTip();
     },
@@ -528,6 +533,8 @@ export function mountGlobe(container, options = {}) {
   };
   /** The map's free frame: the stage less what the columns, the header (narrow)
    * and the clock bar cover. Its grid labels sit inside it and it centres there. */
+  let freeStage = null; // in the tabbed layout: { left, top, right, bottom }, stage px
+  let sheetViewMoved = false;
   const colLeft = root.querySelector('.cg-col-left');
   const colRight = root.querySelector('.cg-col-right');
   const clock = root.querySelector('.cg-clock');
@@ -535,11 +542,22 @@ export function mountGlobe(container, options = {}) {
     const r = root.getBoundingClientRect();
     const gap = 16 * uiScale;
     const inset = { top: 0, right: 0, bottom: 0, left: 0 };
+    freeStage = null;
     if (opts.ui === 'compact') {
       inset.bottom = r.bottom - clock.getBoundingClientRect().top + gap;
     } else if (root.classList.contains('cg-narrow')) {
-      inset.top = head.getBoundingClientRect().bottom - r.top + 8;
-      inset.bottom = el.dock.offsetHeight;
+      // what the header, a picture's card, the bottom bar and an open sheet leave
+      const free = { left: 0, top: head.getBoundingClientRect().bottom - r.top, right: r.width, bottom: el.dock.getBoundingClientRect().top - r.top };
+      if (el.card.getClientRects().length) free.top = Math.max(free.top, el.card.getBoundingClientRect().bottom - r.top);
+      const sheet = state.tab ? root.querySelector(`[data-panel="${state.tab}"]`)?.getBoundingClientRect() : null;
+      if (sheet?.width) {
+        if (sheet.left - r.left > 1) free.right = sheet.left - r.left;
+        else free.bottom = sheet.top - r.top;
+      }
+      freeStage = free;
+      inset.top = free.top + 8;
+      inset.bottom = r.height - free.bottom;
+      inset.right = r.width - free.right;
     } else {
       inset.top = pageTop(); // the map starts under the site nav, which sits on Space
       inset.bottom = r.bottom - clock.getBoundingClientRect().top + gap;
@@ -549,6 +567,24 @@ export function mountGlobe(container, options = {}) {
       }
     }
     map.resize(root.clientWidth || 800, root.clientHeight || 600, uiScale, inset);
+    // the globe centres in the same space
+    if (freeStage) scene.setViewCentre((freeStage.left + freeStage.right) / 2, (freeStage.top + freeStage.bottom) / 2);
+    else scene.setViewCentre();
+  }
+
+  /** While a sheet is open the stage is a small window: keep the satellite in
+   * it, unless the visitor has moved the view themselves since opening it. */
+  function keepSatelliteInView() {
+    if (!state.tab || !freeStage || state.follow || sheetViewMoved || !satState) return;
+    if (onMap()) {
+      if (!map.busy) map.flyToSatellite();
+      return;
+    }
+    if (scene.busy) return;
+    const s = scene.satelliteScreen();
+    const m = 32;
+    const inside = s && s.x >= freeStage.left + m && s.x <= freeStage.right - m && s.y >= freeStage.top + m && s.y <= freeStage.bottom - m;
+    if (!inside) scene.flyToSatellite();
   }
 
   const resizeObserver = new ResizeObserver(() => {
@@ -562,6 +598,9 @@ export function mountGlobe(container, options = {}) {
   resizeObserver.observe(el.card);
   resizeObserver.observe(head);
   resizeObserver.observe(el.satPanel);
+  // a sheet's height follows its content: the views only need to re-centre
+  const sheetObserver = new ResizeObserver(() => resizeMap());
+  for (const panel of root.querySelectorAll('[data-panel]')) sheetObserver.observe(panel);
   layout();
   scene.resize(root.clientWidth || 800, root.clientHeight || 600, uiScale);
   resizeMap();
@@ -853,7 +892,7 @@ export function mountGlobe(container, options = {}) {
     if (!photos.length) {
       const li = document.createElement('li');
       li.className = 'cg-empty';
-      li.textContent = loaded ? 'No pictures yet.' : 'Loading…';
+      li.textContent = !loaded ? 'Loading…' : photosFailed ? 'The pictures couldn’t load. Reload the page to try again.' : 'No pictures yet.';
       ul.appendChild(li);
       return;
     }
@@ -1042,6 +1081,16 @@ export function mountGlobe(container, options = {}) {
   function paintReadouts() {
     const s = satState;
     const dash = '—';
+    // "Right now" only when it is: otherwise say what time this is for
+    const at = state.live ? null : localTime(state.ms, false).time;
+    const when = at ? `At ${at} in Calgary` : 'Right now';
+    if (shown.get(el.fold) !== when) {
+      el.fold.firstChild.nodeValue = when;
+      el.satPanel.setAttribute('aria-label', when);
+      shown.set(el.fold, when);
+    }
+    put(el.satTab, at ? `At ${at}` : 'Right now');
+    keepSatelliteInView();
     // roughly what it is over: a country, else a sea or continent
     const over = s ? placeAt(s.latDeg, s.lonDeg) : null;
     el.over.hidden = !over;
@@ -1085,11 +1134,12 @@ export function mountGlobe(container, options = {}) {
 
     const look = s.look || astro.lookAngles(observer, s.ecef);
     if (look.elevationDeg > 0) {
-      put(el.gs, `In view now, ${look.elevationDeg.toFixed(0)}° up in the ${astro.compassPoint(look.azimuthDeg)}`);
+      put(el.gs, `In view ${state.live ? 'now' : 'at this time'}, ${look.elevationDeg.toFixed(0)}° up in the ${astro.compassPoint(look.azimuthDeg)}`);
       el.gs.dataset.state = 'up';
     } else {
       const next = (passes.list || []).find((p) => p.riseMs > state.ms);
-      put(el.gs, next ? `Next pass in ${fmtDuration(next.riseMs - state.ms)}` : 'Below the horizon');
+      const wait = next ? fmtDuration(next.riseMs - state.ms) : '';
+      put(el.gs, next ? (state.live ? `Next pass in ${wait}` : `Next pass ${wait} later`) : 'Below the horizon');
       el.gs.dataset.state = 'down';
     }
   }
@@ -1108,9 +1158,11 @@ export function mountGlobe(container, options = {}) {
   }
 
   function setFollow(on) {
+    const changed = on !== state.follow;
     state.follow = on;
     el.follow.setAttribute('aria-pressed', String(on));
     if (on) flyToSatellite();
+    if (changed) writeHash();
   }
 
   function setTab(tab) {
@@ -1119,6 +1171,9 @@ export function mountGlobe(container, options = {}) {
     for (const b of root.querySelectorAll('[data-tab]')) {
       b.setAttribute('aria-pressed', String(b.dataset.tab === state.tab));
     }
+    sheetViewMoved = false;
+    layout(); // the bottom bar changes height with a sheet open
+    resizeMap();
   }
 
   /** Side panels on wide screens; hidden leaves the globe, photo card and clock. */
@@ -1178,6 +1233,7 @@ export function mountGlobe(container, options = {}) {
   const placeSearch = createPlaceSearch({
     getOrbit: () => orbit,
     getTime: () => state.ms,
+    isLive: () => state.live,
     onPreview(p, place) {
       shotPanel.open({
         ms: p.closestMs,
@@ -1192,11 +1248,12 @@ export function mountGlobe(container, options = {}) {
       flyToGround(p.latDeg, p.lonDeg);
       writeHash();
     },
-    onPlace(place) {
+    onPlace(place, moveFocus) {
       const title = place ? `Passes over ${place.name}` : 'Passes over Calgary'; // "the North Sea"
       el.passesTitle.textContent = title;
       el.passesPanel.setAttribute('aria-label', title);
       el.calgaryPasses.hidden = !!place;
+      if (moveFocus) el.passesTitle.focus();
     },
   });
   el.placeSlot.replaceWith(placeSearch.element);
@@ -1380,17 +1437,18 @@ export function mountGlobe(container, options = {}) {
   function hashParams() {
     if (!opts.hashState) return {};
     const p = new URLSearchParams(location.hash.replace(/^#/, ''));
-    return { t: p.get('t'), photo: p.get('photo'), view: parseView(p.get('view')), mode: p.get('mode') };
+    return { t: p.get('t'), photo: p.get('photo'), view: parseView(p.get('view')), mode: p.get('mode'), follow: p.get('follow') === '1' };
   }
 
-  /** #t=<iso>&photo=<id>&mode=map, and with `view` the globe's camera:
-   * &view=<lat>,<lon>,<distance>. */
+  /** #t=<iso>&photo=<id>&mode=map&follow=1, and with `view` the globe's camera:
+   * &view=<lat>,<lon>,<distance> (not while following: the satellite sets it). */
   function stateParams({ view = false } = {}) {
     const p = new URLSearchParams();
     if (!state.live) p.set('t', isoUtc(state.ms));
     if (state.selectedId) p.set('photo', state.selectedId);
     if (onMap()) p.set('mode', 'map');
-    const v = view && !onMap() ? scene.viewPoint() : null;
+    if (state.follow) p.set('follow', '1');
+    const v = view && !onMap() && !state.follow ? scene.viewPoint() : null;
     if (v) p.set('view', `${v.latDeg.toFixed(2)},${v.lonDeg.toFixed(2)},${v.distance.toFixed(2)}`);
     return p.toString().replace(/%3A/gi, ':').replace(/%2C/gi, ',');
   }
@@ -1433,6 +1491,7 @@ export function mountGlobe(container, options = {}) {
       }
     }
     applyView(h.view);
+    if (h.follow !== state.follow) setFollow(h.follow);
   }
   if (opts.hashState) listen(window, 'hashchange', applyHash);
 
@@ -1474,6 +1533,7 @@ export function mountGlobe(container, options = {}) {
         if (err.status !== 404) {
           console.warn('Globe: photo data unavailable', err);
           note('Picture data unavailable.');
+          photosFailed = true;
           return [];
         }
         json = await fetchJson(opts.sampleUrl);
@@ -1538,7 +1598,7 @@ export function mountGlobe(container, options = {}) {
       picker.refresh();
       paintPasses();
       // a link with a camera view keeps it rather than flying to the photo
-      const wanted = pendingFocus || (startPhoto ? { id: startPhoto, fly: !hash.view, immediate: true } : null);
+      const wanted = pendingFocus || (startPhoto ? { id: startPhoto, fly: !hash.view && !hash.follow, immediate: true } : null);
       pendingFocus = null;
       const focused = wanted ? focusPhoto(wanted.id, { fly: wanted.fly, immediate: wanted.immediate }) : false;
       if (wanted && !focused) {
@@ -1556,6 +1616,10 @@ export function mountGlobe(container, options = {}) {
       const onPhoto = focused && findPhoto(wanted.id)?.placed;
       if (!onPhoto && !state.userMovedCamera) flyToSatellite({ immediate: true });
       applyView(hash.view); // again, now the Earth is turned to the final time
+      if (hash.follow) {
+        flyToSatellite({ immediate: true });
+        setFollow(true);
+      }
       markDirty();
     })
     .catch((err) => {
@@ -1563,6 +1627,7 @@ export function mountGlobe(container, options = {}) {
       console.error('Globe: failed to load data', err);
       loaded = true;
       note('Could not load the data.');
+      photosFailed = true;
       paintPhotoList();
     });
 
@@ -1586,6 +1651,7 @@ export function mountGlobe(container, options = {}) {
       ac.abort();
       clearTimeout(passes.timer);
       resizeObserver.disconnect();
+      sheetObserver.disconnect();
       for (const off of cleanups) off();
       scene.dispose();
       map.dispose();

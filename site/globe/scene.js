@@ -11,6 +11,7 @@
  */
 import * as THREE from './vendor/three.module.min.js';
 import { DEG, EARTH_RADIUS_KM } from './astro.js';
+import { labelBox, placeLabel } from './labels.js';
 import { RIPPLE_COLOR, RIPPLE_GAP_S, RIPPLE_RADIUS_PX, RIPPLE_S, RIPPLE_STRENGTH, RIPPLE_WAVES, RIPPLE_WAVE_S } from './ripple.js';
 
 const BLUE = '#3C9DF5'; // the satellite and its path, nothing else
@@ -732,9 +733,16 @@ export function createScene(canvas, labelLayer, opts = {}) {
   const satLabel = addLabel('CTS-SAT-1', 'cg-label-sat', () =>
     satellite.points.visible ? worldPos.copy(satellite.position) : null,
   );
-  addLabel('Calgary', 'cg-label-gs', () =>
+  const gsLabel = addLabel('Calgary', 'cg-label-gs', () =>
     station.points.visible ? station.points.localToWorld(worldPos.copy(station.position)) : null,
   );
+  let gsSide = 'right'; // where Calgary's label is: see updateLabels
+  let markerScale = 1;
+  // measured again once the page's font has arrived
+  document.fonts?.ready?.then(() => {
+    for (const l of labels) l.w = 0;
+    needsRender = true;
+  });
 
   // ---- geometry helpers -----------------------------------------------------
   const tmp = new THREE.Vector3();
@@ -972,14 +980,66 @@ export function createScene(canvas, labelLayer, opts = {}) {
   }
 
   /** `scale` sizes the markers with the page's type (1 = their drawn size). */
+  // The middle of the view, in stage pixels (null: the stage's own middle).
+  // Where panels cover part of the stage, globe.js points this at what's left.
+  let viewCentre = null;
+  let viewGoal = null;
+
+  function applyViewCentre() {
+    if (viewCentre) camera.setViewOffset(width, height, width / 2 - viewCentre.x, height / 2 - viewCentre.y, width, height);
+    else camera.clearViewOffset();
+  }
+
+  /** Move the middle of the view to (x, y), easing over a few frames unless
+   * `immediate` or reduced motion. With no arguments, back to the middle. */
+  function setViewCentre(x = null, y = null, { immediate = false } = {}) {
+    if (x === null) {
+      viewCentre = null;
+      viewGoal = null;
+      applyViewCentre();
+      needsRender = true;
+      return;
+    }
+    if (immediate || controls.reducedMotion || !viewCentre) {
+      viewCentre = { x, y };
+      viewGoal = null;
+      applyViewCentre();
+      needsRender = true;
+      return;
+    }
+    if (viewCentre.x !== x || viewCentre.y !== y) viewGoal = { x, y };
+  }
+
+  function stepViewCentre() {
+    if (!viewGoal) return;
+    const dx = viewGoal.x - viewCentre.x;
+    const dy = viewGoal.y - viewCentre.y;
+    if (Math.abs(dx) + Math.abs(dy) < 0.5) {
+      viewCentre = viewGoal;
+      viewGoal = null;
+    } else {
+      viewCentre = { x: viewCentre.x + dx * 0.25, y: viewCentre.y + dy * 0.25 };
+    }
+    applyViewCentre();
+    needsRender = true;
+  }
+
+  /** Where the satellite is on the stage, or null if it's hidden or behind the Earth. */
+  function satelliteScreen() {
+    return satellite.points.visible ? toScreen(satellite.position) : null;
+  }
+
   function resize(w, h, scale = 1) {
     width = Math.max(1, w);
     height = Math.max(1, h);
+    markerScale = scale;
+    for (const l of labels) l.w = 0;
     renderer.setSize(width, height, false);
     camera.aspect = width / height;
     // on portrait screens hold the horizontal field at 35 degrees instead
     const half = Math.tan((35 * DEG) / 2);
     camera.fov = camera.aspect < 1 ? Math.min(75, (2 * Math.atan(half / camera.aspect)) / DEG) : 35;
+    applyViewCentre();
     camera.updateProjectionMatrix();
     const ratio = renderer.getPixelRatio() * scale;
     for (const m of disposables) {
@@ -989,29 +1049,64 @@ export function createScene(canvas, labelLayer, opts = {}) {
     needsRender = true;
   }
 
-  function updateLabels() {
-    for (const label of labels) {
-      const p = label.getPosition();
-      const s = p ? toScreen(p) : null;
-      if (!s) {
-        if (label.visible) {
-          label.el.hidden = true;
-          label.visible = false;
-        }
-        continue;
+  /** Show a label at a point on screen, `side` of it; null hides it. */
+  function showLabel(label, s, side = 'right') {
+    if (!s || !side) {
+      if (label.visible) {
+        label.el.hidden = true;
+        label.visible = false;
       }
-      if (!label.visible) {
-        label.el.hidden = false;
-        label.visible = true;
-      }
-      const x = Math.round(s.x);
-      const y = Math.round(s.y);
-      if (x !== label.x || y !== label.y) {
-        label.el.style.transform = `translate(${x}px, ${y}px)`;
-        label.x = x;
-        label.y = y;
-      }
+      return;
     }
+    if (!label.visible) {
+      label.el.hidden = false;
+      label.visible = true;
+    }
+    // CSS sets the label off to the right of its point; other sides undo that
+    const box = labelBox(side, labelGeometry(label, s));
+    const right = labelBox('right', labelGeometry(label, s));
+    const x = Math.round(s.x + box.left - right.left);
+    const y = Math.round(s.y + box.top - right.top);
+    if (x !== label.x || y !== label.y) {
+      label.el.style.transform = `translate(${x}px, ${y}px)`;
+      label.x = x;
+      label.y = y;
+    }
+  }
+
+  function labelGeometry(label, s) {
+    if (!label.w) {
+      label.w = label.el.offsetWidth;
+      label.h = label.el.offsetHeight;
+    }
+    return { x: s.x, y: s.y, w: label.w, h: label.h, gap: 12 * markerScale };
+  }
+
+  function updateLabels() {
+    const onScreen = (label) => {
+      const p = label.getPosition();
+      return p ? toScreen(p) : null;
+    };
+    const sat = onScreen(satLabel);
+    showLabel(satLabel, sat);
+    const gs = onScreen(gsLabel);
+    if (!gs) {
+      showLabel(gsLabel, null);
+      return;
+    }
+    // the satellite's name wins: Calgary's moves aside, or waits, while they overlap
+    if (!gsLabel.w) showLabel(gsLabel, gs); // shown once to measure; nothing paints until this returns
+    let side = 'right';
+    if (sat && satLabel.w) {
+      const reach = 8 * markerScale;
+      const avoid = [
+        labelBox('right', labelGeometry(satLabel, sat)),
+        { left: sat.x - reach, top: sat.y - reach, right: sat.x + reach, bottom: sat.y + reach },
+      ];
+      side = placeLabel(labelGeometry(gsLabel, gs), avoid, gsSide);
+    }
+    gsSide = side;
+    showLabel(gsLabel, gs, side);
   }
 
   return {
@@ -1035,6 +1130,8 @@ export function createScene(canvas, labelLayer, opts = {}) {
     pick,
     resize,
     satelliteLabel: satLabel,
+    setViewCentre,
+    satelliteScreen,
     /** Render if anything changed; returns true if a frame was drawn. */
     frame(now, force = false) {
       if (rippleStart !== null) {
@@ -1047,6 +1144,7 @@ export function createScene(canvas, labelLayer, opts = {}) {
         }
         needsRender = true;
       }
+      stepViewCentre();
       const moved = controls.update(now);
       if (!(moved || needsRender || force)) return false;
       renderer.render(scene, camera);

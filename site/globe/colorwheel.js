@@ -296,13 +296,14 @@ export function createColorWheel({ onChange = () => {}, storageKey = STORE_KEY }
 
   button.addEventListener('click', () => (panel.hidden ? open() : close()));
   $('close').addEventListener('click', () => close());
-  panel.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      e.preventDefault();
-      e.stopPropagation();
-      close();
-    }
-  });
+  // on the document: Escape still closes it after Tab has left it
+  const onEscape = (e) => {
+    if (e.key !== 'Escape' || panel.hidden) return;
+    e.preventDefault();
+    e.stopPropagation();
+    close();
+  };
+  document.addEventListener('keydown', onEscape, true);
   const outside = (e) => {
     if (panel.hidden || panel.contains(e.target) || button.contains(e.target)) return;
     close({ restoreFocus: false });
@@ -321,6 +322,7 @@ export function createColorWheel({ onChange = () => {}, storageKey = STORE_KEY }
     close,
     destroy() {
       document.removeEventListener('pointerdown', outside, true);
+      document.removeEventListener('keydown', onEscape, true);
       button.remove();
       panel.remove();
     },

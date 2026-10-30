@@ -289,6 +289,11 @@
   font: 600 var(--cg-value)/1.3 var(--cg-sans);
 }
 
+/* takes the focus when a place is chosen: nothing to press, so no ring */
+.cg-panel h2[tabindex]:focus {
+  outline: none;
+}
+
 .cg-panel-head .cg-fine {
   text-align: right;
 }
@@ -883,12 +888,19 @@
   --cg-btn-h: 44px;
 }
 
+/* a solid band under the site's nav, so the words never sit on the Earth;
+   the sources are in Credits */
 .cg-narrow .cg-head {
   position: absolute;
-  top: calc(var(--cg-top, 0px) + 12px);
-  right: 12px;
-  left: 12px;
-  padding: 0;
+  top: 0;
+  right: 0;
+  left: 0;
+  padding: calc(var(--cg-top, 0px) + 12px) 12px 8px;
+  background: var(--cg-bg);
+}
+
+.cg[data-ui="full"].cg-narrow .cg-credit {
+  display: none;
 }
 
 .cg-narrow .cg-col {
@@ -906,7 +918,8 @@
   left: 0;
   z-index: 2;
   display: none;
-  max-height: min(46%, calc(100% - var(--cg-dock-h, 0px) - var(--cg-top, 0px))); /* never up under the site's nav */
+  /* a phone's sheet always leaves a window of stage, at least 140px, above it */
+  max-height: max(120px, min(46%, calc(100% - var(--cg-dock-h, 0px) - var(--cg-head-h, 0px) - 140px)));
   overflow-y: auto;
 }
 
@@ -932,7 +945,7 @@
 }
 
 .cg-narrow .cg-card {
-  top: calc(var(--cg-top, 0px) + 20px + var(--cg-head-h, 44px));
+  top: calc(var(--cg-head-h, 44px) + 8px);
   right: 12px;
   bottom: auto;
   left: 12px;
@@ -1035,6 +1048,89 @@
 
 .cg-narrow .cg-ticks {
   top: 10px;
+}
+
+/* on a phone the scrubber makes way while a sheet is open */
+@media (max-width: 759px) {
+  .cg-narrow:is([data-tab="sat"], [data-tab="passes"], [data-tab="photos"]) .cg-scrub {
+    display: none;
+  }
+}
+
+/* Room to the side: a sheet comes in from the right and the stage keeps its
+   height (a phone on its side, tablets, short laptop windows). */
+@media (min-width: 760px), (min-width: 480px) and (orientation: landscape) {
+  .cg-narrow .cg-panel[data-panel] {
+    top: var(--cg-top, 0px);
+    left: auto;
+    width: min(360px, 45%);
+    max-height: none;
+  }
+
+  .cg-narrow:is([data-tab="sat"], [data-tab="passes"], [data-tab="photos"]) .cg-head {
+    padding-right: calc(min(360px, 45%) + 12px);
+  }
+}
+
+/* Wide but short, or a tablet: one row for the clock, with the speeds, title
+   and place side by side, as on the bigger layout. */
+@media (min-width: 760px) {
+  .cg-narrow .cg-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    column-gap: 16px;
+    padding-right: 192px; /* the Globe / Map switch sits here */
+  }
+
+  .cg-narrow:is([data-tab="sat"], [data-tab="passes"], [data-tab="photos"]) .cg-head {
+    padding-right: calc(min(360px, 45%) + 192px);
+  }
+
+  .cg-narrow .cg-over {
+    margin-top: 0;
+  }
+
+  .cg-narrow .cg-clock {
+    flex-wrap: nowrap;
+    gap: 16px;
+    padding: 8px 12px;
+  }
+
+  .cg-narrow .cg-time {
+    flex: none;
+  }
+
+  .cg-narrow .cg-utc {
+    white-space: nowrap;
+  }
+
+  .cg-narrow .cg-speeds {
+    display: flex;
+  }
+
+  .cg-narrow .cg-speed-cycle {
+    display: none;
+  }
+
+  .cg-narrow .cg-scrub {
+    flex: 1 1 auto;
+    order: 0;
+    min-width: 0;
+    padding-top: 0;
+  }
+}
+
+/* the ends of the scrubber need more room than that row has here */
+@media (min-width: 760px) and (max-width: 899px) {
+  .cg-narrow .cg-scrub-labels {
+    justify-content: center;
+  }
+
+  .cg-narrow .cg-scrub-labels span:first-child,
+  .cg-narrow .cg-scrub-labels span:last-child {
+    display: none;
+  }
 }
 
 /* ---- compact (embedded) ------------------------------------------------------- */

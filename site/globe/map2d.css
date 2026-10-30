@@ -136,6 +136,14 @@
   min-height: 44px;
 }
 
+/* a sheet at the side: the switch and zoom stay beside it */
+@media (min-width: 760px), (min-width: 480px) and (orientation: landscape) {
+  .cg-narrow:is([data-tab="sat"], [data-tab="passes"], [data-tab="photos"]) .cg-views-main,
+  .cg-narrow:is([data-tab="sat"], [data-tab="passes"], [data-tab="photos"]) .cg-seg-zoom {
+    right: calc(min(360px, 45%) + 12px);
+  }
+}
+
 .cg-narrow .cg-views-main {
   position: absolute;
   top: calc(var(--cg-top, 0px) + 12px);

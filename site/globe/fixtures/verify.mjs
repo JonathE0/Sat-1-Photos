@@ -10,6 +10,7 @@ import { fileURLToPath } from 'node:url';
 import { applyAnnotations, launchTime, toIsoUtc, toPhotos } from '../adapter.js';
 import * as astro from '../astro.js';
 import * as wheel from '../colorwheel.js';
+import { labelBox, placeLabel } from '../labels.js';
 import * as map2d from '../map2d.js';
 import * as region from '../../explore/journey-region.js';
 import * as rp from '../regionpasses.js';
@@ -607,6 +608,35 @@ check('compass points', astro.compassPoint(0) === 'N' && astro.compassPoint(355)
     'picam: Earth-fixed to the scene matches earth.js (x, z, -y), turned by GMST',
     a.x === 1 && a.y === 0 && Math.abs(b.z + 1) < 1e-12 && pole.y === 1 && Math.abs(turned.z + 1) < 1e-12,
   );
+}
+
+// ---- labels keeping clear of each other (labels.js) --------------------------------------------
+{
+  const label = (x, y) => ({ x, y, w: 50, h: 16, gap: 12 });
+  const boxAt = (x, y) => labelBox('right', { x, y, w: 70, h: 16, gap: 12 });
+  const hits = (a, b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+  check('labels: on the right when nothing is near', placeLabel(label(300, 100), [boxAt(100, 100)]) === 'right');
+  check('labels: moves aside when another sits on it', placeLabel(label(110, 100), [boxAt(100, 100)]) === 'left');
+  check('labels: tries below and above when both sides are taken', placeLabel(label(100, 100), [
+    { left: 0, top: 90, right: 200, bottom: 110 },
+  ]) === 'below');
+  check('labels: hides when nothing is clear, and only comes back well clear', placeLabel(label(100, 100), [
+    { left: 0, top: 0, right: 300, bottom: 300 },
+  ]) === null);
+
+  // the satellite's label drifts past a fixed one with a pixel of jitter, as rounding gives
+  let side = 'right';
+  let changes = 0;
+  let overlaps = 0;
+  for (let i = 0; i <= 600; i++) {
+    const x = -100 + i * 0.5 + (i % 2 ? 0.8 : -0.8);
+    const avoid = [boxAt(x, 104)];
+    const next = placeLabel(label(100, 100), avoid, side);
+    if (next !== side) changes++;
+    side = next;
+    if (side && hits(labelBox(side, label(100, 100)), avoid[0])) overlaps++;
+  }
+  check('labels: a drifting neighbour never overlaps it and it does not flicker', overlaps === 0 && changes <= 4, `${changes} moves, ${overlaps} overlaps`);
 }
 
 // ---- the page's first paint (index.html) ---------------------------------------------------------
