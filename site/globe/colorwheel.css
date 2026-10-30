@@ -1,0 +1,270 @@
+/* Orbit colour (colorwheel.js): a swatch beside Globe / Map that opens a
+   small flat Panel with a hue ring, a lightness slider and presets. The
+   ring is the one round control on the page: it is a colour wheel. */
+
+/* the globe's satellite label takes the orbit's colour */
+.cg .cg-label-sat {
+  color: var(--cg-orbit, var(--cg-accent));
+}
+
+.cg-swatch {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--cg-btn-h, 32px);
+  height: var(--cg-btn-h, 32px);
+  padding: 0;
+  background: var(--cg-panel, #10151B);
+  border: 0;
+  cursor: pointer;
+}
+
+.cg-swatch:hover,
+.cg-swatch[aria-expanded="true"] {
+  background: var(--cg-raised, #1A2129);
+}
+
+.cg-swatch-chip {
+  display: block;
+  width: calc(14 * var(--cg-u, 1px));
+  height: calc(14 * var(--cg-u, 1px));
+  background: var(--cg-cw-colour, #3C9DF5);
+}
+
+.cg-cw {
+  --cg-cw-size: calc(152 * var(--cg-u, 1px));
+  --cg-cw-ring: calc(18 * var(--cg-u, 1px));
+  position: absolute;
+  top: calc(var(--cg-gap, 16px) + var(--cg-btn-h, 32px) + 8 * var(--cg-u, 1px));
+  left: 50%;
+  z-index: 4;
+  width: calc(232 * var(--cg-u, 1px));
+  padding: var(--cg-pad, 16px);
+  background: var(--cg-panel, #10151B);
+  color: var(--cg-text, #E6EBF0);
+  font: 400 var(--cg-value, 16px)/1.4 var(--cg-sans);
+  transform: translateX(-50%);
+}
+
+.cg-cw-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: calc(12 * var(--cg-u, 1px));
+}
+
+.cg .cg-cw-title,
+.cg-cw-title {
+  margin: 0;
+  font: 600 var(--cg-value, 16px)/1.3 var(--cg-sans);
+}
+
+.cg-cw-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--cg-btn-h, 32px);
+  height: var(--cg-btn-h, 32px);
+  margin-right: calc(-8 * var(--cg-u, 1px));
+  padding: 0;
+  background: none;
+  border: 0;
+  color: var(--cg-muted, #8A96A3);
+  cursor: pointer;
+}
+
+.cg-cw-close:hover {
+  color: var(--cg-text, #E6EBF0);
+}
+
+.cg-cw-close svg {
+  width: calc(12 * var(--cg-u, 1px));
+  height: calc(12 * var(--cg-u, 1px));
+}
+
+.cg-cw-wheel {
+  position: relative;
+  width: var(--cg-cw-size);
+  height: var(--cg-cw-size);
+  margin: 0 auto;
+  border-radius: 50%;
+  cursor: pointer;
+  touch-action: none;
+}
+
+.cg-cw-wheel:focus-visible {
+  outline: 2px solid var(--cg-accent, #3C9DF5);
+  outline-offset: 4px;
+}
+
+.cg-cw-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - var(--cg-cw-ring)), #000 calc(100% - var(--cg-cw-ring) + 1px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - var(--cg-cw-ring)), #000 calc(100% - var(--cg-cw-ring) + 1px));
+}
+
+/* the colour as the orbit will draw it */
+.cg-cw-centre {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: calc(56 * var(--cg-u, 1px));
+  height: calc(56 * var(--cg-u, 1px));
+  border-radius: 50%;
+  background: var(--cg-cw-colour, #3C9DF5);
+  transform: translate(-50%, -50%);
+}
+
+.cg-cw-handle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: calc(22 * var(--cg-u, 1px));
+  height: calc(22 * var(--cg-u, 1px));
+  border: 2px solid var(--cg-text, #E6EBF0);
+  border-radius: 50%;
+  background: var(--cg-cw-colour, #3C9DF5);
+  box-sizing: border-box;
+  pointer-events: none;
+  transform: translate(-50%, -50%) rotate(var(--cg-cw-hue, 0deg))
+    translateY(calc(var(--cg-cw-ring) / 2 - var(--cg-cw-size) / 2));
+}
+
+.cg-cw-light {
+  display: grid;
+  gap: calc(4 * var(--cg-u, 1px));
+  margin-top: calc(16 * var(--cg-u, 1px));
+}
+
+.cg-cw-light span {
+  font-size: var(--cg-small, 13px);
+  color: var(--cg-muted, #8A96A3);
+}
+
+.cg-cw-light input[type="range"] {
+  width: 100%;
+  height: calc(24 * var(--cg-u, 1px));
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.cg-cw-light input[type="range"]::-webkit-slider-runnable-track {
+  height: 2px;
+  background: var(--cg-raised, #1A2129);
+}
+
+.cg-cw-light input[type="range"]::-moz-range-track {
+  height: 2px;
+  background: var(--cg-raised, #1A2129);
+}
+
+.cg-cw-light input[type="range"]::-webkit-slider-thumb {
+  width: calc(10 * var(--cg-u, 1px));
+  height: calc(18 * var(--cg-u, 1px));
+  margin-top: calc(-8 * var(--cg-u, 1px));
+  background: var(--cg-text, #E6EBF0);
+  border: 0;
+  border-radius: 0;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.cg-cw-light input[type="range"]::-moz-range-thumb {
+  width: calc(10 * var(--cg-u, 1px));
+  height: calc(18 * var(--cg-u, 1px));
+  background: var(--cg-text, #E6EBF0);
+  border: 0;
+  border-radius: 0;
+}
+
+.cg-cw-light input[type="range"]:focus-visible {
+  outline: 2px solid var(--cg-accent, #3C9DF5);
+  outline-offset: 2px;
+}
+
+.cg-cw-presets {
+  display: flex;
+  gap: calc(8 * var(--cg-u, 1px));
+  margin-top: calc(12 * var(--cg-u, 1px));
+}
+
+.cg-cw-preset {
+  position: relative;
+  display: inline-flex;
+  flex: 1 1 0;
+  align-items: center;
+  justify-content: center;
+  height: var(--cg-btn-h, 32px);
+  padding: 0;
+  background: var(--cg-raised, #1A2129);
+  border: 0;
+  cursor: pointer;
+}
+
+.cg-cw-preset span {
+  display: block;
+  width: calc(14 * var(--cg-u, 1px));
+  height: calc(14 * var(--cg-u, 1px));
+}
+
+/* the preset in use: an Ink bar along its foot */
+.cg-cw-preset[aria-pressed="true"]::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  background: var(--cg-text, #E6EBF0);
+}
+
+.cg-cw .cg-cw-reset {
+  width: 100%;
+  height: var(--cg-btn-h, 32px);
+  margin-top: calc(12 * var(--cg-u, 1px));
+  background: var(--cg-raised, #1A2129);
+  border: 0;
+  color: var(--cg-text, #E6EBF0);
+  font: 500 var(--cg-small, 13px)/1 var(--cg-sans);
+  cursor: pointer;
+}
+
+.cg-cw .cg-cw-reset:disabled {
+  color: var(--cg-muted, #8A96A3);
+  cursor: default;
+}
+
+/* narrow: under the switch at the top right */
+.cg-narrow .cg-swatch {
+  width: 44px;
+  height: 44px;
+}
+
+.cg-narrow .cg-cw {
+  top: calc(12px + 44px + 8px);
+  right: 12px;
+  left: auto;
+  transform: none;
+}
+
+/* touch: 44px targets, and room for five of them in a row */
+@media (pointer: coarse) {
+  .cg-swatch,
+  .cg-cw-preset {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .cg-cw {
+    width: max(calc(232 * var(--cg-u, 1px)), 284px);
+  }
+}
+
+.cg-narrow .cg-cw {
+  width: min(284px, calc(100% - 24px));
+}

@@ -474,6 +474,7 @@ export function createMap(container, opts = {}) {
   let pins = [];
   let selectedId = null;
   let hoverId = null;
+  let trackColor = BLUE;
 
   function setTime(ms) {
     wantSun = sunDirectionEcef(ms);
@@ -520,6 +521,12 @@ export function createMap(container, opts = {}) {
 
   function setStation(latDeg, lonDeg) {
     station = { latDeg, lonDeg };
+    overDirty = true;
+  }
+
+  /** The orbit's colour: track, footprint and satellite (team blue by default). */
+  function setTrackColor(color) {
+    trackColor = color;
     overDirty = true;
   }
 
@@ -870,14 +877,15 @@ export function createMap(container, opts = {}) {
     octx.lineCap = 'round';
     drawGrid();
 
+    octx.strokeStyle = trackColor;
     if (ring) {
       octx.lineWidth = 1.5 * scale;
-      octx.strokeStyle = 'rgba(230, 235, 240, 0.45)';
+      octx.globalAlpha = 0.5;
       strokeLine(ring.lats, ring.lons, 0, ring.lats.length - 1, ring.minLon, ring.maxLon);
+      octx.globalAlpha = 1;
     }
     if (track && sat) {
       octx.lineWidth = 2 * scale;
-      octx.strokeStyle = BLUE;
       octx.globalAlpha = 0.35;
       strokeLine(track.lats, track.lons, 0, track.split, track.minLon, track.maxLon);
       octx.globalAlpha = 1;
@@ -900,7 +908,7 @@ export function createMap(container, opts = {}) {
     }
 
     const satXs = sat ? view.xs(sat.lonDeg, m) : [];
-    for (const x of satXs) disc(x, view.y(sat.latDeg), 11 * scale, BLUE);
+    for (const x of satXs) disc(x, view.y(sat.latDeg), 11 * scale, trackColor);
 
     // labels last, over everything
     octx.font = font(500, 13);
@@ -983,6 +991,7 @@ export function createMap(container, opts = {}) {
     setSatellite,
     setTrack,
     setStation,
+    setTrackColor,
     setPins,
     setSelected,
     setHover,

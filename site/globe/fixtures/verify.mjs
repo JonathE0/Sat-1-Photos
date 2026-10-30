@@ -9,6 +9,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { applyAnnotations, launchTime, toIsoUtc, toPhotos } from '../adapter.js';
 import * as astro from '../astro.js';
+import * as wheel from '../colorwheel.js';
 import * as map2d from '../map2d.js';
 import { elementsNote, FAR_DAYS, parseUtcInput, utcInputs, VERY_FAR_DAYS } from '../timepick.js';
 
@@ -400,6 +401,48 @@ check('compass points', astro.compassPoint(0) === 'N' && astro.compassPoint(355)
     veryFar.level === 'far' && /hundreds of kilometres/.test(veryFar.text) && /rough guess/.test(veryFar.text),
     veryFar.text,
   );
+}
+
+// ---- orbit colour (colorwheel.js) --------------------------------------------------------------
+{
+  const space = '#05070A';
+  check('colour: WCAG contrast of white on black is 21', Math.abs(wheel.contrast('#FFFFFF', '#000000') - 21) < 1e-9);
+  check('colour: the team blue is clear of the night side', wheel.contrast(wheel.TEAM_BLUE, space) > 6.9, wheel.contrast(wheel.TEAM_BLUE, space).toFixed(2));
+  let roundTrip = 0;
+  for (const hex of [wheel.TEAM_BLUE, '#F2B33D', '#05070A', '#E6EBF0', '#7F3FBF', '#00FF80']) {
+    const back = wheel.rgbToHex(wheel.hslToRgb(...Object.values(wheel.rgbToHsl(wheel.hexToRgb(hex)))));
+    const a = wheel.hexToRgb(hex);
+    const b = wheel.hexToRgb(back);
+    roundTrip = Math.max(roundTrip, Math.abs(a.r - b.r), Math.abs(a.g - b.g), Math.abs(a.b - b.b));
+  }
+  check('colour: hex to HSL and back is exact to the unit', roundTrip <= 1, `${roundTrip} at most`);
+  let worst = Infinity;
+  let worstHue = 0;
+  let lightest = 0;
+  for (let h = 0; h < 360; h++) {
+    for (const l of [0, wheel.LIGHTNESS.min, 60, wheel.LIGHTNESS.max, 100]) {
+      const hex = wheel.readableColour(h, l);
+      const c = wheel.contrast(hex, space);
+      if (c < worst) [worst, worstHue] = [c, h];
+      lightest = Math.max(lightest, wheel.rgbToHsl(wheel.hexToRgb(hex)).l);
+    }
+  }
+  check(
+    `colour: every hue at every lightness keeps ${wheel.MIN_CONTRAST}:1 on the night side, never white`,
+    worst >= wheel.MIN_CONTRAST && lightest < 96,
+    `lowest ${worst.toFixed(2)} at hue ${worstHue}, lightest ${lightest.toFixed(0)}%`,
+  );
+  check(
+    'colour: presets are distinct, usable and start with the team blue',
+    wheel.PRESETS[0].hex === wheel.TEAM_BLUE && new Set(wheel.PRESETS.map((p) => p.hex)).size === wheel.PRESETS.length &&
+      wheel.PRESETS.every((p) => wheel.usable(p.hex)),
+    wheel.PRESETS.map((p) => p.hex).join(' '),
+  );
+  check(
+    'colour: a stored value is only used when it is a clear hex colour',
+    wheel.usable('#3c9df5') && !wheel.usable('#101010') && !wheel.usable('red') && !wheel.usable('#3C9DF5; x') && !wheel.usable(null),
+  );
+  check('colour: hue names', wheel.hueName(208) === 'blue' && wheel.hueName(40) === 'amber' && wheel.hueName(359) === 'red' && wheel.hueName(-10) === 'red');
 }
 
 console.log(`\n${passed} passed, ${failures} failed`);

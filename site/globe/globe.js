@@ -12,6 +12,7 @@
  */
 import { annotationUrls, applyAnnotations, launchTime, toPhotos } from './adapter.js';
 import * as astro from './astro.js';
+import { createColorWheel } from './colorwheel.js';
 import { createMap } from './map2d.js';
 import { createScene, DEFAULT_DISTANCE } from './scene.js';
 import { createTimePicker, FAR_DAYS, offBy } from './timepick.js';
@@ -124,9 +125,11 @@ const TEMPLATE = `
   </div>
 
   <div class="cg-views">
-    <div class="cg-seg cg-seg-view" role="group" aria-label="View" data-ref="views">
-      <button type="button" data-view="globe" aria-pressed="true" title="Globe (M)">Globe</button>
-      <button type="button" data-view="map" aria-pressed="false" title="Map (M)">Map</button>
+    <div class="cg-views-main" data-ref="viewsMain">
+      <div class="cg-seg cg-seg-view" role="group" aria-label="View" data-ref="views">
+        <button type="button" data-view="globe" aria-pressed="true" title="Globe (M)">Globe</button>
+        <button type="button" data-view="map" aria-pressed="false" title="Map (M)">Map</button>
+      </div>
     </div>
     <div class="cg-seg cg-seg-zoom" role="group" aria-label="Map zoom">
       <button type="button" data-ref="zoomOut" aria-label="Zoom out" title="Zoom out (−)">−</button>
@@ -254,6 +257,7 @@ function noScene() {
   return {
     controls: { dragged: false, reducedMotion: false },
     setStation: nothing,
+    setTrackColor: nothing,
     setTime: nothing,
     setTrack: nothing,
     setSatellite: nothing,
@@ -274,7 +278,7 @@ function noScene() {
 }
 
 function ensureStylesheet() {
-  for (const name of ['globe.css', 'map2d.css', 'timepick.css']) {
+  for (const name of ['globe.css', 'map2d.css', 'timepick.css', 'colorwheel.css']) {
     const href = new URL(name, MODULE_BASE).href;
     const present = [...document.querySelectorAll('link[rel="stylesheet"]')].some((l) => l.href === href);
     if (present) continue;
@@ -408,6 +412,17 @@ export function mountGlobe(container, options = {}) {
   canvas.after(map.element);
   map.setStation(astro.CALGARY.latDeg, astro.CALGARY.lonDeg);
   const onMap = () => state.view === 'map';
+
+  // The orbit's colour: team blue unless this visitor has picked another.
+  function paintOrbit(hex) {
+    scene.setTrackColor(hex);
+    map.setTrackColor(hex);
+    root.style.setProperty('--cg-orbit', hex);
+  }
+  const wheel = createColorWheel({ onChange: paintOrbit });
+  el.viewsMain.appendChild(wheel.button);
+  root.appendChild(wheel.element);
+  paintOrbit(wheel.colour);
 
   // Camera moves go to both views, so switching shows the same place.
   function flyToGround(latDeg, lonDeg, o) {
@@ -1488,6 +1503,7 @@ export function mountGlobe(container, options = {}) {
       scene.dispose();
       map.dispose();
       picker.destroy();
+      wheel.destroy();
       root.remove();
     },
   };

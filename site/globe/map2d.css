@@ -62,6 +62,12 @@
   transform: translateX(-50%);
 }
 
+/* Globe / Map and the orbit colour swatch */
+.cg-views-main {
+  display: flex;
+  gap: calc(8 * var(--cg-u, 1px));
+}
+
 .cg-seg {
   display: flex;
   background: var(--cg-panel, #10151B);
@@ -114,7 +120,7 @@
   display: contents;
 }
 
-.cg-narrow .cg-seg-view {
+.cg-narrow .cg-views-main {
   position: absolute;
   top: 12px;
   right: 12px;
