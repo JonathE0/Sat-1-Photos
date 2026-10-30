@@ -28,6 +28,7 @@ const LOCAL_ZONE = 'America/Edmonton';
 const PASS_COUNT = 4;
 const PASS_MASK_DEG = 10;
 const PANELS_KEY = 'cts-globe-panels';
+const HEAD_KEY = 'cts-globe-head';
 
 const pad = (n) => String(n).padStart(2, '0');
 const MINUS = '−';
@@ -142,13 +143,16 @@ const TEMPLATE = `
   <div class="cg-col cg-col-left">
     <header class="cg-head">
       <a class="cg-back" data-ref="back" hidden>All pictures</a>
-      <h1 class="cg-title">CTS-SAT-1</h1>
-      <p class="cg-over" data-ref="over" hidden></p>
-      <p class="cg-fine cg-sub">Also called FrontierSat. NORAD 69015.</p>
-      <p class="cg-fine cg-credit">Earth imagery: NASA. Orbits: Space-Track.org. Places © <a
-        href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>.
-        Borders: <a href="https://www.naturalearthdata.com/" target="_blank" rel="noopener">Natural Earth</a>.</p>
-      <p class="cg-fine cg-note" data-ref="note" hidden></p>
+      <h1 class="cg-title"><button type="button" class="cg-fold" data-ref="headFold" aria-expanded="true"
+        title="Show or hide where it is">CTS-SAT-1${ICONS.chevron}</button></h1>
+      <div data-ref="headBody">
+        <p class="cg-over" data-ref="over" hidden></p>
+        <p class="cg-fine cg-sub">Also called FrontierSat. NORAD 69015.</p>
+        <p class="cg-fine cg-credit">Earth imagery: NASA. Orbits: Space-Track.org. Places © <a
+          href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>.
+          Borders: <a href="https://www.naturalearthdata.com/" target="_blank" rel="noopener">Natural Earth</a>.</p>
+        <p class="cg-fine cg-note" data-ref="note" hidden></p>
+      </div>
     </header>
     <section class="cg-panel" data-panel="sat" data-ref="satPanel" aria-label="Right now">
       <div class="cg-panel-head">
@@ -456,6 +460,28 @@ export function mountGlobe(container, options = {}) {
   listen(el.fold, 'click', () => {
     satFoldedByUser = el.fold.getAttribute('aria-expanded') === 'true';
     setSatFold(satFoldedByUser);
+  });
+
+  // The header folds to the name, with the choice kept for the next visit.
+  function setHeadFold(folded) {
+    el.headBody.hidden = folded;
+    el.headFold.setAttribute('aria-expanded', String(!folded));
+  }
+  try {
+    setHeadFold(localStorage.getItem(HEAD_KEY) === 'folded');
+  } catch {
+    // storage blocked: start with it open
+  }
+  listen(el.headFold, 'click', () => {
+    const folded = !el.headBody.hidden;
+    setHeadFold(folded);
+    try {
+      localStorage.setItem(HEAD_KEY, folded ? 'folded' : 'open');
+    } catch {
+      // storage blocked: the choice lasts until the page closes
+    }
+    layout();
+    resizeMap();
   });
 
   const layout = () => {

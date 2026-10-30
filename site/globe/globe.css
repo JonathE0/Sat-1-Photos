@@ -177,8 +177,13 @@
   pointer-events: none;
 }
 
-.cg-head a {
+.cg-head a,
+.cg-head .cg-fold {
   pointer-events: auto;
+}
+
+.cg-narrow .cg-head .cg-fold {
+  min-height: 44px;
 }
 
 .cg-back {
