@@ -1,0 +1,148 @@
+/* "Go to a time" (timepick.js): a flat Panel above the clock bar, label
+   above field, fields on Raised with no border, the one primary button in
+   Ink. On a narrow globe it spans the width above the bottom bar. */
+
+.cg-tp {
+  position: absolute;
+  bottom: calc(var(--cg-clock-h, 64px) + 2 * var(--cg-gap, 16px));
+  left: var(--cg-gap, 16px);
+  z-index: 4;
+  width: calc(320 * var(--cg-u, 1px));
+  padding: var(--cg-pad, 16px);
+  background: var(--cg-panel, #10151B);
+  color: var(--cg-text, #E6EBF0);
+  font: 400 var(--cg-value, 16px)/1.4 var(--cg-sans);
+  font-variant-numeric: tabular-nums;
+}
+
+.cg-tp-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: calc(12 * var(--cg-u, 1px));
+}
+
+.cg .cg-tp-title,
+.cg-tp-title {
+  margin: 0;
+  font: 600 var(--cg-value, 16px)/1.3 var(--cg-sans);
+}
+
+.cg-tp-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--cg-btn-h, 32px);
+  height: var(--cg-btn-h, 32px);
+  margin-right: calc(-8 * var(--cg-u, 1px));
+  padding: 0;
+  background: none;
+  border: 0;
+  color: var(--cg-muted, #8A96A3);
+  cursor: pointer;
+}
+
+.cg-tp-close:hover {
+  color: var(--cg-text, #E6EBF0);
+}
+
+.cg-tp-close svg {
+  width: calc(12 * var(--cg-u, 1px));
+  height: calc(12 * var(--cg-u, 1px));
+}
+
+.cg-tp-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: calc(12 * var(--cg-u, 1px));
+}
+
+.cg-tp-field {
+  display: grid;
+  gap: calc(4 * var(--cg-u, 1px));
+  min-width: 0;
+}
+
+.cg-tp-field span {
+  font-size: var(--cg-small, 13px);
+  color: var(--cg-muted, #8A96A3);
+}
+
+.cg-tp input {
+  width: 100%;
+  min-width: 0;
+  height: calc(40 * var(--cg-u, 1px));
+  padding: 0 calc(10 * var(--cg-u, 1px));
+  background: var(--cg-raised, #1A2129);
+  border: 0;
+  border-radius: 0;
+  color: var(--cg-text, #E6EBF0);
+  font: 400 var(--cg-value, 16px)/1 var(--cg-sans);
+  font-variant-numeric: tabular-nums;
+  color-scheme: dark;
+}
+
+.cg-tp input:focus-visible {
+  outline: 2px solid var(--cg-accent, #3C9DF5);
+  outline-offset: 2px;
+}
+
+.cg .cg-tp-local,
+.cg-tp-local {
+  margin: calc(12 * var(--cg-u, 1px)) 0 0;
+  font-size: var(--cg-small, 13px);
+  line-height: 1.45;
+}
+
+.cg .cg-tp-note,
+.cg-tp-note {
+  margin: calc(8 * var(--cg-u, 1px)) 0 0;
+  font-size: var(--cg-small, 13px);
+  line-height: 1.45;
+  color: var(--cg-muted, #8A96A3);
+}
+
+.cg-tp-note[data-level="far"] {
+  color: var(--cg-text, #E6EBF0);
+}
+
+.cg-tp-actions {
+  display: flex;
+  gap: calc(8 * var(--cg-u, 1px));
+  margin-top: calc(16 * var(--cg-u, 1px));
+}
+
+.cg-tp .cg-btn {
+  height: var(--cg-btn-h, 32px);
+  padding: 0 calc(12 * var(--cg-u, 1px));
+  background: var(--cg-raised, #1A2129);
+  border: 0;
+  color: var(--cg-text, #E6EBF0);
+  font: 500 var(--cg-small, 13px)/1 var(--cg-sans);
+  cursor: pointer;
+}
+
+.cg-tp .cg-tp-go {
+  background: var(--cg-text, #E6EBF0);
+  color: var(--cg-bg, #05070A);
+}
+
+.cg-tp .cg-tp-go:disabled {
+  background: var(--cg-raised, #1A2129);
+  color: var(--cg-muted, #8A96A3);
+  cursor: default;
+}
+
+.cg-narrow .cg-tp {
+  right: 0;
+  bottom: var(--cg-dock-h, 0px);
+  left: 0;
+  width: auto;
+  max-height: calc(100% - var(--cg-dock-h, 0px));
+  overflow-y: auto;
+}
+
+.cg-narrow .cg-tp input,
+.cg-narrow .cg-tp .cg-btn {
+  height: 44px;
+}
