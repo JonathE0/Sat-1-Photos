@@ -17,3 +17,4 @@ data/update.lock
 Thumbs.db
 .vscode/
 .idea/
+.claude/

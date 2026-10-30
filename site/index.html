@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Pictures from orbit · CTS-SAT-1</title>
   <meta name="description" content="Every picture downlinked from CTS-SAT-1 (FrontierSat) that could be rebuilt, from Calgary To Space's first student-built satellite.">
-  <meta name="theme-color" content="#FF4F00">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%23FF4F00'/%3E%3C/svg%3E">
+  <meta name="theme-color" content="#090C10">
+  <link rel="icon" type="image/png" href="assets/cubesat-icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Jost:wght@700;800&family=Urbanist:wght@400;500;600&display=swap">
@@ -19,12 +19,13 @@
 
   <header class="site-head">
     <nav class="nav" aria-label="Main">
-      <div class="nav-side nav-left">
+      <a class="brand" href="#/" aria-label="CTS-SAT-1 pictures, by CalgaryToSpace">
+        <img class="brand-logo" src="assets/calgarytospace-logo.png" width="640" height="204" alt="">
+        <span class="wordmark">CTS-SAT-1</span>
+      </a>
+      <div class="nav-side nav-right">
         <a href="#/" data-nav="gallery">Pictures</a>
         <a href="globe/index.html">Orbit</a>
-      </div>
-      <a class="wordmark" href="#/" aria-label="CTS-SAT-1, all pictures">CTS-SAT-1</a>
-      <div class="nav-side nav-right">
         <a href="#/about" data-nav="about">About</a>
         <div class="name-ctl" hidden>
           <button type="button" class="name-btn" aria-expanded="false" aria-controls="name-form">Your name</button>
@@ -40,12 +41,40 @@
       </div>
     </nav>
 
-    <div class="band">
-      <h1 class="headline">Pictures from orbit</h1>
-      <div class="band-foot">
-        <p class="intro">These are the images downlinked from CTS-SAT-1 (FrontierSat), Calgary To Space's first student-built satellite, launched on 3&nbsp;May 2026 and heard through the SatNOGS ground-station network.</p>
-        <p class="count" id="count">Loading pictures…</p>
+    <div class="hero">
+      <div class="hero-space">
+        <canvas class="stars" aria-hidden="true"></canvas>
+        <div class="limb" aria-hidden="true"></div>
+        <div class="hero-text">
+          <h1 class="headline"><span class="eyebrow">Pictures from orbit</span> <span class="headline-main">CTS-SAT-1</span></h1>
+          <p class="hero-sub">FrontierSat, Calgary To Space's first student-built satellite</p>
+          <button type="button" class="down" aria-label="Go to the pictures">
+            <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M7 1v11M2 7.5 7 12.5l5-5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+          </button>
+        </div>
       </div>
+
+      <div class="hero-side">
+        <div class="hero-photos"></div>
+        <div class="hero-about">
+          <h2>About the pictures</h2>
+          <p class="intro">These are the images downlinked from CTS-SAT-1 (FrontierSat) since its launch on 3&nbsp;May 2026, heard by the SatNOGS ground-station network and rebuilt here from the satellite's radio packets.</p>
+          <div class="reel-bar" hidden>
+            <span class="mono reel-index">01</span>
+            <span class="reel-track" aria-hidden="true"><span class="reel-fill"></span></span>
+            <span class="mono reel-total">01</span>
+            <button type="button" class="reel-btn" data-toggle>Pause</button>
+            <button type="button" class="reel-btn" data-next aria-label="Next picture">Next</button>
+          </div>
+        </div>
+      </div>
+
+      <dl class="hero-stats">
+        <div><dt>Pictures</dt><dd id="count">Loading…</dd></div>
+        <div><dt>Verified</dt><dd id="stat-verified">–</dd></div>
+        <div><dt>Launched</dt><dd>3 May 2026</dd></div>
+        <div><dt>List updated</dt><dd id="stat-updated">–</dd></div>
+      </dl>
     </div>
   </header>
 
@@ -90,7 +119,7 @@
   <footer class="site-foot">
     <div class="foot-col">
       <h2>Data</h2>
-      <p>Packets from the <a href="https://network.satnogs.org/">SatNOGS network</a>, decoded by the CalgaryToSpace ground-station pipeline at <a href="https://frontiersat.mooo.com/">frontiersat.mooo.com</a>. Place names © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>, via Nominatim. Orbital elements: USSPACECOM, via <a href="https://www.space-track.org/">Space-Track.org</a>. Globe imagery: NASA Earth Observatory.</p>
+      <p>Packets from the <a href="https://network.satnogs.org/">SatNOGS network</a>, decoded by the CalgaryToSpace ground-station pipeline at <a href="https://frontiersat.mooo.com/">frontiersat.mooo.com</a>. Place names © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>, via Nominatim. Orbital elements: USSPACECOM, via <a href="https://www.space-track.org/">Space-Track.org</a>. Globe imagery: NASA Earth Observatory. Logo and CubeSat icon: CalgaryToSpace.</p>
     </div>
     <div class="foot-col">
       <h2>Updated</h2>
@@ -99,6 +128,7 @@
     <div class="foot-col">
       <h2>Links</h2>
       <ul class="foot-links">
+        <li><a href="https://www.calgarytospace.ca/">calgarytospace.ca</a></li>
         <li><a href="https://github.com/CalgaryToSpace">github.com/CalgaryToSpace</a></li>
         <li><a href="https://db.satnogs.org/">db.satnogs.org</a></li>
       </ul>

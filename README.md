@@ -49,6 +49,11 @@ The globe's reference values are regenerated with
 
 ## What's on the site
 
+- **Opening screen**: the title over a starfield, one picture that stays
+  still (`heroPicture` in `site/config.js`) and a slideshow of the most
+  detailed main-camera frames, each sliding in from the side, panning slowly
+  and fading out. With the system's reduced-motion setting on, the slideshow
+  crossfades instead. It can be paused, and pauses while hovered or focused.
 - **Pictures**: every downlinked image, newest first, filterable by camera,
   status, month, member and tag.
 - **Each picture**:
@@ -179,6 +184,8 @@ address; add `--allow-host NAME` to use another name, or set an edit key.
 - Orbital elements: Space-Track.org, via the team pipeline.
 - Place names: © OpenStreetMap contributors, via Nominatim.
 - Globe imagery: NASA Blue Marble and Black Marble (see `site/globe/textures/`).
+- Logo and CubeSat icon (`site/assets/`): CalgaryToSpace, from
+  [calgarytospace.ca](https://www.calgarytospace.ca/).
 
 ## Licence
 

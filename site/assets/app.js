@@ -7,9 +7,10 @@ import { h, append, mono, announce, store } from './dom.js';
 import { loadImages, loadAnnotations, mergeAll, readFilters, applyFilters } from './data.js';
 import { createGallery } from './gallery.js';
 import { createDetail, NAME_KEY } from './detail.js';
-import { toDate, utcLong, plural } from './format.js';
+import { createHero } from './hero.js';
+import { toDate, utcLong, dayMonthYear, clock, plural } from './format.js';
 
-const config = { repoUrl: '', refreshMinutes: 30, ...(window.CTS1_CONFIG || {}) };
+const config = { repoUrl: '', refreshMinutes: 30, heroPicture: '', ...(window.CTS1_CONFIG || {}) };
 
 const state = {
   data: null,
@@ -40,6 +41,8 @@ const views = {
 };
 
 if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+
+const hero = createHero($('.hero'), { stillId: String(config.heroPicture || '') });
 
 const gallery = createGallery(views.gallery, {
   onQueryChange(query) { state.galleryQuery = query; },
@@ -185,6 +188,7 @@ function rebuild() {
   state.photos = mergeAll(state.data.images, state.annotations);
   state.byId = new Map(state.photos.map((p) => [p.id, p]));
   gallery.setData(state.photos);
+  hero.setData(state.photos);
   updateCounts();
   renderSkipped();
 }
@@ -203,13 +207,10 @@ function renderSkipped() {
 }
 
 function updateCounts() {
-  const count = $('#count');
   const built = toDate(state.data?.generated_at);
-  count.replaceChildren(
-    plural(state.photos.length, 'picture'),
-    built ? ' · last updated ' : '',
-    built ? mono(utcLong(built, false)) : '',
-  );
+  $('#count').textContent = state.photos.length.toLocaleString('en-US');
+  $('#stat-verified').textContent = state.photos.filter((p) => p.status === 'verified').length.toLocaleString('en-US');
+  $('#stat-updated').replaceChildren(built ? mono(`${dayMonthYear(built).replace(/ \d{4}$/, '')}, ${clock(built)} UTC`) : '–');
   const minutes = Number(config.refreshMinutes);
   const every = Number.isFinite(minutes) && minutes > 0 ? `every ${plural(minutes, 'minute')}` : 'regularly';
   const updated = $('#foot-updated');

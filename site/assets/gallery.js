@@ -27,13 +27,18 @@ function timeText(p) {
 
 const isWhole = (p) => p && p.camera === 'picam' && (p.status === 'verified' || p.status === 'complete');
 
-// Big tiles go to whole PiCAM frames with some detail in them. File size is a
-// cheap stand-in for detail: black night frames compress to almost nothing,
-// so the smallest 40% of frames are passed over.
-export function featureTest(shown) {
-  const sizes = shown.filter(isWhole).map((p) => p.raw.file_size).filter(Number.isFinite).sort((a, b) => a - b);
+// Whole PiCAM frames with some detail in them. File size is a cheap stand-in
+// for detail: black night frames compress to almost nothing, so the smallest
+// 40% of frames are passed over.
+export function detailTest(photos) {
+  const sizes = photos.filter(isWhole).map((p) => p.raw.file_size).filter(Number.isFinite).sort((a, b) => a - b);
   const floor = sizes.length ? sizes[Math.floor(sizes.length * 0.4)] : 0;
-  const good = (p) => isWhole(p) && (!Number.isFinite(p.raw.file_size) || p.raw.file_size >= floor);
+  return (p) => isWhole(p) && (!Number.isFinite(p.raw.file_size) || p.raw.file_size >= floor);
+}
+
+// Big tiles go to pairs of detailed frames.
+export function featureTest(shown) {
+  const good = detailTest(shown);
   return (start) => good(shown[start]) && good(shown[start + 1]);
 }
 

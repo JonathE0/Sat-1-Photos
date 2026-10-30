@@ -12,4 +12,8 @@ window.CTS1_CONFIG = {
   // scripts/install-schedule.ps1 on a local machine. 0 hides that line, for
   // a copy that is only as current as its last push.
   refreshMinutes: 30,
+
+  // The picture that stays still on the opening screen, by its id (the end
+  // of its #/photo/ link). "" uses the newest detailed picture.
+  heroPicture: "2026-08-06",
 };
