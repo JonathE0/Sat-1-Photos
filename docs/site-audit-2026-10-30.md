@@ -23,6 +23,13 @@ estimates, not measured on devices.
 
 The lead session checked these eight against the screenshots or the code.
 
+**All eight are fixed on `main` (631db2c).** The trade-offs that came with them:
+
+- **#1:** when a phone or small window has too little room, things drop in a set order. The facts banner goes first (its facts stay available in the satellite details), then "Drag to look around", then the second half of the live sentence, then the subheading.
+- **#3:** on short windows the stage for Two and Four is taller than fits above the filmstrip, so the page scrolls to reach it.
+- **#2:** on short windows the Passes panel gets less room and scrolls inside it.
+- **#7:** on Slow 3G the words appear at 6.4 s instead of about 32 to 34 s, but the Earth arrives 3.8 s later (54.1 s against 50.3 s), and words can show in a fallback font and re-wrap before the real one loads. On the Orbit page, Credits doesn't respond until the globe's code has loaded.
+
 | # | Where | What's wrong | Likely cause |
 |---|---|---|---|
 | 1 | Explore, phones; small landscape windows | The facts banner covers the satellite while the line above says to tap it. At 390×664 the tap lands on the banner and the panel stays closed. On a phone on its side the banner also covers the headline text, and a tap on the satellite can hit "See all 31 pictures". Full-height 390×844 is fine, which is why it's easy to miss. | `explore/journey.js:703`, `explore/journey.css:418`, `:844` |
