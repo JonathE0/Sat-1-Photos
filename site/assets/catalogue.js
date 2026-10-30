@@ -108,6 +108,14 @@ export function whenShort(p) {
   return day ? `${dayMonthYear(day)}, time unknown` : 'Time unknown';
 }
 
+// For labels that are read aloud: the headline and the time, without saying a
+// date twice when the date is all the headline has.
+function nameAndWhen(p) {
+  const name = headline(p);
+  const when = whenShort(p);
+  return when.startsWith(name) ? when : `${name}, ${when}`;
+}
+
 let calgaryFormat = null;
 
 // "18:54 MDT on 24 Oct in Calgary" (the date only when it differs from UTC's),
@@ -495,7 +503,8 @@ export function createCatalogue(root, {
     h('div', { class: 'cat-actions-primary' }, globeLink, globeOff),
     h('div', { class: 'cat-actions-row' }, compareBtn, download, copyBtn, detailsLink));
   const emptyNote = h('p', { class: 'cat-empty-note', hidden: true });
-  const info = h('div', { class: 'cat-info' }, title, when, status, emptyNote, facts, notes, actions, globeWhy);
+  // The actions before the facts, so they're on screen on a laptop however long the facts are.
+  const info = h('div', { class: 'cat-info' }, title, when, status, emptyNote, actions, facts, notes, globeWhy);
 
   const grid = h('div', { class: 'cat-grid' }, viewer, dock, info);
   const notice = h('div', { class: 'cat-notice', role: 'status', hidden: true });
@@ -994,7 +1003,7 @@ export function createCatalogue(root, {
   function setStep(button, target, word) {
     button.setAttribute('aria-disabled', String(!target));
     const label = `${word} picture`;
-    button.setAttribute('aria-label', target ? `${label}: ${headline(target)}, ${whenShort(target)}` : `${label}: none`);
+    button.setAttribute('aria-label', target ? `${label}: ${nameAndWhen(target)}` : `${label}: none`);
   }
 
   function updateSteps() {
@@ -1066,14 +1075,14 @@ export function createCatalogue(root, {
       cell.image.width = p.width;
       cell.image.height = p.height;
       cell.image.alt = altText(p);
-      cell.pick.setAttribute('aria-label', `Cell ${i + 1}: ${headline(p)}, ${whenShort(p)}`);
+      cell.pick.setAttribute('aria-label', `Cell ${i + 1}: ${nameAndWhen(p)}`);
       cell.place.textContent = headline(p);
       cell.place.title = headline(p);
       cell.time.textContent = whenShort(p);
       const word = p.status === 'verified' ? '' : capitalize(statusShort(p));
       cell.status.textContent = word;
       cell.status.hidden = !word;
-      cell.remove.setAttribute('aria-label', `Remove ${headline(p)}, ${whenShort(p)}, from cell ${i + 1}`);
+      cell.remove.setAttribute('aria-label', `Remove ${nameAndWhen(p)}, from cell ${i + 1}`);
     });
     const p = slots[active] ? byId.get(slots[active]) : null;
     if (p) fillInfo(p);
@@ -1119,7 +1128,7 @@ export function createCatalogue(root, {
     const fileName = String(p.src || '').split('/').pop() || `${p.id}.jpg`;
     download.setAttribute('download', `cts-sat-1-${fileName}`);
     detailsLink.href = `#/photo/${encodeURIComponent(p.id)}`;
-    detailsName.textContent = ` for ${headline(p)}, ${whenShort(p)}`;
+    detailsName.textContent = ` for ${nameAndWhen(p)}`;
   }
 
   function fillEmptyInfo() {

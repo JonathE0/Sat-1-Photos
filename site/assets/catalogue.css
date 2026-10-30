@@ -688,7 +688,7 @@
 .cat-notes .cat-small { margin: 4px 0 0; }
 
 /* The primary on its own line, then one row of text buttons. */
-.cat-actions { margin-top: 32px; }
+.cat-actions { margin-top: 20px; }
 .cat-actions-row {
   display: flex;
   flex-wrap: wrap;

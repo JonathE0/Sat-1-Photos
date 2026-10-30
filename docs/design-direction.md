@@ -421,6 +421,9 @@ was it taken?** So the picture is the largest thing, and its place is the larges
   - h1 (Statement): the place, "Alberta, Canada". With no place, the date: "24 Oct 2026".
   - Body Muted: "24 Oct 2026, 17:37 UTC" and, on the next line, "11:37 MDT in Calgary".
   - A status line in Body Ink, only when the picture is not checked and whole (copy below).
+  - Actions: "Show on the globe" (the one primary: Ink fill), then text buttons "Compare",
+    "Download", "Copy link", "All details". They come before the facts, so a long list of facts
+    can't push them off a laptop's screen.
   - Facts: a 120px | 1fr grid, 12px row gap, no rules; labels Small Muted; values Body Ink, with a
     second Small Muted line saying what a value rests on.
 
@@ -437,8 +440,6 @@ was it taken?** So the picture is the largest thing, and its place is the larges
 
   - "Notes" (Title 20/600), the team's notes in Body; empty: "No notes yet." Edit fields follow
     the same tokens: label above, 40px tall, Panel fill, no border, blue focus ring.
-  - Actions: "Show on the globe" (the one primary: Ink fill), then text buttons "Compare",
-    "Download", "Copy link".
 - **Browse dock**, full width at the bottom on Space:
   - A 36px row: "Show" and a segmented One / Two / Four; "Newer" and "Older" text buttons; on the
     right "29 pictures" and the filters (if kept, as plain selects in one row).
