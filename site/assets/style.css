@@ -195,7 +195,8 @@ body[data-view="explore"] .nav > * { pointer-events: auto; }
 body[data-view="explore"] .nav-side a,
 body[data-view="explore"] .nav-btn { color: var(--fg); }
 body[data-view="explore"] .wordmark,
-body[data-view="explore"] .site-foot { display: none; }
+body[data-view="explore"] .site-foot,
+body[data-view="explore"] .name-ctl { display: none; }
 
 .brand { display: flex; align-items: center; gap: 14px; min-width: 0; }
 .brand-logo { width: auto; height: 34px; }
@@ -741,10 +742,13 @@ body[data-view="explore"] .site-foot { display: none; }
 
 @media (max-width: 599px) {
   .nav { gap: 10px; font-size: 13px; }
-  .nav-side { gap: 14px; }
+  /* five links and the logo share a phone's width */
+  .nav-side { gap: 10px; }
   .brand { gap: 10px; }
-  .brand-logo { height: 26px; }
-  .wordmark { padding-left: 10px; font-size: 13px; }
+  .brand-logo { height: 22px; }
+  .wordmark { display: none; }
+  /* the edit form on a picture asks for the name itself */
+  .name-ctl { display: none; }
   .name-btn { max-width: 6.5em; }
   .name-btn.is-set::before { content: none; }
   .name-form { position: fixed; left: var(--pad); right: var(--pad); top: calc(var(--nav-h) + 6px); width: auto; }

@@ -94,20 +94,28 @@ const P = {
 /** The end view: this far behind the satellite, the height solved so the limb sits under the text. */
 const CHASE_BEHIND_KM = 1400;
 /**
- * Headings tried for the end view, radians off the track, best first. Straight
- * behind, the camera sits in the orbit's plane and the 3U shows only its end;
- * the side is picked so the track stays clear of the text (chooseYaw).
+ * The end view's heading, radians off the track. Straight behind, the camera
+ * sits in the orbit's plane and the 3U shows only its end; this side sends
+ * the coming track off toward the text column on the left (the composition
+ * the user chose), and the line is cut short of the text (TEXT_GAP).
  */
-const YAW_CANDIDATES = [-0.52, -0.36, -0.7, -0.22, -0.9, 0.52, 0.36, 0.7, 0.22, 0.9];
+const CHASE_YAW = 0.52;
 /** Close up, the camera levels out to this pitch so the limb sits behind the satellite. */
 const CLOSE_PITCH = 18 * DEG;
 /** Long swings rise this much (times the beat 1 distance) at their middle so they don't whip. */
 const SWING_LIFT = 0.6;
-const SCROLL_LAG_S = 0.12;
+/**
+ * Scroll smoothing: a critically damped spring toward the scroll position,
+ * settling in about 0.4 s (no overshoot, stops when it arrives). Under
+ * reduced motion, a plain 30 ms exponential (no velocity): 98% there in 120 ms.
+ */
+const SCROLL_SPRING = 14;
+const SCROLL_LAG_REDUCED_S = 0.03;
 const ZOOM_LAG_S = 0.14;
 const BLEND_MS = 600;
-/** Breathing room between the text column and the track, CSS px. */
-const TEXT_MARGIN = 48;
+/** The orbit line stops this far (CSS px) short of the text, then fades in over FEATHER. */
+const TEXT_GAP = 48;
+const TEXT_FEATHER = 32;
 
 const SPACE = '#05070A';
 const BLUE = '#3C9DF5';
@@ -160,18 +168,19 @@ function template(id, siteRoot) {
       <div class="jy-text">
         <div class="jy-beat jy-b1" data-ref="b1">
           <h1 class="jy-h1"><span class="jy-words">CTS-SAT-1</span></h1>
-          <p class="jy-lead jy-intro-lead"><span class="jy-words">Calgary To Space’s first satellite, built by University of Calgary students and in orbit since ${launchDate}.</span></p>
-          <p class="jy-lead jy-live-lead"><span class="jy-words" data-ref="liveLead"></span></p>
-          <p class="jy-cue" data-ref="cue" tabindex="-1"><span class="jy-words">Scroll to learn more</span> ${ICON_DOWN}</p>
+          <p class="jy-sub"><span class="jy-words">Interactive picture visualizer</span></p>
+          <p class="jy-lead jy-intro-only"><span class="jy-words">Calgary To Space\u2019s first satellite, built by University of Calgary students and in orbit since ${launchDate}.</span></p>
+          <p class="jy-cue jy-intro-only" data-ref="cue" tabindex="-1"><span class="jy-words">Scroll to learn more</span> ${ICON_DOWN}</p>
+          <p class="jy-lead jy-live-lead jy-end-only"><span class="jy-words" data-ref="liveLead"></span></p>
+          <p class="jy-hint jy-end-only" data-ref="hint"><span class="jy-words" data-ref="hintText"></span></p>
         </div>
         <p class="jy-beat jy-statement jy-b2" data-ref="b2"><span class="jy-words" data-ref="b2t"></span></p>
-        <p class="jy-beat jy-statement jy-b3" data-ref="b3"><span class="jy-words" data-ref="b3t"></span></p>
       </div>
 
       <div class="jy-time" data-ref="time" role="group" aria-label="Time">
         <p class="jy-clock"><span class="jy-clock-main" data-ref="clockMain"></span><span class="jy-clock-sub" data-ref="clockSub"></span></p>
         <div class="jy-speed" role="radiogroup" aria-label="Speed">
-          ${SPEEDS.map((s) => `<label><input type="radio" name="jy-speed-${id}" value="${s}"${s === 1 ? ' checked' : ''}><span>${s}×</span></label>`).join('')}
+          ${SPEEDS.map((s) => `<label><input type="radio" name="jy-speed-${id}" value="${s}"${s === 1 ? ' checked' : ''}><span>${s}\u00d7</span></label>`).join('')}
         </div>
         <button type="button" class="jy-btn jy-now" data-ref="now">Now</button>
       </div>
@@ -195,7 +204,7 @@ function template(id, siteRoot) {
         <p>Earth: NASA Blue Marble, Black Marble and cloud imagery. Orbital elements:
           <a class="jy-link" href="https://www.space-track.org/">Space-Track.org</a>. Packets: the
           <a class="jy-link" href="https://network.satnogs.org/">SatNOGS network</a> and the CalgaryToSpace ground station.
-          Place names: © <a class="jy-link" href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>.</p>
+          Place names: \u00a9 <a class="jy-link" href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>.</p>
         <p>CubeSat model: NASA IceCube, a 3U like CTS-SAT-1, by NASA/Christopher R. Meaney (NASA 3D Resources,
           public domain); drawn far larger than life.</p>
         <ul class="jy-credits-links">
@@ -230,12 +239,12 @@ function template(id, siteRoot) {
             <dt>Orbits so far</dt><dd data-ref="fRev"></dd>
           </dl>
           <p class="jy-small jy-muted jy-elements" data-ref="elements"></p>
-          <p class="jy-small jy-retry" data-ref="noOrbit" hidden>Couldn’t work out where it is: no orbital elements loaded.
+          <p class="jy-small jy-retry" data-ref="noOrbit" hidden>Couldn\u2019t work out where it is: no orbital elements loaded.
             <button type="button" class="jy-textbtn" data-ref="retry">Try again</button></p>
           <section class="jy-latest" data-ref="latest" hidden>
             <h3 class="jy-latest-title">Latest picture</h3>
             <a class="jy-latest-frame" data-ref="latestFrame"><img data-ref="latestImg" alt="" decoding="async"></a>
-            <p class="jy-latest-failed" data-ref="latestFailed" hidden>The picture didn’t load.
+            <p class="jy-latest-failed" data-ref="latestFailed" hidden>The picture didn\u2019t load.
               <button type="button" class="jy-textbtn" data-ref="latestRetry">Try again</button></p>
             <p class="jy-latest-place" data-ref="latestPlace"></p>
             <p class="jy-small jy-muted" data-ref="latestTime"></p>
@@ -311,8 +320,9 @@ export function mountJourney(container, options = {}) {
     mode: 'story', // 'story', or 'still' without WebGL
     shown: true,
     visible: true, // on screen (IntersectionObserver)
-    pTarget: 0,
-    pSmooth: 0,
+    pTarget: 0, // the scroll position
+    pSmooth: 0, // what the camera and the beats follow
+    pVel: 0,
     live: true,
     speed: 1,
     simMs: Date.now(),
@@ -353,7 +363,6 @@ export function mountJourney(container, options = {}) {
   const scene = new THREE.Scene();
   // near 0.005 (about 32 km) at every zoom: the satellite never gets nearer than that, see zoomLimits
   const camera = new THREE.PerspectiveCamera(35, 1, 0.005, 60);
-  const scoreCamera = new THREE.PerspectiveCamera(35, 1, 0.005, 60);
   const sunLight = new THREE.DirectionalLight(0xffffff, 3.2);
   const ambient = new THREE.AmbientLight(0xffffff, 0.05);
   scene.add(sunLight, sunLight.target, ambient);
@@ -535,7 +544,7 @@ export function mountJourney(container, options = {}) {
     lens1: { x: 0.62, y: 0.6 },
     a: 0.15,
     b: CHASE_BEHIND_KM / EARTH_RADIUS_KM,
-    yaw: YAW_CANDIDATES[0],
+    yaw: CHASE_YAW,
     satPx: 44,
     ui: 1,
     endText: null, // the text column at the end of the story, stage px
@@ -601,6 +610,16 @@ export function mountJourney(container, options = {}) {
     frame.tanHalf = Math.tan((vfov / 2) * DEG);
     const s = stageRect();
 
+    // The headline block has a beat 1 layout and an end layout; measure both
+    // as they will be, whichever is showing, so the framing never jumps when
+    // the block changes.
+    const composedNow = root.classList.contains('jy-composed');
+    root.classList.remove('jy-composed');
+    const introBox = boxOf(ref.b1, s);
+    root.classList.add('jy-composed');
+    const endBox = boxOf(ref.b1, s);
+    root.classList.toggle('jy-composed', composedNow);
+
     // beat 1: the whole Earth
     let diam;
     if (!narrow) {
@@ -608,15 +627,14 @@ export function mountJourney(container, options = {}) {
       frame.lens0 = { x: 0.7, y: 0.6 };
     } else {
       diam = (1.2 * W) / H;
-      const b1 = boxOf(ref.b1, s);
-      const top = (b1 ? b1.bottom / H : 0.4) + 0.02; // the Earth starts under the h1 block
+      const top = (introBox ? introBox.bottom / H : 0.4) + 0.02; // the Earth starts under the h1 block
       frame.lens0 = { x: 0.5, y: Math.max(0.7, top + diam / 2) };
     }
     frame.d0 = 1 / Math.sin(Math.atan(diam * frame.tanHalf));
 
-    // the end: behind the satellite, the limb under the text column
-    const reduced = reducedMotion();
-    frame.endText = reduced ? boxOf(ref.b1, s) : union([boxOf(ref.b2, s), boxOf(ref.b3, s)]);
+    // the end: behind the satellite, the limb under the headline block (and
+    // under the big live sentence, which is still up as the camera arrives)
+    frame.endText = union([endBox, boxOf(ref.b2, s)]);
     let satY = narrow ? 0.64 : 0.6;
     let limbY = narrow ? 0.45 : 0.42;
     if (frame.endText) limbY = Math.max(limbY, frame.endText.bottom / H + 0.03);
@@ -634,18 +652,26 @@ export function mountJourney(container, options = {}) {
     frame.satPx = (narrow ? 36 : 44) * frame.ui;
     stage.style.setProperty('--jy-ui', String(frame.ui));
     measureText();
-    chooseYaw();
   }
 
-  /** Text on screen now: the orbit line fades under it and pins hide under it. */
+  /**
+   * Text on screen now, including a block still fading out: the orbit line
+   * stops TEXT_GAP px short of it, and pins hide under it.
+   */
+  const leaving = new Map(); // block -> time it started fading out
   function measureText() {
     const s = stageRect();
-    frame.textNow = [ref.b1, ref.b2, ref.b3]
-      .filter((el) => el.classList.contains('is-on'))
-      .map((el) => boxOf(el, s))
-      .filter(Boolean)
-      .map((b) => ({ left: b.left - 16, top: b.top - 16, right: b.right + 16, bottom: b.bottom + 16 }));
-    orbitLine.setMasks(frame.textNow);
+    const now = performance.now();
+    const boxes = [];
+    for (const el of [ref.b1, ref.b2]) {
+      const fading = leaving.has(el) && now - leaving.get(el) < 650;
+      if (!el.classList.contains('is-on') && !fading) continue;
+      const b = boxOf(el, s);
+      if (b) boxes.push(b);
+    }
+    frame.textBoxes = boxes;
+    frame.textNow = boxes.map((b) => ({ left: b.left - 16, top: b.top - 16, right: b.right + 16, bottom: b.bottom + 16 }));
+    orbitLine.setKeepOut(boxes, { gap: TEXT_GAP, feather: TEXT_FEATHER });
   }
 
   function resize() {
@@ -660,10 +686,8 @@ export function mountJourney(container, options = {}) {
       renderer.setSize(W, H, false);
     }
     camera.aspect = W / H;
-    scoreCamera.aspect = W / H;
     computeFrame();
     camera.fov = frame.vfov;
-    scoreCamera.fov = frame.vfov;
     camera.updateProjectionMatrix();
     root.classList.toggle('jy-narrow', frame.narrow);
     if (!webgl) layoutStill();
@@ -673,7 +697,6 @@ export function mountJourney(container, options = {}) {
   // ---- camera rigs -------------------------------------------------------------------
   const rig = { P: new THREE.Vector3(), q: new THREE.Quaternion(), lx: 0.5, ly: 0.5 };
   const shown = { P: new THREE.Vector3(0, 0, 5), q: new THREE.Quaternion(), lx: 0.5, ly: 0.5 };
-  const scoreRig = { P: new THREE.Vector3(), q: new THREE.Quaternion(), lx: 0.5, ly: 0.5 };
   let blend = null; // { from: {P, q, lx, ly}, t0, dur }
   const mLook = new THREE.Matrix4();
   const heading = new THREE.Vector3();
@@ -875,38 +898,7 @@ export function mountJourney(container, options = {}) {
     return out.set(a.x * ka + b.x * kb, a.y * ka + b.y * kb, a.z * ka + b.z * kb);
   }
 
-  // ---- the default heading: the track clear of the text -------------------------------
-  const v4 = new THREE.Vector4();
-  const mScore = new THREE.Matrix4();
-
-  /** How much of the drawn track (and the satellite) falls in the text column plus a margin. */
-  function intrusion(yaw, box) {
-    const d = chaseDefaults();
-    followRig(scoreRig, yaw, d.pitch, d.dist);
-    applyCamera(scoreCamera, scoreRig);
-    scoreCamera.updateProjectionMatrix();
-    mScore.multiplyMatrices(scoreCamera.projectionMatrix, scoreCamera.matrixWorldInverse);
-    let score = 0;
-    const inside = (x, y, z, w) => {
-      v4.set(x, y, z, 1).applyMatrix4(mScore);
-      if (v4.w <= 1e-4) return false;
-      const sx = (v4.x / v4.w * 0.5 + 0.5) * W;
-      const sy = (-v4.y / v4.w * 0.5 + 0.5) * H;
-      return sx > box.left && sx < box.right && sy > box.top && sy < box.bottom && v4.z / v4.w < 1;
-    };
-    for (let i = 0; i < trackN; i++) {
-      const x = trackXYZ[i * 3];
-      const y = trackXYZ[i * 3 + 1];
-      const z = trackXYZ[i * 3 + 2];
-      // points behind the Earth aren't drawn
-      tmpA.set(x, y, z);
-      if (hiddenByEarth(scoreRig.P, tmpA)) continue;
-      if (inside(x, y, z)) score += trackW[i];
-    }
-    if (inside(sat.S.x, sat.S.y, sat.S.z)) score += 20;
-    return score;
-  }
-
+  // ---- occlusion ------------------------------------------------------------------------
   function hiddenByEarth(from, p, radius = 0.999) {
     tmpB.subVectors(p, from);
     const len = tmpB.length();
@@ -916,35 +908,6 @@ export function mountJourney(container, options = {}) {
     if (h <= 0) return false;
     const t = -b - Math.sqrt(h);
     return t > 0 && t < len - 1e-4;
-  }
-
-  /**
-   * Pick the end view's heading so the track and the satellite keep clear of
-   * the text column. Only the default view: once the visitor moves the
-   * camera it's theirs. The track's shape relative to the satellite hardly
-   * changes along the orbit, so the choice holds; it is checked again when
-   * the layout changes and every few seconds.
-   */
-  function chooseYaw() {
-    if (!sat.ok || !trackN || !frame.endText) return;
-    const t = frame.endText;
-    const m = TEXT_MARGIN;
-    const box = { left: t.left - m, top: t.top - m, right: t.right + m, bottom: t.bottom + m };
-    const current = intrusion(frame.yaw, box);
-    if (current < 1e-6) return;
-    let best = frame.yaw;
-    let bestScore = current;
-    for (const y of YAW_CANDIDATES) {
-      const sc = intrusion(y, box);
-      if (sc < bestScore - 1e-6) {
-        best = y;
-        bestScore = sc;
-      }
-    }
-    if (best !== frame.yaw) {
-      if (!state.custom && storyProgress() >= P.swingStart) startBlend();
-      frame.yaw = best;
-    }
   }
 
   // ---- story progress -----------------------------------------------------------------
@@ -984,6 +947,7 @@ export function mountJourney(container, options = {}) {
     scrollWindow(sectionTop());
     state.pTarget = 1;
     state.pSmooth = 1;
+    state.pVel = 0;
     readScroll();
     updateBeats();
     uiDirty = true;
@@ -993,8 +957,34 @@ export function mountJourney(container, options = {}) {
   }
 
   /** Lock once the story is at its end and the page has stopped moving (no finger down). */
+  /**
+   * One step of the smoothing, exact for any frame length (so the same feel at
+   * 30, 60 or 144 frames a second). Critically damped: it never overshoots,
+   * reverses as soon as the scroll does, and comes to rest when it arrives.
+   */
+  function smoothProgress(dt) {
+    const target = state.pTarget;
+    if (reducedMotion()) {
+      state.pSmooth += (target - state.pSmooth) * (1 - Math.exp(-dt / SCROLL_LAG_REDUCED_S));
+      state.pVel = 0;
+    } else {
+      const w = SCROLL_SPRING;
+      const d = state.pSmooth - target;
+      const e = Math.exp(-w * dt);
+      const v = state.pVel;
+      state.pSmooth = target + (d + (v + w * d) * dt) * e;
+      state.pVel = (v - w * (v + w * d) * dt) * e;
+    }
+    if (Math.abs(target - state.pSmooth) < 2e-4 && Math.abs(state.pVel) < 2e-3) {
+      state.pSmooth = target;
+      state.pVel = 0;
+    }
+  }
+
   function maybeLock(atRest) {
     if (state.locked || state.mode !== 'story' || !state.shown || state.pTarget < 0.999) return;
+    // only once the camera has arrived too
+    if (state.pSmooth < 0.999) return;
     if (pointers.size) return;
     if (!atRest && performance.now() - state.lastScrollAt < 200) return;
     lock();
@@ -1018,6 +1008,7 @@ export function mountJourney(container, options = {}) {
     scrollWindow(sectionTop());
     state.pTarget = 0;
     state.pSmooth = 0;
+    state.pVel = 0;
     state.lastScrollAt = performance.now();
     readScroll();
     updateBeats();
@@ -1057,15 +1048,23 @@ export function mountJourney(container, options = {}) {
       // the scroll may be clamped at the page's end: trust the saved progress
       state.pTarget = Number.isFinite(saved.progress) && Math.abs(window.scrollY - y) > 2 ? saved.progress : state.pTarget;
       state.pSmooth = state.pTarget;
+      state.pVel = 0;
     }
     return true;
   }
 
   // ---- beats: classes on thresholds, played in time ------------------------------------
-  const beatShown = { b1: null, b2: null, b3: null, ui: null, composed: null };
+  const beatShown = { b1: null, b2: null, ui: null, composed: null, hint: null };
   function setBeat(el, key, on, past) {
     const value = on ? 'on' : past ? 'past' : 'off';
     if (beatShown[key] === value) return false;
+    if (beatShown[key] === 'on' && !on) {
+      // keep the line away from it while it fades out
+      leaving.set(el, performance.now());
+      setTimeout(() => !destroyed && measureText(), 680);
+    } else if (on) {
+      leaving.delete(el);
+    }
     beatShown[key] = value;
     el.classList.toggle('is-on', on);
     el.classList.toggle('is-past', !on && past);
@@ -1075,11 +1074,16 @@ export function mountJourney(container, options = {}) {
     return true;
   }
 
+  /**
+   * Which text is up follows the smoothed progress, the same value the
+   * camera follows, so words and pictures move together. The headline block
+   * shows in beat 1 and again at the end (name, subheading, live sentence and,
+   * until the first drag or click, how to use it).
+   */
   function updateBeats() {
     const still = state.mode === 'still';
-    const p = still ? 1 : state.pTarget;
-    // reduced motion ends on the h1 block with the live sentence (also without WebGL)
-    const composed = still || (reducedMotion() && p >= P.beat2Out);
+    const p = still ? 1 : state.pSmooth;
+    const composed = still || p >= P.beat2Out;
     let changed = false;
     if (beatShown.composed !== composed) {
       beatShown.composed = composed;
@@ -1089,11 +1093,16 @@ export function mountJourney(container, options = {}) {
     if (composed) {
       changed = setBeat(ref.b1, 'b1', true, false) || changed;
       changed = setBeat(ref.b2, 'b2', false, true) || changed;
-      changed = setBeat(ref.b3, 'b3', false, true) || changed;
     } else {
       changed = setBeat(ref.b1, 'b1', p < P.h1Out, true) || changed;
       changed = setBeat(ref.b2, 'b2', p >= P.beat2In && p < P.beat2Out, p >= P.beat2Out) || changed;
-      changed = setBeat(ref.b3, 'b3', p >= P.beat2Out && !state.hintDismissed && !reducedMotion(), state.hintDismissed) || changed;
+    }
+    const hint = composed && !still && !state.hintDismissed;
+    if (beatShown.hint !== hint) {
+      beatShown.hint = hint;
+      // hidden, not removed: the block keeps its size, so the framing doesn't move
+      ref.hint.classList.toggle('is-off', !hint);
+      ref.hint.setAttribute('aria-hidden', String(!hint));
     }
     // "Scroll to learn more" goes as soon as the visitor starts scrolling
     root.classList.toggle('jy-scrolled', still || p > 0.01);
@@ -1570,7 +1579,7 @@ export function mountJourney(container, options = {}) {
     if (!s) {
       if (orbitStatus === 'failed') {
         put(ref.over, 'Position unavailable');
-        for (const k of ['fAlt', 'fSpeed', 'fPos', 'fSun', 'fPass', 'fRev']) put(ref[k], '—');
+        for (const k of ['fAlt', 'fSpeed', 'fPos', 'fSun', 'fPass', 'fRev']) put(ref[k], '\u2014');
       } else {
         bar(ref.over, 14);
         bar(ref.fAlt, 6);
@@ -1588,7 +1597,7 @@ export function mountJourney(container, options = {}) {
       put(ref.fSpeed, `${s.speedKmS.toFixed(2)} km/s`);
       put(ref.fPos, `${fmtLat(s.latDeg)}, ${fmtLon(s.lonDeg)}`);
       const light = satelliteLight(s.eci, sunPosition(ms));
-      put(ref.fSun, light === 'sunlit' ? 'In sunlight' : light === 'shadow' ? 'In the Earth’s shadow' : 'At the edge of the Earth’s shadow');
+      put(ref.fSun, light === 'sunlit' ? 'In sunlight' : light === 'shadow' ? 'In the Earth\u2019s shadow' : 'At the edge of the Earth\u2019s shadow');
       const pass = nextPass(ms);
       if (!pass) put(ref.fPass, 'Not in the next 2 days');
       else if (pass.riseMs <= ms) {
@@ -1599,7 +1608,7 @@ export function mountJourney(container, options = {}) {
         put(ref.fPass, `${t.time} ${t.zone}, in ${duration(pass.riseMs - ms)}`);
       }
       const rev = orbit.revolutionAt(ms);
-      put(ref.fRev, rev === null ? '—' : rev.toLocaleString('en-US'));
+      put(ref.fRev, rev === null ? '\u2014' : rev.toLocaleString('en-US'));
       const ageDays = (ms - s.tleEpochMs) / DAY_MS;
       const old = Math.abs(ageDays) > 7;
       ref.elements.classList.toggle('jy-muted', !old);
@@ -1640,15 +1649,15 @@ export function mountJourney(container, options = {}) {
     const s = sat.state;
     if (!s) {
       return orbitStatus === 'failed'
-        ? 'Its position can’t be worked out right now: the orbital elements didn’t load.'
+        ? 'Its position can\u2019t be worked out right now: the orbital elements didn\u2019t load.'
         : 'Working out where it is right now.';
     }
     const when = state.live ? 'Right now' : `At ${calgaryTime(state.simMs).time} in Calgary`;
     const alt = Math.round(s.altKm);
     const place = regionAt(s.latDeg, s.lonDeg);
     const where = place
-      ? `${when} it’s over ${place}, ${alt} km up.`
-      : `${when} it’s ${alt} km above ${fmtLatShort(s.latDeg)}, ${fmtLonShort(s.lonDeg)}.`;
+      ? `${when} it\u2019s over ${place}, ${alt} km up.`
+      : `${when} it\u2019s ${alt} km above ${fmtLatShort(s.latDeg)}, ${fmtLonShort(s.lonDeg)}.`;
     const period = Math.round(orbit.periodMinutes(state.simMs));
     return `${where} It goes round the Earth every ${period} minutes, passing over both poles.`;
   }
@@ -1675,7 +1684,7 @@ export function mountJourney(container, options = {}) {
     }
     const now = atNow();
     ref.now.setAttribute('aria-disabled', String(now));
-    ref.now.title = now ? 'Showing now' : 'Live time, 1×, following the satellite';
+    ref.now.title = now ? 'Showing now' : 'Live time, 1\u00d7, following the satellite';
     for (const input of ref.time.querySelectorAll('input[type="radio"]')) {
       const on = Number(input.value) === state.speed;
       if (input.checked !== on) input.checked = on;
@@ -1694,7 +1703,7 @@ export function mountJourney(container, options = {}) {
       const text = liveSentence();
       put(ref.b2t, text);
       put(ref.liveLead, text);
-      put(ref.b3t, hintText());
+      put(ref.hintText, hintText());
       paintClock();
       lastSentence = now;
     }
@@ -1949,7 +1958,6 @@ export function mountJourney(container, options = {}) {
   let lastNow = performance.now();
   let lastPerf = performance.now();
   let lastDraw = -Infinity;
-  let lastYawCheck = 0;
   let needsFrame = true;
   let trackAt = -Infinity;
   let trackSimAt = 0;
@@ -2006,16 +2014,12 @@ export function mountJourney(container, options = {}) {
     lastPerf = now;
     const ms = state.simMs;
 
-    // progress: scroll only, lightly damped (not at all under reduced motion)
+    // progress: the scroll position, smoothed so wheel notches glide (see SCROLL_SPRING)
     readScroll();
     if (state.mode === 'story') {
-      if (reducedMotion()) state.pSmooth = state.pTarget;
-      else {
-        state.pSmooth += (state.pTarget - state.pSmooth) * (1 - Math.exp(-dt / SCROLL_LAG_S));
-        if (Math.abs(state.pTarget - state.pSmooth) < 1e-4) state.pSmooth = state.pTarget;
-      }
+      smoothProgress(dt);
       // back above the swing's end the story has the camera again
-      if (state.pTarget < P.swingEnd && (state.custom || !state.follow)) {
+      if (state.pSmooth < P.swingEnd && (state.custom || !state.follow)) {
         startBlend();
         resetCamera();
         uiDirty = true;
@@ -2043,7 +2047,7 @@ export function mountJourney(container, options = {}) {
     if (!renderer) return;
     // idle at 1x: 30 frames a second is plenty
     const busy = blend || pointers.size || state.speed !== 1 || needsFrame
-      || Math.abs(state.pTarget - state.pSmooth) > 1e-4 || state.dist !== state.distTarget || state.cdist !== state.cdistTarget;
+      || Math.abs(state.pTarget - state.pSmooth) > 1e-4 || state.pVel !== 0 || state.dist !== state.distTarget || state.cdist !== state.cdistTarget;
     if (!busy && now - lastDraw < 33) return;
     lastDraw = now;
     needsFrame = false;
@@ -2055,10 +2059,6 @@ export function mountJourney(container, options = {}) {
     if (now - trackAt > (state.speed === 1 ? 250 : 0) || Math.abs(ms - trackSimAt) > 20_000) {
       rebuildTrack(ms);
       trackAt = now;
-    }
-    if (now - lastYawCheck > 3000) {
-      lastYawCheck = now;
-      chooseYaw();
     }
 
     computeCamera(now, theta);
@@ -2130,6 +2130,7 @@ export function mountJourney(container, options = {}) {
     if (mode === 'still') {
       state.pTarget = 1;
       state.pSmooth = 1;
+      state.pVel = 0;
     }
     for (const key of Object.keys(beatShown)) beatShown[key] = null;
     resize();
@@ -2347,7 +2348,6 @@ export function mountJourney(container, options = {}) {
   });
   textObserver.observe(ref.b1);
   textObserver.observe(ref.b2);
-  textObserver.observe(ref.b3);
   document.fonts?.ready?.then(() => !destroyed && resize());
 
   const io = new IntersectionObserver((entries) => {
@@ -2387,6 +2387,7 @@ export function mountJourney(container, options = {}) {
   } else {
     readScroll();
     state.pSmooth = state.pTarget;
+    state.pVel = 0;
   }
   loadTicker();
   syncLoop();
@@ -2446,13 +2447,10 @@ export function mountJourney(container, options = {}) {
     /** For checking from the console; not an API. */
     get debug() {
       return {
-        state, frame, sat, camera, scene, orbitLine, trackN, W, H, quality, earth, satellite, zoomLimits, chooseYaw, swingAngle,
-        /** How much of the drawn track falls in the end-state text column plus the margin (0 = clear). */
-        trackInText() {
-          const t = frame.endText;
-          if (!t) return null;
-          const m = TEXT_MARGIN;
-          return intrusion(frame.yaw, { left: t.left - m, top: t.top - m, right: t.right + m, bottom: t.bottom + m });
+        state, frame, sat, camera, scene, orbitLine, trackN, W, H, quality, earth, satellite, zoomLimits, swingAngle,
+        /** How close (px) the drawn orbit line came to the text in the last frame (Infinity: nowhere near). */
+        trackGapPx() {
+          return orbitLine.nearestPx;
         },
         /** The swing sampled at n steps for the current satellite: the largest turn between steps, and so on. */
         swingCheck(n = 200, ms = state.simMs) {

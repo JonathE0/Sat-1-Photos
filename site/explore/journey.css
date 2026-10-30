@@ -134,11 +134,7 @@ html.jy-dragging { cursor: grabbing; }
 .jy-beat.is-on .jy-words,
 .jy-beat.is-on button,
 .jy-beat.is-on a { pointer-events: auto; }
-.jy-b3.is-on { transition-delay: 120ms; }
-.jy-b3.is-past {
-  transform: none;
-  transition: opacity 240ms var(--jy-ease-exit), visibility 0s linear 240ms;
-}
+.jy-beat.is-on .jy-hint.is-off .jy-words { pointer-events: none; }
 
 .jy-h1 {
   margin: 0;
@@ -156,11 +152,35 @@ html.jy-dragging { cursor: grabbing; }
   font-weight: 400;
   line-height: 1.4;
 }
-.jy-b1 .jy-h1 + .jy-lead { margin-top: 24px; }
+/* under the name: what this is (Lead size, quiet) */
+.jy-sub {
+  margin: 16px 0 0;
+  color: var(--jy-muted);
+  font-size: var(--jy-lead);
+  font-weight: 400;
+  line-height: 1.3;
+}
+.jy-sub + .jy-lead { margin-top: 20px; }
 
-/* the live sentence joins the h1 block only at the end under reduced motion */
+/* Beat 1 shows the first sentence and the cue; the end shows the live
+   sentence and, until the first drag or click, how to use it. */
+.jy-root.jy-composed .jy-intro-only,
+.jy-root:not(.jy-composed) .jy-end-only { display: none; }
 .jy-live-lead { font-variant-numeric: tabular-nums; }
-.jy-root:not(.jy-composed) .jy-live-lead { display: none; }
+.jy-hint {
+  max-width: 40ch;
+  margin: 16px 0 0;
+  font-size: var(--jy-body);
+  font-weight: 500;
+  line-height: 1.45;
+  transition: opacity 240ms var(--jy-ease-out), visibility 0s;
+}
+/* hidden, not removed, so the block keeps its size and the framing stays put */
+.jy-hint.is-off {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 240ms var(--jy-ease-exit), visibility 0s linear 240ms;
+}
 
 /* "Scroll to learn more": still, quiet, gone once the visitor scrolls */
 .jy-cue {
@@ -175,7 +195,6 @@ html.jy-dragging { cursor: grabbing; }
   outline: none;
 }
 .jy-root.jy-scrolled .jy-cue { opacity: 0; }
-.jy-composed .jy-cue { display: none; }
 
 .jy-statement {
   max-width: 26ch;
@@ -687,16 +706,15 @@ html.jy-dragging { cursor: grabbing; }
 @media (max-height: 640px) and (min-width: 700px) {
   .jy-root { --jy-display: clamp(48px, 12svh, 96px); }
   .jy-text { top: max(16vh, calc(var(--jy-nav) + 16px)); top: max(16svh, calc(var(--jy-nav) + 16px)); }
-  .jy-b1 .jy-h1 + .jy-lead { margin-top: 16px; }
+  .jy-sub { margin-top: 10px; }
+  .jy-sub + .jy-lead { margin-top: 12px; }
   .jy-cue { margin-top: 24px; }
 }
 @media (max-height: 480px) {
-  /* the reduced-motion block keeps the name and the live sentence */
-  .jy-root.jy-composed .jy-intro-lead { display: none; }
+  /* phones on their side: the name, the subheading and the live sentence */
+  .jy-root.jy-composed .jy-hint { display: none; }
   .jy-root.jy-composed .jy-live-lead { margin-top: 12px; }
 }
-/* on a phone the reduced-motion block keeps the name and the live sentence, so the globe fits */
-.jy-narrow.jy-composed .jy-intro-lead { display: none; }
 
 /* ---- reduced motion: opacity only, 200ms or less --------------------------------------- */
 
@@ -718,5 +736,7 @@ html.jy-dragging { cursor: grabbing; }
   .jy-root .jy-marks,
   .jy-root .jy-card,
   .jy-root .jy-cue,
+  .jy-root .jy-hint,
   .jy-root .jy-sat { transition: opacity 150ms linear !important; }
+  .jy-root .jy-hint.is-off { transition: opacity 150ms linear, visibility 0s linear 150ms !important; }
 }

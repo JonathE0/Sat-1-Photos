@@ -49,10 +49,10 @@ export function duration(ms) {
   return `${Math.floor(h / 24)} d ${h % 24} h`;
 }
 
-export const fmtLat = (lat) => `${Math.abs(lat).toFixed(2)}° ${lat >= 0 ? 'N' : 'S'}`;
-export const fmtLon = (lon) => `${Math.abs(lon).toFixed(2)}° ${lon >= 0 ? 'E' : 'W'}`;
-export const fmtLatShort = (lat) => `${Math.round(Math.abs(lat))}° ${lat >= 0 ? 'N' : 'S'}`;
-export const fmtLonShort = (lon) => `${Math.round(Math.abs(lon))}° ${lon >= 0 ? 'E' : 'W'}`;
+export const fmtLat = (lat) => `${Math.abs(lat).toFixed(2)}\u00b0 ${lat >= 0 ? 'N' : 'S'}`;
+export const fmtLon = (lon) => `${Math.abs(lon).toFixed(2)}\u00b0 ${lon >= 0 ? 'E' : 'W'}`;
+export const fmtLatShort = (lat) => `${Math.round(Math.abs(lat))}\u00b0 ${lat >= 0 ? 'N' : 'S'}`;
+export const fmtLonShort = (lon) => `${Math.round(Math.abs(lon))}\u00b0 ${lon >= 0 ? 'E' : 'W'}`;
 
 /** "3 May 2026", from the launch time in astro.js. */
 export const launchDate = (() => {
@@ -72,7 +72,7 @@ export function statusLine(photo) {
   const c = Number(raw.completeness);
   switch (photo.status) {
     case 'complete':
-      return 'Complete, but there’s no checksum to check it against.';
+      return 'Complete, but there\u2019s no checksum to check it against.';
     case 'partial':
       if (photo.camera === 'adcs') return 'Grey bands are rows that never came down.';
       return Number.isFinite(c)

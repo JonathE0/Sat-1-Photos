@@ -195,6 +195,10 @@ function route() {
   if (next.view === 'explore') {
     document.title = 'CTS-SAT-1 · Interactive picture visualizer';
     if (previous !== 'explore') journey.show();
+    if (state.creditsAfterRoute) {
+      state.creditsAfterRoute = false;
+      journey.openCredits($('#credits'));
+    }
     return;
   }
 
@@ -361,9 +365,12 @@ function setupCredits() {
       journey.closeCredits();
       return;
     }
-    if (state.view !== 'explore') location.hash = '#/';
-    // after the route change has shown the globe again
-    window.requestAnimationFrame(() => journey.openCredits(button));
+    if (state.view === 'explore') {
+      journey.openCredits(button);
+    } else {
+      state.creditsAfterRoute = true; // route() opens it once the globe is shown
+      location.hash = '#/';
+    }
   });
 }
 
