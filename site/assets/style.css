@@ -208,7 +208,7 @@ body[data-view="explore"] .wordmark,
 body[data-view="explore"] .site-foot,
 body[data-view="explore"] .name-ctl { display: none; }
 
-.brand { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.brand { display: flex; align-items: center; gap: 14px; min-width: 0; min-height: 44px; }
 .brand-logo { width: auto; height: 34px; }
 
 .wordmark {
