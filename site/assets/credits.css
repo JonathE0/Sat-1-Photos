@@ -7,24 +7,37 @@
   --cr-muted: #8A96A3;
   --cr-blue: #3C9DF5;
   box-sizing: border-box;
+  --cr-pad: 28px;
   width: min(36em, calc(100vw - 32px));
   max-height: min(80vh, 760px);
   overflow: auto;
+  overscroll-behavior: contain;
   margin: auto;
   border: 0;
-  padding: 24px 28px 28px;
+  padding: 0 var(--cr-pad) 28px;
   background: var(--cr-panel);
   color: var(--cr-ink);
   font: 400 15px/1.55 "Jost", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 .credits::backdrop { background: rgba(5, 7, 10, 0.62); }
 
+/* The page behind stays where it is; a page with a scrollbar keeps its room,
+   so nothing behind the dialog shifts. */
+html.credits-open { overflow: hidden; }
+html.credits-open.credits-gutter { scrollbar-gutter: stable; }
+
+/* Close stays on screen while the words scroll under it. */
 .credits-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 16px;
+  margin: 0 calc(-1 * var(--cr-pad)) 8px;
+  padding: 18px var(--cr-pad) 8px;
+  background: var(--cr-panel);
 }
 .credits-title { margin: 0; font-size: 18px; font-weight: 600; outline: none; }
 .credits-close {
@@ -60,5 +73,11 @@
 .credits-news:empty { display: none; }
 .credits-news { padding-top: 16px; border-top: 1px solid #1C242D; }
 
-@media (pointer: coarse) { .credits-close { min-height: 44px; } }
-@media (max-width: 599px) { .credits { padding: 20px 20px 24px; font-size: 14px; } }
+@media (pointer: coarse) {
+  .credits-close { min-height: 44px; }
+  .credits-links a { display: inline-block; padding: 11px 0; }
+}
+@media (max-width: 599px) {
+  .credits { --cr-pad: 20px; padding-bottom: 24px; font-size: 14px; }
+  .credits-head { padding-top: 12px; }
+}

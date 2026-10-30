@@ -72,7 +72,8 @@ function capitalize(text) {
 // A member who moved the capture time without giving a position leaves the
 // computed position in place, but it belongs to the old time (as in detail.js).
 function positionIsStale(p) {
-  return Boolean(p.edited.captured_at && !p.edited.position && !sameTime(p.capturedAt, p.raw.captured_at));
+  return !p.positionRecomputed
+    && Boolean(p.edited.captured_at && !p.edited.position && !sameTime(p.capturedAt, p.raw.captured_at));
 }
 
 function placeName(p) {
@@ -383,12 +384,18 @@ export function createCatalogue(root, {
     const el = h('section', { class: 'cat-cell', 'aria-label': `Cell ${i + 1}` }, pick, cap);
     pick.addEventListener('click', () => { if (active !== i) setActive(i, true); });
     remove.addEventListener('click', () => removeCell(i));
-    return { el, pick, image, empty, place, time, status, remove, cap };
+    const cell = { el, pick, image, empty, place, time, status, remove, cap, failed: null };
+    image.addEventListener('error', () => {
+      cell.failed = image.getAttribute('src');
+      if (cell.failed && size > 1) updateCompare();
+    });
+    return cell;
   }
 
   const cells = Array.from({ length: MAX_CELLS }, (_, i) => makeCell(i));
   const compareEl = h('div', { class: 'cat-compare', hidden: true }, cells.map((c) => c.el));
-  const viewer = h('div', { class: 'cat-viewer' }, frame, compareEl);
+  const noneNote = h('p', { class: 'cat-none', hidden: true });
+  const viewer = h('div', { class: 'cat-viewer' }, frame, compareEl, noneNote);
 
   /* Dock: how many, Newer and Older, filters, the strip */
 
@@ -624,7 +631,7 @@ export function createCatalogue(root, {
 
   function clearFilters() {
     const before = document.activeElement;
-    const refocus = dock.contains(before) && !filterUi.form.contains(before);
+    const refocus = noneNote.contains(before) || (dock.contains(before) && !filterUi.form.contains(before));
     filters = { ...readFilters(new URLSearchParams()), dark: '', missing: '' };
     filterUi.sync(filters);
     render();
@@ -911,11 +918,12 @@ export function createCatalogue(root, {
     if (size === 1) {
       if (!byId.has(currentId)) {
         // No picture named: the newest that is worth opening.
-        currentId = (shown.find(isWorthOpening) || shown[0] || photos[0])?.id || null;
+        currentId = (shown.find(isWorthOpening) || shown[0])?.id || null;
       } else if (shown.length && !shown.some((p) => p.id === currentId)) {
         currentId = nearestShown(currentId);
       }
-      // With nothing shown at all, the viewer keeps the last picture.
+      // With nothing shown at all the stage says so (renderView); this
+      // picture comes back when the filters are cleared.
     }
     filterUi.markActive(filters);
     backRow.hidden = !canGoBack();
@@ -947,7 +955,7 @@ export function createCatalogue(root, {
     countText.textContent = isNarrowed
       ? `${shown.length} of ${plural(totalCount(), 'picture')}.`
       : `${plural(shown.length, 'picture')}.`;
-    clearBtn.hidden = !isNarrowed;
+    clearBtn.hidden = !isNarrowed || (size === 1 && !shown.length); // the stage offers it then
     // One line per kind that the filters let through; the reason only when
     // no filter is set, to keep the dock short.
     for (const [kind, why] of [['dark', DARK_WHY], ['missing', MISSING_WHY]]) {
@@ -967,9 +975,17 @@ export function createCatalogue(root, {
   function renderView() {
     el.dataset.size = String(size);
     const single = size === 1;
-    frame.hidden = !single;
+    const none = single && !shown.length;
+    frame.hidden = !single || none;
     compareEl.hidden = single;
     compareEl.dataset.size = String(size);
+    noneNote.hidden = !none;
+    info.hidden = none;
+    if (none) {
+      noneNote.replaceChildren();
+      append(noneNote, noMatchContent());
+      return;
+    }
     if (single) updateSingle();
     else updateCompare();
     markStrip();
@@ -1025,12 +1041,15 @@ export function createCatalogue(root, {
       if (i >= size) return;
       const p = slots[i] ? byId.get(slots[i]) : null;
       const isActive = i === active;
+      if (cell.failed && cell.failed !== p?.src) cell.failed = null;
+      const failed = Boolean(p && cell.failed);
       cell.el.classList.toggle('is-active', isActive);
-      cell.el.classList.toggle('is-empty', !p);
+      cell.el.classList.toggle('is-empty', !p || failed);
       cell.pick.setAttribute('aria-pressed', String(isActive));
       cell.remove.hidden = !p;
-      cell.image.hidden = !p;
-      cell.empty.hidden = Boolean(p);
+      cell.image.hidden = !p || failed;
+      cell.empty.hidden = Boolean(p) && !failed;
+      cell.empty.textContent = failed ? 'This picture didn’t load.' : 'Pick a picture from the strip below.';
       cell.place.hidden = !p;
       cell.time.hidden = !p;
       // The cell is sized in CSS from the picture's own size and the stage:
@@ -1159,8 +1178,9 @@ export function createCatalogue(root, {
   }
 
   function lightValue(p) {
-    const pos = p.raw.position;
-    if (!pos || typeof pos !== 'object' || p.edited.position || positionIsStale(p)) return null;
+    if (!p.positionRecomputed && (p.edited.position || positionIsStale(p))) return null;
+    const pos = p.positionRecomputed ? p.position : p.raw.position;
+    if (!pos || typeof pos !== 'object') return null;
     const parts = [];
     if (typeof pos.ground_sunlit === 'boolean') {
       const e = pos.sun_elevation_deg;
@@ -1250,6 +1270,7 @@ export function createCatalogue(root, {
       height: p.height,
       loading: index < EAGER_THUMBS ? 'eager' : 'lazy',
       decoding: 'async',
+      onerror: () => button.classList.add('is-failed'),
     }));
     button.addEventListener('click', () => onThumb(p.id));
     thumbs.set(p.id, button);
@@ -1277,10 +1298,11 @@ export function createCatalogue(root, {
   function renderStrip() {
     const none = !shown.length;
     strip.hidden = none;
-    stripNote.hidden = !none;
+    // With one picture the stage says it; comparing, the cells keep their pictures.
+    stripNote.hidden = !none || size === 1;
     if (none) {
       stripNote.replaceChildren();
-      append(stripNote, noMatchContent());
+      if (size > 1) append(stripNote, noMatchContent());
       strip.replaceChildren();
       stripKey = '';
       return;
@@ -1339,6 +1361,18 @@ export function createCatalogue(root, {
     const target = left - (strip.clientWidth - item.offsetWidth) / 2;
     strip.scrollTo({ left: Math.max(0, target), behavior: smooth && !reduceMotion.matches ? 'smooth' : 'auto' });
   }
+
+  // A mouse wheel over the strip moves along it; at either end the page takes over.
+  strip.addEventListener('wheel', (e) => {
+    if (e.ctrlKey || e.shiftKey || Math.abs(e.deltaX) >= Math.abs(e.deltaY)) return;
+    const room = strip.scrollWidth - strip.clientWidth;
+    if (room <= 0) return;
+    const line = e.deltaMode === WheelEvent.DOM_DELTA_LINE ? 32 : 1;
+    const next = Math.min(room, Math.max(0, strip.scrollLeft + e.deltaY * line));
+    if (next === strip.scrollLeft) return;
+    strip.scrollLeft = next;
+    e.preventDefault();
+  }, { passive: false });
 
   /* Keyboard */
 
@@ -1414,6 +1448,18 @@ export function createCatalogue(root, {
       setFiltersOpen(false);
       missing.hidden = true;
       showNotice(content);
+    },
+
+    // Something on the pictures changed in place (corrected.js).
+    refresh() {
+      if (ready) render();
+    },
+
+    // Arriving from another page: focus on the picture's heading, if it's showing.
+    focusTitle() {
+      if (!isVisible(title)) return false;
+      title.focus({ preventScroll: true });
+      return true;
     },
 
     // Called when the route is shown, with the query from the URL.

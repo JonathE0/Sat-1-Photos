@@ -9,6 +9,7 @@ import { loadImages, loadAnnotations, mergeAll, readFilters, applyFilters } from
 import { createCatalogue } from './catalogue.js';
 import { createDetail, NAME_KEY } from './detail.js';
 import { mountCredits } from './credits.js';
+import { workOutCorrected } from './corrected.js';
 import { toDate, utcLong, plural } from './format.js';
 
 const config = { repoUrl: '', ...(window.CTS1_CONFIG || {}) };
@@ -231,6 +232,7 @@ function route() {
     document.title = 'CTS-SAT-1 · Interactive picture visualizer';
     if (next.credits) history.replaceState(history.state, '', '#/');
     if (previous !== 'explore') showJourney();
+    if (state.navigated && previous !== 'explore') $('#main').focus({ preventScroll: true });
     if (next.credits) credits.open();
     return;
   }
@@ -240,7 +242,10 @@ function route() {
     document.title = 'Pictures · CTS-SAT-1';
     if (previous !== 'pictures') window.scrollTo(0, 0);
     gallery.show(new URLSearchParams(next.query));
-    if (previous === 'detail' && state.lastPhotoId) gallery.focusTile(state.lastPhotoId);
+    const backOnTile = previous === 'detail' && state.lastPhotoId && gallery.focusTile(state.lastPhotoId);
+    if (!backOnTile && state.navigated && previous !== 'pictures' && !gallery.focusTitle()) {
+      $('#main').focus({ preventScroll: true });
+    }
     return;
   }
 
@@ -272,6 +277,15 @@ function rebuild() {
   journey?.setPhotos(state.photos);
   updateCounts();
   renderSkipped();
+  // The pictures with a corrected time get their position, height and light
+  // for that time; the viewfinder reads them as it reaches each picture.
+  workOutCorrected(state.photos).then((changed) => {
+    if (!changed) return;
+    gallery.refresh();
+    journey?.setPhotos(state.photos); // its pins move to the new points
+    const shown = state.view === 'detail' && state.byId.get(state.lastPhotoId);
+    if (shown?.positionRecomputed && !detail.isDirty()) detail.show(shown.id, { focus: null });
+  }).catch((err) => console.warn('Corrected times: no position worked out', err));
 }
 
 // Image files known from the satellite that can't be shown, listed on the
@@ -305,18 +319,17 @@ function refreshText() {
   return Number.isFinite(minutes) && minutes > 0 ? `every ${plural(minutes, 'minute')}` : '';
 }
 
-function loadErrorMessage(error) {
-  if (error && error.kind === 'missing') {
-    return [
-      "The picture list hasn't been built yet. Run ",
-      h('code', null, 'python -m cts1_gallery update'),
-      ' to create data/images.json; this page checks again every 30 seconds.',
-    ];
-  }
-  return ["Couldn't load the picture list (data/images.json). Reload the page to try again."];
+function loadErrorMessage(buttonClass) {
+  return [
+    "The pictures couldn't load just now. This page tries again every 30 seconds, or ",
+    h('button', { type: 'button', class: buttonClass, onclick: loadData }, 'try again now'),
+    '.',
+  ];
 }
 
 let retryTimer = 0;
+
+window.addEventListener('online', () => { if (!state.loaded) loadData(); });
 
 async function loadData() {
   const [images, annotations] = await Promise.allSettled([loadImages(), loadAnnotations()]);
@@ -325,14 +338,12 @@ async function loadData() {
     state.editable = annotations.value.editable;
     state.server = annotations.value.server;
   }
+  window.clearTimeout(retryTimer);
   if (images.status === 'rejected') {
-    const message = loadErrorMessage(images.reason);
-    gallery.showError(message);
-    if (state.view === 'detail') views.detail.replaceChildren(h('p', { class: 'notice' }, ...message));
-    if (images.reason?.kind === 'missing') {
-      window.clearTimeout(retryTimer);
-      retryTimer = window.setTimeout(loadData, 30000);
-    }
+    console.warn('The picture list did not load', images.reason);
+    gallery.showError(loadErrorMessage('cat-inline-btn'));
+    if (state.view === 'detail') views.detail.replaceChildren(h('p', { class: 'notice' }, loadErrorMessage('linkish')));
+    retryTimer = window.setTimeout(loadData, 30000);
     return;
   }
   state.data = images.value;

@@ -89,14 +89,24 @@ export function mountCredits(button) {
 
   function open() {
     if (dialog.open) return;
+    const page = document.documentElement;
+    page.classList.toggle('credits-gutter', window.innerWidth > page.clientWidth);
+    page.classList.add('credits-open');
     dialog.showModal();
     button?.setAttribute('aria-expanded', 'true');
     dialog.querySelector('.credits-title').focus({ preventScroll: true });
     loadNews();
   }
 
+  // the close event can come a good while after a busy frame, so the page isn't left waiting on it
+  function freePage() {
+    document.documentElement.classList.remove('credits-open', 'credits-gutter');
+  }
+
   function close() {
-    if (dialog.open) dialog.close();
+    if (!dialog.open) return;
+    dialog.close();
+    freePage();
   }
 
   dialog.querySelector('[data-close]').addEventListener('click', close);
@@ -113,9 +123,13 @@ export function mountCredits(button) {
   // Escape closes a modal dialog natively; either way, hand focus back
   dialog.addEventListener('close', () => {
     if (dialog.open) return; // delivered a frame late: it was opened again meanwhile
+    freePage();
     button?.setAttribute('aria-expanded', 'false');
     button?.focus({ preventScroll: true });
   });
+  // the browser's Back, or any move to another page of the site, takes it away
+  window.addEventListener('popstate', close);
+  window.addEventListener('hashchange', close);
 
   if (button) {
     button.setAttribute('aria-haspopup', 'dialog');

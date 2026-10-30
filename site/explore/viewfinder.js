@@ -63,11 +63,12 @@ function cornerData(p) {
   } else {
     when = p.captureDate ? [photoTime(p), 'Time not known'] : ['Date not known'];
   }
-  // a member's corrected time leaves the computed point behind; a corrected point keeps no light
-  const stale = p.edited?.captured_at && !p.edited?.position;
+  // a member's corrected time or point leaves the computed height and light behind, until
+  // assets/corrected.js has worked them out again
+  const stale = p.edited?.captured_at && !p.edited?.position && !p.positionRecomputed;
   const pos = !stale && p.position && Number.isFinite(p.position.lat) && Number.isFinite(p.position.lon)
     ? p.position : null;
-  const elevation = pos && !p.edited?.position ? pos.sun_elevation_deg : null;
+  const elevation = pos && (p.positionRecomputed || !p.edited?.position) ? pos.sun_elevation_deg : null;
   let sun = '';
   if (Number.isFinite(elevation)) sun = elevation >= 0 ? `Sun ${Math.round(elevation)}° up` : 'Night below';
   return {
