@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-10-30T07:42:39Z",
+ "generated_at": "2026-10-30T23:09:52Z",
  "satellite": {
   "name": "CTS-SAT-1",
   "alias": "FrontierSat",
@@ -7,6 +7,48 @@
   "launched_at": "2026-05-03T06:59:00Z"
  },
  "images": [
+  {
+   "id": "2026-10-30-024800z",
+   "file": "camera/2026-10-30_024800Z.img",
+   "camera": "picam",
+   "title": "30 Oct 2026, 02:47 UTC",
+   "src": "images/2026-10-30-024800z.jpg",
+   "thumb": "images/thumbs/2026-10-30-024800z.jpg",
+   "width": 640,
+   "height": 480,
+   "status": "truncated",
+   "status_note": "The capture was cut short on board: the file holds only lines 0–249 of the 728 the camera announced (then it skips to line 500). This copy is bit-exact: it matches the sha256 the satellite sent.",
+   "completeness": 0.3434,
+   "dark": false,
+   "file_size": 17150,
+   "sha256": "297375724d7ece6e253398b803e0365b4f6f034cce2fc411c86ebb0190762c99",
+   "sha256_expected": "297375724d7ece6e253398b803e0365b4f6f034cce2fc411c86ebb0190762c99",
+   "captured_at": "2026-10-30T02:47:44Z",
+   "capture_date": "2026-10-30",
+   "capture_basis": "filename",
+   "satellite_clock": {
+    "correction_s": -15.8
+   },
+   "downlink": {
+    "first": "2026-10-30T22:04:06Z",
+    "last": "2026-10-30T22:11:41Z",
+    "packets": 88
+   },
+   "position": {
+    "lat": 29.2754,
+    "lon": 114.26,
+    "alt_km": 499.3,
+    "place": "Jiangxi, China",
+    "ground_sunlit": true,
+    "sun_elevation_deg": 43.0,
+    "satellite_sunlit": true,
+    "satellite_light": "sunlit",
+    "sun_above_limb_deg": 65.1,
+    "tle_epoch": "2026-10-27T22:38:42Z",
+    "basis": "SGP4 from the most recent TLE before capture"
+   },
+   "unnamed": false
+  },
   {
    "id": "2026-10-30-024600z",
    "file": "camera/2026-10-30_024600Z.img",
@@ -59,11 +101,11 @@
    "width": 640,
    "height": 480,
    "status": "truncated",
-   "status_note": "The capture was cut short on board: the file holds only lines 0–499 of the 1210 the camera announced (then it skips to line 750), and 367 of those arrived.",
-   "completeness": 0.038,
+   "status_note": "The capture was cut short on board: the file holds only lines 0–499 of the 1210 the camera announced (then it skips to line 750). This copy is bit-exact: it matches the sha256 the satellite sent.",
+   "completeness": 0.4132,
    "dark": false,
    "file_size": 33862,
-   "sha256": "4e1b347d1e3276e9c9030ac299e7d5e6a81f2943db068b25ce0e7eff706d63e5",
+   "sha256": "1845c8e643533e251cc67c5aea04395bfe6640a6da163ffcb9cba5d73b09133a",
    "sha256_expected": "1845c8e643533e251cc67c5aea04395bfe6640a6da163ffcb9cba5d73b09133a",
    "captured_at": "2026-10-30T02:43:44Z",
    "capture_date": "2026-10-30",
@@ -73,8 +115,8 @@
    },
    "downlink": {
     "first": "2026-10-30T03:13:08Z",
-    "last": "2026-10-30T03:16:29Z",
-    "packets": 135
+    "last": "2026-10-30T20:37:08Z",
+    "packets": 662
    },
    "position": {
     "lat": 14.1135,
