@@ -49,6 +49,7 @@ function build() {
       <li><a href="https://frontiersat.mooo.com/">FrontierSat dashboard</a>, live beacon data</li>
       <li><a href="https://github.com/CalgaryToSpace">github.com/CalgaryToSpace</a></li>
     </ul>
+    <p class="credits-made">Website designed by Jonathan Eng and Claude <span aria-hidden="true">🛰️</span></p>
     <div class="credits-news"></div>`;
   return dialog;
 }

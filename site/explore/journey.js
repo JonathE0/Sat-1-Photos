@@ -205,6 +205,7 @@ function template(id, siteRoot) {
           <li><a class="jy-link" href="https://frontiersat.mooo.com/">FrontierSat dashboard</a></li>
           <li><a class="jy-link" href="https://github.com/CalgaryToSpace">github.com/CalgaryToSpace</a></li>
         </ul>
+        <p>Website designed by Jonathan Eng and Claude <span aria-hidden="true">\u{1F6F0}️</span></p>
         <div class="jy-news-slot" data-ref="newsSlot"></div>
       </section>
 

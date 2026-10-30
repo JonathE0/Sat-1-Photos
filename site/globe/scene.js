@@ -11,7 +11,7 @@
  */
 import * as THREE from './vendor/three.module.min.js';
 import { DEG, EARTH_RADIUS_KM } from './astro.js';
-import { RIPPLE_COLOR, RIPPLE_GAP_S, RIPPLE_RADIUS_PX, RIPPLE_S, RIPPLE_WAVES, RIPPLE_WAVE_S } from './ripple.js';
+import { RIPPLE_COLOR, RIPPLE_GAP_S, RIPPLE_RADIUS_PX, RIPPLE_S, RIPPLE_STRENGTH, RIPPLE_WAVES, RIPPLE_WAVE_S } from './ripple.js';
 
 const BLUE = '#3C9DF5'; // the satellite and its path, nothing else
 const INK = '#E6EBF0';
@@ -199,11 +199,11 @@ const RIPPLE_FS = /* glsl */ `
     for (int i = 0; i < ${RIPPLE_WAVES}; i++) {
       float w = (seconds - float(i) * ${RIPPLE_GAP_S.toFixed(3)}) / ${RIPPLE_WAVE_S.toFixed(3)};
       if (w < 0.0 || w > 1.0) continue;
-      float radius = 0.06 + 0.88 * (1.0 - (1.0 - w) * (1.0 - w));
-      float ring = (r - radius) / 0.075;
-      a += exp(-ring * ring) * (1.0 - w) * (1.0 - w);
+      float radius = 0.06 + 0.84 * (1.0 - (1.0 - w) * (1.0 - w));
+      float ring = (r - radius) / 0.11;
+      a += exp(-ring * ring) * smoothstep(0.0, 0.18, w) * (1.0 - w) * (1.0 - w);
     }
-    gl_FragColor = vec4(color, min(a, 1.0));
+    gl_FragColor = vec4(color, min(a, 1.0) * ${RIPPLE_STRENGTH.toFixed(3)});
     #include <colorspace_fragment>
   }
 `;

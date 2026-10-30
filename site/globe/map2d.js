@@ -21,7 +21,7 @@
  * fixtures/verify.mjs checks them against astro.js under Node.
  */
 import { DEG, clamp, footprintAngle, sunDirectionEcef, subsolarPoint } from './astro.js';
-import { RIPPLE_COLOR, RIPPLE_GAP_S, RIPPLE_RADIUS_PX, RIPPLE_S, RIPPLE_WAVES, RIPPLE_WAVE_S } from './ripple.js';
+import { RIPPLE_COLOR, RIPPLE_GAP_S, RIPPLE_RADIUS_PX, RIPPLE_S, RIPPLE_STRENGTH, RIPPLE_WAVES, RIPPLE_WAVE_S } from './ripple.js';
 
 const BLUE = '#3C9DF5'; // the satellite and its path, nothing else
 const INK = '#E6EBF0';
@@ -879,18 +879,21 @@ export function createMap(container, opts = {}) {
     const reach = RIPPLE_RADIUS_PX * scale;
     octx.save();
     octx.strokeStyle = RIPPLE_COLOR;
-    octx.shadowColor = RIPPLE_COLOR;
-    octx.shadowBlur = 8 * scale * ratio; // not scaled by the canvas transform
-    octx.lineWidth = 2 * scale;
     for (const p of pins) {
       const y = view.y(p.latDeg);
       for (const x of view.xs(p.lonDeg, reach)) {
         for (let i = 0; i < RIPPLE_WAVES; i++) {
           const w = (rippleSeconds - i * RIPPLE_GAP_S) / RIPPLE_WAVE_S;
           if (w < 0 || w > 1) continue;
-          octx.globalAlpha = (1 - w) * (1 - w);
+          const a = RIPPLE_STRENGTH * Math.min(1, w / 0.18) * (1 - w);
           octx.beginPath();
-          octx.arc(x, y, reach * (0.06 + 0.88 * (1 - (1 - w) * (1 - w))), 0, 2 * Math.PI);
+          octx.arc(x, y, reach * (0.06 + 0.84 * (1 - (1 - w) * (1 - w))), 0, 2 * Math.PI);
+          // a wide faint stroke under a thin one: the shader's soft ring, in canvas
+          octx.globalAlpha = a * 0.45;
+          octx.lineWidth = 6 * scale;
+          octx.stroke();
+          octx.globalAlpha = a;
+          octx.lineWidth = 2 * scale;
           octx.stroke();
         }
       }
