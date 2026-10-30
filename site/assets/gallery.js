@@ -14,7 +14,7 @@ const EAGER_TILES = 8;
 // Pictures left out of the grid unless their switch is on (dark=1, missing=1).
 const TUCKED = [
   { key: 'dark', is: (p) => p.dark, one: 'dark frame', what: 'nothing but black, sensor noise or the Sun as a single dot' },
-  { key: 'missing', is: (p) => p.mostlyMissing, one: 'mostly missing picture', what: 'less than a fifth of the picture came through' },
+  { key: 'missing', is: (p) => p.mostlyMissing, one: 'mostly missing picture', what: 'less than a fifth of the picture can be shown' },
 ];
 const THUMB_WIDTH = 480; // cts1_gallery/build.py THUMB_WIDTH
 
