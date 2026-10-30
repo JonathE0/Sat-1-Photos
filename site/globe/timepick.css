@@ -179,13 +179,23 @@
   cursor: default;
 }
 
+/* a sheet above the bottom bar, and never up under the site's nav */
 .cg-narrow .cg-tp {
   right: 0;
   bottom: var(--cg-dock-h, 0px);
   left: 0;
   width: auto;
-  max-height: calc(100% - var(--cg-dock-h, 0px));
+  max-width: 480px;
+  max-height: calc(100% - var(--cg-dock-h, 0px) - var(--cg-top, 0px));
   overflow-y: auto;
+}
+
+/* too short to sit above the bar (a phone on its side): cover it instead */
+@media (max-height: 600px) {
+  .cg-narrow .cg-tp {
+    bottom: 0;
+    max-height: calc(100% - var(--cg-top, 0px));
+  }
 }
 
 .cg-narrow .cg-tp input,

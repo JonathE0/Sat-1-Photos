@@ -456,6 +456,23 @@
   flex-direction: column;
 }
 
+/* The side column is shared. Pictures gives up its room first (the large
+   shrink), down to its heading, the Highlight button and about three rows;
+   only then does Passes shrink, scrolling inside what is left. Anything that
+   doesn't fit is a scroll away, so nothing hidden can take the focus. */
+.cg:not(.cg-narrow) .cg-panel-photos {
+  flex: 0 1000 auto;
+  min-height: calc(272 * var(--cg-u));
+}
+
+.cg:not(.cg-narrow) .cg-panel[data-panel="passes"] {
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--cg-raised) transparent;
+}
+
 .cg-highlight {
   flex: none;
   width: 100%;
@@ -889,7 +906,7 @@
   left: 0;
   z-index: 2;
   display: none;
-  max-height: 46%;
+  max-height: min(46%, calc(100% - var(--cg-dock-h, 0px) - var(--cg-top, 0px))); /* never up under the site's nav */
   overflow-y: auto;
 }
 

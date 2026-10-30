@@ -143,21 +143,6 @@
   display: none !important;
 }
 
-/* a place's passes run longer than Calgary's: the panel scrolls inside the
-   column rather than running off the page, and Pictures keeps a little room */
-.cg:not(.cg-narrow) .cg-panel[data-panel="passes"]:has(.cg-place-on) {
-  flex: 0 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: var(--cg-raised, #1A2129) transparent;
-}
-
-.cg:not(.cg-narrow) .cg-col-right:has(.cg-place-on) .cg-panel-photos {
-  flex: 1 1 calc(112 * var(--cg-u, 1px));
-  min-height: calc(112 * var(--cg-u, 1px));
-}
-
 @media (pointer: coarse) {
   .cg-place-input,
   .cg .cg-place-clear {

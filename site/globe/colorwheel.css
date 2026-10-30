@@ -247,6 +247,8 @@
 
 .cg-narrow .cg-cw {
   top: calc(var(--cg-top, 0px) + 12px + 44px + 8px);
+  max-height: calc(100% - var(--cg-top, 0px) - 12px - 44px - 8px - 8px); /* a phone on its side */
+  overflow-y: auto;
   right: 12px;
   left: auto;
   transform: none;
