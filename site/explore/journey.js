@@ -101,6 +101,8 @@ const CHASE_BEHIND_KM = 1400;
  * the user chose); the line is cut only where it would cross words (TEXT_GAP).
  */
 const CHASE_YAW = 0.52;
+/** Room for the tallest fact in the phone banner (three lines and the source row), px. */
+const FACTS_RESERVE_PX = 140;
 /** Close up, the camera levels out to this pitch so the limb sits behind the satellite. */
 const CLOSE_PITCH = 18 * DEG;
 /** Long swings rise this much (times the beat 1 distance) at their middle so they don't whip. */
@@ -122,7 +124,8 @@ const BLEND_MS = 600;
 const TEXT_GAP = 12;
 const TEXT_FEATHER = 12;
 
-const SPACE = '#05070A';
+/** Behind the Earth: true black, with the stars, the Sun and the Moon (sky.js) on it. */
+const SKY = '#000000';
 const BLUE = '#3C9DF5';
 
 const clamp = (x, lo, hi) => Math.min(hi, Math.max(lo, x));
@@ -148,7 +151,9 @@ function template(id, siteRoot) {
       <canvas class="jy-canvas" tabindex="-1"
         aria-label="The Earth and CTS-SAT-1. Drag or use the arrow keys to look around; plus and minus zoom."></canvas>
       <canvas class="jy-still" hidden aria-hidden="true"></canvas>
-      <div class="jy-marks">
+      <div class="jy-marks"></div>
+      <canvas class="jy-over" aria-hidden="true"></canvas>
+      <div class="jy-marks jy-marks-sat" data-ref="satMarks">
         <button type="button" class="jy-sat" data-ref="sat" hidden
           aria-label="CTS-SAT-1: where it is now and its latest picture"><span class="jy-sat-label" aria-hidden="true">CTS-SAT-1</span></button>
       </div>
@@ -194,10 +199,14 @@ function template(id, siteRoot) {
           <a class="jy-link" href="https://www.space-track.org/">Space-Track.org</a>. Packets: the
           <a class="jy-link" href="https://network.satnogs.org/">SatNOGS network</a> and the CalgaryToSpace ground station.
           Place names: \u00a9 <a class="jy-link" href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>.</p>
+        <p>Sky: the <a class="jy-link" href="http://tdc-www.harvard.edu/catalogs/bsc5.html">Yale Bright Star Catalogue</a>
+          (Hoffleit and Warren, 1991) and the Moon from NASA's Scientific Visualization Studio
+          (<a class="jy-link" href="https://svs.gsfc.nasa.gov/4720">CGI Moon Kit</a>).</p>
         <p>CubeSat model: NASA IceCube, a 3U like CTS-SAT-1, by NASA/Christopher R. Meaney (NASA 3D Resources,
           public domain); drawn far larger than life.</p>
         <ul class="jy-credits-links">
           <li><a class="jy-link" href="https://www.calgarytospace.ca/">calgarytospace.ca</a></li>
+          <li><a class="jy-link" href="https://frontiersat.mooo.com/">FrontierSat dashboard</a></li>
           <li><a class="jy-link" href="https://github.com/CalgaryToSpace">github.com/CalgaryToSpace</a></li>
         </ul>
         <div class="jy-news-slot" data-ref="newsSlot"></div>
@@ -291,7 +300,8 @@ export function mountJourney(container, options = {}) {
   const stage = root.querySelector('.jy-stage');
   const canvas = root.querySelector('.jy-canvas');
   const still = root.querySelector('.jy-still');
-  const marks = root.querySelector('.jy-marks');
+  const marks = root.querySelector('.jy-marks'); // the pins; the satellite's button is in ref.satMarks
+  const overCanvas = root.querySelector('.jy-over');
 
   const cleanups = [];
   const listen = (target, type, fn, o) => {
@@ -348,25 +358,33 @@ export function mountJourney(container, options = {}) {
   let webgl = true;
 
   // ---- renderer and scene ------------------------------------------------------
+  // Two canvases. The Earth and the sky are drawn under the picture pins; the
+  // satellite and its orbit line on a transparent canvas over them, so where
+  // they cross a pin they cover it. On that canvas an Earth-sized sphere that
+  // only writes depth still hides whatever passes behind the Earth.
   let renderer = null;
+  let overRenderer = null;
   const scene = new THREE.Scene();
+  const overScene = new THREE.Scene();
   // near 0.005 (about 32 km) at every zoom: the satellite never gets nearer than that, see zoomLimits
   const camera = new THREE.PerspectiveCamera(35, 1, 0.005, 60);
   const sunLight = new THREE.DirectionalLight(0xffffff, 3.2);
   const ambient = new THREE.AmbientLight(0xffffff, 0.05);
-  scene.add(sunLight, sunLight.target, ambient);
   const satHolder = new THREE.Group();
   satHolder.visible = false;
-  scene.add(satHolder);
   const orbitLine = createScreenLine(260, { color: BLUE, widthPx: 2 });
-  scene.add(orbitLine.mesh);
   orbitLine.setOpacity(0);
+  const occluder = new THREE.Mesh(new THREE.SphereGeometry(1, 128, 64), new THREE.MeshBasicMaterial({ colorWrite: false }));
+  occluder.renderOrder = -1;
+  overScene.add(occluder, sunLight, sunLight.target, ambient, satHolder, orbitLine.mesh);
 
   let earth = null;
   let earthReady = false;
+  let sky = null;
   let satellite = null;
   let satMaterials = [];
   let satOpacity = -1;
+  let satScale = 1; // satellite.setScale's last value, for the pins it covers
 
   // earth.js map sizes: 'high' 8192, 'low' 4096, 'phone' 2048 (it steps down
   // itself when the GPU can't take the size)
@@ -380,7 +398,7 @@ export function mountJourney(container, options = {}) {
 
   try {
     renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
-    renderer.setClearColor(SPACE, 1);
+    renderer.setClearColor(SKY, 1);
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1;
   } catch (err) {
@@ -389,6 +407,21 @@ export function mountJourney(container, options = {}) {
     renderer = null;
     canvas.hidden = true;
   }
+  if (renderer) {
+    try {
+      overRenderer = new THREE.WebGLRenderer({ canvas: overCanvas, alpha: true, antialias: true, powerPreference: 'high-performance' });
+      overRenderer.setClearColor(0x000000, 0);
+      overRenderer.toneMapping = THREE.ACESFilmicToneMapping;
+      overRenderer.toneMappingExposure = 1;
+    } catch (err) {
+      // one canvas, as before: the pins then sit over the satellite
+      console.warn('Journey: no second canvas, drawing the satellite under the pins', err);
+      overRenderer = null;
+      occluder.removeFromParent();
+      scene.add(...overScene.children);
+    }
+  }
+  if (!overRenderer) overCanvas.hidden = true;
 
   async function loadEarth() {
     let made = null;
@@ -415,6 +448,20 @@ export function mountJourney(container, options = {}) {
     // frame, so not mid-fade); on a very slow line, show the previews anyway
     Promise.resolve(earth.ready).then(reveal, reveal);
     setTimeout(reveal, 10_000);
+  }
+
+  // the sky is decoration: without it the Earth sits on plain black
+  async function loadSky() {
+    try {
+      const mod = await import('./sky.js');
+      if (destroyed) return;
+      sky = mod.createSky(renderer, { quality });
+      scene.add(sky.group);
+      needsFrame = true;
+      Promise.resolve(sky.ready).then(() => { needsFrame = true; });
+    } catch (err) {
+      console.warn('Journey: no stars, Sun or Moon', err);
+    }
   }
 
   async function loadSatellite() {
@@ -448,6 +495,7 @@ export function mountJourney(container, options = {}) {
 
   if (webgl) {
     loadEarth();
+    loadSky();
     loadSatellite();
   }
 
@@ -628,6 +676,13 @@ export function mountJourney(container, options = {}) {
     let limbY = narrow ? 0.45 : 0.42;
     if (frame.endText) limbY = Math.max(limbY, frame.endText.bottom / H + 0.03);
     satY = clamp(Math.max(satY, limbY + 0.12), 0, narrow ? 0.8 : 0.86);
+    if (narrow) {
+      // On a phone the facts banner spans the width under the satellite: keep
+      // it above the tallest fact (from the banner's bottom, which stays put
+      // as facts change, so the framing doesn't move with each one).
+      const facts = boxOf(ref.factsSlot, s);
+      if (facts) satY = Math.max(limbY + 0.06, Math.min(satY, (facts.bottom - FACTS_RESERVE_PX - 50) / H));
+    }
     let satX = narrow ? 0.5 : 0.62;
     if (state.panel && !narrow) {
       // keep the satellite clear of the open panel on narrower desktops
@@ -682,6 +737,8 @@ export function mountJourney(container, options = {}) {
       const dpr = Math.min(window.devicePixelRatio || 1, 2, Math.sqrt(8.3e6 / (W * H)));
       renderer.setPixelRatio(dpr);
       renderer.setSize(W, H, false);
+      overRenderer?.setPixelRatio(dpr);
+      overRenderer?.setSize(W, H, false);
     }
     camera.aspect = W / H;
     computeFrame();
@@ -1132,6 +1189,7 @@ export function mountJourney(container, options = {}) {
       ref.time.inert = !ui || still;
       ref.corner.inert = !ui;
       marks.inert = !ui || still;
+      ref.satMarks.inert = !ui || still;
       canvas.tabIndex = ui && !still ? 0 : -1;
       if (!ui) hideCard();
       changed = true;
@@ -1183,8 +1241,7 @@ export function mountJourney(container, options = {}) {
       count.className = 'jy-pile-count';
       count.hidden = true;
       count.setAttribute('aria-hidden', 'true');
-      marks.insertBefore(count, ref.sat);
-      marks.insertBefore(a, count);
+      marks.append(a, count);
       pins.push({ photo: p, el: a, count, x: 0, y: 0, vis: false, pile: null, lat: p.position.lat, lon: p.position.lon });
     }
     paintSelected();
@@ -1195,8 +1252,33 @@ export function mountJourney(container, options = {}) {
   }
 
   const pinWorld = new THREE.Vector3();
+  const corner = new THREE.Vector3();
+
+  /**
+   * The satellite's body on screen (stage px), or null. Pins under it take no
+   * pointer, so a click there reaches the satellite drawn over them.
+   */
+  function satelliteRect(satAlpha) {
+    if (!overRenderer || !satellite || !satellite.bodyBounds || satAlpha < 0.5 || !sat.ok) return null;
+    if (hiddenByEarth(camera.position, sat.S)) return null;
+    const { min, max } = satellite.bodyBounds;
+    let left = Infinity, top = Infinity, right = -Infinity, bottom = -Infinity;
+    for (let i = 0; i < 8; i++) {
+      corner.set(i & 1 ? max.x : min.x, i & 2 ? max.y : min.y, i & 4 ? max.z : min.z)
+        .multiplyScalar(satScale).applyMatrix4(satellite.object3d.matrixWorld);
+      const s = toScreen(corner);
+      if (!s) return null;
+      left = Math.min(left, s.x);
+      top = Math.min(top, s.y);
+      right = Math.max(right, s.x);
+      bottom = Math.max(bottom, s.y);
+    }
+    return { left, top, right, bottom };
+  }
+
   function updateMarks(theta, satAlpha, satLengthPx) {
     const show = beatShown.ui === true;
+    const body = show ? satelliteRect(satAlpha) : null;
     for (const pin of pins) {
       let vis = false;
       if (show) {
@@ -1246,6 +1328,11 @@ export function mountJourney(container, options = {}) {
           pin.el.style.zIndex = String(pile ? 100 - pile.index : 100);
           pin.el.classList.toggle('in-pile', !!pile && pile.index > 0);
         }
+      }
+      const under = !!body && pin.vis && x > body.left && x < body.right && y > body.top && y < body.bottom;
+      if (pin.under !== under) {
+        pin.under = under;
+        pin.el.classList.toggle('is-under', under);
       }
       const head = pile && pile.index === 0;
       if (head) {
@@ -1931,7 +2018,8 @@ export function mountJourney(container, options = {}) {
     const now = performance.now();
     const fresh = now - wheel.t > 220;
     wheel.t = now;
-    const overGlobe = e.target === canvas || (marks.contains(e.target) && e.target !== marks);
+    const overGlobe = e.target === canvas || (marks.contains(e.target) && e.target !== marks)
+      || (ref.satMarks.contains(e.target) && e.target !== ref.satMarks);
     const dy = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? H : 1);
     if (e.ctrlKey) {
       if (interactive() && overGlobe) {
@@ -2075,6 +2163,7 @@ export function mountJourney(container, options = {}) {
     needsFrame = false;
 
     const sun = sunPosition(ms);
+    if (sky) sky.setTime(ms, theta);
     if (earth) earth.setTime(theta, sun, ms);
 
     // orbit line points (and, now and then, whether the default heading still clears the text)
@@ -2084,6 +2173,7 @@ export function mountJourney(container, options = {}) {
     }
 
     computeCamera(now, theta);
+    if (sky) sky.update(camera);
     if (earth) earth.update(dt, camera);
 
     // satellite: true position, drawn far larger than life, nose along the track, nadir down
@@ -2102,7 +2192,8 @@ export function mountJourney(container, options = {}) {
       const def = zoomLimits().def;
       const unitsPerPx = (2 * frame.tanHalf * Math.max(distance, def)) / H;
       const length = satellite.bodyBounds ? satellite.bodyBounds.max.z - satellite.bodyBounds.min.z : 0.34;
-      satellite.setScale((frame.satPx * unitsPerPx) / Math.max(0.05, length));
+      satScale = (frame.satPx * unitsPerPx) / Math.max(0.05, length);
+      satellite.setScale(satScale);
       lengthPx = frame.satPx * Math.max(1, def / Math.max(1e-6, distance));
       setSatOpacity(satAlpha);
       // the Sun on it, unless the Earth is in the way; earthshine from below
@@ -2124,6 +2215,7 @@ export function mountJourney(container, options = {}) {
     if (satAlpha > 0.002) orbitLine.update(camera, W, H);
 
     renderer.render(scene, camera);
+    overRenderer?.render(overScene, camera);
     updateMarks(theta, satAlpha, lengthPx);
   }
 
@@ -2327,7 +2419,9 @@ export function mountJourney(container, options = {}) {
         const news = Array.isArray(data?.news) ? data.news : undefined;
         if (destroyed) return;
         if (typeof mod.createFactTicker === 'function') {
-          ticker = mod.createFactTicker(ref.factsSlot, { facts, live, reducedMotion: reducedMotion() });
+          // the facts slide and fade even when the system prefers reduced
+          // motion (the site's choice); ?motion=reduced still keeps them still
+          ticker = mod.createFactTicker(ref.factsSlot, { facts, live, reducedMotion: motionOverride === 'reduced' });
         }
         if (typeof mod.createNewsList === 'function') newsList = mod.createNewsList(ref.newsSlot, { news });
         if (state.locked && state.shown) ticker?.start?.();
@@ -2369,6 +2463,7 @@ export function mountJourney(container, options = {}) {
   });
   textObserver.observe(ref.b1);
   textObserver.observe(ref.b2);
+  textObserver.observe(ref.factsSlot); // the banner fills in after the facts load
   document.fonts?.ready?.then(() => !destroyed && resize());
 
   const io = new IntersectionObserver((entries) => {
@@ -2514,8 +2609,13 @@ export function mountJourney(container, options = {}) {
       earth?.dispose();
       satellite?.dispose();
       orbitLine.dispose();
+      sky?.dispose();
+      occluder.geometry.dispose();
+      occluder.material.dispose();
       renderer?.dispose();
       renderer?.forceContextLoss?.();
+      overRenderer?.dispose();
+      overRenderer?.forceContextLoss?.();
       root.remove();
     },
   };

@@ -38,10 +38,14 @@ function build() {
       <a href="https://www.space-track.org/">Space-Track.org</a>. Packets: the
       <a href="https://network.satnogs.org/">SatNOGS network</a> and the CalgaryToSpace ground station.
       Place names: © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>.</p>
+    <p>Sky: the <a href="http://tdc-www.harvard.edu/catalogs/bsc5.html">Yale Bright Star Catalogue</a>
+      (Hoffleit and Warren, 1991) and the Moon from NASA's Scientific Visualization Studio
+      (<a href="https://svs.gsfc.nasa.gov/4720">CGI Moon Kit</a>).</p>
     <p>CubeSat model: NASA IceCube, a 3U like CTS-SAT-1, by NASA/Christopher R. Meaney (NASA 3D Resources,
       public domain); drawn far larger than life.</p>
     <ul class="credits-links">
       <li><a href="https://www.calgarytospace.ca/">calgarytospace.ca</a></li>
+      <li><a href="https://frontiersat.mooo.com/">FrontierSat dashboard</a>, live beacon data</li>
       <li><a href="https://github.com/CalgaryToSpace">github.com/CalgaryToSpace</a></li>
     </ul>
     <div class="credits-news"></div>`;

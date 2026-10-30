@@ -71,7 +71,7 @@ html.jy-dragging { cursor: grabbing; }
   height: calc(100dvh - var(--jy-top));
   min-height: 320px;
   overflow: hidden;
-  background: var(--jy-space);
+  background: #000; /* the sky: true black, as the canvas clears to (journey.js SKY) */
 }
 
 .jy-canvas {
@@ -94,6 +94,23 @@ html.jy-dragging { cursor: grabbing; }
 .jy-ui-on .jy-canvas { cursor: grab; }
 
 .jy-still { position: absolute; display: block; }
+
+/* the satellite and its orbit line, over the pins (see journey.js, renderer
+   and scene); clicks go through to the pins and the globe */
+.jy-over {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 600ms linear;
+}
+.jy-over[hidden] { display: none; }
+.jy-earth-ready .jy-over { opacity: 1; }
 
 /* ---- text: one anchor on the left margin ------------------------------------- */
 
@@ -438,7 +455,8 @@ html.jy-dragging { cursor: grabbing; }
 @media (pointer: coarse) { .jy-pin::before { content: ""; position: absolute; inset: -12px; } }
 .jy-pin img { display: block; width: 100%; height: 100%; object-fit: contain; }
 .jy-pin.is-off { visibility: hidden; }
-.jy-pin.in-pile { pointer-events: none; }
+.jy-pin.in-pile,
+.jy-pin.is-under { pointer-events: none; }
 
 .jy-pile-count {
   position: absolute;
@@ -735,7 +753,8 @@ html.jy-dragging { cursor: grabbing; }
   .jy-root .jy-panel.is-on,
   .jy-root .jy-credits,
   .jy-root .jy-credits.is-on { transform: none !important; transition: opacity 150ms linear !important; }
-  .jy-root .jy-canvas { transition: opacity 200ms linear !important; }
+  .jy-root .jy-canvas,
+  .jy-root .jy-over { transition: opacity 200ms linear !important; }
   .jy-root .jy-time,
   .jy-root .jy-corner,
   .jy-root .jy-facts-slot,

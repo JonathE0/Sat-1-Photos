@@ -58,21 +58,22 @@
 }
 
 /* Each fact slides out to one side while it fades (240ms) and the next slides
-   in from the other side (400ms); Previous reverses the direction. The
+   in from the other side (480ms); Previous reverses the direction. The
    transitions are !important so the site-wide reduced-motion rule (which
-   turns every transition off) doesn't remove the fade; with reduced motion
-   (.cf-calm, decided in facts.js) the slide goes and the fade stays. */
+   turns every transition off) doesn't remove them. The Explore page asks for
+   the slide even when the system prefers reduced motion; only .cf-calm
+   (reducedMotion: true in facts.js) drops the slide and keeps the fade. */
 .cf .cf-fades {
-  transition: opacity 400ms cubic-bezier(.22, 1, .36, 1), transform 400ms cubic-bezier(.22, 1, .36, 1) !important;
+  transition: opacity 480ms cubic-bezier(.22, 1, .36, 1), transform 480ms cubic-bezier(.22, 1, .36, 1) !important;
 }
 .cf.is-out .cf-fades {
   opacity: 0;
-  transform: translateX(-28px);
+  transform: translateX(-56px);
   transition: opacity 240ms cubic-bezier(.55, .055, .675, .19), transform 240ms cubic-bezier(.55, .055, .675, .19) !important;
 }
-.cf.is-back.is-out .cf-fades { transform: translateX(28px); }
-.cf.is-enter .cf-fades { opacity: 0; transform: translateX(28px); transition: none !important; }
-.cf.is-back.is-enter .cf-fades { transform: translateX(-28px); }
+.cf.is-back.is-out .cf-fades { transform: translateX(56px); }
+.cf.is-enter .cf-fades { opacity: 0; transform: translateX(56px); transition: none !important; }
+.cf.is-back.is-enter .cf-fades { transform: translateX(-56px); }
 .cf.cf-calm .cf-fades,
 .cf.cf-calm.is-out .cf-fades,
 .cf.cf-calm.is-enter .cf-fades { transform: none; }
