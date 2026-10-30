@@ -10,7 +10,7 @@
  * The element needs a size; the globe fills it. Data paths default to the
  * site layout (../data/*.json next to this folder).
  */
-import { loadCountries, placeAt } from '../explore/journey-region.js';
+import { loadCountries, placeAt, placeInSentence } from '../explore/journey-region.js';
 import { annotationUrls, applyAnnotations, launchTime, toPhotos } from './adapter.js';
 import * as astro from './astro.js';
 import { createColorWheel } from './colorwheel.js';
@@ -1094,7 +1094,7 @@ export function mountGlobe(container, options = {}) {
     // roughly what it is over: a country, else a sea or continent
     const over = s ? placeAt(s.latDeg, s.lonDeg) : null;
     el.over.hidden = !over;
-    put(el.over, over ? `Over ${over}` : '');
+    put(el.over, over ? `Over ${placeInSentence(over)}` : '');
     placeSearch.tick(state.ms);
     if (!s) {
       for (const k of ['lat', 'lon', 'alt', 'speed', 'illum', 'ground', 'orbit']) put(el[k], dash);

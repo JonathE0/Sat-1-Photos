@@ -45,6 +45,7 @@ cron/systemd equivalents.
 ```powershell
 .venv\Scripts\python.exe -m unittest -v          # pipeline, sync and server tests
 node site/globe/fixtures/verify.mjs              # globe orbit/astro checks against Python sgp4
+node site/explore/dev/verify-places.mjs          # place names and place search
 ```
 
 The globe's reference values are regenerated with

@@ -43,6 +43,21 @@ The lead session checked these eight against the screenshots or the code.
 
 ## Next
 
+**All 25 are fixed on `main`.** Tested in emulated Chrome at the sizes above; the limits listed at the top still apply, so rotation, swipes and a phone's keyboard closing haven't been seen on a real phone. The trade-offs that came with them:
+
+- **#9, #10:** in Two on a phone the caption sits beside the picture, so the pictures can be larger (222×167 at 390 wide). In Four on a phone on its side the strip runs slightly past the bottom of the screen, and at 568×320 each picture is only 73 px wide.
+- **#11:** below 360 wide the logo is hidden, because the six links fill the row; Explore goes to the same place. Below 390 the nav text is 12 px, under the design's 13 px minimum, because 13 px doesn't fit with the logo.
+- **#12:** after choosing a place, focus moves to the results heading, so searching again takes a click or Shift+Tab.
+- **#13:** province and state outlines are hand-drawn and coarse, right to within a few tens of km. Small places count as at least 40 km across for passes, so "Passes over Singapore" means near it.
+- **#14:** a coast within 100 km names the country when the coarse answer is land or vague, but only within 25 km when it's a named sea, so close to a coast the name can go either way. For the first second or two Explore says "Working out where it is right now." On Slow 3G a coarse name shows first and the country can replace it once.
+- **#17:** on phones the time slider hides while a sheet is open, and the sheet is shorter, so it scrolls more. While a sheet is open the view moves by itself to keep the satellite in the window until the visitor drags or zooms, so at high speed it chases the satellite. In the tabbed layout the source credits move from the header to Credits, and from 760 to 899 px wide the slider's end labels are hidden.
+- **#20:** the end of the story is remembered for the tab only. A new tab, a reload or "Play the intro again" starts it over.
+- **#26:** every main-site page now also downloads the orbit code and data (about 180 KB before compression) to work these out, and the values appear a moment after the page does.
+- **#27:** on a 4K screen a single picture still sits at 640×480 in a very large stage, because pictures are never enlarged.
+- **#29:** Explore has no page scrollbar at all, on the story or at its end. Wheel, keys and touch still scroll. `scrollbar-gutter` would also stop the jump, but leaves a blank 15 px strip beside the Earth.
+- **#31:** the big sentence is on screen for less of the scroll: from 0.58 to 0.74 instead of 0.52 to 0.74.
+- **#33:** below about 690 px a row has no UTC time or direct Orbit link; both are one tap away. On phones the filters are one row that scrolls sideways, and they stop being sticky on screens under 500 px tall. "How this list is made" starts collapsed, and from 1680 px wide the first row starts open, so one map loads straight away.
+
 | # | Where | What's wrong |
 |---|---|---|
 | 9 | Pictures, phone on its side | A whole picture never fits: 480 px tall on a 390 px screen. Four has the same problem. (`assets/catalogue.css:661`) |
@@ -77,13 +92,12 @@ The lead session checked these eight against the screenshots or the code.
 - Pictures: the Download and Copy link row falls at the fold on 1366×768 and 1280×720; uneven line spacing in the hidden-frames notes.
 - Explore: swiping up on the peek sheet's body does nothing (only the grabber); pins sit half under controls at some times.
 - Orbit Map: the header has no backing once zoomed; the rightmost longitude label sits under the zoom buttons; the time picker runs into an open sheet.
-- Orbit and Watchlist have no favicon (`/favicon.ico` 404s). This is the only failed request in normal use.
 - Viewfinder: drops the date from Calgary time ("18:54 MDT" where the catalogue adds "on 24 Oct").
 - Orbit's "Not on the globe: only the date is known" also covers 3 frames with no date at all.
 - One picture has two titles and two vocabularies between catalogue and detail (Taken/Captured, Where/Position, Came down/Downlinked).
 - The footer is under the 13 px rule.
 - The nav is built three separate ways: heights differ, the logo shifts 8 px on Watchlist, and Orbit underlines the current page in team blue.
-- Screen-reader labels: "24 Oct 2026, 24 Oct 2026" repeats. Orbit and Watchlist have no skip link. Orbit has 62 tab stops. Explore's end tabs through the bottom controls before the top right.
+- Screen-reader labels: "24 Oct 2026, 24 Oct 2026" repeats. Orbit has 62 tab stops. Explore's end tabs through the bottom controls before the top right.
 - Night passes: the satellite is invisible in shadow, and dark-frame pins read as empty boxes. A matter of taste.
 - 4K at DPR 1: type and panels stop growing, so everything looks small.
 
@@ -107,9 +121,8 @@ Small:
 Small to medium:
 
 - **Add a pass to my calendar.** A downloadable calendar file from Passes and the Watchlist, using times the site already computes.
-- **Full-screen picture view.** A clean, rotation-friendly view with swipe to step. Also answers #9.
+- **Full-screen picture view.** A clean, rotation-friendly view with swipe to step.
 - **Picture tour on Orbit.** "Next picture" flies the globe from pin to pin in date order, turning the pins into the story of the mission.
-- **Compact Watchlist.** One line per event with its next pass, tap to expand, sticky filters.
 
 Medium:
 
