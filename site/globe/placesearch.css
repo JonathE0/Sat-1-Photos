@@ -1,0 +1,155 @@
+/* "Passes over another place" (placesearch.js) and the "Over ..." line.
+   Label above field, the field on Raised with no border, suggestions in
+   the flow of the panel (so they scroll with a phone's sheet), results in
+   the same rows as the passes over Calgary. The best pass gets a small Ink
+   tag, the selected state of this page. */
+
+/* the header's "Over Canada" line */
+.cg .cg-over {
+  margin-top: calc(4 * var(--cg-u, 1px));
+  font: 500 var(--cg-value, 16px)/1.35 var(--cg-sans);
+  color: var(--cg-text, #E6EBF0);
+}
+
+.cg-place {
+  margin-bottom: calc(12 * var(--cg-u, 1px));
+}
+
+.cg-place-label {
+  display: block;
+  margin-bottom: calc(4 * var(--cg-u, 1px));
+}
+
+.cg-place-field {
+  display: flex;
+  gap: calc(8 * var(--cg-u, 1px));
+}
+
+.cg-place-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: calc(40 * var(--cg-u, 1px));
+  padding: 0 calc(10 * var(--cg-u, 1px));
+  background: var(--cg-raised, #1A2129);
+  border: 0;
+  border-radius: 0;
+  color: var(--cg-text, #E6EBF0);
+  font: 400 var(--cg-value, 16px)/1 var(--cg-sans);
+}
+
+.cg-place-input::placeholder {
+  color: var(--cg-muted, #8A96A3);
+  opacity: 1;
+}
+
+.cg-place-input:focus-visible {
+  outline: 2px solid var(--cg-accent, #3C9DF5);
+  outline-offset: 2px;
+}
+
+.cg .cg-place-clear {
+  flex: none;
+  height: calc(40 * var(--cg-u, 1px));
+  padding: 0 calc(12 * var(--cg-u, 1px));
+  background: var(--cg-raised, #1A2129);
+  border: 0;
+  color: var(--cg-text, #E6EBF0);
+  font: 500 var(--cg-small, 13px)/1 var(--cg-sans);
+  cursor: pointer;
+}
+
+.cg .cg-place-list {
+  margin-top: calc(4 * var(--cg-u, 1px));
+  background: var(--cg-raised, #1A2129);
+}
+
+.cg-place-option {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: calc(12 * var(--cg-u, 1px));
+  min-height: calc(36 * var(--cg-u, 1px));
+  padding: calc(8 * var(--cg-u, 1px)) calc(10 * var(--cg-u, 1px));
+  cursor: pointer;
+}
+
+.cg-place-option:hover,
+.cg-place-option[aria-selected="true"] {
+  background: var(--cg-text, #E6EBF0);
+  color: var(--cg-bg, #05070A);
+}
+
+.cg-place-option:hover .cg-fine,
+.cg-place-option[aria-selected="true"] .cg-fine {
+  color: var(--cg-bg, #05070A);
+}
+
+.cg .cg-place-status {
+  margin-top: calc(8 * var(--cg-u, 1px));
+}
+
+.cg .cg-place-status:empty {
+  display: none;
+}
+
+.cg .cg-place-note {
+  margin: calc(8 * var(--cg-u, 1px)) 0;
+}
+
+.cg .cg-place-later {
+  margin-top: calc(12 * var(--cg-u, 1px));
+  font-weight: 600;
+}
+
+.cg-place-pass .cg-fine {
+  display: block;
+}
+
+.cg-place-pass[aria-current="true"] .cg-pass-row > span:first-child {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+}
+
+.cg .cg-best {
+  flex: none;
+  padding: calc(2 * var(--cg-u, 1px)) calc(6 * var(--cg-u, 1px));
+  background: var(--cg-text, #E6EBF0);
+  color: var(--cg-bg, #05070A);
+  font: 600 var(--cg-small, 13px)/1.2 var(--cg-sans);
+}
+
+.cg .cg-place-reason {
+  margin-top: calc(8 * var(--cg-u, 1px));
+  font-size: var(--cg-small, 13px);
+  line-height: 1.45;
+}
+
+.cg .cg-place-reason:empty {
+  display: none;
+}
+
+.cg .cg-place-accuracy {
+  margin-top: calc(8 * var(--cg-u, 1px));
+  color: var(--cg-text, #E6EBF0);
+}
+
+.cg .cg-place-again {
+  margin-top: calc(10 * var(--cg-u, 1px));
+}
+
+/* while a place is chosen, its passes stand in for Calgary's */
+.cg-calgary-passes[hidden] {
+  display: none !important;
+}
+
+@media (pointer: coarse) {
+  .cg-place-input,
+  .cg .cg-place-clear {
+    height: 44px;
+  }
+
+  .cg-place-option {
+    min-height: 44px;
+  }
+}

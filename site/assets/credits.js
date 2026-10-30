@@ -37,7 +37,8 @@ function build() {
     <p>Earth: NASA Blue Marble, Black Marble and cloud imagery. Orbital elements:
       <a href="https://www.space-track.org/">Space-Track.org</a>. Packets: the
       <a href="https://network.satnogs.org/">SatNOGS network</a> and the CalgaryToSpace ground station.
-      Place names: © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>.</p>
+      Place names: © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>.
+      Country borders: <a href="https://www.naturalearthdata.com/">Natural Earth</a> (public domain).</p>
     <p>Sky: the <a href="http://tdc-www.harvard.edu/catalogs/bsc5.html">Yale Bright Star Catalogue</a>
       (Hoffleit and Warren, 1991) and the Moon from NASA's Scientific Visualization Studio
       (<a href="https://svs.gsfc.nasa.gov/4720">CGI Moon Kit</a>).</p>

@@ -10,10 +10,12 @@
  * The element needs a size; the globe fills it. Data paths default to the
  * site layout (../data/*.json next to this folder).
  */
+import { loadCountries, placeAt } from '../explore/journey-region.js';
 import { annotationUrls, applyAnnotations, launchTime, toPhotos } from './adapter.js';
 import * as astro from './astro.js';
 import { createColorWheel } from './colorwheel.js';
 import { createMap } from './map2d.js';
+import { createPlaceSearch } from './placesearch.js';
 import { createScene, DEFAULT_DISTANCE } from './scene.js';
 import { createTimePicker, FAR_DAYS, offBy } from './timepick.js';
 
@@ -141,9 +143,11 @@ const TEMPLATE = `
     <header class="cg-head">
       <a class="cg-back" data-ref="back" hidden>All pictures</a>
       <h1 class="cg-title">CTS-SAT-1</h1>
+      <p class="cg-over" data-ref="over" hidden></p>
       <p class="cg-fine cg-sub">Also called FrontierSat. NORAD 69015.</p>
       <p class="cg-fine cg-credit">Earth imagery: NASA. Orbits: Space-Track.org. Places © <a
-        href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>.</p>
+        href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>.
+        Borders: <a href="https://www.naturalearthdata.com/" target="_blank" rel="noopener">Natural Earth</a>.</p>
       <p class="cg-fine cg-note" data-ref="note" hidden></p>
     </header>
     <section class="cg-panel" data-panel="sat" data-ref="satPanel" aria-label="Right now">
@@ -182,13 +186,16 @@ const TEMPLATE = `
   </div>
 
   <div class="cg-col cg-col-right">
-    <section class="cg-panel" data-panel="passes" aria-label="Passes over Calgary">
+    <section class="cg-panel" data-panel="passes" data-ref="passesPanel" aria-label="Passes over Calgary">
       <div class="cg-panel-head">
-        <h2>Passes over Calgary</h2>
+        <h2 data-ref="passesTitle">Passes over Calgary</h2>
       </div>
-      <p class="cg-fine cg-passes-note">Times in Calgary, for passes higher than ${PASS_MASK_DEG}°.</p>
-      <p class="cg-status" data-ref="gs"></p>
-      <ol class="cg-list cg-passes" data-ref="passes"></ol>
+      <div data-ref="placeSlot"></div>
+      <div class="cg-calgary-passes" data-ref="calgaryPasses">
+        <p class="cg-fine cg-passes-note">Times in Calgary, for passes higher than ${PASS_MASK_DEG}°.</p>
+        <p class="cg-status" data-ref="gs"></p>
+        <ol class="cg-list cg-passes" data-ref="passes"></ol>
+      </div>
     </section>
     <section class="cg-panel cg-panel-photos" data-panel="photos" aria-label="Pictures">
       <div class="cg-panel-head">
@@ -278,7 +285,7 @@ function noScene() {
 }
 
 function ensureStylesheet() {
-  for (const name of ['globe.css', 'map2d.css', 'timepick.css', 'colorwheel.css']) {
+  for (const name of ['globe.css', 'map2d.css', 'timepick.css', 'colorwheel.css', 'placesearch.css']) {
     const href = new URL(name, MODULE_BASE).href;
     const present = [...document.querySelectorAll('link[rel="stylesheet"]')].some((l) => l.href === href);
     if (present) continue;
@@ -997,6 +1004,11 @@ export function mountGlobe(container, options = {}) {
   function paintReadouts() {
     const s = satState;
     const dash = '—';
+    // roughly what it is over: a country, else a sea or continent
+    const over = s ? placeAt(s.latDeg, s.lonDeg) : null;
+    el.over.hidden = !over;
+    put(el.over, over ? `Over ${over}` : '');
+    placeSearch.tick(state.ms);
     if (!s) {
       for (const k of ['lat', 'lon', 'alt', 'speed', 'illum', 'ground', 'orbit']) put(el[k], dash);
       put(
@@ -1117,6 +1129,29 @@ export function mountGlobe(container, options = {}) {
     },
   });
   root.appendChild(picker.element);
+
+  // Passes over another place: while one is chosen its passes stand in for
+  // Calgary's in the Passes panel.
+  const placeSearch = createPlaceSearch({
+    getOrbit: () => orbit,
+    getTime: () => state.ms,
+    onJump(p) {
+      closeSheet();
+      jumpTo(p.closestMs);
+      pushScene(true);
+      setFollow(false);
+      flyToGround(p.latDeg, p.lonDeg);
+      writeHash();
+    },
+    onPlace(place) {
+      const title = place ? `Passes over ${place.name}` : 'Passes over Calgary'; // "the North Sea"
+      el.passesTitle.textContent = title;
+      el.passesPanel.setAttribute('aria-label', title);
+      el.calgaryPasses.hidden = !!place;
+    },
+  });
+  el.placeSlot.replaceWith(placeSearch.element);
+  loadCountries();
 
   /** On narrow screens, put the sheet away so the globe shows what was picked. */
   function closeSheet() {
@@ -1507,6 +1542,7 @@ export function mountGlobe(container, options = {}) {
       map.dispose();
       picker.destroy();
       wheel.destroy();
+      placeSearch.destroy();
       root.remove();
     },
   };

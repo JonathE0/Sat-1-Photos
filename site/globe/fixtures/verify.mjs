@@ -11,6 +11,8 @@ import { applyAnnotations, launchTime, toIsoUtc, toPhotos } from '../adapter.js'
 import * as astro from '../astro.js';
 import * as wheel from '../colorwheel.js';
 import * as map2d from '../map2d.js';
+import * as region from '../../explore/journey-region.js';
+import * as rp from '../regionpasses.js';
 import { elementsNote, FAR_DAYS, parseUtcInput, utcInputs, VERY_FAR_DAYS } from '../timepick.js';
 
 const read = (rel) => JSON.parse(readFileSync(fileURLToPath(new URL(rel, import.meta.url)), 'utf8'));
@@ -443,6 +445,77 @@ check('compass points', astro.compassPoint(0) === 'N' && astro.compassPoint(355)
     wheel.usable('#3c9df5') && !wheel.usable('#101010') && !wheel.usable('red') && !wheel.usable('#3C9DF5; x') && !wheel.usable(null),
   );
   check('colour: hue names', wheel.hueName(208) === 'blue' && wheel.hueName(40) === 'amber' && wheel.hueName(359) === 'red' && wheel.hueName(-10) === 'red');
+}
+
+// ---- places and passes over them (explore/journey-region.js, regionpasses.js) -------------------
+{
+  check('places: country outlines load', region.setCountries(read('../../explore/countries-110m.json')));
+  const where = [
+    [51.05, -114.07, 'Canada'], [35.7, 139.7, 'Japan'], [-29.3, 28.2, 'Lesotho'], [-26.2, 28.0, 'South Africa'],
+    [64.8, -147.7, 'United States'], [65, 178, 'Russia'], [-12.05, -77.05, 'Peru'], [0, -150, 'the North Pacific Ocean'],
+    [-30, -150, 'the South Pacific Ocean'], [43, 35, 'the Black Sea'], [-75, 0, 'Antarctica'],
+  ];
+  const wrong = where.filter(([lat, lon, want]) => region.placeAt(lat, lon) !== want);
+  check(
+    'places: what is under a point (a hole in a country, both sides of the date line, seas)',
+    !wrong.length,
+    wrong.map(([lat, lon, want]) => `${lat},${lon}: ${region.placeAt(lat, lon)} not ${want}`).join('; '),
+  );
+  check('places: regionAt still answers the front page as before', region.regionAt(51.05, -114.07) === 'North America');
+  const first = (q) => region.findPlaces(q)[0]?.label;
+  const typed = { jpan: 'Japan', austrailia: 'Australia', usa: 'United States', russ: 'Russia', 'cote d ivoire': 'Ivory Coast',
+    mediteranean: 'Mediterranean Sea', 'north sea': 'North Sea', 'S. Korea': 'South Korea', peru: 'Peru' };
+  const misses = Object.entries(typed).filter(([q, want]) => first(q) !== want);
+  check('places: search forgives typos and knows other names', !misses.length,
+    misses.map(([q, want]) => `"${q}" gave ${first(q)}, not ${want}`).join('; '));
+  check('places: nothing for nonsense, no country codes from partial words', region.findPlaces('qqq').length === 0 &&
+    region.findPlaces('u')[0]?.label !== 'United States');
+  const jp = region.getPlace(region.findPlaces('Japan')[0].id);
+  check('places: a country\'s middle lies inside it', jp.contains(jp.middle[1], jp.middle[0]) &&
+    region.getPlace(region.findPlaces('Peru')[0].id).contains(-9.2, -75));
+  check('places: a sea from the gazetteer has a middle in it and a box round it', (() => {
+    const med = region.getPlace(region.findPlaces('Mediterranean')[0].id);
+    const [w, s, e, n] = med.bbox;
+    return med.contains(med.middle[1], med.middle[0]) && w < 0 && e > 30 && s >= 29 && n <= 47;
+  })());
+  check('passes: the box test reaches across the date line', rp.nearBox([170, -20, 180, -15], -17, -179, 2) &&
+    !rp.nearBox([170, -20, 180, -15], -17, -150, 2));
+
+  const from = Date.UTC(2026, 9, 26, 12);
+  const step = 2000;
+  for (const name of ['Japan', 'Peru', 'North Sea']) {
+    const place = region.getPlace(region.findPlaces(name)[0].id);
+    const passes = rp.findRegionPasses(orbit, place, from);
+    const inAt = (ms) => {
+      const s = orbit.stateAt(ms);
+      return place.contains(s.latDeg, s.lonDeg);
+    };
+    const edgesOk = passes.every((p) => p.inProgress || (!inAt(p.startMs - step) && inAt(p.startMs + step)));
+    const exitsOk = passes.every((p) => inAt(p.endMs - step) && !inAt(p.endMs + step));
+    const ordered = passes.every((p, i) => i === 0 || p.startMs > passes[i - 1].endMs);
+    const sunOk = passes.every((p) => Math.abs(p.sunElevationDeg - astro.sunElevationDeg(p.latDeg, p.lonDeg, p.closestMs)) < 1e-9);
+    // the nearest moment found really is the nearest: nothing in the pass comes closer
+    let nearestOk = true;
+    for (const p of passes) {
+      for (let t = p.startMs; t <= p.endMs; t += 1000) {
+        const s = orbit.stateAt(t);
+        if (rp.surfaceKm(s.latDeg, s.lonDeg, place.middle[1], place.middle[0]) < p.closestKm - 0.5) nearestOk = false;
+      }
+    }
+    check(
+      `passes over ${place.label}: 3 found, entries and exits within 2 s, in order, nearest point and sun right`,
+      passes.length === 3 && edgesOk && exitsOk && ordered && sunOk && nearestOk,
+      passes.map((p) => `${new Date(p.closestMs).toISOString().slice(5, 16)} ${Math.round(p.durationS)} s ${Math.round(p.closestKm)} km`).join(', '),
+    );
+  }
+  const fake = (km, sun) => ({ closestKm: km, sunElevationDeg: sun });
+  const pick = (list) => rp.bestPass(list)?.index;
+  check(
+    'passes: best is daylight first, then closest to the middle',
+    pick([fake(50, -20), fake(300, 10), fake(200, 30)]) === 2 && pick([fake(50, -20), fake(80, -5)]) === 0 &&
+      pick([fake(900, 5), fake(20, -40)]) === 0 && rp.bestPass([]) === null,
+  );
+  check('passes: distances read as people would say them', rp.fmtKm(4) === 'under 10 km' && rp.fmtKm(1238) === '1,240 km');
 }
 
 console.log(`\n${passed} passed, ${failures} failed`);
