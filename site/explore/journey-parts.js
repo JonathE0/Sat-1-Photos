@@ -100,6 +100,9 @@ export function placeOf(photo) {
 /** In the catalogue's default set: not a dark frame, not mostly missing. */
 export const inDefaultSet = (photo) => !photo.dark && !photo.mostlyMissing;
 
+/** For the viewfinder: not a dark frame, and at least 95% of the picture can be shown. */
+export const isNearlyWhole = (photo) => !photo.dark && !((photo.raw?.completeness ?? photo.completeness) < 0.95);
+
 /**
  * How many rows of a loaded picture to show: all, or for one that never fully
  * came down, those above the flat grey a JPEG decoder fills the missing part

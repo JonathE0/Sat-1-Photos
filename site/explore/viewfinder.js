@@ -5,8 +5,8 @@
  *   createViewfinder(container, { photos, siteRoot, photoHref, onOpen, reducedMotion })
  *     -> { setPhotos(photos), start(), stop(), dispose() }
  *
- * `photos` is mergeAll() output; dark and mostly missing pictures are left out,
- * as in the catalogue's default view, and the rest run newest first and loop.
+ * `photos` is mergeAll() output; only pictures that are at least 95% there run
+ * here, newest first in a loop. The catalogue keeps everything else.
  *
  * Each picture comes down the way the real one did: top first, in packet-sized
  * bands at uneven intervals, with a faint line at the leading edge. Between
@@ -25,7 +25,7 @@ import {
   calgaryTime,
   fmtLat,
   fmtLon,
-  inDefaultSet,
+  isNearlyWhole,
   photoTime,
   placeOf,
   rowsWithData,
@@ -392,7 +392,7 @@ export function createViewfinder(container, {
   function setPhotos(list) {
     const at = deck[index]?.id;
     deck = (Array.isArray(list) ? list : [])
-      .filter(inDefaultSet)
+      .filter(isNearlyWhole)
       .sort((a, b) => (b.sortTime || 0) - (a.sortTime || 0));
     index = deck.findIndex((p) => p.id === at);
     next = null;

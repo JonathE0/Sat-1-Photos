@@ -118,7 +118,7 @@ The list as found:
 - **Reduced motion.** The design doc promises a short page with no swing for people whose system asks for reduced motion. The site now keeps the motion, because the owner wants it and has that setting on. Either update the doc, or add an on-page motion switch so other people with that setting still get a calm version.
 - **"See all 31 pictures"** lands on "21 pictures", with 10 behind "Show them". The hiding is intended; the wording could change.
 - **"Play the intro again"** returns to the top and waits for scrolling rather than playing.
-- **The viewfinder's first picture** is the newest viewable one, currently a cut-short frame. It could open on the newest complete picture.
+- **The viewfinder's first picture.** Decided by the owner on 31 Oct: the viewfinder only runs pictures that are at least 95% there, so it opens on the newest of those. The Pictures tab keeps everything.
 - **The orbit line crossing the words** was reported as a flaw against the design doc, but it was the owner's request. The doc may want updating.
 - **Earth position at 1920×1080.** It sits lower so the picture fits at full size. Smaller pictures would give it more room.
 

@@ -320,5 +320,33 @@
     "title": null,
     "updated_at": "2026-10-30T03:28:57Z",
     "updated_by": "CTS-SAT-1 team"
+  },
+  "2026-10-30-024600z": {
+    "captured_at": null,
+    "history": [
+      {
+        "at": "2026-10-31T05:22:31Z",
+        "by": "CTS-SAT-1 team",
+        "changes": {
+          "notes": [
+            null,
+            "The camera looked about 16° off straight down, so this frame shows the coast around Hong Kong, not the sea below the satellite. Hong Kong is a little above the middle, partly under small clouds; the Pearl River estuary is the grey funnel above it and Daya Bay the blue inlet below. In this picture the top is west and the right is north. Placed from landmarks read by eye, good to about 20 km."
+          ],
+          "place": [
+            null,
+            "Hong Kong"
+          ]
+        }
+      }
+    ],
+    "lat": null,
+    "lon": null,
+    "notes": "The camera looked about 16° off straight down, so this frame shows the coast around Hong Kong, not the sea below the satellite. Hong Kong is a little above the middle, partly under small clouds; the Pearl River estuary is the grey funnel above it and Daya Bay the blue inlet below. In this picture the top is west and the right is north. Placed from landmarks read by eye, good to about 20 km.",
+    "people": [],
+    "place": "Hong Kong",
+    "tags": [],
+    "title": null,
+    "updated_at": "2026-10-31T05:22:31Z",
+    "updated_by": "CTS-SAT-1 team"
   }
 }
