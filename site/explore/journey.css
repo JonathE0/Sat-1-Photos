@@ -460,7 +460,7 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
 .jy-now { min-height: var(--jy-ctl); padding: 0 16px; }
 .jy-now[aria-disabled="true"] { background: none; box-shadow: inset 1px 0 0 var(--jy-raised); color: var(--jy-muted); cursor: default; }
 
-/* bottom right: [Play the intro again] [See all n pictures] [- | +] */
+/* bottom right: [Play the intro again] [Following] [Aurora] [See all n pictures] [- | +] */
 .jy-corner {
   right: var(--jy-m);
   bottom: var(--jy-bottom);
@@ -483,6 +483,18 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
 .jy-again svg { flex: none; color: var(--jy-muted); transition: color 180ms var(--jy-ease-out); }
 .jy-again:hover svg { color: var(--jy-ink); }
 .jy-again:hover { background: var(--jy-raised); }
+/* Following, Aurora: on when Raised with the Ink line, as the other chosen things */
+.jy-toggle {
+  min-height: var(--jy-ctl);
+  padding: 0 16px;
+  background: var(--jy-panel);
+  text-decoration: none;
+  transition: background-color 180ms var(--jy-ease-out);
+}
+.jy-toggle[hidden] { display: none; }
+.jy-toggle:hover { background: var(--jy-raised); }
+.jy-toggle[aria-pressed="true"] { background: var(--jy-raised); box-shadow: inset 0 -2px 0 var(--jy-ink); }
+.jy-root[data-mode="still"] .jy-toggle { display: none; }
 .jy-zoom { display: flex; }
 .jy-zoom .jy-sq { width: var(--jy-row); height: auto; min-height: var(--jy-ctl); }
 .jy-zoom .jy-sq + .jy-sq { box-shadow: inset 1px 0 0 var(--jy-raised); }
@@ -658,7 +670,7 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
   .jy-dock { --vf-caption: 124px; }
 }
 
-@media (max-width: 1099px) {
+@media (max-width: 1199px) {
   /* the corner row goes above the time row so the two never meet */
   .jy-root:not(.jy-narrow) .jy-corner { bottom: calc(var(--jy-bottom) + var(--jy-row) + 8px); }
   .jy-root:not(.jy-narrow) .jy-facts-slot,
@@ -1039,7 +1051,7 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
 .jy-narrow .jy-speed span { min-width: 44px; padding: 0 4px; }
 .jy-narrow .jy-now { padding: 0 12px; }
 
-/* Controls, above the bar and edge to edge: [clock | speeds | Now] over [Play the intro again] [- | +]
+/* Controls, above the bar and edge to edge: [clock | speeds | Now] over [replay] [Following] [Aurora] [- | +]
    (without WebGL there's no bar, and See all n pictures stays in the corner) */
 .jy-narrow .jy-corner { left: var(--jy-m); }
 .jy-root.jy-narrow:not([data-mode="still"]) .jy-time {
@@ -1060,6 +1072,18 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
 }
 .jy-root.jy-narrow:not([data-mode="still"]) .jy-all { display: none; }
 .jy-root.jy-narrow:not([data-mode="still"]) .jy-again { background: none; }
+.jy-narrow .jy-toggle { padding: 0 12px; }
+/* phones: the replay button keeps its icon, and its name for screen readers, so the row fits */
+@media (max-width: 479px) {
+  .jy-root.jy-narrow:not([data-mode="still"]) .jy-again span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
 .jy-root.jy-narrow:not([data-mode="still"]):not(.jy-phone-controls) .jy-time,
 .jy-root.jy-narrow:not([data-mode="still"]):not(.jy-phone-controls) .jy-corner { opacity: 0; visibility: hidden; }
 

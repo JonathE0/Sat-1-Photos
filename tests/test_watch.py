@@ -404,6 +404,12 @@ class Parsing(unittest.TestCase):
         self.assertEqual(events, [])
         self.assertEqual((summary["max_kp"], summary["threshold_kp"]), (3.0, 4.0))
 
+    def test_sizes_have_no_comma_in_their_numbers(self):
+        # a comma is a decimal point across much of Europe
+        self.assertEqual(watch._size("wildfire", 12567.0, "ha"), "12 567 hectares burnt")
+        self.assertEqual(watch._size("storm", 700, "NM^2"), "About 2 401 km²")
+        self.assertEqual(watch._size("wildfire", 900.0, "ha"), "900 hectares burnt")
+
 
 if __name__ == "__main__":
     unittest.main()

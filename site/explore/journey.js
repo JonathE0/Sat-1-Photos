@@ -54,6 +54,7 @@ import {
   sunElevationDeg,
   sunPosition,
 } from '../globe/astro.js';
+import { grouped } from '../assets/format.js';
 import { createScreenLine } from './journey-line.js';
 import {
   calgaryTime,
@@ -158,6 +159,7 @@ const rememberedChoice = (key) => ({
 });
 const dockHiddenChoice = rememberedChoice('cts-panel-hidden');
 const factsHiddenChoice = rememberedChoice('cts-facts-hidden');
+const auroraHiddenChoice = rememberedChoice('cts-aurora-hidden');
 /** Screens with room for the picture viewfinder; keep in step with .jy-vf-slot in journey.css. */
 const VIEWFINDER_MEDIA = '(min-width: 1360px) and (min-height: 760px) and (min-aspect-ratio: 4/5)';
 /** Close up, the camera levels out to this pitch so the limb sits behind the satellite. */
@@ -245,6 +247,7 @@ function template(id, siteRoot) {
             <dt>Orbits so far</dt><dd data-ref="fRev"></dd>
           </dl>
           <p class="jy-small jy-muted jy-elements" data-ref="elements"></p>
+          <p class="jy-small jy-muted jy-aurora-note" data-ref="auroraNote" hidden></p>
           <div class="jy-details-facts" data-ref="detailsFacts"></div>
           <p class="jy-small jy-retry" data-ref="noOrbit" hidden>Couldn\u2019t work out where it is: no orbital elements loaded.
             <button type="button" class="jy-textbtn" data-ref="retry">Try again</button></p>
@@ -283,7 +286,10 @@ function template(id, siteRoot) {
         <p>Earth: NASA Blue Marble, Black Marble and cloud imagery. Orbital elements:
           <a class="jy-link" href="https://www.space-track.org/">Space-Track.org</a>. Packets: the
           <a class="jy-link" href="https://network.satnogs.org/">SatNOGS network</a> and the team's own ground station.
-          Place names: © <a class="jy-link" href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>.</p>
+          Place names: © <a class="jy-link" href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>.
+          Aurora: the OVATION forecast from the
+          <a class="jy-link" href="https://www.swpc.noaa.gov/products/aurora-30-minute-forecast">NOAA Space Weather Prediction Center</a>;
+          the shimmer on it is only for show.</p>
         <p>Sky: the <a class="jy-link" href="http://tdc-www.harvard.edu/catalogs/bsc5.html">Yale Bright Star Catalogue</a>
           (Hoffleit and Warren, 1991) and the Moon from NASA's Scientific Visualization Studio
           (<a class="jy-link" href="https://svs.gsfc.nasa.gov/4720">CGI Moon Kit</a>).</p>
@@ -330,6 +336,10 @@ function template(id, siteRoot) {
 
       <div class="jy-corner" data-ref="corner">
         <button type="button" class="jy-textbtn jy-again" data-ref="again">${ICON_REPLAY}<span>Play the intro again</span></button>
+        <button type="button" class="jy-textbtn jy-toggle" data-ref="followBar" aria-pressed="true"
+          title="Keep the camera on the satellite">Following</button>
+        <button type="button" class="jy-textbtn jy-toggle" data-ref="aurora" aria-pressed="true" hidden
+          title="Show or hide NOAA's aurora forecast">Aurora</button>
         <a class="jy-btn jy-all" data-ref="all"><span data-ref="allText"></span>${ICON_ARROW}</a>
         <div class="jy-zoom" role="group" aria-label="Zoom">
           <button type="button" class="jy-sq" data-ref="zoomOut" aria-label="Zoom out">${ICON_MINUS}</button>
@@ -484,6 +494,8 @@ export function mountJourney(container, options = {}) {
 
   let earth = null;
   let earthReady = false;
+  let aurora = null;
+  let auroraNote = () => null;
   let sky = null;
   let satellite = null;
   let satMaterials = [];
@@ -555,6 +567,39 @@ export function mountJourney(container, options = {}) {
     // frame, so not mid-fade); on a very slow line, show the previews anyway
     Promise.resolve(earth.ready).then(reveal, reveal);
     setTimeout(reveal, 10_000);
+    loadAurora();
+  }
+
+  // NOAA's forecast, on the Earth (aurora.js). Without it the globe just has no aurora.
+  async function loadAurora() {
+    try {
+      const mod = await import('../globe/aurora.js');
+      if (destroyed) return;
+      auroraNote = mod.auroraNote;
+      aurora = mod.createAurora({
+        quality,
+        still: motionOverride === 'reduced',
+        onStatus: () => {
+          needsFrame = true;
+          paintAurora();
+        },
+      });
+      aurora.setOn(!auroraHiddenChoice.get());
+      earth.group.add(aurora.object);
+      paintAurora();
+    } catch (err) {
+      console.warn('Journey: no aurora', err);
+    }
+  }
+
+  /** The button, and the line in the details that says what's being shown. */
+  function paintAurora() {
+    if (!aurora) return;
+    ref.aurora.hidden = false;
+    ref.aurora.setAttribute('aria-pressed', String(aurora.on));
+    const note = aurora.on ? auroraNote(aurora.status, state.simMs) : null;
+    ref.auroraNote.hidden = !note;
+    if (note) put(ref.auroraNote, note);
   }
 
   // the sky is decoration: without it the Earth sits on plain black
@@ -1959,6 +2004,7 @@ export function mountJourney(container, options = {}) {
   listen(ref.sat, 'click', (e) => satelliteClicked(e.detail));
   listen(ref.close, 'click', () => closePanel({ restoreFocus: true }));
   listen(ref.follow, 'click', () => setFollow(!state.follow));
+  listen(ref.followBar, 'click', () => setFollow(!state.follow));
   listen(ref.zoomSat, 'click', () => zoomToSatellite());
   listen(ref.retry, 'click', () => loadOrbit());
   // no broken icon: the message takes the frame's place, and "Open in the catalogue" stays under it
@@ -2203,7 +2249,7 @@ export function mountJourney(container, options = {}) {
         put(ref.fPass, `${t.time} ${t.zone}, in ${duration(pass.riseMs - ms)}`);
       }
       const rev = orbit.revolutionAt(ms);
-      put(ref.fRev, rev === null ? '\u2014' : rev.toLocaleString('en-US'));
+      put(ref.fRev, rev === null ? '\u2014' : grouped(rev));
       const ageDays = (ms - s.tleEpochMs) / DAY_MS;
       const old = Math.abs(ageDays) > 7;
       ref.elements.classList.toggle('jy-muted', !old);
@@ -2214,6 +2260,7 @@ export function mountJourney(container, options = {}) {
           : `Worked out from orbital elements published ${utcShort(s.tleEpochMs)}.`,
       );
     }
+    paintAurora();
     paintLatest();
   }
 
@@ -2350,6 +2397,8 @@ export function mountJourney(container, options = {}) {
       // the words moved: where pins hide follows them
       if (a || b || c || d || e) measureText();
       put(ref.summaryWhere, summaryWhere());
+      put(ref.followBar, state.follow ? 'Following' : 'Follow');
+      ref.followBar.setAttribute('aria-pressed', String(state.follow));
       paintClock();
       lastSentence = now;
     }
@@ -2444,6 +2493,13 @@ export function mountJourney(container, options = {}) {
     uiDirty = true;
   }
 
+  listen(ref.aurora, 'click', () => {
+    if (!aurora) return;
+    aurora.setOn(!aurora.on);
+    auroraHiddenChoice.set(!aurora.on);
+    needsFrame = true;
+    paintAurora();
+  });
   listen(ref.zoomIn, 'click', () => zoomBy(0.7));
   listen(ref.zoomOut, 'click', () => zoomBy(1 / 0.7));
 
@@ -2778,6 +2834,7 @@ export function mountJourney(container, options = {}) {
     computeCamera(now, theta);
     if (sky) sky.update(camera);
     if (earth) earth.update(dt, camera);
+    aurora?.update(ms, sun, theta, now, camera);
 
     // satellite: true position, drawn far larger than life, nose along the track, nadir down
     const p = storyProgress();
@@ -3138,7 +3195,7 @@ export function mountJourney(container, options = {}) {
     latest = (shown.length ? shown : photos).reduce((best, p) => (!best || (p.sortTime || 0) > (best.sortTime || 0) ? p : best), null);
     ref.latest.dataset.id = '';
     const n = photos.length;
-    ref.allText.textContent = n ? `See all ${n.toLocaleString('en-US')} pictures` : 'See the pictures';
+    ref.allText.textContent = n ? `See all ${grouped(n)} pictures` : 'See the pictures';
     ref.latestAll.textContent = ref.allText.textContent;
     ref.viewfinderSlot.hidden = !photos.some(isNearlyWhole);
     paintTabs();
@@ -3279,7 +3336,7 @@ export function mountJourney(container, options = {}) {
     /** For checking from the console; not an API. */
     get debug() {
       return {
-        state, frame, sat, camera, scene, orbitLine, trackN, W, H, quality, earth, satellite, sky, zoomLimits, swingAngle,
+        state, frame, sat, camera, scene, orbitLine, trackN, W, H, quality, earth, aurora, satellite, sky, zoomLimits, swingAngle,
         /** The swing sampled at n steps for the current satellite: the largest turn between steps, and so on. */
         swingCheck(n = 200, ms = state.simMs) {
           const theta = gmstAt(ms);
@@ -3323,6 +3380,7 @@ export function mountJourney(container, options = {}) {
       newsList?.dispose?.();
       viewfinder?.dispose();
       document.documentElement.classList.remove('jy-dragging');
+      aurora?.dispose();
       earth?.dispose();
       satellite?.dispose();
       orbitLine.dispose();

@@ -94,9 +94,16 @@ export function latLon(lat, lon, digits = 2) {
   return `${Math.abs(lat).toFixed(digits)}° ${ns}, ${Math.abs(lon).toFixed(digits)}° ${ew}`;
 }
 
+// "27 400": a narrow space between the thousands. Across much of Europe a comma
+// in a number is its decimal point, so "27,400" reads as 27.4; a space reads the
+// same everywhere.
+export function grouped(n, digits = 0) {
+  return n.toLocaleString('en-US', { minimumFractionDigits: digits, maximumFractionDigits: digits }).replace(/,/g, ' ');
+}
+
 export function bytes(n) {
   if (!Number.isFinite(n)) return null;
-  const exact = `${Math.round(n).toLocaleString('en-US')} bytes`;
+  const exact = `${grouped(Math.round(n))} bytes`;
   if (n < 1024) return exact;
   return `${(n / 1024).toFixed(1)} KB (${exact})`;
 }
@@ -107,7 +114,7 @@ export function shortHash(hash) {
 }
 
 export function plural(n, one, many = `${one}s`) {
-  return `${n.toLocaleString('en-US')} ${n === 1 ? one : many}`;
+  return `${grouped(n)} ${n === 1 ? one : many}`;
 }
 
 // "Sep 2026" for the month key "2026-09".

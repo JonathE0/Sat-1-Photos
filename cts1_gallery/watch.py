@@ -284,16 +284,22 @@ def _hectares(value, unit) -> float | None:
     return None
 
 
+def _grouped(value: float) -> str:
+    """A whole number with a narrow space between the thousands: a comma is a
+    decimal point across much of Europe, so "2,401" would read as 2.4."""
+    return f"{value:,.0f}".replace(",", " ")
+
+
 def _size(category: str, value, unit) -> str | None:
     if value is None:
         return None
     unit = unit or ""
     if category == "wildfire" and (ha := _hectares(value, unit)) is not None:
-        return f"{ha:,.0f} hectares burnt"
+        return f"{_grouped(ha)} hectares burnt"
     if unit == "kts":
         return f"Winds of {value:.0f} knots"
     if unit == "NM^2":
-        return f"About {value * 3.43:,.0f} km²"
+        return f"About {_grouped(value * 3.43)} km²"
     return None
 
 
@@ -342,7 +348,7 @@ def gdacs_events(parts: dict, now: datetime, p: Params, places=None) -> list[Eve
                 where = None  # it moves; the page shows where it will be
             else:
                 title = " ".join((props.get("name") or props.get("description") or "").split())
-                size = (f"{value:,.0f} hectares burnt" if category == "wildfire" and unit == "ha" and value
+                size = (f"{_grouped(value)} hectares burnt" if category == "wildfire" and unit == "ha" and value
                         else _volcano_size(severity) if category == "volcano" else None)
                 where = (places.name(lat, lon) if places else None) or props.get("country") or None
             url = (props.get("url") or {}).get("report") or "https://www.gdacs.org/"
@@ -427,7 +433,7 @@ def merge_nearby_fires(events: list[Event]) -> list[Event]:
         into.updated_at = max((t for t in (into.updated_at, e.updated_at) if t), default=None)
         into.started_at = min((t for t in (into.started_at, e.started_at) if t), default=None)
         if into.area_ha:
-            into.size = f"{into.area_ha:,.0f} hectares burnt in {into.areas} areas"
+            into.size = f"{_grouped(into.area_ha)} hectares burnt in {into.areas} areas"
     keep = {id(e) for e in kept}
     return [e for e in events if e.category != "wildfire" or id(e) in keep]
 

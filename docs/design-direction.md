@@ -661,6 +661,38 @@ the page. Put it behind a `<details>` with the summary "Keys" (Small 500 Ink). I
 - The range track becomes 2px of `#1A2129` and the thumb stays Ink. The column positions and widths
   do not change.
 
+### Numbers (31 Oct 2026, a teammate's report)
+
+Thousands take a narrow no-break space, never a comma: 27 400 km/h, 50 462 bytes. Across much of
+Europe a comma in a number is its decimal point, so "27,400" reads as 27.4. Decimals keep the point.
+`grouped()` in `site/assets/format.js`, `num` on the Watchlist, `_grouped` in `cts1_gallery/watch.py`.
+Commas between things stay: "22.3° N, 114.2° E".
+
+### Aurora, on both globes (`site/globe/aurora.js`)
+
+NOAA's OVATION forecast, fetched by the browser and again every 5 minutes, drawn as light 95 to
+340 km up: green low, red high, a trace on the day side where it couldn't be seen. Where it is and
+how strong come from the forecast, which is a model, not a photograph. The shimmer is decoration, and
+the page says so. It's turned about the magnetic pole to keep facing the Sun at other times, and
+fades out 3 to 6 hours from the forecast's time. A button turns it off (`A` on Orbit), remembered
+across both pages, and off it fetches nothing. The flat map has none. No forecast: the globe goes on
+without one and a line says so.
+
+### Picture previews on Orbit
+
+As on Explore: thumbnails on the globe's pins (`site/globe/picturepins.js`), which only show, so
+a drag from one still turns the globe; a larger preview on hover, a list for a pile; and the
+viewfinder (`site/explore/viewfinder.js`) at the top of the Pictures panel, where a chosen picture
+goes up. The map keeps its marks. Where Passes and Pictures don't both fit in the right column,
+Pictures stays open and Passes folds to its heading and next-pass line; opening one folds the other.
+The picture's card leaves out its thumbnail while the viewfinder shows it.
+
+### Following, on Explore
+
+A Following button sits in the end view's bottom-right row, beside Aurora, so the camera can be let
+go without opening the details. The row goes above the time row below 1200px, and on phones
+Play the intro again keeps only its icon.
+
 ---
 
 ## 6. Checklist: tells to keep off these pages

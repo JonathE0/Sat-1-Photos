@@ -22,6 +22,7 @@
  *
  * Styles: facts.css. Class prefix `cf-`.
  */
+import { grouped } from '../assets/format.js';
 
 const FADE_IN_MS = 400;
 const FADE_OUT_MS = 240; // exits run at 60% of the entrance
@@ -31,7 +32,7 @@ const LAUNCH_LABEL = '3 May 2026';
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 const num = (x) => (typeof x === 'number' && Number.isFinite(x) ? x : null);
-const fmtInt = (n) => Math.round(n).toLocaleString('en-US');
+const fmtInt = (n) => grouped(Math.round(n));
 
 function el(tag, className, text) {
   const node = document.createElement(tag);

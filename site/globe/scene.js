@@ -11,6 +11,7 @@
  */
 import * as THREE from './vendor/three.module.min.js';
 import { DEG, EARTH_RADIUS_KM } from './astro.js';
+import { createAurora } from './aurora.js';
 import { labelBox, placeLabel } from './labels.js';
 import { RIPPLE_COLOR, RIPPLE_GAP_S, RIPPLE_RADIUS_PX, RIPPLE_S, RIPPLE_STRENGTH, RIPPLE_WAVES, RIPPLE_WAVE_S } from './ripple.js';
 
@@ -462,6 +463,10 @@ export function createScene(canvas, labelLayer, opts = {}) {
     reducedMotion = false,
     wheelZoom = true,
     onUserMove = () => {},
+    aurora: withAurora = false,
+    auroraStill = false,
+    auroraOn = true,
+    onAurora = () => {},
   } = opts;
   let disposed = false;
   let needsRender = true;
@@ -547,6 +552,26 @@ export function createScene(canvas, labelLayer, opts = {}) {
   };
   loadTexture('earth-day', 'dayMap');
   loadTexture('earth-night', 'nightMap');
+
+  // ---- aurora (aurora.js) -------------------------------------------------
+  let aurora = null;
+  let lastAurora = 0;
+  if (withAurora) {
+    try {
+      aurora = createAurora({
+        quality: big ? 'low' : 'phone',
+        still: auroraStill,
+        onStatus(status) {
+          needsRender = true;
+          onAurora(status);
+        },
+      });
+      aurora.setOn(auroraOn);
+      earth.add(aurora.object);
+    } catch (err) {
+      console.warn('Globe: no aurora', err); // decoration on top of the data: the globe goes on without it
+    }
+  }
 
   // ---- materials ----------------------------------------------------------
   const outline = new THREE.Color(BACKGROUND);
@@ -747,6 +772,7 @@ export function createScene(canvas, labelLayer, opts = {}) {
   // ---- geometry helpers -----------------------------------------------------
   const tmp = new THREE.Vector3();
   const tmp2 = new THREE.Vector3();
+  const pinPoint = new THREE.Vector3();
 
   /** Is a world point hidden behind the Earth from the camera? */
   function occluded(p) {
@@ -777,6 +803,8 @@ export function createScene(canvas, labelLayer, opts = {}) {
 
   // ---- per-frame state ------------------------------------------------------
   let gmstNow = 0;
+  let timeNow = Date.now();
+  let sunNow = { x: 1, y: 0, z: 0 };
 
   function setSun(sunEci, gmstAngle) {
     // unit vector toward the Sun: scene frame, then Earth-fixed
@@ -785,8 +813,10 @@ export function createScene(canvas, labelLayer, opts = {}) {
     spin(sunLocal, -gmstAngle);
   }
 
-  function setTime(gmstAngle, sunEci) {
+  function setTime(gmstAngle, sunEci, ms = timeNow) {
     gmstNow = gmstAngle;
+    timeNow = ms;
+    sunNow = sunEci;
     earth.rotation.y = gmstAngle;
     setSun(sunEci, gmstAngle);
     needsRender = true;
@@ -949,6 +979,17 @@ export function createScene(canvas, labelLayer, opts = {}) {
     if (id === hoverId) return;
     hoverId = id;
     paintPins();
+  }
+
+  /** Where each picture's pin is on the stage, id to { x, y }; the ones behind the Earth are left out. */
+  function pinsOnScreen() {
+    earth.updateMatrixWorld();
+    const out = new Map();
+    pins.positions.forEach((p, i) => {
+      const s = toScreen(earth.localToWorld(pinPoint.copy(p)));
+      if (s) out.set(pins.ids[i], s);
+    });
+    return out;
   }
 
   /** What is under a canvas-relative point (CSS px)? */
@@ -1120,6 +1161,12 @@ export function createScene(canvas, labelLayer, opts = {}) {
     setSubsolar,
     setCoverage,
     setPins,
+    pinsOnScreen,
+    /** Draw the pins as squares here, or leave them to thumbnails over the canvas (picturepins.js). */
+    setPinsDrawn(on) {
+      pinMaterial.visible = on;
+      needsRender = true;
+    },
     highlightPins,
     setSelected,
     setHover,
@@ -1132,8 +1179,24 @@ export function createScene(canvas, labelLayer, opts = {}) {
     satelliteLabel: satLabel,
     setViewCentre,
     satelliteScreen,
+    /** Show or hide the aurora. */
+    setAurora(on) {
+      aurora?.setOn(on);
+      needsRender = true;
+    },
+    get auroraStatus() {
+      return aurora?.status ?? null;
+    },
     /** Render if anything changed; returns true if a frame was drawn. */
     frame(now, force = false) {
+      if (aurora) {
+        aurora.update(timeNow, sunNow, gmstNow, now, camera);
+        // it shimmers: 30 frames a second is plenty
+        if (aurora.animated && now - lastAurora >= 33) {
+          lastAurora = now;
+          needsRender = true;
+        }
+      }
       if (rippleStart !== null) {
         const seconds = (now - rippleStart) / 1000;
         if (seconds >= RIPPLE_S) {
@@ -1159,6 +1222,7 @@ export function createScene(canvas, labelLayer, opts = {}) {
       disposed = true;
       controls.dispose();
       if (pins.geometry) pins.geometry.dispose();
+      aurora?.dispose();
       for (const d of disposables) d.dispose();
       for (const l of labels) l.el.remove();
       renderer.dispose();

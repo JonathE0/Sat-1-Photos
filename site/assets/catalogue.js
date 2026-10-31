@@ -23,7 +23,7 @@
 // is at least half there; the strip still starts with the newest.
 
 import { h, append, announce, copyText } from './dom.js';
-import { CAMERAS, clock, dayMonthYear, latLon, percent, plural, toDate } from './format.js';
+import { CAMERAS, clock, dayMonthYear, grouped, latLon, percent, plural, toDate } from './format.js';
 import { applyFilters, FILTER_KEYS, readFilters } from './data.js';
 import { createFilterForm, describeFilters } from './filters.js';
 
@@ -228,7 +228,7 @@ function statusLine(p) {
       text = ['The satellite stopped this capture early: it ', saved, checksumMatches(p) ? ', and all of that came down.' : '.'];
     } else {
       const sofar = lines && arrived != null
-        ? `${arrived.toLocaleString('en-US')} of those have come down so far`
+        ? `${grouped(arrived)} of those have come down so far`
         : 'Not all of those have come down yet';
       const gap = Number(raw.completeness) < 0.25 ? 'a gap near the top' : 'a gap';
       text = ['The satellite stopped this capture early and ', saved, `. ${sofar}, but ${gap} means `,

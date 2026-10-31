@@ -8,7 +8,9 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { applyAnnotations, comparePhotos, launchTime, toIsoUtc, toPhotos, whenKnown } from '../adapter.js';
+import { bytes, grouped, plural } from '../../assets/format.js';
 import * as astro from '../astro.js';
+import { auroraNote, parseForecast, turnSince } from '../aurora.js';
 import * as wheel from '../colorwheel.js';
 import { labelBox, placeLabel } from '../labels.js';
 import * as map2d from '../map2d.js';
@@ -517,7 +519,7 @@ check('compass points', astro.compassPoint(0) === 'N' && astro.compassPoint(355)
     pick([fake(50, -20), fake(300, 10), fake(200, 30)]) === 2 && pick([fake(50, -20), fake(80, -5)]) === 0 &&
       pick([fake(900, 5), fake(20, -40)]) === 0 && rp.bestPass([]) === null,
   );
-  check('passes: distances read as people would say them', rp.fmtKm(4) === 'under 10 km' && rp.fmtKm(1238) === '1,240 km');
+  check('passes: distances read as people would say them', rp.fmtKm(4) === 'under 10 km' && rp.fmtKm(1238) === '1 240 km');
 }
 
 // ---- the picam's geometry ---------------------------------------------------------
@@ -677,6 +679,46 @@ check('compass points', astro.compassPoint(0) === 'N' && astro.compassPoint(355)
     html.includes(".orbit-loading')?.remove()") && /<script type="module" onerror=/.test(html) &&
       /<noscript><style>\.orbit-loading \{ display: none; \}/.test(head),
   );
+}
+
+// ---- numbers: nobody reads a thousands comma as a decimal ------------------------
+{
+  check('numbers: a narrow space between the thousands', grouped(27400) === '27 400' && grouped(999) === '999' && grouped(1234567) === '1 234 567');
+  check('numbers: a decimal is still a point', grouped(1234.56, 1) === '1 234.6');
+  check('numbers: bytes and counts read the same', bytes(50462) === '49.3 KB (50 462 bytes)' && plural(1200, 'packet') === '1 200 packets' && plural(1, 'packet') === '1 packet');
+  const facts = readFileSync(fileURLToPath(new URL('../../explore/facts.json', import.meta.url)), 'utf8');
+  check('numbers: no thousands comma left in the facts', !/\d,\d{3}\b/.test(facts));
+}
+
+// ---- aurora -----------------------------------------------------------------------
+{
+  const cells = [[10, 65, 50], [359, -90, 100], [0, 0, 0]];
+  for (let i = 0; cells.length < 1000; i++) cells.push([i % 360, 10, 0]);
+  const parsed = parseForecast({ 'Observation Time': '2026-10-31T17:29:00Z', 'Forecast Time': '2026-10-31T18:23:00Z', coordinates: cells });
+  check('aurora: a cell lands by its latitude and longitude', Math.abs(parsed.grid[(65 + 90) * 360 + 10] - 127.5) < 1 && parsed.grid[359] === 255 && parsed.grid[90 * 360] === 0);
+  check('aurora: the times and the peak are read', parsed.forecastMs === Date.UTC(2026, 9, 31, 18, 23) && parsed.observedMs === Date.UTC(2026, 9, 31, 17, 29) && parsed.peak === 100);
+  let refused = 0;
+  for (const junk of [null, {}, { coordinates: [] }, { 'Forecast Time': 'soon', coordinates: cells }]) {
+    try {
+      parseForecast(junk);
+    } catch {
+      refused += 1;
+    }
+  }
+  check('aurora: anything else is refused', refused === 4);
+
+  const t = parsed.forecastMs;
+  const deg = (a) => (Math.atan2(Math.sin(a), Math.cos(a)) * 180) / Math.PI;
+  check('aurora: at the forecast\'s own time the map is not turned', turnSince(t, t) === 0);
+  const six = deg(turnSince(t + 6 * 3_600_000, t));
+  check('aurora: six hours later it has turned about 90 degrees, the way the Sun went', Math.abs(six - 90) < 15, `${six.toFixed(1)}`);
+  const day = deg(turnSince(t + 24 * 3_600_000, t));
+  check('aurora: a day later it is back where it was', Math.abs(day) < 3, `${day.toFixed(1)}`);
+
+  const ok = { state: 'ok', forecastMs: t };
+  check('aurora: the note says the forecast\'s time and that the shimmer is for show', /18:23 UTC/.test(auroraNote(ok, t)) && /shimmer/.test(auroraNote(ok, t)));
+  check('aurora: far from the forecast the note says why there is none', /isn.t shown/.test(auroraNote(ok, t + 7 * 3_600_000)));
+  check('aurora: a failed load says so, and loading says nothing', /couldn.t be loaded/.test(auroraNote({ state: 'failed' }, t)) && auroraNote({ state: 'loading' }, t) === null);
 }
 
 console.log(`\n${passed} passed, ${failures} failed`);

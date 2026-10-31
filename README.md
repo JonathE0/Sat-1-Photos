@@ -189,6 +189,9 @@ address; add `--allow-host NAME` to use another name, or set an edit key.
 - Orbital elements: Space-Track.org, via the team pipeline.
 - Place names: © OpenStreetMap contributors, via Nominatim.
 - Globe imagery: NASA Blue Marble and Black Marble (see `site/globe/textures/`).
+- Aurora: the OVATION forecast from the
+  [NOAA Space Weather Prediction Center](https://www.swpc.noaa.gov/products/aurora-30-minute-forecast),
+  fetched by the visitor's browser (`site/globe/aurora.js`).
 - Logo and CubeSat icon (`site/assets/`): CalgaryToSpace, from
   [calgarytospace.ca](https://www.calgarytospace.ca/).
 

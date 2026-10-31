@@ -50,7 +50,8 @@
   const zone = (ms) => (zoneFmt.formatToParts(ms).find((p) => p.type === 'timeZoneName') || {}).value || '';
   const calgary = (ms) => `${calgaryFmt.format(ms)} ${zone(ms)}`; // "Sat 31 Oct, 02:33 MDT"
   const utc = (ms) => `${utcFmt.format(ms)} UTC`; // "31 Oct, 08:33 UTC"
-  const num = (x, digits = 0) => x.toLocaleString('en-GB', { maximumFractionDigits: digits, minimumFractionDigits: digits });
+  // a narrow space between the thousands, as in assets/format.js: a comma is a decimal point across much of Europe
+  const num = (x, digits = 0) => x.toLocaleString('en-GB', { maximumFractionDigits: digits, minimumFractionDigits: digits }).replace(/,/g, ' ');
 
   function span(ms) {
     const m = Math.round(Math.abs(ms) / 60000);

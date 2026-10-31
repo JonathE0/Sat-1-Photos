@@ -12,6 +12,7 @@
  * place's box, and each entry and exit is then pinned down to under a
  * second. No DOM, so fixtures/verify.mjs checks it under Node.
  */
+import { grouped } from '../assets/format.js';
 import { DEG, EARTH_RADIUS_KM, groundLight, sunElevationDeg } from './astro.js';
 
 const S = 1000;
@@ -188,10 +189,10 @@ export async function findRegionPassesAsync(orbit, place, fromMs, { signal, slic
   }
 }
 
-/** "under 10 km", "120 km", "1,240 km" */
+/** "under 10 km", "120 km", "1 240 km" */
 export function fmtKm(km) {
   if (km < 10) return 'under 10 km';
-  return `${(Math.round(km / 10) * 10).toLocaleString('en-US')} km`;
+  return `${grouped(Math.round(km / 10) * 10)} km`;
 }
 
 /**

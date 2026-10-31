@@ -1,8 +1,9 @@
 /**
  * The satellite's pictures, one at a time, in a thin camera viewfinder: the sky
- * at the top right of the story's end view, on big screens.
+ * at the top right of the story's end view, on big screens, and the Pictures panel
+ * on Orbit.
  *
- *   createViewfinder(container, { photos, siteRoot, photoHref, onOpen, reducedMotion })
+ *   createViewfinder(container, { photos, siteRoot, photoHref, onOpen, reducedMotion, firstMs })
  *     -> { setPhotos(photos), show(photo), start(), stop(), dispose() }
  *
  * `photos` is mergeAll() output; only pictures that are at least 95% there run
@@ -20,9 +21,10 @@
  * tab is hidden. Screen readers hear a picture only when the visitor steps to it
  * with Previous or Next.
  *
- * Styles: viewfinder.css (its sizes come from .jy-vf-slot in journey.css). Class
- * prefix `vf-`.
+ * Styles: viewfinder.css (its sizes come from .jy-vf-slot in journey.css, and from
+ * .cg-vf in globe.css on Orbit). Class prefix `vf-`.
  */
+import { plural } from '../assets/format.js';
 import {
   calgaryTime,
   fmtLat,
@@ -96,7 +98,7 @@ function downlinkLine(p) {
     else range = `${day0}, ${time0} UTC`;
   }
   const n = dl.packets;
-  const packets = Number.isFinite(n) ? `${n.toLocaleString('en-US')} ${n === 1 ? 'packet' : 'packets'}` : '';
+  const packets = Number.isFinite(n) ? plural(n, 'packet') : '';
   if (range && packets) return `Came down ${range} in ${packets}`;
   if (range) return `Came down ${range}`;
   return packets ? `Came down in ${packets}` : '';
@@ -125,6 +127,7 @@ export function createViewfinder(container, {
   photoHref = (id) => `#/photo/${encodeURIComponent(id)}`,
   onOpen,
   reducedMotion = false,
+  firstMs = FIRST_MS,
 } = {}) {
   const reduced = Boolean(reducedMotion);
 
@@ -393,7 +396,7 @@ export function createViewfinder(container, {
     timer = 0;
     if (held || !running || disposed || !deck.length || document.hidden) return;
     if (shown && (hovered || focused)) return;
-    timer = setTimeout(() => step(1, false), shown ? DWELL_MS : FIRST_MS);
+    timer = setTimeout(() => step(1, false), shown ? DWELL_MS : firstMs);
   }
 
   // ---- events ----

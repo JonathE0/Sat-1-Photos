@@ -73,7 +73,7 @@
     },
     {
       "id": "boom",
-      "text": "It also tests a new boom of 3D-printed carbon fibre, stowed for launch and designed to reach 1,143 mm when it opens.",
+      "text": "It also tests a new boom of 3D-printed carbon fibre, stowed for launch and designed to reach 1 143 mm when it opens.",
       "category": "hardware",
       "sources": [
         { "title": "Deployable Composite Lattice Boom", "outlet": "CTS-SAT-1 wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Deployable-Composite-Lattice-Boom" },
@@ -91,7 +91,7 @@
     },
     {
       "id": "csa-imager",
-      "text": "The Canadian Space Agency backs its science through IMAGER, a $500,000 FAST grant to UCalgary led by Dr. Burchill.",
+      "text": "The Canadian Space Agency backs its science through IMAGER, a $500 000 FAST grant to UCalgary led by Dr. Burchill.",
       "category": "team",
       "sources": [
         { "title": "Grants awarded under the FAST 2023 Announcement of Opportunity", "outlet": "Canadian Space Agency", "date": "2025-02-13", "url": "https://www.asc-csa.gc.ca/eng/funding-programs/programs/fast/grants-awarded-fast-ao-2023.asp" },
@@ -267,7 +267,7 @@
     },
     {
       "id": "radio",
-      "text": "It radios home on an amateur radio frequency, 436.15 MHz, at 9,600 bits a second.",
+      "text": "It radios home on an amateur radio frequency, 436.15 MHz, at 9 600 bits a second.",
       "category": "hardware",
       "sources": [
         { "title": "FrontierSat", "outlet": "SatNOGS DB", "date": null, "accessed": "2026-10-29", "url": "https://db.satnogs.org/satellite/GGCH-4346-1583-9419-5634/" }
@@ -335,7 +335,7 @@
     },
     {
       "id": "vibe-test",
-      "text": "The flight satellite passed its launch vibration test in Airdrie, Alberta, in June 2025; the test cost under $5,000.",
+      "text": "The flight satellite passed its launch vibration test in Airdrie, Alberta, in June 2025; the test cost under $5 000.",
       "category": "launch",
       "sources": [
         { "title": "Vibe Test", "outlet": "CTS-SAT-1 wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Vibe-Test" },

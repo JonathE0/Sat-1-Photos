@@ -19,6 +19,9 @@ import { createPlaceSearch } from './placesearch.js';
 import { fmtKm } from './regionpasses.js';
 import { createShotPanel } from './shotpanel.js';
 import { rovingList } from './rovinglist.js';
+import { grouped } from '../assets/format.js';
+import { auroraNote } from './aurora.js';
+import { createPicturePins } from './picturepins.js';
 import { createScene, DEFAULT_DISTANCE } from './scene.js';
 import { createTimePicker, FAR_DAYS, offBy } from './timepick.js';
 
@@ -140,8 +143,10 @@ const TEMPLATE = `
   <div class="cg-stage">
     <canvas class="cg-canvas" tabindex="0" role="img"
       aria-label="Globe showing CTS-SAT-1, its orbit, the ground station and where the pictures were taken"></canvas>
+    <div class="cg-pins" data-ref="pinLayer" aria-hidden="true"></div>
     <div class="cg-labels" aria-hidden="true"></div>
     <div class="cg-tip" hidden></div>
+    <div class="cg-peek" data-ref="peek" hidden></div>
   </div>
 
   <div class="cg-views">
@@ -151,6 +156,8 @@ const TEMPLATE = `
         <button type="button" data-view="map" aria-pressed="false" title="Map (M)">Map</button>
       </div>
     </div>
+    <button type="button" class="cg-btn cg-aurora-btn" data-ref="auroraBtn" aria-pressed="true"
+      title="Show or hide NOAA's aurora forecast (A)">Aurora</button>
     <div class="cg-seg cg-seg-zoom" role="group" aria-label="Map zoom. Arrow keys move between them." data-ref="zoom">
       <button type="button" data-ref="zoomOut" aria-label="Zoom out" title="Zoom out (−)">−</button>
       <button type="button" data-ref="zoomIn" aria-label="Zoom in" title="Zoom in (+)">+</button>
@@ -167,7 +174,9 @@ const TEMPLATE = `
         <p class="cg-fine cg-sub">Also called FrontierSat. NORAD 69015.</p>
         <p class="cg-fine cg-credit">Earth imagery: NASA. Orbits: Space-Track.org. Places © <a
           href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>.
-          Borders: <a href="https://www.naturalearthdata.com/" target="_blank" rel="noopener">Natural Earth</a>.</p>
+          Borders: <a href="https://www.naturalearthdata.com/" target="_blank" rel="noopener">Natural Earth</a>.
+          Aurora: <a href="https://www.swpc.noaa.gov/products/aurora-30-minute-forecast" target="_blank" rel="noopener">NOAA SWPC</a>.</p>
+        <p class="cg-fine cg-credit" data-ref="auroraNote" hidden></p>
         <p class="cg-fine cg-note" data-ref="note" hidden></p>
       </div>
     </header>
@@ -202,6 +211,7 @@ const TEMPLATE = `
         <div><dt><kbd>F</kbd></dt><dd>Follow the satellite</dd></div>
         <div><dt><kbd>T</kbd></dt><dd>Go to a date and time</dd></div>
         <div><dt><kbd>M</kbd></dt><dd>Switch between globe and map</dd></div>
+        <div><dt><kbd>A</kbd></dt><dd>Show or hide the aurora</dd></div>
         <div><dt><kbd>+</kbd> <kbd>−</kbd></dt><dd>Zoom the map</dd></div>
         <div><dt><kbd>P</kbd></dt><dd>Show or hide the panels</dd></div>
       </dl>
@@ -212,21 +222,24 @@ const TEMPLATE = `
     <section class="cg-panel" data-panel="passes" data-ref="passesPanel" aria-label="Passes over Calgary">
       <div class="cg-panel-head">
         <h2 data-ref="passesTitle" tabindex="-1">Passes over Calgary</h2>
+        <button type="button" class="cg-fold cg-fold-side" data-ref="passesFold" aria-expanded="true" aria-label="Show or hide the passes" disabled>${ICONS.chevron}</button>
       </div>
       <div data-ref="placeSlot"></div>
       <div class="cg-calgary-passes" data-ref="calgaryPasses">
-        <p class="cg-fine cg-passes-note">Times in Calgary, for passes higher than ${PASS_MASK_DEG}°.</p>
+        <p class="cg-fine cg-passes-note cg-fold-body">Times in Calgary, for passes higher than ${PASS_MASK_DEG}°.</p>
         <p class="cg-status" data-ref="gs"></p>
-        <ol class="cg-list cg-passes" data-ref="passes" role="list" aria-label="Next passes over Calgary. Arrow keys move between them."></ol>
+        <ol class="cg-list cg-passes cg-fold-body" data-ref="passes" role="list" aria-label="Next passes over Calgary. Arrow keys move between them."></ol>
       </div>
     </section>
-    <section class="cg-panel cg-panel-photos" data-panel="photos" aria-label="Pictures">
+    <section class="cg-panel cg-panel-photos" data-panel="photos" data-ref="photosPanel" aria-label="Pictures">
       <div class="cg-panel-head">
-        <h2>Pictures</h2>
-        <span class="cg-fine" data-ref="photoCount"></span>
+        <h2 data-ref="photosTitle">Pictures</h2>
+        <span class="cg-fine cg-photo-count" data-ref="photoCount"></span>
+        <button type="button" class="cg-fold cg-fold-side" data-ref="photosFold" aria-expanded="true" aria-label="Show or hide the pictures" disabled>${ICONS.chevron}</button>
       </div>
-      <button type="button" class="cg-btn cg-highlight" data-ref="highlight" hidden>Highlight photos taken by FrontierSat</button>
-      <ul class="cg-list cg-photos" data-ref="photos" role="list" aria-label="Pictures. Arrow keys move between them."></ul>
+      <div class="cg-vf cg-fold-body" data-ref="vfSlot" hidden></div>
+      <button type="button" class="cg-btn cg-highlight cg-fold-body" data-ref="highlight" hidden>Highlight photos taken by FrontierSat</button>
+      <ul class="cg-list cg-photos cg-fold-body" data-ref="photos" role="list" aria-label="Pictures. Arrow keys move between them."></ul>
     </section>
   </div>
 
@@ -292,6 +305,10 @@ function noScene() {
   return {
     controls: { dragged: false, reducedMotion: false },
     setStation: nothing,
+    setAurora: nothing,
+    auroraStatus: null,
+    setPinsDrawn: nothing,
+    pinsOnScreen: () => new Map(),
     setViewCentre: nothing,
     satelliteScreen: () => null,
     setTrackColor: nothing,
@@ -316,7 +333,7 @@ function noScene() {
 }
 
 function ensureStylesheet() {
-  for (const name of ['globe.css', 'map2d.css', 'timepick.css', 'colorwheel.css', 'placesearch.css', 'shotpanel.css']) {
+  for (const name of ['globe.css', 'map2d.css', 'timepick.css', 'colorwheel.css', 'placesearch.css', 'shotpanel.css', '../explore/viewfinder.css']) {
     const href = new URL(name, MODULE_BASE).href;
     const present = [...document.querySelectorAll('link[rel="stylesheet"]')].some((l) => l.href === href);
     if (present) continue;
@@ -416,6 +433,27 @@ export function mountGlobe(container, options = {}) {
   };
 
   // ---- scene -----------------------------------------------------------------
+  // the aurora and the picture previews; an embed keeps to the picture it's showing
+  const full = opts.ui !== 'compact';
+  // only ?motion=reduced stills them, as on Explore: the site keeps its motion otherwise
+  const stillMotion = new URLSearchParams(location.search).get('motion') === 'reduced';
+  // the visitor's choice, shared with Explore
+  const auroraHidden = {
+    get() {
+      try {
+        return localStorage.getItem('cts-aurora-hidden') === '1';
+      } catch {
+        return false;
+      }
+    },
+    set(hidden) {
+      try {
+        if (hidden) localStorage.setItem('cts-aurora-hidden', '1');
+        else localStorage.removeItem('cts-aurora-hidden');
+      } catch { /* no storage: it's only remembered until the page closes */ }
+    },
+  };
+  let auroraOn = full && !auroraHidden.get();
   let scene;
   try {
     scene = createScene(canvas, root.querySelector('.cg-labels'), {
@@ -423,6 +461,9 @@ export function mountGlobe(container, options = {}) {
       preferSmallTextures: Math.min(container.clientWidth || 1024, window.innerWidth) < 700,
       reducedMotion: reducedMotionQuery.matches,
       wheelZoom: opts.wheelZoom,
+      aurora: full,
+      auroraOn,
+      auroraStill: stillMotion,
       onUserMove(kind) {
         state.userMovedCamera = true;
         sheetViewMoved = true;
@@ -442,6 +483,9 @@ export function mountGlobe(container, options = {}) {
     root.classList.add('cg-nogl-on');
   }
   scene.setStation(astro.CALGARY.latDeg, astro.CALGARY.lonDeg);
+  // the pictures as little pictures, over the globe (the map keeps its marks)
+  const picturePins = full && !root.classList.contains('cg-nogl-on') ? createPicturePins(el.pinLayer) : null;
+  if (picturePins) scene.setPinsDrawn(false);
 
   // The flat map shares the stage, under the labels and tooltip. It needs
   // only canvas 2D, so without WebGL the page opens on it.
@@ -528,6 +572,35 @@ export function mountGlobe(container, options = {}) {
     resizeMap();
   });
 
+  // The right column holds Passes and Pictures, with the viewfinder in Pictures. Where they
+  // don't both fit, one folds to its heading (Passes keeps its next-pass line), Pictures first.
+  let rightOpen = 'photos'; // which stays open when they don't fit
+  let passesFull = 0;
+  let vfFull = 0;
+  let viewfinder = null;
+  let finderPhotos = [];
+  function fitRightColumn(h, narrow) {
+    const passesFolded = el.passesPanel.hasAttribute('data-folded');
+    const photosFolded = el.photosPanel.hasAttribute('data-folded');
+    if (!passesFolded) passesFull = el.passesPanel.scrollHeight;
+    if (!photosFolded && !el.vfSlot.hidden && !narrow) vfFull = el.vfSlot.offsetHeight;
+    // with the viewfinder above it the list can do with a little less
+    const vfRoom = el.vfSlot.hidden ? 0 : Math.max(0, vfFull - 12 * uiScale);
+    root.style.setProperty('--cg-vf-h', `${vfRoom}px`);
+    const room = h - pageTop() - 112 * uiScale; // globe.css .cg-col-right's max-height
+    const min = 272 * uiScale + vfRoom; // as .cg-panel-photos' min-height
+    const both = narrow || passesFull + 12 * uiScale + min <= room;
+    for (const [panel, fold, open] of [
+      [el.passesPanel, el.passesFold, both || rightOpen === 'passes'],
+      [el.photosPanel, el.photosFold, both || rightOpen === 'photos'],
+    ]) {
+      panel.toggleAttribute('data-folded', !open);
+      fold.setAttribute('aria-expanded', String(open));
+      fold.disabled = both;
+    }
+    root.classList.toggle('cg-right-accordion', !both);
+  }
+
   const layout = () => {
     const w = root.clientWidth;
     const h = root.clientHeight;
@@ -549,6 +622,8 @@ export function mountGlobe(container, options = {}) {
     const cardSpace = el.card.hidden ? 0 : el.card.offsetHeight + 12 * uiScale;
     root.style.setProperty('--cg-card-space', `${cardSpace}px`);
     el.fold.disabled = narrow; // a tab's sheet shows it whole
+    fitRightColumn(h, narrow);
+    syncViewfinder();
     if (narrow) {
       setSatFold(false);
       return;
@@ -731,14 +806,35 @@ export function mountGlobe(container, options = {}) {
       map.frame(now);
     } else {
       if (state.follow) scene.follow();
-      scene.frame(now);
+      if (scene.frame(now)) placePins();
     }
     if (uiDirty || now - lastUi >= 100) {
       paintClock();
-      if (uiDirty || now - lastUi >= 250) paintReadouts();
+      if (uiDirty || now - lastUi >= 250) {
+        paintReadouts();
+        paintAurora();
+      }
       lastUi = now;
       uiDirty = false;
     }
+  }
+
+  /** The button, and the line that says what's being shown. Only the globe has an aurora. */
+  function paintAurora() {
+    const status = scene.auroraStatus;
+    const shown = Boolean(status) && !onMap();
+    el.auroraBtn.hidden = !shown;
+    el.auroraBtn.setAttribute('aria-pressed', String(auroraOn));
+    const note = shown && auroraOn ? auroraNote(status, state.ms) : null;
+    el.auroraNote.hidden = !note;
+    if (note && el.auroraNote.textContent !== note) el.auroraNote.textContent = note;
+  }
+
+  function setAuroraOn(on) {
+    auroraOn = on;
+    auroraHidden.set(!on);
+    scene.setAurora(on);
+    paintAurora();
   }
 
   // ---- scene state -----------------------------------------------------------
@@ -768,7 +864,7 @@ export function mountGlobe(container, options = {}) {
     const ms = state.ms;
     const theta = astro.gmst(ms);
     const sun = astro.sunPosition(ms);
-    scene.setTime(theta, sun);
+    scene.setTime(theta, sun, ms);
     map.setTime(ms);
     const ss = astro.subsolarPoint(ms);
     scene.setSubsolar(ss.latDeg, ss.lonDeg);
@@ -912,9 +1008,134 @@ export function mountGlobe(container, options = {}) {
       v.setPins(pins);
       v.setSelected(state.selectedId);
     }
+    picturePins?.setPins(photos.filter((p) => p.placed).map((p) => ({ id: p.id, thumb: safeHref(p.thumb), dark: p.dark, square: p.square })));
+    picturePins?.setSelected(state.selectedId);
     paintPhotoList();
     paintTicks();
   }
+
+  /** The thumbnails follow the globe, and the preview over one follows its pin. */
+  function placePins() {
+    if (!picturePins) return;
+    const points = scene.pinsOnScreen();
+    picturePins.place(points, uiScale);
+    if (peek.id) {
+      const s = points.get(peek.id);
+      if (s) placePeek(s);
+      else hidePeek();
+    }
+  }
+
+  // ---- the viewfinder, in the Pictures panel (explore/viewfinder.js) ---------------
+  async function loadViewfinder(images, annotations) {
+    if (!full || !images?.length) return;
+    try {
+      const [{ createViewfinder }, { mergeAll }] = await Promise.all([import('../explore/viewfinder.js'), import('../assets/data.js')]);
+      if (destroyed) return;
+      finderPhotos = mergeAll(images, annotations);
+      el.vfSlot.hidden = !finderPhotos.length;
+      viewfinder = createViewfinder(el.vfSlot, {
+        photos: finderPhotos,
+        siteRoot: opts.siteRoot,
+        photoHref: (id) => safeHref(findPhoto(id)?.href) || '',
+        reducedMotion: stillMotion,
+        firstMs: 300, // no story to wait for, as on Explore: the empty frame shouldn't linger
+      });
+      if (state.selectedId) showInViewfinder(state.selectedId);
+      layout();
+    } catch (err) {
+      console.warn('Globe: no viewfinder', err); // the list and the picture's card still show them
+      el.vfSlot.hidden = true;
+    }
+  }
+
+  function showInViewfinder(id) {
+    const photo = finderPhotos.find((p) => p.id === id);
+    if (photo) viewfinder?.show(photo);
+  }
+
+  /** It only rotates while it can be seen. The picture's card then needn't show the picture too. */
+  function syncViewfinder() {
+    const seen = !el.vfSlot.hidden && el.vfSlot.getClientRects().length > 0;
+    root.classList.toggle('cg-has-vf', seen);
+    if (seen) viewfinder?.start();
+    else viewfinder?.stop();
+  }
+
+  // ---- the preview over a picture's pin -------------------------------------------
+  const peek = { id: null, key: '', timer: 0 };
+
+  function peekItem(p, big) {
+    const item = document.createElement(big ? 'span' : 'button');
+    item.className = big ? 'cg-peek-item cg-peek-one' : 'cg-peek-item';
+    if (!big) {
+      item.type = 'button';
+      item.addEventListener('click', () => {
+        hidePeek();
+        focusPhoto(p.id);
+      });
+    }
+    const url = safeHref(big ? p.src || p.thumb : p.thumb);
+    if (url && !p.dark) {
+      const img = document.createElement('img');
+      img.alt = '';
+      img.decoding = 'async';
+      img.addEventListener('error', () => { img.hidden = true; }); // the place and time still say what it is
+      img.src = url;
+      if (p.square) img.classList.add('is-square');
+      item.appendChild(img);
+    }
+    const place = document.createElement('span');
+    place.className = 'cg-peek-place';
+    place.textContent = photoName(p);
+    const time = document.createElement('span');
+    time.className = 'cg-peek-time cg-fine';
+    time.textContent = utcWhen(p.ms);
+    item.append(place, time);
+    return item;
+  }
+
+  function showPeek(hit) {
+    clearTimeout(peek.timer);
+    const ids = picturePins && !onMap() ? picturePins.pileOf(hit.id) : [hit.id];
+    const key = ids.join(',');
+    if (peek.key !== key) {
+      peek.key = key;
+      const list = ids.map(findPhoto).filter(Boolean);
+      el.peek.replaceChildren(...list.map((p) => peekItem(p, list.length === 1)));
+      el.peek.classList.toggle('is-list', list.length > 1);
+    }
+    peek.id = hit.id;
+    el.peek.hidden = false;
+    placePeek(hit);
+    requestAnimationFrame(() => el.peek.classList.add('is-on'));
+  }
+
+  /** Above the pin if there's room, else under it. */
+  function placePeek(s) {
+    const w = el.peek.offsetWidth;
+    const h = el.peek.offsetHeight;
+    const gap = 22 * uiScale;
+    const x = astro.clamp(s.x - w / 2, 8, Math.max(8, root.clientWidth - w - 8));
+    let y = s.y - h - gap;
+    if (y < pageTop() + 8) y = s.y + gap;
+    el.peek.style.transform = `translate(${Math.round(x)}px, ${Math.round(y)}px)`;
+  }
+
+  function hidePeek(delay = 0) {
+    clearTimeout(peek.timer);
+    const go = () => {
+      peek.id = null;
+      peek.key = '';
+      el.peek.classList.remove('is-on');
+      el.peek.hidden = true;
+    };
+    if (delay) peek.timer = setTimeout(go, delay);
+    else go();
+  }
+  // a pile's list takes the pointer, so it can be reached across the gap
+  listen(el.peek, 'pointerenter', () => clearTimeout(peek.timer));
+  listen(el.peek, 'pointerleave', () => hidePeek(160));
 
   /** A picture's name for the list and card: its place, else its title,
    * else (when the title is just the time) the day it was taken. */
@@ -1017,6 +1238,9 @@ export function mountGlobe(container, options = {}) {
     state.selectedId = p.id;
     scene.setSelected(p.id);
     map.setSelected(p.id);
+    picturePins?.setSelected(p.id);
+    rightOpen = 'photos'; // where the picture goes up
+    showInViewfinder(p.id);
     if (p.ms !== null) {
       state.focusMs = p.ms;
       jumpTo(p.ms);
@@ -1037,6 +1261,7 @@ export function mountGlobe(container, options = {}) {
     state.selectedId = null;
     scene.setSelected(null);
     map.setSelected(null);
+    picturePins?.setSelected(null);
     paintCard();
     paintPhotoList();
     paintTicks();
@@ -1173,7 +1398,7 @@ export function mountGlobe(container, options = {}) {
     el.illum.dataset.state = light;
     put(el.ground, fmtGround(astro.sunElevationDeg(s.latDeg, s.lonDeg, state.ms)));
     const rev = orbit.revolutionAt(state.ms);
-    put(el.orbit, rev === null ? dash : rev.toLocaleString('en-US'));
+    put(el.orbit, rev === null ? dash : grouped(rev));
     const age = state.ms - s.tleEpochMs;
     const stale = Math.abs(age) > FAR_DAYS * DAY_MS;
     put(
@@ -1234,6 +1459,18 @@ export function mountGlobe(container, options = {}) {
     if (picker.isOpen && sheetAlongBottom()) picker.close({ restoreFocus: false });
   }
 
+  // where they don't both fit, opening one folds the other
+  const swapRightColumn = () => {
+    rightOpen = rightOpen === 'photos' ? 'passes' : 'photos';
+    layout();
+  };
+  for (const [title, fold] of [[el.passesTitle, el.passesFold], [el.photosTitle, el.photosFold]]) {
+    listen(fold, 'click', swapRightColumn);
+    listen(title, 'click', () => {
+      if (!fold.disabled) swapRightColumn();
+    });
+  }
+
   /** It wants the same space as the time picker: one at a time. A sheet at the
    * side leaves room for both. */
   function sheetAlongBottom() {
@@ -1252,6 +1489,7 @@ export function mountGlobe(container, options = {}) {
     } catch {
       // storage blocked: the choice lasts until the page closes
     }
+    syncViewfinder();
     resizeMap();
   }
 
@@ -1322,6 +1560,7 @@ export function mountGlobe(container, options = {}) {
       if (moveFocus) el.passesTitle.focus();
     },
   });
+  placeSearch.element.classList.add('cg-fold-body');
   el.placeSlot.replaceWith(placeSearch.element);
   loadCountries();
 
@@ -1340,6 +1579,7 @@ export function mountGlobe(container, options = {}) {
   }
   listen(el.speedCycle, 'click', () => setSpeed(SPEEDS[(SPEEDS.indexOf(state.speed) + 1) % SPEEDS.length]));
   listen(el.follow, 'click', () => setFollow(!state.follow));
+  listen(el.auroraBtn, 'click', () => setAuroraOn(!auroraOn));
   listen(el.panels, 'click', () => setPanels(!state.panels));
   // it opens at the foot of a column that may be full: bring it into view
   listen(el.keys, 'toggle', () => {
@@ -1395,6 +1635,7 @@ export function mountGlobe(container, options = {}) {
   // pins: hover and click, the same on the globe and the map
   function hideTip() {
     tip.hidden = true;
+    if (peek.id) hidePeek(el.peek.classList.contains('is-list') ? 160 : 0);
     for (const v of [scene, map]) v.setHover(null);
     canvas.style.cursor = '';
     map.canvas.style.cursor = '';
@@ -1411,17 +1652,24 @@ export function mountGlobe(container, options = {}) {
   function onPointerMove(e, surface, view) {
     if (e.pointerType !== 'mouse' || e.buttons) return;
     const r = surface.getBoundingClientRect();
-    const hit = view.pick(e.clientX - r.left, e.clientY - r.top, 12 * uiScale);
+    const hit = view.pick(e.clientX - r.left, e.clientY - r.top, pinReach(12));
     if (!hit) {
-      if (!tip.hidden || surface.style.cursor) hideTip();
+      if (!tip.hidden || peek.id || surface.style.cursor) hideTip();
       return;
     }
     view.setHover(hit.type === 'photo' ? hit.id : null);
     if (hit.type === 'photo') {
+      tip.hidden = true;
+      if (full) {
+        showPeek(hit);
+        surface.style.cursor = 'pointer';
+        return;
+      }
       const p = findPhoto(hit.id);
       // "Antarctica, 25 Oct, 00:54 UTC"
       tip.textContent = p ? `${p.place ? `${p.place}, ` : ''}${utcDay(p.ms, false)}, ${utcTime(p.ms, false)} UTC` : '';
     } else if (hit.type === 'satellite') {
+      if (peek.id) hidePeek();
       tip.textContent = state.follow ? 'CTS-SAT-1' : 'Click to follow CTS-SAT-1';
     } else if (hit.type === 'station') {
       tip.textContent = 'University of Calgary ground station';
@@ -1432,11 +1680,14 @@ export function mountGlobe(container, options = {}) {
     tip.hidden = false;
     tip.style.transform = `translate(${Math.round(hit.x)}px, ${Math.round(hit.y)}px)`;
   }
+  /** How near the pointer counts as on a mark: a thumbnail on the globe is bigger than a map mark. */
+  const pinReach = (px) => (picturePins && !onMap() ? px + 8 : px) * uiScale;
   function onPointerUp(e, surface, view) {
     if (view.controls.dragged) return;
     const r = surface.getBoundingClientRect();
-    const hit = view.pick(e.clientX - r.left, e.clientY - r.top, (e.pointerType === 'mouse' ? 12 : 22) * uiScale);
+    const hit = view.pick(e.clientX - r.left, e.clientY - r.top, pinReach(e.pointerType === 'mouse' ? 12 : 22));
     if (hit?.type === 'photo') {
+      if (peek.id) hidePeek();
       closeSheet();
       focusPhoto(hit.id);
     } else if (hit?.type === 'satellite') {
@@ -1476,6 +1727,11 @@ export function mountGlobe(container, options = {}) {
       case 'M':
         if (opts.ui === 'compact') return;
         setView(onMap() ? 'globe' : 'map');
+        break;
+      case 'a':
+      case 'A':
+        if (!scene.auroraStatus || onMap()) return;
+        setAuroraOn(!auroraOn);
         break;
       case '+':
       case '=':
@@ -1627,15 +1883,18 @@ export function mountGlobe(container, options = {}) {
     }
     launchMs = launchTime(json) ?? astro.LAUNCH_MS;
     let list = toPhotos(json, { base: opts.siteRoot });
+    let annotations = null;
     if (!sample) {
       for (const url of annotationUrls(opts.siteRoot)) {
         try {
-          list = applyAnnotations(list, await fetchJson(url));
+          annotations = await fetchJson(url);
+          list = applyAnnotations(list, annotations);
           break;
         } catch (err) {
           if (err.name === 'AbortError') throw err;
         }
       }
+      loadViewfinder(Array.isArray(json) ? json : json.images, annotations);
     }
     return list;
   }

@@ -135,7 +135,8 @@
 
 /* beside the switch, out of the group's width: only the switch is centred, so
    it stays put when the zoom appears in map mode */
-.cg:not(.cg-narrow) .cg-seg-zoom {
+.cg:not(.cg-narrow) .cg-seg-zoom,
+.cg:not(.cg-narrow) .cg-aurora-btn {
   position: absolute;
   top: 0;
   left: 100%;
@@ -158,7 +159,8 @@
 /* a sheet at the side: the switch and zoom stay beside it */
 @media (min-width: 760px), (min-width: 480px) and (orientation: landscape) {
   .cg-narrow:is([data-tab="sat"], [data-tab="passes"], [data-tab="photos"]) .cg-views-main,
-  .cg-narrow:is([data-tab="sat"], [data-tab="passes"], [data-tab="photos"]) .cg-seg-zoom {
+  .cg-narrow:is([data-tab="sat"], [data-tab="passes"], [data-tab="photos"]) .cg-seg-zoom,
+  .cg-narrow:is([data-tab="sat"], [data-tab="passes"], [data-tab="photos"]) .cg-aurora-btn {
     right: calc(min(360px, 45%) + 12px);
   }
 }
@@ -176,6 +178,15 @@
   bottom: calc(var(--cg-dock-h, 0px) + 12px);
   z-index: 1;
   flex-direction: column-reverse;
+}
+
+/* the same spot as the map's zoom: only the globe has an aurora */
+.cg-narrow .cg-aurora-btn {
+  position: absolute;
+  right: 12px;
+  bottom: calc(var(--cg-dock-h, 0px) + 12px);
+  z-index: 1;
+  height: 44px;
 }
 
 .cg-narrow .cg-seg button {

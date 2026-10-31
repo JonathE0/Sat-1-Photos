@@ -263,6 +263,7 @@
   right: var(--cg-gap);
   width: var(--cg-right-w);
   max-height: calc(100% - var(--cg-top, 0px) - var(--cg-clock-h) - 3 * var(--cg-gap));
+  overflow-y: auto;
   pointer-events: none;
 }
 
@@ -474,7 +475,17 @@
    doesn't fit is a scroll away, so nothing hidden can take the focus. */
 .cg:not(.cg-narrow) .cg-panel-photos {
   flex: 0 1000 auto;
-  min-height: calc(272 * var(--cg-u));
+  min-height: calc(272 * var(--cg-u) + var(--cg-vf-h, 0px));
+}
+
+/* folded to its heading, by fitRightColumn in globe.js */
+.cg:not(.cg-narrow) .cg-panel-photos[data-folded] {
+  flex: none;
+  min-height: 0;
+}
+
+.cg:not(.cg-narrow) .cg-panel[data-panel="passes"][data-folded] {
+  flex: none;
 }
 
 .cg:not(.cg-narrow) .cg-panel[data-panel="passes"] {
@@ -493,6 +504,206 @@
 
 .cg-highlight[hidden] {
   display: none;
+}
+
+/* The viewfinder (explore/viewfinder.js), edge to edge in the Pictures panel, with
+   the sizes viewfinder.css asks for and the page's tokens. */
+.cg-vf {
+  --jy-font: var(--cg-sans);
+  --jy-raised: var(--cg-raised);
+  --jy-ink: var(--cg-text);
+  --jy-muted: var(--cg-muted);
+  --jy-small: var(--cg-small);
+  --jy-body: var(--cg-value);
+  --vf-inset: calc(12 * var(--cg-u));
+  --vf-band-top: calc(44 * var(--cg-u));
+  --vf-band-bottom: calc(28 * var(--cg-u));
+  --vf-pic-h: calc((var(--cg-right-w) - 2 * var(--vf-inset)) * 3 / 4);
+  flex: none;
+  margin: 0 calc(-1 * var(--cg-pad)) calc(12 * var(--cg-u));
+}
+
+.cg-vf .vf {
+  height: auto;
+  padding-bottom: calc(8 * var(--cg-u));
+}
+
+/* in a phone's sheet: small enough that the whole picture shows when it opens */
+.cg-narrow .cg-vf {
+  --vf-pic-h: min(calc((100vw - 2 * var(--vf-inset)) * 3 / 4), 24vh);
+}
+
+/* the picture is in the viewfinder: the card keeps to what it says */
+.cg-has-vf:not(.cg-narrow) .cg-card-thumb {
+  display: none;
+}
+
+.cg-photo-count {
+  margin-left: auto;
+}
+
+.cg-fold-side {
+  justify-content: center;
+  flex: none;
+  min-width: calc(24 * var(--cg-u));
+  min-height: calc(24 * var(--cg-u));
+  margin-left: calc(4 * var(--cg-u));
+}
+
+.cg-fold-side:disabled {
+  display: none;
+}
+
+.cg-right-accordion .cg-col-right .cg-panel-head h2 {
+  cursor: pointer;
+}
+
+/* The pictures on the globe, as on Explore. They only show: the pointer goes through. */
+.cg-pins {
+  position: absolute;
+  inset: 0;
+  isolation: isolate; /* so the pins' own stacking stays under the labels and the buttons */
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.cg-mode-map .cg-pins {
+  display: none;
+}
+
+.cg-pin {
+  position: absolute;
+  left: 0;
+  top: 0;
+  box-sizing: border-box;
+  display: block;
+  width: calc(32 * var(--cg-u) + 4px);
+  height: calc(24 * var(--cg-u) + 4px);
+  border: 2px solid var(--cg-text);
+  background: var(--cg-bg);
+  will-change: transform;
+}
+
+.cg-pin.cg-pin-square {
+  width: calc(24 * var(--cg-u) + 4px);
+}
+
+.cg-pin img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.cg-pin.is-off {
+  visibility: hidden;
+}
+
+.cg-pin.cg-pin-dark {
+  width: 10px;
+  height: 10px;
+  border: 1px solid color-mix(in srgb, var(--cg-text) 55%, transparent);
+  background: color-mix(in srgb, var(--cg-bg) 60%, transparent);
+}
+
+/* chosen: a size larger, on top of its neighbours */
+.cg-pin.is-selected {
+  z-index: 200 !important;
+  scale: 1.5;
+}
+
+.cg-pile-count {
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: var(--cg-text);
+  font-size: var(--cg-small);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* the preview over a pin; only a pile's list takes the pointer */
+.cg-peek {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 3;
+  max-width: calc(100% - 16px);
+  padding: calc(12 * var(--cg-u));
+  background: var(--cg-panel);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms cubic-bezier(.22, 1, .36, 1);
+}
+
+.cg-peek.is-on {
+  opacity: 1;
+}
+
+.cg-peek-item {
+  display: block;
+  color: var(--cg-text);
+}
+
+.cg-peek-item img {
+  display: block;
+  width: calc(200 * var(--cg-u));
+  height: calc(150 * var(--cg-u));
+  object-fit: contain;
+  background: var(--cg-bg);
+}
+
+.cg-peek-item img.is-square {
+  width: calc(150 * var(--cg-u));
+}
+
+.cg-peek-place {
+  display: block;
+  margin-top: calc(8 * var(--cg-u));
+  font-size: var(--cg-value);
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.cg-peek-time {
+  display: block;
+}
+
+.cg-peek.is-list {
+  display: grid;
+  gap: calc(8 * var(--cg-u));
+  max-height: 60%;
+  overflow: auto;
+  pointer-events: auto;
+}
+
+.cg-peek.is-list .cg-peek-item {
+  display: grid;
+  grid-template-columns: calc(64 * var(--cg-u)) minmax(0, 1fr);
+  column-gap: calc(12 * var(--cg-u));
+  align-items: center;
+  width: 100%;
+  padding: 0;
+  background: none;
+  border: 0;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.cg-peek.is-list .cg-peek-item img {
+  grid-row: 1 / 3;
+  width: calc(64 * var(--cg-u));
+  height: calc(48 * var(--cg-u));
+}
+
+.cg-peek.is-list .cg-peek-place {
+  margin-top: 0;
+}
+
+.cg-peek.is-list .cg-peek-item:hover .cg-peek-place {
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .cg-photos {
