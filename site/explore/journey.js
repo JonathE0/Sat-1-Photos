@@ -160,6 +160,9 @@ const rememberedChoice = (key) => ({
 const dockHiddenChoice = rememberedChoice('cts-panel-hidden');
 const factsHiddenChoice = rememberedChoice('cts-facts-hidden');
 const auroraHiddenChoice = rememberedChoice('cts-aurora-hidden');
+const cycleOffChoice = rememberedChoice('cts-cycle-off');
+/** Stats' turn when the panel cycles; Pictures' turn is one picture (DWELL_MS in viewfinder.js). */
+const CYCLE_STATS_MS = 10000;
 /** Screens with room for the picture viewfinder; keep in step with .jy-vf-slot in journey.css. */
 const VIEWFINDER_MEDIA = '(min-width: 1360px) and (min-height: 760px) and (min-aspect-ratio: 4/5)';
 /** Close up, the camera levels out to this pitch so the limb sits behind the satellite. */
@@ -218,6 +221,8 @@ function template(id, siteRoot) {
             <div class="jy-tabs" role="group" aria-label="Show in this panel">
               <button type="button" class="jy-tab" data-ref="tabStats" aria-pressed="false" aria-controls="jy-panel-${id}">Stats</button>
               <button type="button" class="jy-tab" data-ref="tabPictures" aria-pressed="false">Pictures</button>
+              <button type="button" class="jy-tab jy-cycle" data-ref="cycle" aria-pressed="false" hidden
+                title="Take turns showing Stats and Pictures">Cycle</button>
             </div>
             <button type="button" class="jy-tab jy-dock-toggle" data-ref="dockToggle" aria-expanded="true"
               aria-label="Hide this panel"><span data-ref="dockToggleText">Hide</span> ${ICON_DOWN}</button>
@@ -1843,6 +1848,7 @@ export function mountJourney(container, options = {}) {
     const pictures = viewfinderHere() ? !state.panel : state.panel && state.tab === 'pictures';
     ref.tabPictures.setAttribute('aria-pressed', String(pictures));
     ref.tabStats.setAttribute('aria-pressed', String(state.panel && state.tab === 'stats'));
+    ref.cycle.hidden = !webgl || !viewfinderHere();
     ref.panel.dataset.tab = state.tab;
     paintPhoneBar();
   }
@@ -1886,8 +1892,8 @@ export function mountJourney(container, options = {}) {
     listen(ref[key], 'click', () => choosePhoneBar(name));
   }
 
-  function openPanel({ focus = true, tab = 'stats' } = {}) {
-    dismissHint();
+  function openPanel({ focus = true, tab = 'stats', byCycle = false } = {}) {
+    if (!byCycle) dismissHint();
     closeCredits();
     setDockHidden(false);
     state.phoneExtra = null;
@@ -1928,6 +1934,7 @@ export function mountJourney(container, options = {}) {
 
   /** The tabs: choose what the panel shows. Where they drop down, the chosen one folds up again. */
   function chooseTab(tab) {
+    setCycle(false); // the visitor has chosen: it stays on that one
     if (viewfinderHere()) {
       if (tab === 'pictures') closePanel();
       else if (!state.panel) openPanel({ focus: false });
@@ -1992,6 +1999,7 @@ export function mountJourney(container, options = {}) {
 
   /** A click on the satellite: the panel; a double click: fly in close. */
   function satelliteClicked(detail) {
+    setCycle(false);
     if (detail >= 2) {
       zoomToSatellite();
       if (!state.panel) openPanel({ focus: false });
@@ -2950,6 +2958,7 @@ export function mountJourney(container, options = {}) {
       selectedId: state.selectedId,
       hintDismissed: state.hintDismissed,
       locked: state.locked,
+      cycle: cycleOn,
     };
   }
 
@@ -2982,6 +2991,7 @@ export function mountJourney(container, options = {}) {
     state.selectedId = typeof s.selectedId === 'string' ? s.selectedId : null;
     state.hintDismissed = !!s.hintDismissed;
     state.wantLock = !!s.locked;
+    if (typeof s.cycle === 'boolean') setCycle(s.cycle);
     if (state.locked && s.locked === false) {
       // a state from mid-story: open the story up again
       state.locked = false;
@@ -3169,6 +3179,10 @@ export function mountJourney(container, options = {}) {
           // as the facts: it moves even when the system prefers reduced motion
           // (the site's choice); ?motion=reduced still keeps it still
           reducedMotion: motionOverride === 'reduced',
+          takeTurn: () => {
+            if (cycleOn) openPanel({ focus: false, byCycle: true });
+            return cycleOn;
+          },
         });
         // a pin clicked while it was still on its way
         if (state.previewId) viewfinder.show(photos.find((p) => p.id === state.previewId));
@@ -3185,7 +3199,58 @@ export function mountJourney(container, options = {}) {
     if (on) loadViewfinder();
     if (on) viewfinder?.start();
     else viewfinder?.stop();
+    syncCycle();
   }
+
+  // ---- Stats and Pictures in turn, where they share a place -------------------------------
+  // Pictures' turn ends when the viewfinder asks (takeTurn), so whatever holds its rotation up
+  // holds this up too: the pointer on it, a picture chosen on the globe, a hidden tab.
+  let cycleOn = !cycleOffChoice.get() && motionOverride !== 'reduced';
+  let cycleTimer = 0;
+  let cycleHover = false;
+  let cycleFocus = false; // keyboard focus, as in the viewfinder: a mouse click doesn't hold it forever
+
+  function setCycle(on, { remember = false } = {}) {
+    cycleOn = on;
+    ref.cycle.setAttribute('aria-pressed', String(on));
+    if (remember) cycleOffChoice.set(!on);
+    syncCycle();
+  }
+
+  /** Stats' turn: it runs while Stats is up and nobody is reading it. */
+  function syncCycle() {
+    clearTimeout(cycleTimer);
+    const statsUp = state.locked && state.shown && state.panel && state.tab === 'stats' && !state.creditsOpen && !state.dockHidden;
+    if (!cycleOn || !statsUp || cycleHover || cycleFocus || document.hidden || !viewfinderHere()) return;
+    cycleTimer = setTimeout(() => {
+      closePanel();
+      viewfinder?.next();
+    }, CYCLE_STATS_MS);
+  }
+
+  listen(ref.cycle, 'click', () => setCycle(!cycleOn, { remember: true }));
+  listen(ref.panel, 'pointerenter', () => {
+    cycleHover = true;
+    syncCycle();
+  });
+  listen(ref.panel, 'pointerleave', () => {
+    cycleHover = false;
+    syncCycle();
+  });
+  listen(ref.panel, 'focusin', (e) => {
+    try {
+      cycleFocus = e.target.matches(':focus-visible');
+    } catch {
+      cycleFocus = true; // older browsers: treat as keyboard focus
+    }
+    syncCycle();
+  });
+  listen(ref.panel, 'focusout', (e) => {
+    if (e.relatedTarget && ref.panel.contains(e.relatedTarget)) return;
+    cycleFocus = false;
+    syncCycle();
+  });
+  listen(document, 'visibilitychange', syncCycle);
 
   // ---- photos ---------------------------------------------------------------------------
   function setPhotos(list) {
@@ -3208,6 +3273,7 @@ export function mountJourney(container, options = {}) {
   // as the visitor last left them
   setDockHidden(dockHiddenChoice.get());
   setFactsHidden(factsHiddenChoice.get());
+  setCycle(cycleOn);
   const resizeObserver = new ResizeObserver(() => resize());
   resizeObserver.observe(stage);
   // the text blocks set where the Earth may go
@@ -3375,6 +3441,7 @@ export function mountJourney(container, options = {}) {
       textObserver.disconnect();
       io.disconnect();
       clearTimeout(card.timer);
+      clearTimeout(cycleTimer);
       for (const off of cleanups) off();
       ticker?.dispose?.();
       newsList?.dispose?.();

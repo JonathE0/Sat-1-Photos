@@ -324,6 +324,11 @@ state and one set of details. Closes with the same control, Esc, or a click on e
   row. "Pictures" is the viewfinder and "Stats" the details, in the same place under the bar; going back
   to Pictures brings back the same picture. No "Latest picture" here (the viewfinder is that), and the
   framing does not move.
+- **Cycle (the user's request, 31 Oct 2026):** a third button beside the tabs, big screens only, on at
+  first. Stats and Pictures take turns: one picture, then Stats for 10 s, then the next picture. It waits
+  while the pointer or keyboard focus is on what's showing, and on a picture chosen on the globe. Choosing
+  a tab or the satellite stops it for the visit; turning it off with the button is remembered.
+  `?motion=reduced` starts with it off.
 - **Laptops and smaller desktops:** the same bar top right under the nav, 380px wide, the tabs on a second
   row. Nothing is open at first: "Stats" drops the details down, "Pictures" drops down "Latest picture",
   and pressing the open one folds it up.

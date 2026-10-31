@@ -3,13 +3,16 @@
  * at the top right of the story's end view, on big screens, and the Pictures panel
  * on Orbit.
  *
- *   createViewfinder(container, { photos, siteRoot, photoHref, onOpen, reducedMotion, firstMs })
- *     -> { setPhotos(photos), show(photo), start(), stop(), dispose() }
+ *   createViewfinder(container, { photos, siteRoot, photoHref, onOpen, reducedMotion, firstMs, takeTurn })
+ *     -> { setPhotos(photos), show(photo), next(), start(), stop(), dispose() }
  *
  * `photos` is mergeAll() output; only pictures that are at least 95% there run
  * here, newest first in a loop. The catalogue keeps everything else. show() puts
  * up any picture, whole or not, and it stays until the visitor steps on with
  * Previous or Next, which also starts the rotation again.
+ *
+ * takeTurn() is asked when a picture's time is up: true if something else is going
+ * up in its place, and then next() brings on the next picture when that's done.
  *
  * Each picture comes down the way the real one did: top first, in packet-sized
  * bands at uneven intervals, with a faint line at the leading edge. Between
@@ -128,6 +131,7 @@ export function createViewfinder(container, {
   onOpen,
   reducedMotion = false,
   firstMs = FIRST_MS,
+  takeTurn,
 } = {}) {
   const reduced = Boolean(reducedMotion);
 
@@ -396,7 +400,9 @@ export function createViewfinder(container, {
     timer = 0;
     if (held || !running || disposed || !deck.length || document.hidden) return;
     if (shown && (hovered || focused)) return;
-    timer = setTimeout(() => step(1, false), shown ? DWELL_MS : firstMs);
+    timer = setTimeout(() => {
+      if (!shown || !takeTurn?.()) step(1, false);
+    }, shown ? DWELL_MS : firstMs);
   }
 
   // ---- events ----
@@ -465,6 +471,7 @@ export function createViewfinder(container, {
   return {
     setPhotos,
     show,
+    next: () => step(1, false),
     /** Show pictures: the first after a moment, then one every 12 s. */
     start() {
       if (disposed || running) return;
