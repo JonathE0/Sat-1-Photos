@@ -337,16 +337,26 @@
             "Hong Kong"
           ]
         }
+      },
+      {
+        "at": "2026-10-31T06:55:53Z",
+        "by": "CTS-SAT-1 team",
+        "changes": {
+          "notes": [
+            "The camera looked about 16° off straight down, so this frame shows the coast around Hong Kong, not the sea below the satellite. Hong Kong is a little above the middle, partly under small clouds; the Pearl River estuary is the grey funnel above it and Daya Bay the blue inlet below. In this picture the top is west and the right is north. Placed from landmarks read by eye, good to about 20 km.",
+            "The camera looked about 20° off straight down, so this frame shows the coast of Guangdong rather than the sea below the satellite. Hong Kong falls close to the middle of the picture, where the shore meets the small clouds; at about 0.8 km a pixel, and under that cloud, the city itself can't be picked out. Placed by sliding a coastline map over the picture with the clouds left out: good to about 20 km across the coast and 70 km along it. In this picture the top is west and the right is north."
+          ]
+        }
       }
     ],
     "lat": null,
     "lon": null,
-    "notes": "The camera looked about 16° off straight down, so this frame shows the coast around Hong Kong, not the sea below the satellite. Hong Kong is a little above the middle, partly under small clouds; the Pearl River estuary is the grey funnel above it and Daya Bay the blue inlet below. In this picture the top is west and the right is north. Placed from landmarks read by eye, good to about 20 km.",
+    "notes": "The camera looked about 20° off straight down, so this frame shows the coast of Guangdong rather than the sea below the satellite. Hong Kong falls close to the middle of the picture, where the shore meets the small clouds; at about 0.8 km a pixel, and under that cloud, the city itself can't be picked out. Placed by sliding a coastline map over the picture with the clouds left out: good to about 20 km across the coast and 70 km along it. In this picture the top is west and the right is north.",
     "people": [],
     "place": "Hong Kong",
     "tags": [],
     "title": null,
-    "updated_at": "2026-10-31T05:22:31Z",
+    "updated_at": "2026-10-31T06:55:53Z",
     "updated_by": "CTS-SAT-1 team"
   }
 }

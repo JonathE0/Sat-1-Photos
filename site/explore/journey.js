@@ -110,8 +110,7 @@ const CHASE_BEHIND_KM = 1400;
 const CHASE_YAW = 0.52;
 /** The satellite's smallest length on screen when zoomed far out, px. */
 const SAT_MIN_PX = 12;
-/** Room for the tallest fact in the banner (phone: three lines and the source row), px. */
-const FACTS_RESERVE_PX = 140;
+/** Room for the tallest fact in the banner, px. */
 const FACTS_RESERVE_WIDE_PX = 120;
 /** From the satellite's centre to whatever is under it: half its button and a margin, px. */
 const SAT_CLEAR_PX = 30;
@@ -197,6 +196,10 @@ const ICON_PLUS = '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="
 const ICON_DOWN = '<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M2 4.5l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>';
 const ICON_REPLAY = '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M3.2 8a4.8 4.8 0 1 0 1.5-3.5M4.4 2.2v2.6H7" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>';
 const ICON_ARROW = '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M3 8h9M8.5 4.5L12 8l-3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>';
+const ICON_STATS = '<svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><path d="M4 16.5V10M10 16.5V4M16 16.5v-9" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>';
+const ICON_PICTURES = '<svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><path d="M3 4.5h14v11H3zM3 13l4-4 3 3 2.5-2.5L17 14" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>';
+const ICON_FACTS = '<svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><circle cx="10" cy="10" r="7" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10 9v5M10 6v1.5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>';
+const ICON_CONTROLS = '<svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><path d="M3 6h7M14 6h3M3 14h3M10 14h7" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10 3.8h4v4.4h-4zM6 11.8h4v4.4H6z" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>';
 
 function template(id, siteRoot) {
   const logo = new URL('assets/calgarytospace-logo.png', siteRoot).href;
@@ -226,7 +229,6 @@ function template(id, siteRoot) {
           <h2 class="jy-panel-title" id="jy-panel-title-${id}" tabindex="-1">CTS-SAT-1</h2>
           <div class="jy-panel-tools">
             <button type="button" class="jy-textbtn" data-ref="follow" aria-pressed="true">Following</button>
-            <button type="button" class="jy-textbtn jy-more" data-ref="more" aria-expanded="false">More</button>
             <button type="button" class="jy-textbtn" data-ref="close">Close</button>
           </div>
         </div>
@@ -255,6 +257,7 @@ function template(id, siteRoot) {
             <p class="jy-small jy-muted" data-ref="latestTime"></p>
             <p class="jy-small" data-ref="latestStatus"></p>
             <a class="jy-link" data-ref="latestOpen">Open in the catalogue</a>
+            <a class="jy-link jy-latest-all" data-ref="latestAll"></a>
           </section>
         </div>
       </aside>
@@ -309,9 +312,10 @@ function template(id, siteRoot) {
       <canvas class="jy-over-canvas" aria-hidden="true"></canvas>
       <div class="jy-marks jy-marks-sat" data-ref="satMarks">
         <button type="button" class="jy-sat" data-ref="sat" hidden
-          aria-label="CTS-SAT-1: where it is now and its latest picture"><span class="jy-sat-label" aria-hidden="true">CTS-SAT-1</span></button>
+          aria-label="CTS-SAT-1: where it is now"><span class="jy-sat-label" aria-hidden="true">CTS-SAT-1</span></button>
       </div>
       <div class="jy-card" data-ref="card" hidden></div>
+      <div class="jy-sky-label" data-ref="skyLabel" aria-hidden="true"></div>
 
       <div class="jy-facts-slot" data-ref="factsSlot"></div>
       <button type="button" class="jy-facts-show" data-ref="factsShow" hidden>Show facts</button>
@@ -326,13 +330,18 @@ function template(id, siteRoot) {
 
       <div class="jy-corner" data-ref="corner">
         <button type="button" class="jy-textbtn jy-again" data-ref="again">${ICON_REPLAY}<span>Play the intro again</span></button>
-        <button type="button" class="jy-textbtn jy-details" data-ref="details" aria-expanded="false"
-          aria-controls="jy-panel-${id}">Satellite details</button>
         <a class="jy-btn jy-all" data-ref="all"><span data-ref="allText"></span>${ICON_ARROW}</a>
         <div class="jy-zoom" role="group" aria-label="Zoom">
           <button type="button" class="jy-sq" data-ref="zoomOut" aria-label="Zoom out">${ICON_MINUS}</button>
           <button type="button" class="jy-sq" data-ref="zoomIn" aria-label="Zoom in">${ICON_PLUS}</button>
         </div>
+      </div>
+
+      <div class="jy-tabbar" data-ref="tabbar" role="group" aria-label="Explore">
+        <button type="button" class="jy-tabbar-item" data-ref="barStats" aria-pressed="false">${ICON_STATS}<span>Stats</span></button>
+        <button type="button" class="jy-tabbar-item" data-ref="barPictures" aria-pressed="false">${ICON_PICTURES}<span>Pictures</span></button>
+        <button type="button" class="jy-tabbar-item" data-ref="barFacts" aria-pressed="false">${ICON_FACTS}<span>Facts</span></button>
+        <button type="button" class="jy-tabbar-item" data-ref="barControls" aria-pressed="false">${ICON_CONTROLS}<span>Controls</span></button>
       </div>
     </div>
   </section>`;
@@ -426,6 +435,7 @@ export function mountJourney(container, options = {}) {
     dockHidden: false, // the whole panel put away
     dockResume: null, // the tab that was open when it was
     factsHidden: false,
+    phoneExtra: null, // what's open over a phone's bottom bar, besides the details: 'facts' or 'controls'
     previewId: null, // a picture chosen on the globe, for the preview
     sheetOpen: false,
     creditsOpen: false,
@@ -751,25 +761,22 @@ export function mountJourney(container, options = {}) {
   /**
    * Where the satellite can go on the end view, for the words ending at
    * `textBottom`: under the limb, and clear of the controls and the facts banner.
-   * On a phone the banner runs across the width under the satellite, from a fixed
-   * bottom with room for the tallest fact, so the framing doesn't move as facts
-   * change. Elsewhere it is a column on the left, which the satellite moves right
-   * of when they'd meet. `fits` is false when the words, the satellite and
-   * everything kept at this level don't all fit.
+   * On a phone only the bottom bar is always there; the facts and the controls open
+   * over the globe when asked for. Elsewhere the banner is a column on the left, which
+   * the satellite moves right of when they'd meet. `fits` is false when the words, the
+   * satellite and everything kept at this level don't all fit.
    */
   function endRoom(s, narrow, textBottom, fit) {
-    const controls = union([boxOf(ref.corner, s), boxOf(ref.time, s)]);
+    const controls = narrow ? boxOf(ref.tabbar, s) : union([boxOf(ref.corner, s), boxOf(ref.time, s)]);
     const floor = controls ? controls.top : H;
     const satMin = textBottom / H + LIMB_UNDER_TEXT + SAT_UNDER_LIMB;
     let satMax = (floor - SAT_CLEAR_PX) / H;
     let satX = narrow ? 0.5 : 0.62;
     let clearOfText = true;
-    if (fit < FIT_NO_FACTS) {
-      const top = narrow ? floor - 20 - FACTS_RESERVE_PX : floor - 16 - FACTS_RESERVE_WIDE_PX;
+    if (!narrow && fit < FIT_NO_FACTS) {
+      const top = floor - 16 - FACTS_RESERVE_WIDE_PX;
       clearOfText = top >= textBottom + 8;
-      if (narrow) {
-        satMax = (top - 50) / H;
-      } else if (controls) {
+      if (controls) {
         const m = controls.left;
         const right = m + Math.min(34 * parseFloat(getComputedStyle(ref.factsSlot).fontSize), W - 2 * m);
         const beside = right + 40; // the model's half length
@@ -785,15 +792,17 @@ export function mountJourney(container, options = {}) {
 
   /** The facts banner, or the same facts in the details when the end view has no room for it. */
   function placeFacts() {
-    const home = frame.fit >= FIT_NO_FACTS ? ref.detailsFacts : ref.factsSlot;
+    const inDetails = !frame.narrow && frame.fit >= FIT_NO_FACTS;
+    const home = inDetails ? ref.detailsFacts : ref.factsSlot;
     if (ticker?.element && ticker.element.parentNode !== home) home.append(ticker.element);
     // in the details the facts are out of the way already, with nothing to hide
-    ref.factsShow.hidden = !state.factsHidden || frame.fit >= FIT_NO_FACTS;
+    ref.factsShow.hidden = !state.factsHidden || inDetails;
   }
 
   function computeFrame() {
     const narrow = W < 600 || W / H < 0.8 || (W < 700 && W / H < 1.2);
     frame.narrow = narrow;
+    root.classList.toggle('jy-narrow', narrow); // what's measured below depends on it
     frame.ui = clamp(1 + ((W - 1920) / 1920) * 0.3, 1, 1.2);
     // landscape: 35 degrees tall; portrait: hold 35 degrees across
     const vfov = W >= H ? 35 : (2 * Math.atan(Math.tan(17.5 * DEG) * (H / W))) / DEG;
@@ -912,7 +921,7 @@ export function mountJourney(container, options = {}) {
       const b = boxOf(el, s);
       if (b && getComputedStyle(el).visibility !== 'hidden') covers.push(b);
     };
-    for (const el of [...ref.time.children, ...ref.corner.children, ...ref.factsSlot.children, ref.factsShow, ref.summary]) cover(el);
+    for (const el of [...ref.time.children, ...ref.corner.children, ...ref.factsSlot.children, ...ref.tabbar.children, ref.factsShow, ref.summary]) cover(el);
     // the viewfinder's fade out would still count as showing, so go by what took its place
     if (state.panel) cover(ref.panel);
     else if (state.creditsOpen) cover(ref.credits);
@@ -937,9 +946,9 @@ export function mountJourney(container, options = {}) {
     computeFrame();
     camera.fov = frame.vfov;
     camera.updateProjectionMatrix();
-    root.classList.toggle('jy-narrow', frame.narrow);
+    if (!frame.narrow) setPhoneExtra(null);
     // tab order follows the screen: when the corner row sits above the time row it comes first
-    const stacked = frame.narrow || W < 1100;
+    const stacked = !frame.narrow && W < 1100;
     if (stacked !== frame.stacked) {
       frame.stacked = stacked;
       if (stacked) ref.corner.after(ref.time);
@@ -1411,6 +1420,7 @@ export function mountJourney(container, options = {}) {
     }
     if (ref.again.hidden !== !state.locked) {
       ref.again.hidden = !state.locked;
+      ref.tabbar.inert = !state.locked || still;
       changed = true; // the end's controls are up: where pins hide follows them
     }
     if (changed) measureText();
@@ -1729,10 +1739,9 @@ export function mountJourney(container, options = {}) {
     if (!pin) return;
     dismissHint();
     const head = pin.pile ? pin.pile.head : pin;
-    // a pile, or a first tap on a phone (the next one leaves the page): show the card
-    if (pin.pile || (frame.narrow && lastPointerType !== 'mouse' && card.touchArmed !== head)) {
+    // a pile: the card lists what's in it
+    if (pin.pile) {
       showCard(head);
-      card.touchArmed = head;
       return;
     }
     previewPhoto(pin.photo.id);
@@ -1747,15 +1756,12 @@ export function mountJourney(container, options = {}) {
 
   /**
    * A pin or a card: the picture goes up in the preview, whole or not, and the visitor stays
-   * here (the preview's own picture leads on to the catalogue). A phone has no preview beside
-   * the globe, so there it opens the catalogue.
+   * here (the preview's own picture leads on to the catalogue). Without the viewfinder that's
+   * the Pictures tab's dropdown, or on a phone its sheet.
    */
   function previewPhoto(pid) {
     const photo = photos.find((p) => p.id === pid);
-    if (!photo || frame.narrow) {
-      openPhoto(pid);
-      return;
-    }
+    if (!photo) return;
     state.selectedId = pid;
     paintSelected();
     dismissHint();
@@ -1774,10 +1780,10 @@ export function mountJourney(container, options = {}) {
   /** What the panel's picture section shows: the one chosen on the globe, else the latest. */
   const pictured = () => (state.previewId && photos.find((p) => p.id === state.previewId)) || latest;
 
-  // ---- the satellite's details: one state, opened by the bar's Stats tab, the phone's
-  // "Satellite details" button or the satellite itself ------------------------------------
+  // ---- the satellite's details: one state, opened by the bar's Stats tab, a phone's bottom
+  // bar or the satellite itself -------------------------------------------------------------
   function setExpanded(open) {
-    for (const toggle of [ref.details, ref.sat]) toggle.setAttribute('aria-expanded', String(open));
+    ref.sat.setAttribute('aria-expanded', String(open));
   }
 
   const viewfinderHere = () => bigQuery.matches && !ref.viewfinderSlot.hidden;
@@ -1788,18 +1794,61 @@ export function mountJourney(container, options = {}) {
     ref.tabPictures.setAttribute('aria-pressed', String(pictures));
     ref.tabStats.setAttribute('aria-pressed', String(state.panel && state.tab === 'stats'));
     ref.panel.dataset.tab = state.tab;
+    paintPhoneBar();
+  }
+
+  // ---- a phone's bottom bar: one thing open above it at a time, and otherwise a clear view ----
+  const phoneBarButtons = { stats: 'barStats', pictures: 'barPictures', facts: 'barFacts', controls: 'barControls' };
+  const phoneOpen = () => (state.panel ? state.tab : state.phoneExtra);
+
+  function paintPhoneBar() {
+    for (const [name, key] of Object.entries(phoneBarButtons)) {
+      ref[key].setAttribute('aria-pressed', String(phoneOpen() === name));
+    }
+    root.classList.toggle('jy-phone-facts', phoneOpen() === 'facts');
+    root.classList.toggle('jy-phone-controls', phoneOpen() === 'controls');
+  }
+
+  /** The facts or the controls, which aren't part of the details. */
+  function setPhoneExtra(name) {
+    if (state.phoneExtra === name) return;
+    state.phoneExtra = name;
+    paintPhoneBar();
+    if (state.locked && state.shown) runTicker();
+    if (name === 'facts') ticker?.reveal?.();
+    measureSettled();
+  }
+
+  function choosePhoneBar(name) {
+    if (phoneOpen() === name) {
+      closePanel();
+      setPhoneExtra(null);
+    } else if (name === 'stats' || name === 'pictures') {
+      state.previewId = null; // the bar means the latest picture
+      openPanel({ focus: false, tab: name });
+    } else {
+      closePanel();
+      setPhoneExtra(name);
+    }
+  }
+
+  for (const [name, key] of Object.entries(phoneBarButtons)) {
+    listen(ref[key], 'click', () => choosePhoneBar(name));
   }
 
   function openPanel({ focus = true, tab = 'stats' } = {}) {
     dismissHint();
     closeCredits();
     setDockHidden(false);
+    state.phoneExtra = null;
     state.tab = tab;
     state.panel = true;
     ref.panel.hidden = false;
     root.classList.add('jy-panel-open');
     setExpanded(true);
     paintTabs();
+    if (frame.narrow) setSheet(true);
+    if (state.locked && state.shown) runTicker();
     requestAnimationFrame(() => ref.panel.classList.add('is-on'));
     uiDirty = true;
     paintPanel(true);
@@ -1871,8 +1920,6 @@ export function mountJourney(container, options = {}) {
     state.previewId = null;
     state.sheetOpen = false;
     ref.panel.classList.remove('is-on', 'is-open');
-    ref.more.setAttribute('aria-expanded', 'false');
-    ref.more.textContent = 'More';
     root.classList.remove('jy-panel-open');
     setExpanded(false);
     paintTabs();
@@ -1883,14 +1930,12 @@ export function mountJourney(container, options = {}) {
     };
     if (motionOverride === 'reduced') done();
     else setTimeout(done, 160);
-    if (restoreFocus) (frame.narrow ? ref.details : ref.tabStats).focus({ preventScroll: true });
+    if (restoreFocus) (frame.narrow ? ref.barStats : ref.tabStats).focus({ preventScroll: true });
   }
 
   function setSheet(open) {
     state.sheetOpen = open;
     ref.panel.classList.toggle('is-open', open);
-    ref.more.setAttribute('aria-expanded', String(open));
-    ref.more.textContent = open ? 'Less' : 'More';
     measureText();
   }
 
@@ -1906,14 +1951,7 @@ export function mountJourney(container, options = {}) {
   }
 
   listen(ref.sat, 'click', (e) => satelliteClicked(e.detail));
-  // the button says details, so a phone's sheet opens all the way
-  listen(ref.details, 'click', () => {
-    openPanel();
-    setSheet(true);
-  });
   listen(ref.close, 'click', () => closePanel({ restoreFocus: true }));
-  listen(ref.more, 'click', () => setSheet(!state.sheetOpen));
-  listen(ref.grab, 'click', () => setSheet(!state.sheetOpen));
   listen(ref.follow, 'click', () => setFollow(!state.follow));
   listen(ref.zoomSat, 'click', () => zoomToSatellite());
   listen(ref.retry, 'click', () => loadOrbit());
@@ -1946,42 +1984,20 @@ export function mountJourney(container, options = {}) {
     });
   }
 
-  // drag the phone sheet's grabber up or down
+  // the phone sheet's grabber: a tap, or a drag down, folds it away
   let sheetDrag = null;
   listen(ref.grab, 'pointerdown', (e) => {
-    sheetDrag = { y: e.clientY, moved: false };
+    sheetDrag = { y: e.clientY };
     ref.grab.setPointerCapture?.(e.pointerId);
   });
-  listen(ref.grab, 'pointermove', (e) => {
-    if (!sheetDrag) return;
-    const dy = e.clientY - sheetDrag.y;
-    if (Math.abs(dy) > 24 && !sheetDrag.moved) {
-      sheetDrag.moved = true;
-      setSheet(dy < 0);
-    }
+  listen(ref.grab, 'pointerup', (e) => {
+    const dy = sheetDrag ? e.clientY - sheetDrag.y : 0;
+    sheetDrag = null;
+    if (dy > -24) closePanel();
   });
-  listen(ref.grab, 'pointerup', () => {
+  listen(ref.grab, 'pointercancel', () => {
     sheetDrag = null;
   });
-
-  // On a phone's peek, a swipe up anywhere on the sheet opens it. Only once the story has
-  // locked (journey.css gives the sheet its touches then): before that the same swipe
-  // scrolls the page, and an open sheet keeps its own scrolling.
-  let peekSwipeY = null;
-  listen(ref.panel, 'pointerdown', (e) => {
-    const peeking = frame.narrow && state.locked && !state.sheetOpen;
-    peekSwipeY = peeking && e.pointerType !== 'mouse' && !e.target.closest('.jy-grab') ? e.clientY : null;
-  });
-  listen(ref.panel, 'pointermove', (e) => {
-    if (peekSwipeY === null || peekSwipeY - e.clientY < 24) return;
-    peekSwipeY = null;
-    setSheet(true);
-  });
-  for (const type of ['pointerup', 'pointercancel']) {
-    listen(ref.panel, type, () => {
-      peekSwipeY = null;
-    });
-  }
 
   function setFollow(on) {
     if (on === state.follow && !(on && state.custom)) return;
@@ -2217,7 +2233,7 @@ export function mountJourney(container, options = {}) {
   function satTipText() {
     if (!webgl) return 'This browser can’t draw the 3D globe, so the Earth here is a still picture.';
     if (orbitStatus === 'failed') return '';
-    return `${touchQuery.matches ? 'Tap' : 'Click'} on the satellite to see ${bigQuery.matches ? 'where it is now' : 'its latest image'}!`;
+    return `${touchQuery.matches ? 'Tap' : 'Click'} on the satellite to see where it is now!`;
   }
 
   function atNow() {
@@ -2259,7 +2275,6 @@ export function mountJourney(container, options = {}) {
       const tip = satTipText();
       const e = put(ref.satTip, tip);
       ref.tip.hidden = !tip;
-      if (e) ref.sat.setAttribute('aria-label', `CTS-SAT-1: where it is now${bigQuery.matches ? '' : ' and its latest picture'}`);
       // the words moved: where pins hide follows them
       if (a || b || c || d || e) measureText();
       put(ref.summaryWhere, summaryWhere());
@@ -2302,12 +2317,14 @@ export function mountJourney(container, options = {}) {
     uiDirty = true;
   });
 
-  listen(ref.all, 'click', (e) => {
-    if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-    e.preventDefault();
-    opts.onOpenCatalogue();
-  });
-  ref.all.href = opts.catalogueHref;
+  for (const a of [ref.all, ref.latestAll]) {
+    listen(a, 'click', (e) => {
+      if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      e.preventDefault();
+      opts.onOpenCatalogue();
+    });
+    a.href = opts.catalogueHref;
+  }
   listen(ref.again, 'click', () => playAgain());
 
   function dismissHint() {
@@ -2388,8 +2405,55 @@ export function mountJourney(container, options = {}) {
     return raycaster.intersectObjects(satellite.hitObjects || [], true).length > 0;
   }
 
+  // ---- the Sun and the Moon say what they are, under a resting mouse or for a moment after a tap ----
+  const skyPoint = new THREE.Vector3();
+  let skyPointer = null; // where to look, on the stage
+  let skyTapUntil = 0;
+
+  function stagePoint(e) {
+    const r = canvas.getBoundingClientRect();
+    return { x: e.clientX - r.left, y: e.clientY - r.top };
+  }
+
+  /** The Sun or the Moon at a point on the stage, unless the Earth is in front of it. */
+  function skyBodyAt({ x, y }) {
+    if (!sky?.bodies || !interactive()) return null;
+    const eye = camera.position;
+    for (const body of sky.bodies(camera)) {
+      const along = eye.dot(body.dir);
+      if (along < 0 && along * along - eye.lengthSq() + OCCLUDER_RADIUS ** 2 > 0) continue;
+      const at = toScreen(skyPoint.copy(eye).addScaledVector(body.dir, 10));
+      if (!at) continue;
+      const radius = (Math.tan(body.angRadius) * H) / (2 * frame.tanHalf);
+      if (Math.hypot(x - at.x, y - at.y) <= Math.max(14, radius + 6)) return { name: body.name, x: at.x, y: at.y, radius };
+    }
+    return null;
+  }
+
+  function paintSkyLabel() {
+    if (skyTapUntil && performance.now() > skyTapUntil) {
+      skyTapUntil = 0;
+      skyPointer = null;
+    }
+    const body = skyPointer && skyBodyAt(skyPointer);
+    ref.skyLabel.classList.toggle('is-on', Boolean(body));
+    if (!body) return;
+    ref.skyLabel.textContent = body.name;
+    // beside it, as the satellite's label, and on the other side at the edge of the stage
+    const clear = Math.max(10, body.radius + 10);
+    const left = body.x + clear + 48 <= W;
+    const x = left ? body.x + clear : body.x - clear;
+    ref.skyLabel.style.transform = `translate(${Math.round(x)}px, ${Math.round(body.y)}px) translate(${left ? 0 : -100}%, -50%)`;
+  }
+
+  listen(canvas, 'pointerleave', () => {
+    if (!skyTapUntil) skyPointer = null;
+  });
+
   const dragClass = (on) => document.documentElement.classList.toggle('jy-dragging', on);
   listen(canvas, 'pointerdown', (e) => {
+    skyPointer = null;
+    skyTapUntil = 0;
     if (!interactive()) return;
     if (e.pointerType === 'mouse' && e.button !== 0) return;
     // a drag that starts on the globe never selects the text it passes over
@@ -2403,6 +2467,7 @@ export function mountJourney(container, options = {}) {
     pinch = null;
   });
   listen(canvas, 'pointermove', (e) => {
+    if (e.pointerType === 'mouse' && !pointers.size) skyPointer = stagePoint(e);
     const p = pointers.get(e.pointerId);
     if (!p || p.pageSwipe) return;
     const dx = e.clientX - p.x;
@@ -2450,6 +2515,12 @@ export function mountJourney(container, options = {}) {
         // a click on empty space
         dismissHint();
         if (state.panel) closePanel();
+        setPhoneExtra(null);
+        // no hover on touch: a tap on the Sun or the Moon names it for a moment
+        if (e.pointerType !== 'mouse' && skyBodyAt(stagePoint(e))) {
+          skyPointer = stagePoint(e);
+          skyTapUntil = performance.now() + 2500;
+        }
       }
     }
     if (pointers.size === 0) {
@@ -2516,6 +2587,9 @@ export function mountJourney(container, options = {}) {
       e.preventDefault();
     } else if (state.panel) {
       closePanel({ restoreFocus: true });
+      e.preventDefault();
+    } else if (state.phoneExtra) {
+      setPhoneExtra(null);
       e.preventDefault();
     }
   });
@@ -2677,6 +2751,7 @@ export function mountJourney(container, options = {}) {
     renderer.render(scene, camera);
     overRenderer?.render(overScene, camera);
     updateMarks(theta, satAlpha, lengthPx);
+    paintSkyLabel();
   }
 
   function startLoop() {
@@ -2903,7 +2978,8 @@ export function mountJourney(container, options = {}) {
 
   /** Rotating only while it can be seen: put away, it waits (in the details it can't be put away). */
   function runTicker() {
-    if (state.factsHidden && frame.fit < FIT_NO_FACTS) ticker?.stop?.();
+    const away = frame.narrow ? state.phoneExtra !== 'facts' : state.factsHidden && frame.fit < FIT_NO_FACTS;
+    if (away) ticker?.stop?.();
     else ticker?.start?.();
   }
 
@@ -2991,6 +3067,7 @@ export function mountJourney(container, options = {}) {
     ref.latest.dataset.id = '';
     const n = photos.length;
     ref.allText.textContent = n ? `See all ${n.toLocaleString('en-US')} pictures` : 'See the pictures';
+    ref.latestAll.textContent = ref.allText.textContent;
     ref.viewfinderSlot.hidden = !photos.some(isNearlyWhole);
     paintTabs();
     viewfinder?.setPhotos(photos);
@@ -3130,7 +3207,7 @@ export function mountJourney(container, options = {}) {
     /** For checking from the console; not an API. */
     get debug() {
       return {
-        state, frame, sat, camera, scene, orbitLine, trackN, W, H, quality, earth, satellite, zoomLimits, swingAngle,
+        state, frame, sat, camera, scene, orbitLine, trackN, W, H, quality, earth, satellite, sky, zoomLimits, swingAngle,
         /** The swing sampled at n steps for the current satellite: the largest turn between steps, and so on. */
         swingCheck(n = 200, ms = state.simMs) {
           const theta = gmstAt(ms);

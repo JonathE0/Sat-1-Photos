@@ -334,12 +334,21 @@ state and one set of details. Closes with the same control, Esc, or a click on e
 - **Pins (the user's request, 31 Oct 2026):** clicking a pin or a hover card's picture puts that picture
   up in the preview and stays on the page, whether it is whole or not: in the viewfinder where it shows,
   bringing the panel back if need be, and it stays there until Previous or Next; elsewhere in the Pictures
-  tab's dropdown, titled "Selected picture". The preview's own picture is what leads on to the catalogue.
-  A phone has no preview beside the globe, so a pin there still opens the catalogue.
-- **Phone:** no bar over the text. "Satellite details" beside "Play the intro again" opens a bottom
-  sheet across the full width, all the way up; a tap on the satellite opens it to its peek of 120px
-  (title and the place line); drag or tap "More" to open up to 85svh. A 36 × 4 Muted grabber bar. The
-  time controls hide while it is open.
+  tab's dropdown or sheet, titled "Selected picture". The preview's own picture is what leads on to the
+  catalogue.
+- **Phone (the user's request, 31 Oct 2026):** the opening stays as it is. From the story's end, a flat
+  Panel bar across the bottom edge, 56px, with icon and word: Stats, Pictures, Facts, Controls. One opens
+  at a time above it, its item marked Raised with an Ink line along the top, and pressing it again, or a
+  tap on the globe, puts it away; otherwise nothing but the bar sits over the globe. Stats and Pictures are
+  a sheet across the full width, up to 72% of the height, with a 36 × 4 Muted grabber: a tap or a drag down
+  folds it away. Pictures adds "See all n pictures" there. Facts is the banner just above the bar, off by
+  default on a phone. Controls is the clock, speeds and Now over "Play the intro again" and zoom.
+- **Words at the end (the user's request, 31 Oct 2026):** once the camera has come in, the words step back
+  so the Earth and the satellite are the point. Everywhere: the name at 80% of its opening size, the
+  subheading and live sentence at 88%, the two lines under them at 94%. On a phone, more: the name at 62%,
+  the subheading 15, the live sentence 16, the lines under it 14, and the big sentence of beat 2 at 20.
+- **The Sun and the Moon** say their names beside them under a resting mouse, or for 2.5 s after a tap,
+  in the satellite label's style, unless the Earth is in front of them.
 
 Copy, top to bottom:
 

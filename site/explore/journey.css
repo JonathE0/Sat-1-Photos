@@ -25,6 +25,7 @@
   --jy-m: 16px;          /* outer margin */
   --jy-ctl: 36px;        /* control height */
   --jy-row: 44px;        /* the bottom toolbars' height: the clock's two lines */
+  --jy-tabbar: 56px;     /* a phone's bottom bar */
   --jy-top: 0px;         /* a sticky header above the stage, if the page has one */
   --jy-nav: 64px;        /* room for a nav laid over the stage */
   --jy-bottom: max(var(--jy-m), env(safe-area-inset-bottom));
@@ -149,6 +150,7 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
   pointer-events: none;
 }
 .jy-narrow .jy-text { top: 88px; }
+.jy-narrow.jy-composed .jy-text { top: 72px; }
 
 .jy-beat {
   grid-area: 1 / 1;
@@ -224,6 +226,20 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
   margin: 4px 0 0;
   transition: opacity 240ms var(--jy-ease-out), visibility 0s;
 }
+/* Once the camera has come in, the Earth and the satellite are the point: the words step
+   back a little, and a good deal on a phone. The opening keeps its full size. */
+.jy-root.jy-composed .jy-h1 { font-size: calc(var(--jy-display) * 0.8); }
+.jy-root.jy-composed .jy-sub,
+.jy-root.jy-composed .jy-live-lead { font-size: calc(var(--jy-lead) * 0.88); }
+.jy-root.jy-composed .jy-tip,
+.jy-root.jy-composed .jy-hint { font-size: calc(var(--jy-body) * 0.94); }
+.jy-root.jy-narrow.jy-composed .jy-h1 { font-size: calc(var(--jy-display) * 0.62); }
+.jy-root.jy-narrow.jy-composed .jy-sub { margin-top: 6px; font-size: 15px; }
+.jy-root.jy-narrow.jy-composed .jy-live-lead { margin-top: 10px; font-size: 16px; line-height: 1.35; }
+.jy-root.jy-narrow.jy-composed .jy-tip,
+.jy-root.jy-narrow.jy-composed .jy-hint { font-size: 14px; }
+.jy-root.jy-narrow.jy-composed .jy-tip { margin-top: 8px; }
+.jy-root.jy-narrow.jy-composed .jy-hint { margin-top: 2px; }
 /* hidden, not removed, so the block keeps its size and the framing stays put */
 .jy-hint.is-off {
   opacity: 0;
@@ -266,6 +282,7 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
 /* room for the longest live sentence, so the end frame doesn't shift when the place changes */
 .jy-b2 { min-height: calc(5 * 1.2em); }
 .jy-narrow .jy-b2 { min-height: calc(6 * 1.2em); }
+.jy-narrow .jy-statement { font-size: 20px; }
 
 /* ---- controls ----------------------------------------------------------------- */
 
@@ -455,8 +472,7 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
 /* the one strong action down here: the pictures */
 .jy-all { gap: 8px; min-height: var(--jy-ctl); padding: 0 16px; }
 /* quiet, on Panel */
-.jy-again,
-.jy-details {
+.jy-again {
   gap: 8px;
   min-height: var(--jy-ctl);
   padding: 0 16px;
@@ -466,11 +482,7 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
 }
 .jy-again svg { flex: none; color: var(--jy-muted); transition: color 180ms var(--jy-ease-out); }
 .jy-again:hover svg { color: var(--jy-ink); }
-.jy-again:hover,
-.jy-details:hover { background: var(--jy-raised); }
-/* phones only: everywhere else the summary bar does this */
-.jy-details { display: none; }
-.jy-root[data-mode="still"] .jy-details { display: none !important; }
+.jy-again:hover { background: var(--jy-raised); }
 .jy-zoom { display: flex; }
 .jy-zoom .jy-sq { width: var(--jy-row); height: auto; min-height: var(--jy-ctl); }
 .jy-zoom .jy-sq + .jy-sq { box-shadow: inset 1px 0 0 var(--jy-raised); }
@@ -484,7 +496,7 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
 }
 .jy-facts-slot:empty { display: none; }
 /* put away, it leaves a button in its corner to bring it back */
-.jy-facts-hidden .jy-facts-slot { opacity: 0; visibility: hidden; }
+.jy-root:not(.jy-narrow).jy-facts-hidden .jy-facts-slot { opacity: 0; visibility: hidden; }
 .jy-facts-show {
   position: absolute;
   z-index: 2;
@@ -585,9 +597,9 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
 .jy-root:not(.jy-narrow).jy-dock-hidden .jy-summary-tools { flex: none; box-shadow: none; }
 .jy-root:not(.jy-narrow).jy-dock-hidden .jy-dock-toggle { box-shadow: none; color: var(--jy-ink); }
 /* the tabs where they drop down: Stats and Pictures are the two halves of the details */
-.jy-root:not(.jy-narrow) .jy-panel[data-tab="stats"] .jy-latest { display: none; }
-.jy-root:not(.jy-narrow) .jy-panel[data-tab="pictures"] :is(.jy-panel-head, [data-ref="aka"], .jy-panel-zoom, .jy-facts, .jy-elements, .jy-details-facts, .jy-retry) { display: none; }
-.jy-root:not(.jy-narrow) .jy-panel[data-tab="pictures"] .jy-latest { margin-top: 12px; }
+.jy-root .jy-panel[data-tab="stats"] .jy-latest { display: none; }
+.jy-root .jy-panel[data-tab="pictures"] :is(.jy-panel-head, [data-ref="aka"], .jy-over, .jy-panel-zoom, .jy-facts, .jy-elements, .jy-details-facts, .jy-retry) { display: none; }
+.jy-root .jy-panel[data-tab="pictures"] .jy-latest { margin-top: 12px; }
 
 /* The picture viewfinder (viewfinder.js): big screens only, at the end only. The
    dock's box is set here, whatever the picture and before the module loads, because
@@ -836,10 +848,11 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
 .jy-root:not(.jy-ui-on) .jy-panel { visibility: hidden; opacity: 0; }
 
 .jy-grab { display: none; }
-.jy-more { display: none; }
 
 /* The bar above names the satellite, says where it is and folds the details up, so the
-   dock's details keep the title for screen readers only and show no Close. */
+   dock's details keep the title for screen readers only and show no Close. On a phone the
+   bottom bar folds them up. */
+.jy-root [data-ref="close"] { display: none; }
 .jy-root:not(.jy-narrow) .jy-panel .jy-panel-head { grid-area: 1 / 2; margin: 0; }
 .jy-root:not(.jy-narrow) .jy-panel .jy-panel-title {
   position: absolute;
@@ -850,7 +863,6 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
   clip-path: inset(50%);
   white-space: nowrap;
 }
-.jy-root:not(.jy-narrow) [data-ref="close"],
 .jy-root:not(.jy-narrow) .jy-panel .jy-over { display: none; }
 .jy-root:not(.jy-narrow) .jy-panel [data-ref="aka"] { grid-area: 1 / 1; }
 .jy-root:not(.jy-narrow) .jy-panel-body { grid-column: 1 / -1; }
@@ -925,6 +937,9 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
 }
 .jy-latest-place { margin-top: 12px !important; font-weight: 500; }
 .jy-latest .jy-link { display: inline-block; margin-top: 12px; }
+/* a phone has no "See all n pictures" beside the globe: it's here */
+.jy-latest .jy-latest-all { display: none; }
+.jy-narrow .jy-latest .jy-latest-all { display: inline-block; margin-left: 16px; }
 /* on touch a taller place to tap than the words, with nothing about them moved */
 @media (pointer: coarse) {
   .jy-latest .jy-link { position: relative; }
@@ -956,54 +971,115 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
 .jy-credits-links .jy-link { display: inline-flex; align-items: center; min-height: 44px; }
 .jy-news-slot:empty { display: none; }
 
-/* ---- narrow screens: the bottom sheet, the control rows -------------------------------- */
+/* ---- a phone: a bottom bar, and one thing at a time above it ------------------------------ */
 
-.jy-narrow .jy-time {
-  right: var(--jy-m);
-  justify-content: space-between;
+/* the Sun and the Moon's names, beside them, as the satellite's label */
+.jy-sky-label {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 2;
+  color: var(--jy-ink);
+  font-size: var(--jy-small);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 150ms var(--jy-ease-out);
 }
-.jy-narrow .jy-clock { min-width: 0; flex: 1; padding: 4px 8px; }
-.jy-narrow .jy-speed span { min-width: 44px; padding: 0 4px; }
-.jy-narrow .jy-now { padding: 0 10px; }
+.jy-sky-label.is-on { opacity: 1; }
 
-/* above the time row: [Play the intro again] [Satellite details] / [See all n pictures] [- +] */
-.jy-narrow .jy-corner {
-  left: var(--jy-m);
-  bottom: calc(var(--jy-bottom) + var(--jy-row) + 8px);
+/* [Stats] [Pictures] [Facts] [Controls], from the story's end. A flat Panel strip across
+   the bottom edge; what's open has the Ink line, at the top because the bar is at the bottom. */
+.jy-tabbar { display: none; }
+.jy-root.jy-narrow:not([data-mode="still"]) .jy-tabbar {
+  position: absolute;
+  z-index: 5;
+  left: 0;
+  right: 0;
+  bottom: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  grid-template-areas: "again details" "all zoom";
-  gap: 4px 8px;
-  align-items: stretch;
-  min-height: 0;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  padding-bottom: env(safe-area-inset-bottom);
+  background: var(--jy-panel);
+  box-shadow: inset 0 1px 0 var(--jy-raised);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 150ms var(--jy-ease-exit), visibility 0s linear 150ms;
 }
-.jy-narrow .jy-again { grid-area: again; justify-self: start; padding: 0 12px; }
-.jy-narrow .jy-details { grid-area: details; display: inline-flex; padding: 0 12px; }
-.jy-narrow .jy-all { grid-area: all; justify-self: start; }
-.jy-narrow .jy-zoom { grid-area: zoom; justify-self: end; }
-/* no room for the icons on a phone's rows */
-.jy-narrow .jy-again svg,
-.jy-narrow .jy-all svg { display: none; }
-/* no bar on a phone, and the details are a bottom sheet over the whole stage */
+.jy-root.jy-narrow.jy-locked:not([data-mode="still"]) .jy-tabbar {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 240ms var(--jy-ease-out), visibility 0s;
+}
+.jy-tabbar-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-width: 0;
+  min-height: var(--jy-tabbar);
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  background: none;
+  color: var(--jy-muted);
+  font: 500 13px / 1.1 var(--jy-font);
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 180ms var(--jy-ease-out), color 180ms var(--jy-ease-out);
+}
+.jy-tabbar-item[aria-pressed="true"] { background: var(--jy-raised); box-shadow: inset 0 2px 0 var(--jy-ink); color: var(--jy-ink); }
+
+.jy-narrow .jy-clock { min-width: 0; flex: 1; padding: 4px 8px 4px 16px; }
+.jy-narrow .jy-speed span { min-width: 44px; padding: 0 4px; }
+.jy-narrow .jy-now { padding: 0 12px; }
+
+/* Controls, above the bar and edge to edge: [clock | speeds | Now] over [Play the intro again] [- | +]
+   (without WebGL there's no bar, and See all n pictures stays in the corner) */
+.jy-narrow .jy-corner { left: var(--jy-m); }
+.jy-root.jy-narrow:not([data-mode="still"]) .jy-time {
+  left: 0;
+  right: 0;
+  bottom: calc(var(--jy-tabbar) + env(safe-area-inset-bottom) + var(--jy-row));
+  justify-content: space-between;
+  box-shadow: inset 0 1px 0 var(--jy-raised);
+}
+.jy-root.jy-narrow:not([data-mode="still"]) .jy-corner {
+  left: 0;
+  right: 0;
+  bottom: calc(var(--jy-tabbar) + env(safe-area-inset-bottom));
+  justify-content: space-between;
+  gap: 0;
+  background: var(--jy-panel);
+  box-shadow: inset 0 1px 0 var(--jy-raised);
+}
+.jy-root.jy-narrow:not([data-mode="still"]) .jy-all { display: none; }
+.jy-root.jy-narrow:not([data-mode="still"]) .jy-again { background: none; }
+.jy-root.jy-narrow:not([data-mode="still"]):not(.jy-phone-controls) .jy-time,
+.jy-root.jy-narrow:not([data-mode="still"]):not(.jy-phone-controls) .jy-corner { opacity: 0; visibility: hidden; }
+
+/* the facts, on request, just above the bar; the bar is what puts them away */
+.jy-root.jy-narrow:not([data-mode="still"]) .jy-facts-slot { bottom: calc(var(--jy-tabbar) + env(safe-area-inset-bottom) + 8px); }
+.jy-root.jy-narrow:not([data-mode="still"]):not(.jy-phone-facts) .jy-facts-slot { opacity: 0; visibility: hidden; }
+.jy-narrow .jy-facts-show,
+.jy-narrow .cf-hide { display: none; }
+.jy-narrow.jy-credits-open .jy-facts-slot { opacity: 0; visibility: hidden; }
+
+/* no summary bar on a phone, and the details are a sheet above the bottom bar */
 .jy-narrow .jy-dock { position: static; display: block; width: auto; max-width: none; }
 .jy-narrow .jy-summary { display: none; }
-/* the narrowest phones: every row still fits, the clock whole */
+/* the narrowest phones: the row still fits, the clock whole */
 @media (max-width: 340px) {
-  .jy-narrow .jy-corner { column-gap: 4px; }
-  .jy-narrow .jy-again,
-  .jy-narrow .jy-details { padding: 0 8px; }
-  .jy-narrow .jy-all { padding: 0 14px; }
-  .jy-narrow .jy-clock { padding: 4px 6px; }
+  .jy-narrow .jy-clock { padding: 4px 6px 4px 12px; }
   .jy-narrow .jy-clock-main { font-size: 15px; }
   .jy-narrow .jy-speed span { min-width: 34px; padding: 0 2px; }
   .jy-narrow .jy-now { padding: 0 8px; }
 }
-.jy-narrow .jy-facts-slot,
-.jy-narrow .jy-facts-show { bottom: calc(var(--jy-bottom) + var(--jy-row) + 2 * var(--jy-ctl) + 24px); }
-.jy-narrow.jy-panel-open .jy-time,
-.jy-narrow.jy-panel-open .jy-corner,
-.jy-narrow.jy-credits-open .jy-facts-slot,
-.jy-narrow.jy-credits-open .jy-facts-show { opacity: 0; visibility: hidden; }
 
 .jy-narrow .jy-panel {
   position: absolute;
@@ -1016,16 +1092,12 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
   align-items: stretch;
   max-height: 120px;
   overflow: hidden;
-  padding: 0 16px calc(16px + env(safe-area-inset-bottom));
+  padding: 0 16px 16px;
   transform: translateY(16px);
 }
+.jy-narrow.jy-locked .jy-panel { bottom: calc(var(--jy-tabbar) + env(safe-area-inset-bottom)); }
 .jy-narrow .jy-panel.is-on { transform: none; }
-.jy-narrow .jy-panel.is-open { max-height: 85%; overflow: auto; }
-/* The peek has nothing of its own to scroll, so a swipe on it during the story scrolls the
-   page. At the end there is no page to scroll: its swipes are its own (journey.js opens it
-   on one going up). */
-.jy-narrow .jy-panel:not(.is-open) { overscroll-behavior: auto; }
-.jy-narrow.jy-locked .jy-panel:not(.is-open) { touch-action: none; }
+.jy-narrow .jy-panel.is-open { max-height: 72%; overflow: auto; }
 .jy-narrow .jy-grab {
   display: flex;
   flex: none;
@@ -1041,7 +1113,6 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
   touch-action: none;
 }
 .jy-narrow .jy-grab span { display: block; width: 36px; height: 4px; background: var(--jy-muted); }
-.jy-narrow .jy-more { display: inline-flex; }
 .jy-narrow .jy-panel-head { margin-top: 0; }
 .jy-narrow .jy-panel-tools { gap: 14px; }
 .jy-narrow .jy-over { order: 1; margin-top: 0 !important; }

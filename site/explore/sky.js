@@ -452,6 +452,19 @@ export function createSky(renderer, { quality = 'high', base } = {}) {
 
   setTime(Date.now(), 0);
 
+  const toMoonNow = new THREE.Vector3();
+
+  /** For a label: each body's direction from the camera, and its angular radius in radians. */
+  function bodies(camera) {
+    camera.getWorldPosition(camPos);
+    toMoonNow.copy(moon.position).sub(camPos);
+    const range = toMoonNow.length();
+    return [
+      { name: 'Sun', dir: sunDir, angRadius: sunMaterial.uniforms.angRadius.value },
+      { name: 'Moon', dir: toMoonNow.normalize(), angRadius: Math.asin(Math.min(1, moon.scale.x / range)) },
+    ];
+  }
+
   function dispose() {
     disposed = true;
     abort.abort();
@@ -465,5 +478,5 @@ export function createSky(renderer, { quality = 'high', base } = {}) {
     moonTexture?.dispose();
   }
 
-  return { group, setTime, update, ready, dispose };
+  return { group, setTime, update, bodies, ready, dispose };
 }
