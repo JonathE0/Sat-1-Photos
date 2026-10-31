@@ -91,6 +91,13 @@ _SEAS = (
     ("Baltic Sea", 53.5, 60.0, 12.0, 30.5),
     ("Baltic Sea", 60.0, 66.0, 16.5, 30.5),  # Gulf of Bothnia, east of Norway's coast
     ("White Sea", 63.5, 66.0, 32.0, 44.5),
+    ("South China Sea", 3.0, 6.1, 102.0, 117.0),  # from the Malay Peninsula's east coast
+    ("South China Sea", 6.1, 8.3, 104.8, 117.0),  # from 104.8 E, so the Gulf of Thailand stays out
+    ("South China Sea", 8.3, 9.5, 104.8, 118.0),  # up Palawan's spine, so the Sulu Sea stays out
+    ("South China Sea", 9.5, 10.5, 104.8, 119.0),
+    ("South China Sea", 10.5, 12.5, 104.8, 120.0),
+    ("South China Sea", 12.5, 22.0, 104.8, 120.8),  # west of Mindoro and Luzon
+    ("South China Sea", 22.0, 23.5, 104.8, 117.0),  # up to the coast of China, short of the Taiwan Strait
 )
 
 
