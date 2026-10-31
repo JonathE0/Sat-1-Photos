@@ -161,6 +161,7 @@ const dockHiddenChoice = rememberedChoice('cts-panel-hidden');
 const factsHiddenChoice = rememberedChoice('cts-facts-hidden');
 const auroraHiddenChoice = rememberedChoice('cts-aurora-hidden');
 const cycleOffChoice = rememberedChoice('cts-cycle-off');
+const previewsHiddenChoice = rememberedChoice('cts-previews-hidden'); // shared with Orbit
 /** Stats' turn when the panel cycles; Pictures' turn is one picture (DWELL_MS in viewfinder.js). */
 const CYCLE_STATS_MS = 10000;
 /** Screens with room for the picture viewfinder; keep in step with .jy-vf-slot in journey.css. */
@@ -201,6 +202,7 @@ const ICON_PLUS = '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="
 const ICON_DOWN = '<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M2 4.5l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>';
 const ICON_REPLAY = '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M3.2 8a4.8 4.8 0 1 0 1.5-3.5M4.4 2.2v2.6H7" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>';
 const ICON_ARROW = '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M3 8h9M8.5 4.5L12 8l-3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>';
+const ICON_EYE = '<svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><path d="M2.5 10s2.7-5 7.5-5 7.5 5 7.5 5-2.7 5-7.5 5-7.5-5-7.5-5z" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="10" cy="10" r="2.2" fill="none" stroke="currentColor" stroke-width="1.5"/><path class="jy-previews-slash" d="M4 16L16 4" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>';
 const ICON_STATS = '<svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><path d="M4 16.5V10M10 16.5V4M16 16.5v-9" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>';
 const ICON_PICTURES = '<svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><path d="M3 4.5h14v11H3zM3 13l4-4 3 3 2.5-2.5L17 14" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>';
 const ICON_FACTS = '<svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><circle cx="10" cy="10" r="7" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10 9v5M10 6v1.5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>';
@@ -305,9 +307,10 @@ function template(id, siteRoot) {
 
       <div class="jy-text">
         <div class="jy-beat jy-b1" data-ref="b1">
-          <h1 class="jy-h1"><span class="jy-words">CTS-SAT-1</span></h1>
+          <h1 class="jy-h1"><span class="jy-words">FRONTIER SAT</span></h1>
+          <p class="jy-sub"><span class="jy-words">NORAD ID 69015</span></p>
           <p class="jy-sub"><span class="jy-words">Interactive picture visualizer</span></p>
-          <p class="jy-lead jy-intro-only"><span class="jy-words">Calgary To Space\u2019s first satellite, built by University of Calgary students and in orbit since ${launchDate}.</span></p>
+          <p class="jy-lead jy-intro-only"><span class="jy-words">Calgary\u2019s first student-built satellite. In orbit since ${launchDate}.</span></p>
           <p class="jy-cue jy-intro-only" data-ref="cue" tabindex="-1"><span class="jy-words">Scroll to learn more</span> ${ICON_DOWN}</p>
           <p class="jy-lead jy-live-lead jy-end-only"><span class="jy-words" data-ref="liveLead"></span> <span class="jy-words jy-lead-more" data-ref="liveMore"></span></p>
           <p class="jy-tip jy-end-only" data-ref="tip"><span class="jy-words" data-ref="satTip"></span></p>
@@ -340,11 +343,13 @@ function template(id, siteRoot) {
       </div>
 
       <div class="jy-corner" data-ref="corner">
-        <button type="button" class="jy-textbtn jy-again" data-ref="again">${ICON_REPLAY}<span>Play the intro again</span></button>
+        <button type="button" class="jy-textbtn jy-again" data-ref="again" title="Play the intro again">${ICON_REPLAY}<span>Play the intro again</span></button>
         <button type="button" class="jy-textbtn jy-toggle" data-ref="followBar" aria-pressed="true"
           title="Keep the camera on the satellite">Following</button>
         <button type="button" class="jy-textbtn jy-toggle" data-ref="aurora" aria-pressed="true" hidden
           title="Show or hide NOAA's aurora forecast">Aurora</button>
+        <button type="button" class="jy-textbtn jy-toggle jy-previews" data-ref="previews"
+          title="Show or hide the pictures on the globe">${ICON_EYE}<span data-ref="previewsText">Hide photo previews</span></button>
         <a class="jy-btn jy-all" data-ref="all"><span data-ref="allText"></span>${ICON_ARROW}</a>
         <div class="jy-zoom" role="group" aria-label="Zoom">
           <button type="button" class="jy-sq" data-ref="zoomOut" aria-label="Zoom out">${ICON_MINUS}</button>
@@ -420,6 +425,7 @@ export function mountJourney(container, options = {}) {
   const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
   const touchQuery = window.matchMedia('(hover: none) and (pointer: coarse)');
   const bigQuery = window.matchMedia(VIEWFINDER_MEDIA);
+  let previewsHidden = previewsHiddenChoice.get();
   let motionOverride = opts.motion === 'full' || opts.motion === 'reduced' ? opts.motion : null;
   const reducedMotion = () => (motionOverride ? motionOverride === 'reduced' : motionQuery.matches);
   root.classList.toggle('jy-calm', motionOverride === 'reduced');
@@ -1505,9 +1511,20 @@ export function mountJourney(container, options = {}) {
 
   /** Pins wait for the Earth: on a slow line their pictures would hold up its textures, and they show only at the end. */
   function loadPinPicture(img) {
-    if (!img?.dataset.src) return;
+    if (previewsHidden || !img?.dataset.src) return;
     img.src = img.dataset.src;
     delete img.dataset.src;
+  }
+
+  /** The pictures on the globe, down to small marks that still take a click. As on Orbit. */
+  function setPreviewsHidden(hidden) {
+    previewsHidden = hidden;
+    previewsHiddenChoice.set(hidden);
+    root.classList.toggle('jy-previews-hidden', hidden);
+    ref.previews.classList.toggle('is-hidden', hidden);
+    ref.previewsText.textContent = hidden ? 'Show photo previews' : 'Hide photo previews';
+    hideCard();
+    if (earthReady) for (const pin of pins) loadPinPicture(pin.el.querySelector('img'));
   }
 
   function buildPins() {
@@ -1677,19 +1694,22 @@ export function mountJourney(container, options = {}) {
     const a = document.createElement('a');
     a.className = big ? 'jy-card-item jy-card-one' : 'jy-card-item';
     a.href = opts.photoHref(photo.id);
-    const img = document.createElement('img');
-    img.alt = '';
-    img.decoding = 'async';
-    img.addEventListener('error', () => { img.hidden = true; }); // the place and time still say what it is
-    img.src = new URL(big ? photo.src || photo.thumb : photo.thumb || photo.src, siteRoot).href;
-    if (isSquare(photo)) img.classList.add('is-square');
+    if (!previewsHidden) {
+      const img = document.createElement('img');
+      img.alt = '';
+      img.decoding = 'async';
+      img.addEventListener('error', () => { img.hidden = true; }); // the place and time still say what it is
+      img.src = new URL(big ? photo.src || photo.thumb : photo.thumb || photo.src, siteRoot).href;
+      if (isSquare(photo)) img.classList.add('is-square');
+      a.append(img);
+    }
     const place = document.createElement('span');
     place.className = 'jy-card-place';
     place.textContent = placeOf(photo) || 'Place unknown';
     const time = document.createElement('span');
     time.className = 'jy-card-time';
     time.textContent = photoTime(photo);
-    a.append(img, place, time);
+    a.append(place, time);
     a.addEventListener('click', (e) => {
       if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
       e.preventDefault();
@@ -2014,6 +2034,7 @@ export function mountJourney(container, options = {}) {
   listen(ref.follow, 'click', () => setFollow(!state.follow));
   listen(ref.followBar, 'click', () => setFollow(!state.follow));
   listen(ref.zoomSat, 'click', () => zoomToSatellite());
+  listen(ref.previews, 'click', () => setPreviewsHidden(!previewsHidden));
   listen(ref.retry, 'click', () => loadOrbit());
   // no broken icon: the message takes the frame's place, and "Open in the catalogue" stays under it
   listen(ref.latestImg, 'error', () => {
@@ -3274,6 +3295,7 @@ export function mountJourney(container, options = {}) {
   setDockHidden(dockHiddenChoice.get());
   setFactsHidden(factsHiddenChoice.get());
   setCycle(cycleOn);
+  setPreviewsHidden(previewsHidden);
   const resizeObserver = new ResizeObserver(() => resize());
   resizeObserver.observe(stage);
   // the text blocks set where the Earth may go

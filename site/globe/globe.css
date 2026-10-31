@@ -567,7 +567,8 @@
   pointer-events: none;
 }
 
-.cg-mode-map .cg-pins {
+.cg-mode-map .cg-pins,
+.cg-pins[hidden] {
   display: none;
 }
 

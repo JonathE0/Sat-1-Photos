@@ -124,7 +124,8 @@ function parseView(text) {
 }
 
 const ICONS = {
-  play: '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 1.8v8.4L10.2 6z" fill="currentColor"/></svg>',
+  eye: '<svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><path d="M2.5 10s2.7-5 7.5-5 7.5 5 7.5 5-2.7 5-7.5 5-7.5-5-7.5-5z" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="10" cy="10" r="2.2" fill="none" stroke="currentColor" stroke-width="1.5"/><path class="cg-previews-slash" d="M4 16L16 4" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>',
+  play:'<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 1.8v8.4L10.2 6z" fill="currentColor"/></svg>',
   pause:
     '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.6 1.8h2.4v8.4H2.6zM7 1.8h2.4v8.4H7z" fill="currentColor"/></svg>',
   stepBack:
@@ -156,11 +157,15 @@ const TEMPLATE = `
         <button type="button" data-view="map" aria-pressed="false" title="Map (M)">Map</button>
       </div>
     </div>
-    <button type="button" class="cg-btn cg-aurora-btn" data-ref="auroraBtn" aria-pressed="true"
-      title="Show or hide NOAA's aurora forecast (A)">Aurora</button>
-    <div class="cg-seg cg-seg-zoom" role="group" aria-label="Map zoom. Arrow keys move between them." data-ref="zoom">
-      <button type="button" data-ref="zoomOut" aria-label="Zoom out" title="Zoom out (−)">−</button>
-      <button type="button" data-ref="zoomIn" aria-label="Zoom in" title="Zoom in (+)">+</button>
+    <div class="cg-views-side">
+      <button type="button" class="cg-btn cg-aurora-btn" data-ref="auroraBtn" aria-pressed="true"
+        title="Show or hide NOAA's aurora forecast (A)">Aurora</button>
+      <div class="cg-seg cg-seg-zoom" role="group" aria-label="Map zoom. Arrow keys move between them." data-ref="zoom">
+        <button type="button" data-ref="zoomOut" aria-label="Zoom out" title="Zoom out (−)">−</button>
+        <button type="button" data-ref="zoomIn" aria-label="Zoom in" title="Zoom in (+)">+</button>
+      </div>
+      <button type="button" class="cg-btn cg-previews-btn" data-ref="previewsBtn" hidden
+        title="Show or hide the pictures on the globe">${ICONS.eye}<span data-ref="previewsText">Hide photo previews</span></button>
     </div>
   </div>
 
@@ -437,22 +442,24 @@ export function mountGlobe(container, options = {}) {
   const full = opts.ui !== 'compact';
   // only ?motion=reduced stills them, as on Explore: the site keeps its motion otherwise
   const stillMotion = new URLSearchParams(location.search).get('motion') === 'reduced';
-  // the visitor's choice, shared with Explore
-  const auroraHidden = {
+  // the visitor's choices, shared with Explore
+  const remembered = (key) => ({
     get() {
       try {
-        return localStorage.getItem('cts-aurora-hidden') === '1';
+        return localStorage.getItem(key) === '1';
       } catch {
         return false;
       }
     },
     set(hidden) {
       try {
-        if (hidden) localStorage.setItem('cts-aurora-hidden', '1');
-        else localStorage.removeItem('cts-aurora-hidden');
+        if (hidden) localStorage.setItem(key, '1');
+        else localStorage.removeItem(key);
       } catch { /* no storage: it's only remembered until the page closes */ }
     },
-  };
+  });
+  const auroraHidden = remembered('cts-aurora-hidden');
+  const previewsHiddenChoice = remembered('cts-previews-hidden');
   let auroraOn = full && !auroraHidden.get();
   let scene;
   try {
@@ -485,7 +492,21 @@ export function mountGlobe(container, options = {}) {
   scene.setStation(astro.CALGARY.latDeg, astro.CALGARY.lonDeg);
   // the pictures as little pictures, over the globe (the map keeps its marks)
   const picturePins = full && !root.classList.contains('cg-nogl-on') ? createPicturePins(el.pinLayer) : null;
-  if (picturePins) scene.setPinsDrawn(false);
+  let previewsHidden = Boolean(picturePins) && previewsHiddenChoice.get();
+
+  /** Hidden, the scene draws its small squares in their place, which still take a click. As on Explore. */
+  function setPreviewsHidden(hidden) {
+    previewsHidden = hidden;
+    previewsHiddenChoice.set(hidden);
+    scene.setPinsDrawn(hidden);
+    el.pinLayer.hidden = hidden;
+    el.previewsBtn.classList.toggle('is-hidden', hidden);
+    el.previewsText.textContent = hidden ? 'Show photo previews' : 'Hide photo previews';
+  }
+  if (picturePins) {
+    setPreviewsHidden(previewsHidden);
+    el.previewsBtn.hidden = false;
+  }
 
   // The flat map shares the stage, under the labels and tooltip. It needs
   // only canvas 2D, so without WebGL the page opens on it.
@@ -1076,7 +1097,7 @@ export function mountGlobe(container, options = {}) {
       });
     }
     const url = safeHref(big ? p.src || p.thumb : p.thumb);
-    if (url && !p.dark) {
+    if (url && !p.dark && !previewsHidden) {
       const img = document.createElement('img');
       img.alt = '';
       img.decoding = 'async';
@@ -1097,7 +1118,7 @@ export function mountGlobe(container, options = {}) {
 
   function showPeek(hit) {
     clearTimeout(peek.timer);
-    const ids = picturePins && !onMap() ? picturePins.pileOf(hit.id) : [hit.id];
+    const ids = picturePins && !previewsHidden && !onMap() ? picturePins.pileOf(hit.id) : [hit.id];
     const key = ids.join(',');
     if (peek.key !== key) {
       peek.key = key;
@@ -1580,6 +1601,10 @@ export function mountGlobe(container, options = {}) {
   listen(el.speedCycle, 'click', () => setSpeed(SPEEDS[(SPEEDS.indexOf(state.speed) + 1) % SPEEDS.length]));
   listen(el.follow, 'click', () => setFollow(!state.follow));
   listen(el.auroraBtn, 'click', () => setAuroraOn(!auroraOn));
+  listen(el.previewsBtn, 'click', () => {
+    setPreviewsHidden(!previewsHidden);
+    hidePeek();
+  });
   listen(el.panels, 'click', () => setPanels(!state.panels));
   // it opens at the foot of a column that may be full: bring it into view
   listen(el.keys, 'toggle', () => {
@@ -1681,7 +1706,7 @@ export function mountGlobe(container, options = {}) {
     tip.style.transform = `translate(${Math.round(hit.x)}px, ${Math.round(hit.y)}px)`;
   }
   /** How near the pointer counts as on a mark: a thumbnail on the globe is bigger than a map mark. */
-  const pinReach = (px) => (picturePins && !onMap() ? px + 8 : px) * uiScale;
+  const pinReach = (px) => (picturePins && !previewsHidden && !onMap() ? px + 8 : px) * uiScale;
   function onPointerUp(e, surface, view) {
     if (view.controls.dragged) return;
     const r = surface.getBoundingClientRect();

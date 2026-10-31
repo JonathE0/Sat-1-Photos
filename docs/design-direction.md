@@ -699,6 +699,20 @@ goes up. The map keeps its marks. Where Passes and Pictures don't both fit in th
 Pictures stays open and Passes folds to its heading and next-pass line; opening one folds the other.
 The picture's card leaves out its thumbnail while the viewfinder shows it.
 
+### The name on Explore's opening
+
+The user's choice (31 Oct 2026): the big title reads FRONTIER SAT in capitals, with NORAD ID 69015 under
+it, then "Calgary's first student-built satellite. In orbit since May 3, 2026." The size is set so the
+longer name still fits a 320px phone. Smaller labels and the other pages still say CTS-SAT-1.
+
+### Hide photo previews
+
+A button on both pages, its words saying what it will do, and the choice is shared between them. It
+turns the thumbnails on the globe into small marks that still take a click, and leaves the place and time
+on hover, no picture. The viewfinder and the lists stay as they are. On Explore it sits in the bottom-right
+row; on Orbit beside Aurora, or under it where the row has no room. On phones both pages show only an eye,
+struck through while they're hidden.
+
 ### Following, on Explore
 
 A Following button sits in the end view's bottom-right row, beside Aurora, so the camera can be let

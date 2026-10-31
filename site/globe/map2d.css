@@ -135,12 +135,27 @@
 
 /* beside the switch, out of the group's width: only the switch is centred, so
    it stays put when the zoom appears in map mode */
-.cg:not(.cg-narrow) .cg-seg-zoom,
-.cg:not(.cg-narrow) .cg-aurora-btn {
+.cg:not(.cg-narrow) .cg-views-side {
   position: absolute;
   top: 0;
   left: 100%;
+  display: flex;
+  gap: calc(8 * var(--cg-u, 1px));
   margin-left: calc(8 * var(--cg-u, 1px));
+}
+.cg-previews-btn { white-space: nowrap; }
+/* its words say what it will do; on a phone only the eye shows, struck through while they're hidden */
+.cg-previews-btn svg { display: none; flex: none; }
+.cg-previews-btn:not(.is-hidden) .cg-previews-slash { display: none; }
+/* too narrow for a third thing on the row, with the Pictures panel beside it */
+@media (max-width: 1339px) {
+  .cg:not(.cg-narrow) .cg-views-side {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+.cg-narrow .cg-views-side {
+  display: contents;
 }
 
 /* narrow: the switch top right, clear of the title on the left; zoom at the
@@ -162,6 +177,9 @@
   .cg-narrow:is([data-tab="sat"], [data-tab="passes"], [data-tab="photos"]) .cg-seg-zoom,
   .cg-narrow:is([data-tab="sat"], [data-tab="passes"], [data-tab="photos"]) .cg-aurora-btn {
     right: calc(min(360px, 45%) + 12px);
+  }
+  .cg-narrow:is([data-tab="sat"], [data-tab="passes"], [data-tab="photos"]) .cg-previews-btn {
+    right: calc(min(360px, 45%) + 90px);
   }
 }
 
@@ -188,6 +206,25 @@
   z-index: 1;
   height: 44px;
 }
+.cg-narrow .cg-previews-btn {
+  position: absolute;
+  right: 90px; /* left of Aurora */
+  bottom: calc(var(--cg-dock-h, 0px) + 12px);
+  z-index: 1;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+}
+.cg-narrow .cg-previews-btn svg { display: block; }
+.cg-narrow .cg-previews-btn span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+/* the map's zoom has this corner, and the thumbnails are the globe's */
+.cg-narrow.cg-mode-map .cg-previews-btn { display: none; }
 
 .cg-narrow .cg-seg button {
   height: 44px;
