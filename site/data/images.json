@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-10-31T05:15:12Z",
+ "generated_at": "2026-10-31T16:00:10Z",
  "satellite": {
   "name": "CTS-SAT-1",
   "alias": "FrontierSat",
@@ -7,6 +7,188 @@
   "launched_at": "2026-05-03T06:59:00Z"
  },
  "images": [
+  {
+   "id": "2026-10-31-111421z",
+   "file": "camera/2026-10-31_111421Z.img",
+   "camera": "picam",
+   "title": "31 Oct 2026, 11:14 UTC",
+   "src": "images/2026-10-31-111421z.jpg",
+   "thumb": "images/thumbs/2026-10-31-111421z.jpg",
+   "width": 640,
+   "height": 480,
+   "status": "partial",
+   "status_note": "243 of 339 lines arrived, but line 209 did not, and the camera's JPEGs can't be decoded past a gap: the picture is shown down to it.",
+   "completeness": 0.6165,
+   "dark": false,
+   "file_size": 22791,
+   "sha256": "8ceb454bb49239fc0996f850441b07cf1e65dfb6895c13ba71bf0395d269d560",
+   "sha256_expected": "93d5044374cb2a8e4040dc2c09337e1d11627a45eae33fd0c8a455e187a783dd",
+   "captured_at": "2026-10-31T11:14:21Z",
+   "capture_date": "2026-10-31",
+   "capture_basis": "filename",
+   "satellite_clock": {
+    "correction_s": 0.0
+   },
+   "downlink": {
+    "first": "2026-10-31T13:56:42Z",
+    "last": "2026-10-31T14:02:36Z",
+    "packets": 118
+   },
+   "position": {
+    "lat": -57.8948,
+    "lon": 159.8942,
+    "alt_km": 515.5,
+    "place": "South Pacific Ocean",
+    "ground_sunlit": false,
+    "sun_elevation_deg": -14.5,
+    "satellite_sunlit": true,
+    "satellite_light": "sunlit",
+    "sun_above_limb_deg": 7.5,
+    "tle_epoch": "2026-10-29T12:28:45Z",
+    "basis": "SGP4 from the most recent TLE before capture"
+   },
+   "unnamed": false
+  },
+  {
+   "id": "2026-10-31-094109z",
+   "file": "camera/2026-10-31_094109Z.img",
+   "camera": "picam",
+   "title": "31 Oct 2026, 09:41 UTC",
+   "src": "images/2026-10-31-094109z.jpg",
+   "thumb": "images/thumbs/2026-10-31-094109z.jpg",
+   "width": 640,
+   "height": 480,
+   "status": "verified",
+   "status_note": "Bit-exact: matches the sha256 the satellite sent.",
+   "completeness": 1.0,
+   "dark": false,
+   "file_size": 24667,
+   "sha256": "092fd6c1d0a603a6c5b676b43714b784c3358e0ac5b7bd96c1cd58a7a249cb64",
+   "sha256_expected": "092fd6c1d0a603a6c5b676b43714b784c3358e0ac5b7bd96c1cd58a7a249cb64",
+   "captured_at": "2026-10-31T09:41:09Z",
+   "capture_date": "2026-10-31",
+   "capture_basis": "filename",
+   "satellite_clock": {
+    "correction_s": 0.0
+   },
+   "downlink": {
+    "first": "2026-10-31T10:20:55Z",
+    "last": "2026-10-31T10:24:22Z",
+    "packets": 246
+   },
+   "position": {
+    "lat": -62.9586,
+    "lon": -179.5768,
+    "alt_km": 516.9,
+    "place": "Southern Ocean",
+    "ground_sunlit": false,
+    "sun_elevation_deg": -9.4,
+    "satellite_sunlit": true,
+    "satellite_light": "sunlit",
+    "sun_above_limb_deg": 12.6,
+    "tle_epoch": "2026-10-29T12:28:45Z",
+    "basis": "SGP4 from the most recent TLE before capture"
+   },
+   "unnamed": false
+  },
+  {
+   "id": "2026-10-31-080804z",
+   "file": "camera/2026-10-31_080804Z.img",
+   "camera": "picam",
+   "title": "31 Oct 2026, 08:08 UTC",
+   "src": "images/2026-10-31-080804z.jpg",
+   "thumb": "images/thumbs/2026-10-31-080804z.jpg",
+   "width": 640,
+   "height": 480,
+   "status": "verified",
+   "status_note": "Bit-exact: matches the sha256 the satellite sent.",
+   "completeness": 1.0,
+   "dark": false,
+   "file_size": 22992,
+   "sha256": "2d53adf46771f5c3a09e981a7020379c601f3d0b3795caa575b1f4468b517592",
+   "sha256_expected": "2d53adf46771f5c3a09e981a7020379c601f3d0b3795caa575b1f4468b517592",
+   "captured_at": "2026-10-31T08:08:04Z",
+   "capture_date": "2026-10-31",
+   "capture_basis": "filename",
+   "satellite_clock": {
+    "correction_s": null
+   },
+   "downlink": {
+    "first": "2026-10-31T08:48:34Z",
+    "last": "2026-10-31T08:50:19Z",
+    "packets": 118
+   },
+   "position": {
+    "lat": -68.3557,
+    "lon": -160.6326,
+    "alt_km": 518.2,
+    "place": null,
+    "ground_sunlit": false,
+    "sun_elevation_deg": -3.9,
+    "satellite_sunlit": true,
+    "satellite_light": "sunlit",
+    "sun_above_limb_deg": 18.2,
+    "tle_epoch": "2026-10-29T12:28:45Z",
+    "basis": "SGP4 from the most recent TLE before capture"
+   },
+   "unnamed": false
+  },
+  {
+   "id": "unnamed-2026-10-31-0162",
+   "file": "camera/unnamed_2026-10-31_0162.img",
+   "camera": "picam",
+   "title": "Unnamed capture, received 31 Oct 2026",
+   "src": "images/unnamed-2026-10-31-0162.jpg",
+   "thumb": "images/thumbs/unnamed-2026-10-31-0162.jpg",
+   "width": 640,
+   "height": 480,
+   "status": "partial",
+   "status_note": "321 of 354 lines arrived, but line 87 did not, and the camera's JPEGs can't be decoded past a gap: the picture is shown down to it.",
+   "completeness": 0.2458,
+   "dark": true,
+   "file_size": 23796,
+   "sha256": "a2de83d589a45313da72a7ae3cdf6b6c7bda28a7a1e1220e25845e906db47557",
+   "sha256_expected": null,
+   "captured_at": null,
+   "capture_date": "2026-10-31",
+   "capture_basis": "date only",
+   "satellite_clock": null,
+   "downlink": {
+    "first": "2026-10-31T10:19:16Z",
+    "last": "2026-10-31T10:20:37Z",
+    "packets": 114
+   },
+   "position": null,
+   "unnamed": true
+  },
+  {
+   "id": "unnamed-2026-10-31-0188",
+   "file": "camera/unnamed_2026-10-31_0188.img",
+   "camera": "picam",
+   "title": "Unnamed capture, received 31 Oct 2026",
+   "src": "images/unnamed-2026-10-31-0188.jpg",
+   "thumb": "images/thumbs/unnamed-2026-10-31-0188.jpg",
+   "width": 640,
+   "height": 480,
+   "status": "partial",
+   "status_note": "87 of 392 lines arrived, but line 34 did not, and the camera's JPEGs can't be decoded past a gap: the picture is shown down to it. The JPEG header was restored from the camera's standard header, which every complete capture shares.",
+   "completeness": 0.0867,
+   "dark": false,
+   "file_size": 26342,
+   "sha256": "071182eec6716b5a584f8746c63df54778fa295ed0ced44aa76f7c0eb9c2b1bb",
+   "sha256_expected": null,
+   "captured_at": null,
+   "capture_date": "2026-10-31",
+   "capture_basis": "date only",
+   "satellite_clock": null,
+   "downlink": {
+    "first": "2026-10-31T14:43:55Z",
+    "last": "2026-10-31T14:47:56Z",
+    "packets": 51
+   },
+   "position": null,
+   "unnamed": true
+  },
   {
    "id": "2026-10-30-024800z",
    "file": "camera/2026-10-30_024800Z.img",
@@ -1147,6 +1329,14 @@
   },
   {
    "file": "camera/2026-10-23.img",
+   "reason": "the satellite refused the download: no such file on board"
+  },
+  {
+   "file": "camera/2026-10-31_090655Z.img",
+   "reason": "a download was started, but no packets of it were received"
+  },
+  {
+   "file": "camera/2026-10-31_104039Z.img",
    "reason": "the satellite refused the download: no such file on board"
   }
  ]
