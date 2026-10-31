@@ -39,7 +39,7 @@ import {
 } from './journey-parts.js';
 
 const DWELL_MS = 12000; // each picture, start to start
-const FIRST_MS = 4500; // the facts banner changes every 9 s or so: start half a beat after it
+const FIRST_MS = 2000; // from the end of the story's scroll, to the first picture starting to arrive
 const SHUTTER_MS = 160; // keep in step with .is-shut in viewfinder.css
 const BAND_PX = 16; // one row of the camera's JPEG blocks
 const REVEAL_MS = 1200; // about, before the slower packets

@@ -707,7 +707,8 @@ Play the intro again keeps only its icon.
 One exception, the user's choice (30 Oct 2026): the picture viewfinder on the landing's end view
 (`site/explore/viewfinder.js`) has corner brackets, a crosshair and a top-down reveal with a faint
 scanline, on purpose. Its data and captions still sit around the picture, never on it, in Jost and
-sentence case. These stay off every other page and component.
+sentence case. These stay off every other page and component. The first picture starts arriving
+2 s after the story's scroll ends, not on a schedule of its own, and 0.3 s after Orbit opens.
 
 The globe and the scene
 
