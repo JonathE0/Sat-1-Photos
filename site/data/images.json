@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-10-30T23:09:52Z",
+ "generated_at": "2026-10-31T04:00:06Z",
  "satellite": {
   "name": "CTS-SAT-1",
   "alias": "FrontierSat",
@@ -35,16 +35,16 @@
     "packets": 88
    },
    "position": {
-    "lat": 29.2754,
-    "lon": 114.26,
-    "alt_km": 499.3,
+    "lat": 29.2736,
+    "lon": 114.2607,
+    "alt_km": 499.4,
     "place": "Jiangxi, China",
     "ground_sunlit": true,
     "sun_elevation_deg": 43.0,
     "satellite_sunlit": true,
     "satellite_light": "sunlit",
     "sun_above_limb_deg": 65.1,
-    "tle_epoch": "2026-10-27T22:38:42Z",
+    "tle_epoch": "2026-10-29T12:28:45Z",
     "basis": "SGP4 from the most recent TLE before capture"
    },
    "unnamed": false
@@ -58,12 +58,12 @@
    "thumb": "images/thumbs/2026-10-30-024600z.jpg",
    "width": 640,
    "height": 480,
-   "status": "partial",
-   "status_note": "300 of 752 lines arrived, but line 43 did not, and the camera's JPEGs can't be decoded past a gap: the picture is shown down to it.",
-   "completeness": 0.0572,
+   "status": "verified",
+   "status_note": "Bit-exact: matches the sha256 the satellite sent.",
+   "completeness": 1.0,
    "dark": false,
    "file_size": 50462,
-   "sha256": "7cc7b46b0e5149e854c813509e0de71e38ac9fba1aa83a6086f9d3dbed85dbf2",
+   "sha256": "2e022cbefeb30e251cd6d7d36835a7e560704b72283b2554beba8cacb6ec7215",
    "sha256_expected": "2e022cbefeb30e251cd6d7d36835a7e560704b72283b2554beba8cacb6ec7215",
    "captured_at": "2026-10-30T02:45:44Z",
    "capture_date": "2026-10-30",
@@ -73,20 +73,20 @@
    },
    "downlink": {
     "first": "2026-10-30T04:48:00Z",
-    "last": "2026-10-30T04:54:01Z",
-    "packets": 161
+    "last": "2026-10-30T23:43:33Z",
+    "packets": 834
    },
    "position": {
-    "lat": 21.7024,
-    "lon": 115.963,
-    "alt_km": 497.7,
+    "lat": 21.7008,
+    "lon": 115.9636,
+    "alt_km": 497.8,
     "place": "North Pacific Ocean",
     "ground_sunlit": true,
     "sun_elevation_deg": 50.2,
     "satellite_sunlit": true,
     "satellite_light": "sunlit",
     "sun_above_limb_deg": 72.3,
-    "tle_epoch": "2026-10-27T22:38:42Z",
+    "tle_epoch": "2026-10-29T12:28:45Z",
     "basis": "SGP4 from the most recent TLE before capture"
    },
    "unnamed": false
@@ -119,16 +119,16 @@
     "packets": 662
    },
    "position": {
-    "lat": 14.1135,
-    "lon": 117.5461,
-    "alt_km": 496.7,
+    "lat": 14.1121,
+    "lon": 117.5467,
+    "alt_km": 496.8,
     "place": "North Pacific Ocean",
     "ground_sunlit": true,
     "sun_elevation_deg": 57.2,
     "satellite_sunlit": true,
     "satellite_light": "sunlit",
     "sun_above_limb_deg": 79.3,
-    "tle_epoch": "2026-10-27T22:38:42Z",
+    "tle_epoch": "2026-10-29T12:28:45Z",
     "basis": "SGP4 from the most recent TLE before capture"
    },
    "unnamed": false
