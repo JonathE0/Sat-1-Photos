@@ -24,6 +24,7 @@
 
   --jy-m: 16px;          /* outer margin */
   --jy-ctl: 36px;        /* control height */
+  --jy-row: 44px;        /* the bottom toolbars' height: the clock's two lines */
   --jy-top: 0px;         /* a sticky header above the stage, if the page has one */
   --jy-nav: 64px;        /* room for a nav laid over the stage */
   --jy-bottom: max(var(--jy-m), env(safe-area-inset-bottom));
@@ -38,7 +39,7 @@
 
 @media (min-width: 600px) { .jy-root { --jy-m: 24px; } }
 @media (min-width: 1100px) { .jy-root { --jy-m: 32px; } }
-@media (min-width: 2400px) { .jy-root { --jy-m: 48px; --jy-ctl: 40px; } }
+@media (min-width: 2400px) { .jy-root { --jy-m: 48px; --jy-ctl: 40px; --jy-row: 52px; } }
 @media (pointer: coarse) { .jy-root { --jy-ctl: 44px; } }
 
 .jy-root *, .jy-root *::before, .jy-root *::after { box-sizing: border-box; }
@@ -331,7 +332,31 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
   transition: background-color 180ms var(--jy-ease-out);
 }
 .jy-sq:hover { background: var(--jy-raised); }
-.jy-sq:disabled { color: var(--jy-muted); opacity: 0.5; cursor: default; background: var(--jy-panel); }
+.jy-sq:disabled { color: var(--jy-muted); cursor: default; background: var(--jy-panel); }
+.jy-sq:disabled svg { opacity: 0.5; }
+
+/* Choosing between things, here and in the panel's tabs: the chosen one is Raised with
+   an Ink line under it, as the nav marks the current page. */
+.jy-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: var(--jy-ctl);
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  padding: 0 12px;
+  background: none;
+  color: var(--jy-muted);
+  font: 500 var(--jy-small) / 1.2 var(--jy-font);
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 180ms var(--jy-ease-out), color 180ms var(--jy-ease-out);
+}
+.jy-tab:hover { background: var(--jy-raised); color: var(--jy-ink); }
+.jy-tab[aria-pressed="true"] { background: var(--jy-raised); box-shadow: inset 0 -2px 0 var(--jy-ink); color: var(--jy-ink); }
 
 /* The end-state controls: hidden during the story. Their boxes pass the
    pointer through; only the controls themselves take it. */
@@ -357,26 +382,26 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
 .jy-corner .jy-zoom > *,
 .jy-facts-slot > * { pointer-events: auto; }
 
-/* time: [clock] [1x 60x 600x] [Now], bottom left */
+/* Two flat toolbars along the bottom, one height, on Panel because they often sit over
+   bright cloud; their parts are divided by a Raised line.
+   time: [clock | 1x 60x 600x | Now], bottom left */
 .jy-time {
   left: var(--jy-m);
   bottom: var(--jy-bottom);
   display: flex;
   align-items: stretch;
-  gap: 8px;
+  min-height: var(--jy-row);
+  background: var(--jy-panel);
 }
 .jy-root[data-mode="still"] .jy-time { display: none; }
 
-/* on a flat Panel block: it often sits over bright cloud */
 .jy-clock {
   display: flex;
   flex-direction: column;
   justify-content: center;
   min-width: 11.5em;
-  min-height: var(--jy-ctl);
   margin: 0;
   padding: 4px 12px;
-  background: var(--jy-panel);
   line-height: 1.25;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
@@ -386,7 +411,7 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
 
 .jy-speed {
   display: flex;
-  background: var(--jy-panel);
+  box-shadow: inset 1px 0 0 var(--jy-raised);
 }
 .jy-speed label { position: relative; display: block; cursor: pointer; }
 .jy-speed input {
@@ -412,59 +437,100 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
   transition: background-color 180ms var(--jy-ease-out), color 180ms var(--jy-ease-out);
 }
 .jy-speed label:hover span { background: var(--jy-raised); color: var(--jy-ink); }
-.jy-speed input:checked + span { background: var(--jy-ink); color: var(--jy-space); }
+.jy-speed input:checked + span { background: var(--jy-raised); box-shadow: inset 0 -2px 0 var(--jy-ink); color: var(--jy-ink); }
 .jy-speed input:focus-visible + span { outline: 2px solid var(--jy-blue); outline-offset: 2px; }
 
 .jy-now { min-height: var(--jy-ctl); padding: 0 16px; }
-.jy-now[aria-disabled="true"] { background: var(--jy-panel); color: var(--jy-muted); cursor: default; }
+.jy-now[aria-disabled="true"] { background: none; box-shadow: inset 1px 0 0 var(--jy-raised); color: var(--jy-muted); cursor: default; }
 
-/* bottom right: [Play the intro again] [See all n pictures] [- +] */
+/* bottom right: [Play the intro again] [See all n pictures] [- | +] */
 .jy-corner {
   right: var(--jy-m);
   bottom: var(--jy-bottom);
   display: flex;
-  align-items: center;
-  gap: 24px;
+  align-items: stretch;
+  gap: 8px;
+  min-height: var(--jy-row);
 }
-.jy-all { min-height: var(--jy-ctl); }
-/* a quiet secondary control on a flat Panel block, readable over bright cloud */
+/* the one strong action down here: the pictures */
+.jy-all { gap: 8px; min-height: var(--jy-ctl); padding: 0 16px; }
+/* quiet, on Panel */
 .jy-again,
 .jy-details {
+  gap: 8px;
   min-height: var(--jy-ctl);
   padding: 0 16px;
   background: var(--jy-panel);
   text-decoration: none;
   transition: background-color 180ms var(--jy-ease-out);
 }
+.jy-again svg { flex: none; color: var(--jy-muted); transition: color 180ms var(--jy-ease-out); }
+.jy-again:hover svg { color: var(--jy-ink); }
 .jy-again:hover,
 .jy-details:hover { background: var(--jy-raised); }
 /* phones only: everywhere else the summary bar does this */
 .jy-details { display: none; }
 .jy-root[data-mode="still"] .jy-details { display: none !important; }
-.jy-zoom { display: flex; gap: 4px; }
+.jy-zoom { display: flex; }
+.jy-zoom .jy-sq { width: var(--jy-row); height: auto; min-height: var(--jy-ctl); }
+.jy-zoom .jy-sq + .jy-sq { box-shadow: inset 1px 0 0 var(--jy-raised); }
 .jy-root[data-mode="still"] .jy-zoom { display: none; }
 
 /* the facts ticker (facts.js) sits above the time controls, at the end only */
 .jy-facts-slot {
   left: var(--jy-m);
-  bottom: calc(var(--jy-bottom) + var(--jy-ctl) + 16px);
+  bottom: calc(var(--jy-bottom) + var(--jy-row) + 8px);
   width: min(34em, calc(100% - 2 * var(--jy-m)));
 }
 .jy-facts-slot:empty { display: none; }
+/* put away, it leaves a button in its corner to bring it back */
+.jy-facts-hidden .jy-facts-slot { opacity: 0; visibility: hidden; }
+.jy-facts-show {
+  position: absolute;
+  z-index: 2;
+  left: var(--jy-m);
+  bottom: calc(var(--jy-bottom) + var(--jy-row) + 8px);
+  min-height: var(--jy-ctl);
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  padding: 0 12px;
+  background: var(--jy-panel);
+  color: var(--jy-ink);
+  font: 500 var(--jy-small) / 1.2 var(--jy-font);
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 150ms var(--jy-ease-exit), visibility 0s linear 150ms, background-color 180ms var(--jy-ease-out);
+}
+.jy-locked .jy-facts-show {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 240ms var(--jy-ease-out), visibility 0s, background-color 180ms var(--jy-ease-out);
+}
+.jy-facts-show:hover { background: var(--jy-raised); }
+.jy-root[data-mode="still"] .jy-facts-show { display: none; }
+/* in the details, where the end view has no room for the banner, there's nothing to put away */
+.jy-details-facts .cf-hide { display: none; }
 /* below this the banner and the details would meet; above it the banner stays put */
-@media (max-width: 1099px) { .jy-panel-open .jy-facts-slot { opacity: 0; visibility: hidden; } }
-.jy-narrow.jy-panel-open .jy-facts-slot { opacity: 0; visibility: hidden; }
+@media (max-width: 1099px) {
+  .jy-panel-open .jy-facts-slot,
+  .jy-panel-open .jy-facts-show { opacity: 0; visibility: hidden; }
+}
+.jy-narrow.jy-panel-open .jy-facts-slot,
+.jy-narrow.jy-panel-open .jy-facts-show { opacity: 0; visibility: hidden; }
 
-/* The dock, top right, at the end only: the summary bar, and under it the details
-   (.jy-panel, dropped down from the bar) or, on big screens, the viewfinder in the
-   same place. Below the bar the box only passes the pointer through. */
+/* The dock, top right, at the end only: the summary bar with its tabs, and under it the
+   details (.jy-panel, dropped down from the bar) or, on big screens, the viewfinder in
+   the same place. Below the bar the box only passes the pointer through. */
 .jy-dock {
   position: absolute;
   z-index: 4;
   top: var(--jy-nav);
   right: var(--jy-m);
   /* down to just above the bottom-right controls */
-  bottom: calc(var(--jy-bottom) + var(--jy-ctl) + 24px);
+  bottom: calc(var(--jy-bottom) + var(--jy-row) + 16px);
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   grid-template-rows: auto minmax(0, 1fr);
@@ -474,24 +540,18 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
 }
 .jy-root[data-mode="still"] .jy-dock { display: none; }
 
+/* where it is, over [Stats | Pictures] [Hide]; on one row where the viewfinder shows (below) */
 .jy-summary {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
   width: 100%;
   min-height: var(--jy-ctl);
-  margin: 0;
-  border: 0;
-  border-radius: 0;
-  padding: 0 12px;
   background: var(--jy-panel);
   color: var(--jy-ink);
   font: 400 var(--jy-small) / 1.2 var(--jy-font);
   letter-spacing: 0.01em;
   font-variant-numeric: tabular-nums;
-  text-align: left;
-  cursor: pointer;
   pointer-events: auto;
   opacity: 0;
   visibility: hidden;
@@ -500,28 +560,42 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
 .jy-ui-on .jy-summary {
   opacity: 1;
   visibility: visible;
-  transition: opacity 240ms var(--jy-ease-out), visibility 0s, background-color 180ms var(--jy-ease-out);
+  transition: opacity 240ms var(--jy-ease-out), visibility 0s;
 }
 /* the credits open in the same corner: the dock steps aside but stays laid out, so the
    framing doesn't move (and the same below for the viewfinder) */
 .jy-credits-open .jy-summary { opacity: 0; visibility: hidden; }
-.jy-summary:hover { background: var(--jy-raised); }
-/* a long place name takes a second line, inside the bar's height, so the altitude is never cut off */
-.jy-summary-text { min-width: 0; }
+/* a long place name takes a second line, so the altitude is never cut off */
+.jy-summary-text { flex: 1 1 100%; min-width: 0; margin: 0; padding: 8px 12px; }
 .jy-summary-name { margin-right: 0.25em; font-size: var(--jy-body); font-weight: 500; letter-spacing: 0; }
+.jy-summary-tools { display: flex; flex: 1 1 100%; box-shadow: inset 0 1px 0 var(--jy-raised); }
+.jy-tabs { display: flex; flex: 1; }
+.jy-tabs .jy-tab { flex: 1; }
+.jy-dock-toggle { flex: none; box-shadow: inset 1px 0 0 var(--jy-raised); }
 /* The chevron turns even when the system prefers reduced motion (the site's choice,
    as the facts banner and the viewfinder); only ?motion=reduced (.jy-calm) stops it. */
-.jy-summary svg { flex: none; transition: transform 240ms var(--jy-ease-out) !important; }
-.jy-summary[aria-expanded="true"] svg { transform: rotate(180deg); }
-.jy-calm .jy-summary svg { transition: none !important; }
+.jy-dock-toggle svg { flex: none; transition: transform 240ms var(--jy-ease-out) !important; }
+.jy-dock-toggle[aria-expanded="true"] svg { transform: rotate(180deg); }
+.jy-calm .jy-dock-toggle svg { transition: none !important; }
+/* The whole panel put away: only the button to bring it back, in the same corner. The dock
+   stays laid out, so the framing doesn't move. */
+.jy-root:not(.jy-narrow).jy-dock-hidden .jy-summary { justify-self: end; width: auto; }
+.jy-root:not(.jy-narrow).jy-dock-hidden .jy-summary-text,
+.jy-root:not(.jy-narrow).jy-dock-hidden .jy-tabs { display: none; }
+.jy-root:not(.jy-narrow).jy-dock-hidden .jy-summary-tools { flex: none; box-shadow: none; }
+.jy-root:not(.jy-narrow).jy-dock-hidden .jy-dock-toggle { box-shadow: none; color: var(--jy-ink); }
+/* the tabs where they drop down: Stats and Pictures are the two halves of the details */
+.jy-root:not(.jy-narrow) .jy-panel[data-tab="stats"] .jy-latest { display: none; }
+.jy-root:not(.jy-narrow) .jy-panel[data-tab="pictures"] :is(.jy-panel-head, [data-ref="aka"], .jy-panel-zoom, .jy-facts, .jy-elements, .jy-details-facts, .jy-retry) { display: none; }
+.jy-root:not(.jy-narrow) .jy-panel[data-tab="pictures"] .jy-latest { margin-top: 12px; }
 
 /* The picture viewfinder (viewfinder.js): big screens only, at the end only. The
    dock's box is set here, whatever the picture and before the module loads, because
    the framing keeps the Earth's limb under it from the start (computeFrame). The
    picture is 4:3 and never larger than its own 640 x 480: it gives way to the height,
-   and on narrower screens to the headline. The bar needs its 380px, so on the shortest
-   of these the picture sits centred in a wider frame.
-   The media query is VIEWFINDER_MEDIA in journey.js. */
+   and on narrower screens to the headline. The bar needs 488px to hold its words and
+   its tabs on one row, so on the shortest of these the picture sits centred in a wider
+   frame. The media query is VIEWFINDER_MEDIA in journey.js. */
 .jy-vf-slot { display: none; }
 @media (min-width: 1360px) and (min-height: 760px) and (min-aspect-ratio: 4/5) {
   .jy-dock {
@@ -534,9 +608,14 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
       calc(68.6vh - var(--jy-nav) - var(--jy-ctl) - var(--vf-gap) - var(--vf-band-top) - var(--vf-band-bottom) - var(--vf-caption)),
       calc((50vw - 112px) * 3 / 4));
     bottom: auto;
-    width: max(380px, calc(var(--vf-pic-h) * 4 / 3 + 2 * var(--vf-inset)));
+    width: max(488px, calc(var(--vf-pic-h) * 4 / 3 + 2 * var(--vf-inset)));
     height: calc(var(--jy-ctl) + var(--vf-gap) + var(--vf-band-top) + var(--vf-pic-h) + var(--vf-band-bottom) + var(--vf-caption));
   }
+  .jy-summary { flex-wrap: nowrap; }
+  .jy-summary-text { flex: 1 1 auto; padding: 0 12px; }
+  .jy-summary-tools { flex: none; align-self: stretch; box-shadow: none; }
+  .jy-tabs { flex: none; }
+  .jy-tabs .jy-tab { flex: none; }
   .jy-vf-slot {
     grid-area: 2 / 1;
     display: block;
@@ -555,6 +634,7 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
   .jy-vf-slot > * { pointer-events: auto; }
   /* the details take its place; it keeps its picture until they close */
   .jy-panel-open .jy-vf-slot,
+  .jy-dock-hidden .jy-vf-slot,
   .jy-credits-open .jy-vf-slot {
     opacity: 0;
     visibility: hidden;
@@ -568,9 +648,10 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
 
 @media (max-width: 1099px) {
   /* the corner row goes above the time row so the two never meet */
-  .jy-root:not(.jy-narrow) .jy-corner { bottom: calc(var(--jy-bottom) + var(--jy-ctl) + 12px); }
-  .jy-root:not(.jy-narrow) .jy-facts-slot { bottom: calc(var(--jy-bottom) + 2 * var(--jy-ctl) + 28px); }
-  .jy-root:not(.jy-narrow) .jy-dock { bottom: calc(var(--jy-bottom) + 2 * var(--jy-ctl) + 28px); }
+  .jy-root:not(.jy-narrow) .jy-corner { bottom: calc(var(--jy-bottom) + var(--jy-row) + 8px); }
+  .jy-root:not(.jy-narrow) .jy-facts-slot,
+  .jy-root:not(.jy-narrow) .jy-facts-show { bottom: calc(var(--jy-bottom) + 2 * var(--jy-row) + 16px); }
+  .jy-root:not(.jy-narrow) .jy-dock { bottom: calc(var(--jy-bottom) + 2 * var(--jy-row) + 24px); }
 }
 
 /* ---- marks over the canvas: pins and the satellite -------------------------------- */
@@ -716,7 +797,7 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
   width: clamp(360px, 18vw, 420px);
   max-width: calc(100% - 2 * var(--jy-m));
   /* down to just above the bottom-right controls */
-  max-height: calc(100% - max(96px, calc(var(--jy-nav) + 32px)) - var(--jy-bottom) - var(--jy-ctl) - 24px);
+  max-height: calc(100% - max(96px, calc(var(--jy-nav) + 32px)) - var(--jy-bottom) - var(--jy-row) - 16px);
   padding: 24px;
   transform: translateX(16px);
   transition: opacity 150ms var(--jy-ease-exit), transform 150ms var(--jy-ease-exit);
@@ -880,7 +961,6 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
 .jy-narrow .jy-time {
   right: var(--jy-m);
   justify-content: space-between;
-  gap: 4px;
 }
 .jy-narrow .jy-clock { min-width: 0; flex: 1; padding: 4px 8px; }
 .jy-narrow .jy-speed span { min-width: 44px; padding: 0 4px; }
@@ -889,17 +969,21 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
 /* above the time row: [Play the intro again] [Satellite details] / [See all n pictures] [- +] */
 .jy-narrow .jy-corner {
   left: var(--jy-m);
-  bottom: calc(var(--jy-bottom) + var(--jy-ctl) + 8px);
+  bottom: calc(var(--jy-bottom) + var(--jy-row) + 8px);
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   grid-template-areas: "again details" "all zoom";
   gap: 4px 8px;
-  align-items: center;
+  align-items: stretch;
+  min-height: 0;
 }
 .jy-narrow .jy-again { grid-area: again; justify-self: start; padding: 0 12px; }
 .jy-narrow .jy-details { grid-area: details; display: inline-flex; padding: 0 12px; }
 .jy-narrow .jy-all { grid-area: all; justify-self: start; }
 .jy-narrow .jy-zoom { grid-area: zoom; justify-self: end; }
+/* no room for the icons on a phone's rows */
+.jy-narrow .jy-again svg,
+.jy-narrow .jy-all svg { display: none; }
 /* no bar on a phone, and the details are a bottom sheet over the whole stage */
 .jy-narrow .jy-dock { position: static; display: block; width: auto; max-width: none; }
 .jy-narrow .jy-summary { display: none; }
@@ -914,10 +998,12 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
   .jy-narrow .jy-speed span { min-width: 34px; padding: 0 2px; }
   .jy-narrow .jy-now { padding: 0 8px; }
 }
-.jy-narrow .jy-facts-slot { bottom: calc(var(--jy-bottom) + 3 * var(--jy-ctl) + 32px); }
+.jy-narrow .jy-facts-slot,
+.jy-narrow .jy-facts-show { bottom: calc(var(--jy-bottom) + var(--jy-row) + 2 * var(--jy-ctl) + 24px); }
 .jy-narrow.jy-panel-open .jy-time,
 .jy-narrow.jy-panel-open .jy-corner,
-.jy-narrow.jy-credits-open .jy-facts-slot { opacity: 0; visibility: hidden; }
+.jy-narrow.jy-credits-open .jy-facts-slot,
+.jy-narrow.jy-credits-open .jy-facts-show { opacity: 0; visibility: hidden; }
 
 .jy-narrow .jy-panel {
   position: absolute;
@@ -1009,6 +1095,7 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
   .jy-root .jy-time,
   .jy-root .jy-corner,
   .jy-root .jy-facts-slot,
+  .jy-root .jy-facts-show,
   .jy-root .jy-vf-slot,
   .jy-root .jy-summary,
   .jy-root .jy-marks,

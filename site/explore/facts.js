@@ -1,8 +1,8 @@
 /**
  * A small rotating banner of facts about CTS-SAT-1, and the "In the news" list.
  *
- *   createFactTicker(container, { facts, live, intervalMs = 9000, reducedMotion })
- *     -> { start(), stop(), next(), prev(), dispose() }
+ *   createFactTicker(container, { facts, live, intervalMs = 9000, reducedMotion, onHide })
+ *     -> { start(), stop(), next(), prev(), reveal(), dispose() }
  *   createNewsList(container, { news }) -> { dispose() }
  *
  * `facts` is the list in facts.json (objects with `text` and `sources`, or plain
@@ -14,10 +14,11 @@
  *
  * One fact at a time, in a shuffled order with no repeats until all have been
  * shown. Each fact slides out to one side as it fades and the next slides in
- * from the other. The rotation pauses while the banner is hovered or focused,
- * and while the tab is hidden. Screen readers hear a fact only when the visitor
- * steps to it with Previous or Next. With reduced motion the facts still change,
- * by a plain crossfade with no slide.
+ * from the other, and the box fades out and in with them. The rotation pauses
+ * while the banner is hovered or focused, and while the tab is hidden. Screen
+ * readers hear a fact only when the visitor steps to it with Previous or Next.
+ * With reduced motion the facts still change, by a plain crossfade with no slide.
+ * `onHide`, if given, adds a Hide button that calls it.
  *
  * Styles: facts.css. Class prefix `cf-`.
  */
@@ -184,7 +185,7 @@ function now(r) {
 /**
  * The banner. `container` gets one child; dispose() removes it.
  */
-export function createFactTicker(container, { facts, live, intervalMs = 9000, reducedMotion } = {}) {
+export function createFactTicker(container, { facts, live, intervalMs = 9000, reducedMotion, onHide } = {}) {
   const reduced = typeof reducedMotion === 'boolean' ? reducedMotion : prefersReducedMotion();
   const interval = Math.max(3000, Number(intervalMs) || 9000);
   const statics = staticItems(facts);
@@ -206,6 +207,12 @@ export function createFactTicker(container, { facts, live, intervalMs = 9000, re
   const nextBtn = el('button', 'cf-btn', 'Next fact');
   nextBtn.type = 'button';
   nav.append(prevBtn, nextBtn);
+  const hideBtn = typeof onHide === 'function' ? el('button', 'cf-btn cf-hide', 'Hide') : null;
+  if (hideBtn) {
+    hideBtn.type = 'button';
+    hideBtn.setAttribute('aria-label', 'Hide the facts');
+    nav.append(hideBtn);
+  }
 
   const foot = el('div', 'cf-foot');
   foot.append(meta, nav);
@@ -335,6 +342,14 @@ export function createFactTicker(container, { facts, live, intervalMs = 9000, re
     }, 50);
   }
 
+  /** Jump to the entry side with no transition, then let the fact slide home as the box fades in. */
+  function enter() {
+    root.classList.add('is-enter');
+    root.classList.remove('is-out');
+    void root.offsetWidth;
+    root.classList.remove('is-enter');
+  }
+
   /**
    * Show history[pos] with a slide and fade: the old fact leaves to one side
    * and the new one comes in from the other (dir 1: leaves left, enters from
@@ -346,23 +361,15 @@ export function createFactTicker(container, { facts, live, intervalMs = 9000, re
     if (!item) return;
     clearTimeout(fadeTimer);
     root.classList.toggle('is-back', dir < 0);
-    const animate = Boolean(shownText);
+    const leaving = Boolean(shownText);
     const swap = () => {
       if (disposed) return;
       if (!paint(item)) return;
-      if (animate) {
-        // jump to the entry side with no transition, then let it slide home
-        root.classList.add('is-enter');
-        root.classList.remove('is-out');
-        void root.offsetWidth;
-        root.classList.remove('is-enter');
-      } else {
-        root.classList.remove('is-out');
-      }
+      enter();
       scheduleRefresh();
       if (manual) announce(item);
     };
-    if (animate) {
+    if (leaving) {
       root.classList.add('is-out');
       fadeTimer = setTimeout(swap, FADE_OUT_MS);
     } else {
@@ -434,6 +441,7 @@ export function createFactTicker(container, { facts, live, intervalMs = 9000, re
 
   prevBtn.addEventListener('click', onPrev);
   nextBtn.addEventListener('click', onNext);
+  hideBtn?.addEventListener('click', onHide);
   root.addEventListener('pointerenter', onEnter);
   root.addEventListener('pointerleave', onLeave);
   root.addEventListener('focusin', onFocusIn);
@@ -467,6 +475,10 @@ export function createFactTicker(container, { facts, live, intervalMs = 9000, re
     prev() {
       step(-1, true);
     },
+    /** Bring the fact on screen in again, as when it first arrives (not announced). */
+    reveal() {
+      if (shownText) enter();
+    },
     dispose() {
       disposed = true;
       running = false;
@@ -475,6 +487,7 @@ export function createFactTicker(container, { facts, live, intervalMs = 9000, re
       clearInterval(refreshTimer);
       prevBtn.removeEventListener('click', onPrev);
       nextBtn.removeEventListener('click', onNext);
+      hideBtn?.removeEventListener('click', onHide);
       root.removeEventListener('pointerenter', onEnter);
       root.removeEventListener('pointerleave', onLeave);
       root.removeEventListener('focusin', onFocusIn);
@@ -487,6 +500,7 @@ export function createFactTicker(container, { facts, live, intervalMs = 9000, re
       return history[pos] ? history[pos].id : null;
     },
     element: root,
+    hideButton: hideBtn,
   };
 }
 

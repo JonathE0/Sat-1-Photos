@@ -141,6 +141,24 @@ const storyFinished = {
     } catch { /* no storage: the story just plays again */ }
   },
 };
+/** A visitor's choice that outlasts the tab: the panel or the facts put away. */
+const rememberedChoice = (key) => ({
+  get() {
+    try {
+      return localStorage.getItem(key) === '1';
+    } catch {
+      return false;
+    }
+  },
+  set(on) {
+    try {
+      if (on) localStorage.setItem(key, '1');
+      else localStorage.removeItem(key);
+    } catch { /* no storage: it's only remembered until the page closes */ }
+  },
+});
+const dockHiddenChoice = rememberedChoice('cts-panel-hidden');
+const factsHiddenChoice = rememberedChoice('cts-facts-hidden');
 /** Screens with room for the picture viewfinder; keep in step with .jy-vf-slot in journey.css. */
 const VIEWFINDER_MEDIA = '(min-width: 1360px) and (min-height: 760px) and (min-aspect-ratio: 4/5)';
 /** Close up, the camera levels out to this pitch so the limb sits behind the satellite. */
@@ -177,6 +195,8 @@ let uid = 0;
 const ICON_MINUS = '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M3 8h10" stroke="currentColor" stroke-width="1.6"/></svg>';
 const ICON_PLUS = '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M3 8h10M8 3v10" stroke="currentColor" stroke-width="1.6"/></svg>';
 const ICON_DOWN = '<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M2 4.5l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>';
+const ICON_REPLAY = '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M3.2 8a4.8 4.8 0 1 0 1.5-3.5M4.4 2.2v2.6H7" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>';
+const ICON_ARROW = '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M3 8h9M8.5 4.5L12 8l-3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>';
 
 function template(id, siteRoot) {
   const logo = new URL('assets/calgarytospace-logo.png', siteRoot).href;
@@ -187,8 +207,17 @@ function template(id, siteRoot) {
            How things stack is z-index in journey.css, not this. resize() swaps the last two when
            the corner row sits above the time row. -->
       <div class="jy-dock">
-        <button type="button" class="jy-summary" data-ref="summary" aria-expanded="false" aria-controls="jy-panel-${id}"
-          aria-label="CTS-SAT-1: where it is now"><span class="jy-summary-text"><span class="jy-summary-name">CTS-SAT-1</span> <span data-ref="summaryWhere"></span></span>${ICON_DOWN}</button>
+        <div class="jy-summary" data-ref="summary">
+          <p class="jy-summary-text"><span class="jy-summary-name">CTS-SAT-1</span> <span data-ref="summaryWhere"></span></p>
+          <div class="jy-summary-tools">
+            <div class="jy-tabs" role="group" aria-label="Show in this panel">
+              <button type="button" class="jy-tab" data-ref="tabStats" aria-pressed="false" aria-controls="jy-panel-${id}">Stats</button>
+              <button type="button" class="jy-tab" data-ref="tabPictures" aria-pressed="false">Pictures</button>
+            </div>
+            <button type="button" class="jy-tab jy-dock-toggle" data-ref="dockToggle" aria-expanded="true"
+              aria-label="Hide this panel"><span data-ref="dockToggleText">Hide</span> ${ICON_DOWN}</button>
+          </div>
+        </div>
         <div class="jy-vf-slot" data-ref="viewfinderSlot" hidden></div>
 
       <aside class="jy-panel" id="jy-panel-${id}" data-ref="panel" hidden aria-labelledby="jy-panel-title-${id}">
@@ -285,6 +314,7 @@ function template(id, siteRoot) {
       <div class="jy-card" data-ref="card" hidden></div>
 
       <div class="jy-facts-slot" data-ref="factsSlot"></div>
+      <button type="button" class="jy-facts-show" data-ref="factsShow" hidden>Show facts</button>
 
       <div class="jy-time" data-ref="time" role="group" aria-label="Time">
         <p class="jy-clock"><span class="jy-clock-main" data-ref="clockMain"></span><span class="jy-clock-sub" data-ref="clockSub"></span></p>
@@ -295,10 +325,10 @@ function template(id, siteRoot) {
       </div>
 
       <div class="jy-corner" data-ref="corner">
-        <button type="button" class="jy-textbtn jy-again" data-ref="again">Play the intro again</button>
+        <button type="button" class="jy-textbtn jy-again" data-ref="again">${ICON_REPLAY}<span>Play the intro again</span></button>
         <button type="button" class="jy-textbtn jy-details" data-ref="details" aria-expanded="false"
           aria-controls="jy-panel-${id}">Satellite details</button>
-        <a class="jy-btn jy-all" data-ref="all"></a>
+        <a class="jy-btn jy-all" data-ref="all"><span data-ref="allText"></span>${ICON_ARROW}</a>
         <div class="jy-zoom" role="group" aria-label="Zoom">
           <button type="button" class="jy-sq" data-ref="zoomOut" aria-label="Zoom out">${ICON_MINUS}</button>
           <button type="button" class="jy-sq" data-ref="zoomIn" aria-label="Zoom in">${ICON_PLUS}</button>
@@ -392,6 +422,10 @@ export function mountJourney(container, options = {}) {
     cdist: 3,
     cdistTarget: 3,
     panel: false,
+    tab: 'stats', // what the details show: 'stats', or 'pictures' where the viewfinder doesn't show
+    dockHidden: false, // the whole panel put away
+    dockResume: null, // the tab that was open when it was
+    factsHidden: false,
     sheetOpen: false,
     creditsOpen: false,
     selectedId: null,
@@ -752,6 +786,8 @@ export function mountJourney(container, options = {}) {
   function placeFacts() {
     const home = frame.fit >= FIT_NO_FACTS ? ref.detailsFacts : ref.factsSlot;
     if (ticker?.element && ticker.element.parentNode !== home) home.append(ticker.element);
+    // in the details the facts are out of the way already, with nothing to hide
+    ref.factsShow.hidden = !state.factsHidden || frame.fit >= FIT_NO_FACTS;
   }
 
   function computeFrame() {
@@ -875,11 +911,11 @@ export function mountJourney(container, options = {}) {
       const b = boxOf(el, s);
       if (b && getComputedStyle(el).visibility !== 'hidden') covers.push(b);
     };
-    for (const el of [...ref.time.children, ...ref.corner.children, ...ref.factsSlot.children, ref.summary]) cover(el);
+    for (const el of [...ref.time.children, ...ref.corner.children, ...ref.factsSlot.children, ref.factsShow, ref.summary]) cover(el);
     // the viewfinder's fade out would still count as showing, so go by what took its place
     if (state.panel) cover(ref.panel);
     else if (state.creditsOpen) cover(ref.credits);
-    else cover(ref.viewfinderSlot);
+    else if (!state.dockHidden) cover(ref.viewfinderSlot);
     frame.covers = covers;
   }
 
@@ -1623,7 +1659,8 @@ export function mountJourney(container, options = {}) {
     const h = el.offsetHeight;
     const gap = 16 * frame.ui;
     const s = stageRect();
-    const dock = union([boxOf(ref.summary, s), state.panel ? boxOf(ref.panel, s) : boxOf(ref.viewfinderSlot, s)]);
+    const below = state.panel ? ref.panel : state.dockHidden ? null : ref.viewfinderSlot;
+    const dock = union([boxOf(ref.summary, s), boxOf(below, s)]);
     const clear = (cx, cy) => !dock || cx + w <= dock.left - 8 || cy >= dock.bottom + 8;
     let x = clamp(pin.x - w / 2, 8, W - w - 8);
     let y = pin.y - h - gap;
@@ -1707,19 +1744,32 @@ export function mountJourney(container, options = {}) {
     opts.onOpenPhoto(pid);
   }
 
-  // ---- the satellite's details: one state, opened by the summary bar, the phone's
+  // ---- the satellite's details: one state, opened by the bar's Stats tab, the phone's
   // "Satellite details" button or the satellite itself ------------------------------------
   function setExpanded(open) {
-    for (const toggle of [ref.summary, ref.details, ref.sat]) toggle.setAttribute('aria-expanded', String(open));
+    for (const toggle of [ref.details, ref.sat]) toggle.setAttribute('aria-expanded', String(open));
   }
 
-  function openPanel({ focus = true } = {}) {
+  const viewfinderHere = () => bigQuery.matches && !ref.viewfinderSlot.hidden;
+
+  /** Where the viewfinder shows, Pictures is it and one tab is always chosen; elsewhere they drop down. */
+  function paintTabs() {
+    const pictures = viewfinderHere() ? !state.panel : state.panel && state.tab === 'pictures';
+    ref.tabPictures.setAttribute('aria-pressed', String(pictures));
+    ref.tabStats.setAttribute('aria-pressed', String(state.panel && state.tab === 'stats'));
+    ref.panel.dataset.tab = state.tab;
+  }
+
+  function openPanel({ focus = true, tab = 'stats' } = {}) {
     dismissHint();
     closeCredits();
+    setDockHidden(false);
+    state.tab = tab;
     state.panel = true;
     ref.panel.hidden = false;
     root.classList.add('jy-panel-open');
     setExpanded(true);
+    paintTabs();
     requestAnimationFrame(() => ref.panel.classList.add('is-on'));
     uiDirty = true;
     paintPanel(true);
@@ -1728,10 +1778,49 @@ export function mountJourney(container, options = {}) {
     measureSettled();
     if (focus) {
       // the bar stays right above the details; a phone's sheet has its own title
-      const target = frame.narrow ? ref.panel.querySelector('.jy-panel-title') : ref.summary;
+      const target = frame.narrow ? ref.panel.querySelector('.jy-panel-title') : ref.tabStats;
       target.focus({ preventScroll: true });
     }
   }
+
+  /** The whole panel put away, down to a button to bring it back; the framing stays as it was. */
+  function setDockHidden(hidden) {
+    if (state.dockHidden === hidden) return;
+    state.dockHidden = hidden;
+    root.classList.toggle('jy-dock-hidden', hidden);
+    ref.dockToggle.setAttribute('aria-expanded', String(!hidden));
+    ref.dockToggle.setAttribute('aria-label', hidden ? 'Show this panel' : 'Hide this panel');
+    ref.dockToggleText.textContent = hidden ? 'Show panel' : 'Hide';
+    dockHiddenChoice.set(hidden);
+    syncViewfinder();
+    measureSettled();
+  }
+
+  /** The tabs: choose what the panel shows. Where they drop down, the chosen one folds up again. */
+  function chooseTab(tab) {
+    if (viewfinderHere()) {
+      if (tab === 'pictures') closePanel();
+      else if (!state.panel) openPanel({ focus: false });
+    } else if (state.panel && state.tab === tab) {
+      closePanel();
+    } else {
+      openPanel({ focus: false, tab });
+    }
+  }
+
+  listen(ref.tabStats, 'click', () => chooseTab('stats'));
+  listen(ref.tabPictures, 'click', () => chooseTab('pictures'));
+  listen(ref.dockToggle, 'click', () => {
+    if (state.dockHidden) {
+      setDockHidden(false);
+      // what it was showing when it was put away
+      if (state.dockResume) openPanel({ focus: false, tab: state.dockResume });
+    } else {
+      state.dockResume = state.panel ? state.tab : null;
+      closePanel();
+      setDockHidden(true);
+    }
+  });
 
   /** A panel slides in: where pins hide follows where it lands, not where it starts. */
   function measureSettled() {
@@ -1754,6 +1843,7 @@ export function mountJourney(container, options = {}) {
     ref.more.textContent = 'More';
     root.classList.remove('jy-panel-open');
     setExpanded(false);
+    paintTabs();
     reframe();
     syncViewfinder();
     const done = () => {
@@ -1761,7 +1851,7 @@ export function mountJourney(container, options = {}) {
     };
     if (motionOverride === 'reduced') done();
     else setTimeout(done, 160);
-    if (restoreFocus) (frame.narrow ? ref.details : ref.summary).focus({ preventScroll: true });
+    if (restoreFocus) (frame.narrow ? ref.details : ref.tabStats).focus({ preventScroll: true });
   }
 
   function setSheet(open) {
@@ -1779,15 +1869,11 @@ export function mountJourney(container, options = {}) {
       if (!state.panel) openPanel({ focus: false });
       return;
     }
-    if (state.panel) closePanel();
+    if (state.panel && state.tab === 'stats') closePanel();
     else openPanel();
   }
 
   listen(ref.sat, 'click', (e) => satelliteClicked(e.detail));
-  listen(ref.summary, 'click', () => {
-    if (state.panel) closePanel();
-    else openPanel({ focus: false });
-  });
   // the button says details, so a phone's sheet opens all the way
   listen(ref.details, 'click', () => {
     openPanel();
@@ -2758,11 +2844,19 @@ export function mountJourney(container, options = {}) {
         if (typeof mod.createFactTicker === 'function') {
           // the facts slide and fade even when the system prefers reduced
           // motion (the site's choice); ?motion=reduced still keeps them still
-          ticker = mod.createFactTicker(ref.factsSlot, { facts, live, reducedMotion: motionOverride === 'reduced' });
+          ticker = mod.createFactTicker(ref.factsSlot, {
+            facts,
+            live,
+            reducedMotion: motionOverride === 'reduced',
+            onHide: () => {
+              setFactsHidden(true);
+              ref.factsShow.focus({ preventScroll: true });
+            },
+          });
           placeFacts();
         }
         if (typeof mod.createNewsList === 'function') newsList = mod.createNewsList(ref.newsSlot, { news });
-        if (state.locked && state.shown) ticker?.start?.();
+        if (state.locked && state.shown) runTicker();
       } catch {
         // no facts module (yet): nothing to show
       }
@@ -2770,11 +2864,33 @@ export function mountJourney(container, options = {}) {
     return tickerLoading;
   }
 
+  /** Rotating only while it can be seen: put away, it waits (in the details it can't be put away). */
+  function runTicker() {
+    if (state.factsHidden && frame.fit < FIT_NO_FACTS) ticker?.stop?.();
+    else ticker?.start?.();
+  }
+
+  function setFactsHidden(hidden) {
+    if (state.factsHidden === hidden) return;
+    state.factsHidden = hidden;
+    root.classList.toggle('jy-facts-hidden', hidden);
+    factsHiddenChoice.set(hidden);
+    placeFacts();
+    if (state.locked && state.shown) runTicker();
+    measureSettled();
+  }
+
+  listen(ref.factsShow, 'click', () => {
+    setFactsHidden(false);
+    ticker?.reveal?.();
+    ticker?.hideButton?.focus({ preventScroll: true });
+  });
+
   /** The ticker runs only at the end of the story. */
   function startTicker() {
     if (!webgl) return;
     loadTicker();
-    ticker?.start?.();
+    runTicker();
     syncViewfinder();
   }
   function stopTicker() {
@@ -2819,9 +2935,9 @@ export function mountJourney(container, options = {}) {
     })();
   }
 
-  /** It runs at the end of the story, on big screens, unless the details or the credits have taken its place. */
+  /** It runs at the end of the story, on big screens, unless the panel is put away or the details or the credits have taken its place. */
   function syncViewfinder() {
-    const on = webgl && state.locked && state.shown && !state.panel && !state.creditsOpen && bigQuery.matches;
+    const on = webgl && state.locked && state.shown && !state.panel && !state.creditsOpen && !state.dockHidden && bigQuery.matches;
     if (on) loadViewfinder();
     if (on) viewfinder?.start();
     else viewfinder?.stop();
@@ -2835,14 +2951,18 @@ export function mountJourney(container, options = {}) {
     latest = (shown.length ? shown : photos).reduce((best, p) => (!best || (p.sortTime || 0) > (best.sortTime || 0) ? p : best), null);
     ref.latest.dataset.id = '';
     const n = photos.length;
-    ref.all.textContent = n ? `See all ${n.toLocaleString('en-US')} pictures` : 'See the pictures';
+    ref.allText.textContent = n ? `See all ${n.toLocaleString('en-US')} pictures` : 'See the pictures';
     ref.viewfinderSlot.hidden = !photos.some(isNearlyWhole);
+    paintTabs();
     viewfinder?.setPhotos(photos);
     if (webgl) buildPins();
     uiDirty = true;
   }
 
   // ---- wiring ----------------------------------------------------------------------------
+  // as the visitor last left them
+  setDockHidden(dockHiddenChoice.get());
+  setFactsHidden(factsHiddenChoice.get());
   const resizeObserver = new ResizeObserver(() => resize());
   resizeObserver.observe(stage);
   // the text blocks set where the Earth may go
@@ -2884,7 +3004,13 @@ export function mountJourney(container, options = {}) {
   listen(touchQuery, 'change', () => {
     uiDirty = true;
   });
-  listen(bigQuery, 'change', syncViewfinder);
+  listen(bigQuery, 'change', () => {
+    // the Pictures tab's dropdown has no place where the viewfinder is back
+    if (viewfinderHere() && state.panel && state.tab === 'pictures') closePanel();
+    paintTabs();
+    uiDirty = true;
+    syncViewfinder();
+  });
 
   // ---- start ------------------------------------------------------------------------------
   loadOrbit();
@@ -2918,7 +3044,7 @@ export function mountJourney(container, options = {}) {
       if (state.live) state.simMs = Date.now();
       resize();
       if (state.saved) restoreScroll();
-      if (state.locked) ticker?.start?.();
+      if (state.locked) runTicker();
       syncViewfinder();
       syncLoop();
     },

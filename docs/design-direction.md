@@ -299,9 +299,12 @@ Bottom left on the margins (desktop); one row across the bottom above the safe a
 
 - Clock: "21:58 in Calgary" (Body 16, tabular) over "30 Oct, 03:58 UTC" (Small Muted). Off live
   time, the second line reads "2 h 14 min ahead of now" (or "behind").
+- Toolbars (the user's request, 31 Oct 2026): the clock, the speeds and Now are one flat Panel bar,
+  divided by Raised lines, and so are the two zoom buttons. Everything along the bottom is one height.
+  Ink fill is kept for "See all n pictures", and for Now when it has something to do.
 - Speed: a segmented control on a Panel track, three radios "1×", "60×", "600×", group label
-  "Speed" (`aria-label`). Selected: Ink fill, Space text. Others: Muted text, Raised on hover. At
-  600× an orbit takes about 9 seconds.
+  "Speed" (`aria-label`). Selected: Raised with an Ink line under it, as the nav marks the current
+  page. Others: Muted text, Raised on hover. At 600× an orbit takes about 9 seconds.
 - Now: an Ink-filled button "Now" whenever the time is off live or the camera is not following;
   disabled (Muted on Panel, `aria-disabled`, title "Showing now") when live and following. Now
   means: live time, 1×, camera follows the satellite.
@@ -317,13 +320,17 @@ control that is always there at the end view, so nobody has to find the satellit
 state and one set of details. Closes with the same control, Esc, or a click on empty space.
 
 - **Big screens (where the viewfinder shows):** a summary bar on Panel at the top of the viewfinder's
-  slot, reading "CTS-SAT-1 Currently Over Africa, Altitude : 501 km" with a chevron. Pressing it swaps the viewfinder
-  for the details in the same place, under the bar, and folding them up brings back the same picture.
-  No "Latest picture" here (the viewfinder is that), and the framing does not move.
-- **Laptops and smaller desktops:** the same bar top right under the nav, 380px wide, with the details
-  dropping down beneath it, "Latest picture" included.
-- Both: the bar stands in for the title, the place line and Close. Panel ground, square, no border, no
-  shadow. Opens in 240ms (opacity, 8px down); closes in 150ms.
+  slot, reading "CTS-SAT-1 Currently Over Africa, Altitude : 501 km", with two tabs and Hide on the same
+  row. "Pictures" is the viewfinder and "Stats" the details, in the same place under the bar; going back
+  to Pictures brings back the same picture. No "Latest picture" here (the viewfinder is that), and the
+  framing does not move.
+- **Laptops and smaller desktops:** the same bar top right under the nav, 380px wide, the tabs on a second
+  row. Nothing is open at first: "Stats" drops the details down, "Pictures" drops down "Latest picture",
+  and pressing the open one folds it up.
+- Both: "Hide" puts the whole panel away, down to a "Show panel" button in the same corner that brings back
+  what was showing; the framing does not move, and the choice is remembered. The bar stands in for the
+  title, the place line and Close. Panel ground, square, no border, no shadow. Opens in 240ms (opacity,
+  8px down); closes in 150ms.
 - **Phone:** no bar over the text. "Satellite details" beside "Play the intro again" opens a bottom
   sheet across the full width, all the way up; a tap on the satellite opens it to its peek of 120px
   (title and the place line); drag or tap "More" to open up to 85svh. A 36 × 4 Muted grabber bar. The

@@ -60,11 +60,16 @@
 }
 
 /* Each fact slides out to one side while it fades (240ms) and the next slides
-   in from the other side (480ms); Previous reverses the direction. The
-   transitions are !important so the site-wide reduced-motion rule (which
-   turns every transition off) doesn't remove them. The Explore page asks for
-   the slide even when the system prefers reduced motion; only .cf-calm
-   (reducedMotion: true in facts.js) drops the slide and keeps the fade. */
+   in from the other side (480ms); Previous reverses the direction. The box fades
+   with them, in place: sliding it would take it past the screen's edge and move
+   the buttons out from under the pointer. The transitions are !important so the
+   site-wide reduced-motion rule (which turns every transition off) doesn't remove
+   them. The Explore page asks for the slide even when the system prefers reduced
+   motion; only .cf-calm (reducedMotion: true in facts.js) drops the slide and
+   keeps the fade. */
+.cf { transition: opacity 480ms cubic-bezier(.22, 1, .36, 1) !important; }
+.cf.is-out { opacity: 0; transition: opacity 240ms cubic-bezier(.55, .055, .675, .19) !important; }
+.cf.is-enter { opacity: 0; transition: none !important; }
 .cf .cf-fades {
   transition: opacity 480ms cubic-bezier(.22, 1, .36, 1), transform 480ms cubic-bezier(.22, 1, .36, 1) !important;
 }
