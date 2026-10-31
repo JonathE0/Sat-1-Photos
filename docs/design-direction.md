@@ -331,6 +331,11 @@ state and one set of details. Closes with the same control, Esc, or a click on e
   what was showing; the framing does not move, and the choice is remembered. The bar stands in for the
   title, the place line and Close. Panel ground, square, no border, no shadow. Opens in 240ms (opacity,
   8px down); closes in 150ms.
+- **Pins (the user's request, 31 Oct 2026):** clicking a pin or a hover card's picture puts that picture
+  up in the preview and stays on the page, whether it is whole or not: in the viewfinder where it shows,
+  bringing the panel back if need be, and it stays there until Previous or Next; elsewhere in the Pictures
+  tab's dropdown, titled "Selected picture". The preview's own picture is what leads on to the catalogue.
+  A phone has no preview beside the globe, so a pin there still opens the catalogue.
 - **Phone:** no bar over the text. "Satellite details" beside "Play the intro again" opens a bottom
   sheet across the full width, all the way up; a tap on the satellite opens it to its peek of 120px
   (title and the place line); drag or tap "More" to open up to 85svh. A 36 × 4 Muted grabber bar. The

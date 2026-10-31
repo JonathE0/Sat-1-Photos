@@ -7,7 +7,7 @@
  *   const journey = mountJourney(container, {
  *     photos,                       // mergeAll() output from assets/data.js
  *     tleUrl: 'data/tle.json',
- *     onOpenPhoto(id) {},           // a pin, a card, the panel's latest picture
+ *     onOpenPhoto(id) {},           // the preview's picture; on a phone, a pin or a card
  *     onOpenCatalogue() {},         // "See the pictures", "See all n pictures"
  *   });
  *   journey.setPhotos(photos); journey.hide(); journey.show(); journey.getState();
@@ -247,7 +247,7 @@ function template(id, siteRoot) {
           <p class="jy-small jy-retry" data-ref="noOrbit" hidden>Couldn\u2019t work out where it is: no orbital elements loaded.
             <button type="button" class="jy-textbtn" data-ref="retry">Try again</button></p>
           <section class="jy-latest" data-ref="latest" hidden>
-            <h3 class="jy-latest-title">Latest picture</h3>
+            <h3 class="jy-latest-title" data-ref="latestTitle">Latest picture</h3>
             <a class="jy-latest-frame" data-ref="latestFrame"><img data-ref="latestImg" alt="" decoding="async"></a>
             <p class="jy-latest-failed" data-ref="latestFailed" hidden>This picture didn\u2019t load.
               <button type="button" class="jy-textbtn" data-ref="latestRetry">Try again</button></p>
@@ -426,6 +426,7 @@ export function mountJourney(container, options = {}) {
     dockHidden: false, // the whole panel put away
     dockResume: null, // the tab that was open when it was
     factsHidden: false,
+    previewId: null, // a picture chosen on the globe, for the preview
     sheetOpen: false,
     creditsOpen: false,
     selectedId: null,
@@ -1627,7 +1628,7 @@ export function mountJourney(container, options = {}) {
     a.addEventListener('click', (e) => {
       if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
       e.preventDefault();
-      openPhoto(photo.id);
+      previewPhoto(photo.id);
     });
     return a;
   }
@@ -1728,13 +1729,13 @@ export function mountJourney(container, options = {}) {
     if (!pin) return;
     dismissHint();
     const head = pin.pile ? pin.pile.head : pin;
-    // a pile, or a first tap: show the card; the card is the link
-    if (pin.pile || (lastPointerType !== 'mouse' && card.touchArmed !== head)) {
+    // a pile, or a first tap on a phone (the next one leaves the page): show the card
+    if (pin.pile || (frame.narrow && lastPointerType !== 'mouse' && card.touchArmed !== head)) {
       showCard(head);
       card.touchArmed = head;
       return;
     }
-    openPhoto(pin.photo.id);
+    previewPhoto(pin.photo.id);
   });
 
   function openPhoto(pid) {
@@ -1743,6 +1744,35 @@ export function mountJourney(container, options = {}) {
     dismissHint();
     opts.onOpenPhoto(pid);
   }
+
+  /**
+   * A pin or a card: the picture goes up in the preview, whole or not, and the visitor stays
+   * here (the preview's own picture leads on to the catalogue). A phone has no preview beside
+   * the globe, so there it opens the catalogue.
+   */
+  function previewPhoto(pid) {
+    const photo = photos.find((p) => p.id === pid);
+    if (!photo || frame.narrow) {
+      openPhoto(pid);
+      return;
+    }
+    state.selectedId = pid;
+    paintSelected();
+    dismissHint();
+    state.previewId = pid;
+    if (viewfinderHere()) {
+      closeCredits();
+      setDockHidden(false);
+      closePanel();
+      viewfinder?.show(photo);
+      syncViewfinder();
+    } else {
+      openPanel({ focus: false, tab: 'pictures' });
+    }
+  }
+
+  /** What the panel's picture section shows: the one chosen on the globe, else the latest. */
+  const pictured = () => (state.previewId && photos.find((p) => p.id === state.previewId)) || latest;
 
   // ---- the satellite's details: one state, opened by the bar's Stats tab, the phone's
   // "Satellite details" button or the satellite itself ------------------------------------
@@ -1804,6 +1834,7 @@ export function mountJourney(container, options = {}) {
     } else if (state.panel && state.tab === tab) {
       closePanel();
     } else {
+      state.previewId = null; // the tab means the latest picture again
       openPanel({ focus: false, tab });
     }
   }
@@ -1837,6 +1868,7 @@ export function mountJourney(container, options = {}) {
   function closePanel({ restoreFocus = false } = {}) {
     if (!state.panel) return;
     state.panel = false;
+    state.previewId = null;
     state.sheetOpen = false;
     ref.panel.classList.remove('is-on', 'is-open');
     ref.more.setAttribute('aria-expanded', 'false');
@@ -1894,20 +1926,23 @@ export function mountJourney(container, options = {}) {
     ref.latestFrame.hidden = false;
     ref.latestFailed.hidden = true;
     // the frame ends where the data did; the picture is anchored to its top (journey.css)
-    if (latest) ref.latestFrame.style.aspectRatio = `${ref.latestImg.naturalWidth} / ${rowsWithData(ref.latestImg, latest)}`;
+    const pic = pictured();
+    if (pic) ref.latestFrame.style.aspectRatio = `${ref.latestImg.naturalWidth} / ${rowsWithData(ref.latestImg, pic)}`;
   });
   listen(ref.latestRetry, 'click', () => {
-    if (!latest) return;
+    const pic = pictured();
+    if (!pic) return;
     ref.latestFailed.hidden = true;
     ref.latestFrame.hidden = false;
-    const src = new URL(latest.src || latest.thumb, siteRoot).href;
+    const src = new URL(pic.src || pic.thumb, siteRoot).href;
     ref.latestImg.src = `${src}${src.includes('?') ? '&' : '?'}retry=${Date.now()}`;
   });
   for (const a of [ref.latestFrame, ref.latestOpen]) {
     listen(a, 'click', (e) => {
-      if (!latest || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      const pic = pictured();
+      if (!pic || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
       e.preventDefault();
-      openPhoto(latest.id);
+      openPhoto(pic.id);
     });
   }
 
@@ -2095,24 +2130,26 @@ export function mountJourney(container, options = {}) {
   }
 
   function paintLatest() {
-    // where the viewfinder shows, it already is the latest picture
-    ref.latest.hidden = !latest || (bigQuery.matches && !ref.viewfinderSlot.hidden);
+    // where the viewfinder shows, it already is the preview
+    const pic = pictured();
+    ref.latest.hidden = !pic || (bigQuery.matches && !ref.viewfinderSlot.hidden);
     if (ref.latest.hidden) return;
-    if (ref.latest.dataset.id !== latest.id) {
-      ref.latest.dataset.id = latest.id;
-      const href = opts.photoHref(latest.id);
+    if (ref.latest.dataset.id !== pic.id) {
+      ref.latest.dataset.id = pic.id;
+      const href = opts.photoHref(pic.id);
       ref.latestFrame.href = href;
       ref.latestOpen.href = href;
-      const ratio = latest.width && latest.height ? latest.width / latest.height : 4 / 3;
+      const ratio = pic.width && pic.height ? pic.width / pic.height : 4 / 3;
       ref.latestFrame.style.aspectRatio = String(ratio);
       ref.latestFrame.hidden = false;
       ref.latestFailed.hidden = true;
-      ref.latestImg.src = new URL(latest.src || latest.thumb, siteRoot).href;
-      const place = placeOf(latest);
+      ref.latestImg.src = new URL(pic.src || pic.thumb, siteRoot).href;
+      const place = placeOf(pic);
       ref.latestImg.alt = place ? `Picture over ${place}` : 'The latest picture';
-      put(ref.latestPlace, place || photoTime(latest));
-      put(ref.latestTime, place ? photoTime(latest) : '');
-      const status = statusLine(latest);
+      ref.latestTitle.textContent = pic === latest ? 'Latest picture' : 'Selected picture';
+      put(ref.latestPlace, place || photoTime(pic));
+      put(ref.latestTime, place ? photoTime(pic) : '');
+      const status = statusLine(pic);
       put(ref.latestStatus, status);
       ref.latestStatus.hidden = !status;
     }
@@ -2928,6 +2965,8 @@ export function mountJourney(container, options = {}) {
           // (the site's choice); ?motion=reduced still keeps it still
           reducedMotion: motionOverride === 'reduced',
         });
+        // a pin clicked while it was still on its way
+        if (state.previewId) viewfinder.show(photos.find((p) => p.id === state.previewId));
         syncViewfinder();
       } catch {
         // no viewfinder module (yet): the sky stays empty

@@ -3,10 +3,12 @@
  * at the top right of the story's end view, on big screens.
  *
  *   createViewfinder(container, { photos, siteRoot, photoHref, onOpen, reducedMotion })
- *     -> { setPhotos(photos), start(), stop(), dispose() }
+ *     -> { setPhotos(photos), show(photo), start(), stop(), dispose() }
  *
  * `photos` is mergeAll() output; only pictures that are at least 95% there run
- * here, newest first in a loop. The catalogue keeps everything else.
+ * here, newest first in a loop. The catalogue keeps everything else. show() puts
+ * up any picture, whole or not, and it stays until the visitor steps on with
+ * Previous or Next, which also starts the rotation again.
  *
  * Each picture comes down the way the real one did: top first, in packet-sized
  * bands at uneven intervals, with a faint line at the leading edge. Between
@@ -185,6 +187,7 @@ export function createViewfinder(container, {
   let deck = [];
   let index = -1;
   let shown = null; // the picture on screen
+  let held = null; // a picture put up by show(): it stays until the visitor steps on
   let run = 0; // the latest step; an older one that was still loading gives way
   let misses = 0; // pictures in a row that wouldn't load
   let running = false;
@@ -258,7 +261,7 @@ export function createViewfinder(container, {
     packet();
   }
 
-  function paint(photo, img) {
+  function paintWords(photo) {
     shown = photo;
     root.classList.add('has-picture');
     root.dataset.photoId = photo.id;
@@ -276,7 +279,10 @@ export function createViewfinder(container, {
     placeEl.textContent = name;
     downEl.textContent = downlinkLine(photo);
     noteEl.textContent = honestNote(photo);
+  }
 
+  function paint(photo, img) {
+    paintWords(photo);
     // setting the size clears the canvas to the frame's black
     canvas.width = img.naturalWidth;
     canvas.height = img.naturalHeight;
@@ -297,10 +303,30 @@ export function createViewfinder(container, {
     }, 50);
   }
 
+  /** The shutter closes on what's there, if anything, then the next picture goes up. */
+  function closeThen(swap) {
+    clearTimeout(swapTimer);
+    dropReveal();
+    if (shown) {
+      root.classList.add('is-shut');
+      swapTimer = setTimeout(swap, SHUTTER_MS);
+    } else {
+      swap();
+    }
+  }
+
   /** Step through the deck: the next picture is ready before the shutter closes on this one. */
   function step(dir, manual) {
     if (disposed || !deck.length) return;
-    index = (index + dir + deck.length) % deck.length;
+    if (held && !deck.includes(held)) {
+      // a picture from outside the run: on to its neighbours in time
+      const older = deck.findIndex((p) => (p.sortTime || 0) < (held.sortTime || 0));
+      const at = older < 0 ? deck.length : older;
+      index = (dir > 0 ? at : at - 1 + deck.length) % deck.length;
+    } else {
+      index = (index + dir + deck.length) % deck.length;
+    }
+    held = null;
     const photo = deck[index];
     const mine = ++run;
     clearTimeout(timer);
@@ -325,21 +351,47 @@ export function createViewfinder(container, {
         schedule();
         if (manual) announce(photo);
       };
+      closeThen(swap);
+    });
+  }
+
+  /** Any picture, whole or not, chosen somewhere else. One that won't load says so in the frame. */
+  function show(photo) {
+    if (disposed || !photo) return;
+    held = photo;
+    const at = deck.indexOf(photo);
+    if (at >= 0) index = at;
+    const mine = ++run;
+    clearTimeout(timer);
+    timer = 0;
+    root.hidden = false;
+    if (shown && shown.id === photo.id) {
       clearTimeout(swapTimer);
-      dropReveal();
-      if (shown) {
-        root.classList.add('is-shut');
-        swapTimer = setTimeout(swap, SHUTTER_MS);
-      } else {
-        swap();
-      }
+      root.classList.remove('is-shut');
+      return;
+    }
+    fetchPicture(photo).then((img) => {
+      if (disposed || mine !== run) return;
+      closeThen(() => {
+        if (disposed || mine !== run) return;
+        if (img) {
+          paint(photo, img);
+        } else {
+          paintWords(photo);
+          noteEl.textContent = 'This picture didn’t load.';
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          root.classList.remove('is-shut');
+          settled();
+        }
+        announce(photo);
+      });
     });
   }
 
   function schedule() {
     clearTimeout(timer);
     timer = 0;
-    if (!running || disposed || !deck.length || document.hidden) return;
+    if (held || !running || disposed || !deck.length || document.hidden) return;
     if (shown && (hovered || focused)) return;
     timer = setTimeout(() => step(1, false), shown ? DWELL_MS : FIRST_MS);
   }
@@ -391,10 +443,12 @@ export function createViewfinder(container, {
 
   function setPhotos(list) {
     const at = deck[index]?.id;
-    deck = (Array.isArray(list) ? list : [])
+    const all = Array.isArray(list) ? list : [];
+    deck = all
       .filter(isNearlyWhole)
       .sort((a, b) => (b.sortTime || 0) - (a.sortTime || 0));
     index = deck.findIndex((p) => p.id === at);
+    if (held) held = all.find((p) => p.id === held.id) || null;
     next = null;
     misses = 0;
     root.hidden = false;
@@ -407,6 +461,7 @@ export function createViewfinder(container, {
   // ---- API ----
   return {
     setPhotos,
+    show,
     /** Show pictures: the first after a moment, then one every 12 s. */
     start() {
       if (disposed || running) return;
