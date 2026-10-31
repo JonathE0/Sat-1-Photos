@@ -86,10 +86,20 @@ function fmtDuration(ms) {
   return `${Math.floor(min / 60)} h ${min % 60} min`;
 }
 
-function fmtOffset(ms) {
-  const min = Math.round(Math.abs(ms) / MIN_MS);
-  const sign = ms < 0 && min > 0 ? MINUS : '+';
-  return `${sign}${min < 60 ? '' : `${Math.floor(min / 60)} h `}${min % 60} min`;
+function fmtOffset(ms, exact = false) {
+  // to the second when stopped, where the step buttons can land on one
+  const secs = exact ? Math.round(Math.abs(ms) / 1000) : Math.round(Math.abs(ms) / MIN_MS) * 60;
+  const sign = ms < 0 && secs > 0 ? MINUS : '+';
+  const min = Math.floor(secs / 60);
+  const whole = `${min < 60 ? '' : `${Math.floor(min / 60)} h `}${min % 60} min`;
+  if (!(secs % 60)) return `${sign}${whole}`;
+  return min ? `${sign}${whole} ${secs % 60} s` : `${sign}${secs} s`;
+}
+
+/** How far a step button goes at a speed: a second at 1×, so a minute at 60×. */
+function stepWords(speed) {
+  const [n, unit] = speed < 60 ? [speed, 'second'] : speed < 3600 ? [speed / 60, 'minute'] : [speed / 3600, 'hour'];
+  return `${n} ${unit}${n === 1 ? '' : 's'}`;
 }
 
 /** How far the orbital elements are from the time shown: "2 days old", "3 hours later". */
@@ -114,6 +124,10 @@ const ICONS = {
   play: '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 1.8v8.4L10.2 6z" fill="currentColor"/></svg>',
   pause:
     '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.6 1.8h2.4v8.4H2.6zM7 1.8h2.4v8.4H7z" fill="currentColor"/></svg>',
+  stepBack:
+    '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.2 1.8h1.6v8.4H2.2zM10 1.8v8.4L4.6 6z" fill="currentColor"/></svg>',
+  stepForward:
+    '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M8.2 1.8h1.6v8.4H8.2zM2 1.8v8.4L7.4 6z" fill="currentColor"/></svg>',
   close:
     '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 2.5l7 7M9.5 2.5l-7 7" stroke="currentColor" stroke-width="1.3"/></svg>',
   chevron:
@@ -182,6 +196,7 @@ const TEMPLATE = `
       <dl>
         <div><dt><kbd>Space</kbd></dt><dd>Pause or play</dd></div>
         <div><dt><kbd>N</kbd></dt><dd>Back to now</dd></div>
+        <div><dt><kbd>,</kbd> <kbd>.</kbd></dt><dd>One step back or forward, by the speed</dd></div>
         <div><dt><kbd>←</kbd> <kbd>→</kbd></dt><dd>One minute (with Shift, one hour)</dd></div>
         <div><dt><kbd>↑</kbd> <kbd>↓</kbd></dt><dd>Move along a list or a row of buttons</dd></div>
         <div><dt><kbd>F</kbd></dt><dd>Follow the satellite</dd></div>
@@ -245,7 +260,11 @@ const TEMPLATE = `
       <span class="cg-fine" data-ref="local"></span>
     </button>
     <div class="cg-transport">
-      <button type="button" class="cg-btn cg-icon-btn" data-ref="play" aria-label="Pause">${ICONS.pause}</button>
+      <div class="cg-steps">
+        <button type="button" class="cg-btn cg-icon-btn cg-step" data-ref="stepBack" aria-label="Back 1 second">${ICONS.stepBack}</button>
+        <button type="button" class="cg-btn cg-icon-btn" data-ref="play" aria-label="Pause">${ICONS.pause}</button>
+        <button type="button" class="cg-btn cg-icon-btn cg-step" data-ref="stepForward" aria-label="Forward 1 second">${ICONS.stepForward}</button>
+      </div>
       <div class="cg-speeds" role="group" aria-label="Speed. Arrow keys move between them." data-ref="speeds">
         ${SPEEDS.map((s) => `<button type="button" class="cg-btn" data-speed="${s}" aria-pressed="false">${s}×</button>`).join('')}
       </div>
@@ -682,6 +701,12 @@ export function mountGlobe(container, options = {}) {
     writeHash();
   }
 
+  /** The fine adjustment: one second of the clock times the speed, from a whole second, and it stops there. */
+  function stepBySpeed(dir) {
+    jumpTo(Math.floor(state.ms / 1000) * 1000 + dir * state.speed * 1000);
+    writeHash();
+  }
+
   function frame(now) {
     raf = requestAnimationFrame(frame);
     const dt = Math.min(now - lastFrame, 250);
@@ -1101,7 +1126,7 @@ export function mountGlobe(container, options = {}) {
     put(el.local, `${local.time} ${local.zone} in Calgary`);
     const offset = Math.round((state.ms - state.focusMs) / MIN_MS);
     if (document.activeElement !== el.scrub && String(offset) !== el.scrub.value) el.scrub.value = String(offset);
-    put(el.offset, state.live ? 'Now' : fmtOffset(state.ms - state.focusMs));
+    put(el.offset, state.live ? 'Now' : fmtOffset(state.ms - state.focusMs, !state.playing));
   }
 
   function paintReadouts() {
@@ -1179,6 +1204,11 @@ export function mountGlobe(container, options = {}) {
     }
     el.speedCycle.textContent = `${state.speed}×`;
     el.speedCycle.setAttribute('aria-label', `Speed ${state.speed} times, tap to change`);
+    const stepSize = stepWords(state.speed);
+    el.stepBack.setAttribute('aria-label', `Back ${stepSize}`);
+    el.stepBack.title = `Back ${stepSize} (,)`;
+    el.stepForward.setAttribute('aria-label', `Forward ${stepSize}`);
+    el.stepForward.title = `Forward ${stepSize} (.)`;
     speedsRow.sync();
     el.now.setAttribute('aria-pressed', String(state.live));
     root.classList.toggle('cg-live', state.live);
@@ -1302,6 +1332,8 @@ export function mountGlobe(container, options = {}) {
 
   // ---- controls --------------------------------------------------------------
   listen(el.play, 'click', () => setPlaying(!state.playing));
+  listen(el.stepBack, 'click', () => stepBySpeed(-1));
+  listen(el.stepForward, 'click', () => stepBySpeed(1));
   listen(el.now, 'click', () => goLive());
   for (const b of el.speeds.querySelectorAll('[data-speed]')) {
     listen(b, 'click', () => setSpeed(Number(b.dataset.speed)));
@@ -1460,6 +1492,12 @@ export function mountGlobe(container, options = {}) {
         // only where the button shows: the side-panel layout of the full UI
         if (opts.ui === 'compact' || root.classList.contains('cg-narrow')) return;
         setPanels(!state.panels);
+        break;
+      case ',':
+        stepBySpeed(-1);
+        break;
+      case '.':
+        stepBySpeed(1);
         break;
       case 'ArrowLeft':
         step(-(e.shiftKey ? 60 : 1) * MIN_MS);
