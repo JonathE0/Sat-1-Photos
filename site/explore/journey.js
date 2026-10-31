@@ -947,6 +947,11 @@ export function mountJourney(container, options = {}) {
     camera.fov = frame.vfov;
     camera.updateProjectionMatrix();
     if (!frame.narrow) setPhoneExtra(null);
+    // turned on its side, a height the finger left it at no longer means anything
+    if (frame.sheetW !== W && !ref.panel.classList.contains('is-dragging')) {
+      frame.sheetW = W;
+      resetSheetSize();
+    }
     // tab order follows the screen: when the corner row sits above the time row it comes first
     const stacked = !frame.narrow && W < 1100;
     if (stacked !== frame.stacked) {
@@ -1843,6 +1848,7 @@ export function mountJourney(container, options = {}) {
     state.phoneExtra = null;
     state.tab = tab;
     state.panel = true;
+    resetSheetSize();
     ref.panel.hidden = false;
     root.classList.add('jy-panel-open');
     setExpanded(true);
@@ -1984,19 +1990,85 @@ export function mountJourney(container, options = {}) {
     });
   }
 
-  // the phone sheet's grabber: a tap, or a drag down, folds it away
+  // The phone sheet's handle: the sheet follows the finger, and on letting go it settles at
+  // the nearest of its resting heights, going by where a flick was heading. Below the
+  // shortest it folds away; a tap goes between that and open.
+  const SHEET_OPEN_SHARE = 0.72; // of the stage, as a new sheet's max-height in journey.css
+  const SHEET_FLICK_MS = 160; // a flick counts for where it would have got to in this long
   let sheetDrag = null;
+
+  /** The heights it rests at: the peek (down to its first lines), open, and as tall as it goes. */
+  function sheetRests() {
+    const box = ref.panel.getBoundingClientRect();
+    const firstLines = state.tab === 'pictures' ? ref.latestTitle : ref.over;
+    // short of the next line, which would show cut in half
+    const peek = Math.round(firstLines.getBoundingClientRect().bottom - box.top + ref.panel.scrollTop + 8);
+    const whole = ref.panel.scrollHeight;
+    const nav = parseFloat(getComputedStyle(root).getPropertyValue('--jy-nav')) || 0;
+    const full = Math.round(Math.min(whole, box.bottom - stageRect().top - nav));
+    const open = Math.round(Math.min(full, H * SHEET_OPEN_SHARE));
+    return { peek: Math.min(peek, open), open, full };
+  }
+
+  function resetSheetSize() {
+    ref.panel.style.height = '';
+    ref.panel.classList.remove('is-sized', 'is-dragging');
+  }
+
+  function restSheet(height) {
+    ref.panel.style.height = `${height}px`;
+    measureSettled();
+  }
+
+  function nearestRest(height, rests) {
+    return [rests.peek, rests.open, rests.full].reduce((best, h) => (Math.abs(h - height) < Math.abs(best - height) ? h : best));
+  }
+
   listen(ref.grab, 'pointerdown', (e) => {
-    sheetDrag = { y: e.clientY };
+    const start = ref.panel.getBoundingClientRect().height;
+    const rests = sheetRests();
+    sheetDrag = { y0: e.clientY, y: e.clientY, at: e.timeStamp, start, rests, speed: 0, moved: false };
     ref.grab.setPointerCapture?.(e.pointerId);
+    // from its natural height to a set one, with nothing to animate yet
+    ref.panel.classList.add('is-sized', 'is-dragging');
+    ref.panel.style.height = `${start}px`;
+  });
+  listen(ref.grab, 'pointermove', (e) => {
+    const d = sheetDrag;
+    if (!d) return;
+    const dy = e.clientY - d.y0;
+    if (Math.abs(dy) > 4) d.moved = true;
+    const dt = e.timeStamp - d.at;
+    if (dt > 0) d.speed = d.speed * 0.3 + ((e.clientY - d.y) / dt) * 0.7;
+    d.y = e.clientY;
+    d.at = e.timeStamp;
+    if (!d.moved) return;
+    // past its full height it gives only a little, and comes back
+    let height = d.start - dy;
+    if (height > d.rests.full) height = d.rests.full + (height - d.rests.full) * 0.25;
+    ref.panel.style.height = `${Math.max(0, height)}px`;
   });
   listen(ref.grab, 'pointerup', (e) => {
-    const dy = sheetDrag ? e.clientY - sheetDrag.y : 0;
+    const d = sheetDrag;
+    if (!d) return;
     sheetDrag = null;
-    if (dy > -24) closePanel();
+    ref.panel.classList.remove('is-dragging');
+    const now = ref.panel.getBoundingClientRect().height;
+    if (!d.moved) {
+      restSheet(now > d.rests.peek + 1 ? d.rests.peek : d.rests.open);
+      return;
+    }
+    // a finger that has come to rest isn't flicking
+    const aimed = now - (e.timeStamp - d.at > 80 ? 0 : d.speed) * SHEET_FLICK_MS;
+    if (aimed < d.rests.peek * 0.7) closePanel();
+    else restSheet(nearestRest(aimed, d.rests));
   });
   listen(ref.grab, 'pointercancel', () => {
+    const d = sheetDrag;
+    if (!d) return;
     sheetDrag = null;
+    ref.panel.classList.remove('is-dragging');
+    restSheet(nearestRest(ref.panel.getBoundingClientRect().height, d.rests));
   });
 
   function setFollow(on) {

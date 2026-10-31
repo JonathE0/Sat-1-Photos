@@ -1097,22 +1097,37 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
 }
 .jy-narrow.jy-locked .jy-panel { bottom: calc(var(--jy-tabbar) + env(safe-area-inset-bottom)); }
 .jy-narrow .jy-panel.is-on { transform: none; }
+/* opens at its natural height up to this share (SHEET_OPEN_SHARE in journey.js); once the handle
+   has moved it, the height is set there */
 .jy-narrow .jy-panel.is-open { max-height: 72%; overflow: auto; }
+.jy-narrow .jy-panel.is-sized { max-height: none; }
+.jy-root.jy-narrow:not(.jy-calm) .jy-panel.is-on {
+  transition: opacity 240ms var(--jy-ease-out), transform 240ms var(--jy-ease-out), height 280ms var(--jy-ease-out) !important;
+}
+.jy-root.jy-narrow .jy-panel.is-dragging { transition: none !important; }
+/* The handle: the whole strip across the top takes the finger, and stays there as the
+   sheet's contents scroll under it. */
 .jy-narrow .jy-grab {
+  position: sticky;
+  top: 0;
+  z-index: 1;
   display: flex;
   flex: none;
   align-items: center;
   justify-content: center;
-  width: 100%;
-  height: 20px;
-  margin: 0;
+  width: calc(100% + 32px);
+  height: 36px;
+  margin: 0 -16px -4px;
   border: 0;
   padding: 0;
-  background: none;
+  background: var(--jy-panel);
   cursor: grab;
   touch-action: none;
+  -webkit-tap-highlight-color: transparent;
 }
-.jy-narrow .jy-grab span { display: block; width: 36px; height: 4px; background: var(--jy-muted); }
+.jy-narrow .jy-grab span { display: block; width: 36px; height: 4px; background: var(--jy-muted); transition: background-color 180ms var(--jy-ease-out); }
+.jy-narrow .jy-panel.is-dragging .jy-grab { cursor: grabbing; }
+.jy-narrow .jy-panel.is-dragging .jy-grab span { background: var(--jy-ink); }
 .jy-narrow .jy-panel-head { margin-top: 0; }
 .jy-narrow .jy-panel-tools { gap: 14px; }
 .jy-narrow .jy-over { order: 1; margin-top: 0 !important; }

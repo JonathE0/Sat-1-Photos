@@ -340,8 +340,10 @@ state and one set of details. Closes with the same control, Esc, or a click on e
   Panel bar across the bottom edge, 56px, with icon and word: Stats, Pictures, Facts, Controls. One opens
   at a time above it, its item marked Raised with an Ink line along the top, and pressing it again, or a
   tap on the globe, puts it away; otherwise nothing but the bar sits over the globe. Stats and Pictures are
-  a sheet across the full width, up to 72% of the height, with a 36 × 4 Muted grabber: a tap or a drag down
-  folds it away. Pictures adds "See all n pictures" there. Facts is the banner just above the bar, off by
+  a sheet across the full width, opening up to 72% of the height, with a 36 × 4 Muted handle that turns Ink
+  while held. The sheet follows the finger on the handle and settles at a peek (down to its first lines),
+  open, or as tall as its contents and the nav allow; below the peek, or on a flick down, it folds away, and
+  a tap goes between the peek and open. Pictures adds "See all n pictures" there. Facts is the banner just above the bar, off by
   default on a phone. Controls is the clock, speeds and Now over "Play the intro again" and zoom.
 - **Words at the end (the user's request, 31 Oct 2026):** once the camera has come in, the words step back
   so the Earth and the satellite are the point. Everywhere: the name at 80% of its opening size, the
