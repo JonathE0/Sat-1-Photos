@@ -65,9 +65,9 @@ import {
   fmtLatShort,
   fmtLon,
   fmtLonShort,
+  isNearlyWhole,
   isSquare,
   launchDate,
-  inDefaultSet,
   photoTime,
   placeOf,
   rowsWithData,
@@ -2830,13 +2830,13 @@ export function mountJourney(container, options = {}) {
   // ---- photos ---------------------------------------------------------------------------
   function setPhotos(list) {
     photos = Array.isArray(list) ? list.filter((p) => p && p.id) : [];
-    // the newest the catalogue shows by default: not a black frame, not one mostly missing
-    const shown = photos.filter((p) => !p.dark && !p.mostlyMissing);
+    // the newest nearly whole picture, the one the viewfinder opens on
+    const shown = photos.filter(isNearlyWhole);
     latest = (shown.length ? shown : photos).reduce((best, p) => (!best || (p.sortTime || 0) > (best.sortTime || 0) ? p : best), null);
     ref.latest.dataset.id = '';
     const n = photos.length;
     ref.all.textContent = n ? `See all ${n.toLocaleString('en-US')} pictures` : 'See the pictures';
-    ref.viewfinderSlot.hidden = !photos.some(inDefaultSet);
+    ref.viewfinderSlot.hidden = !photos.some(isNearlyWhole);
     viewfinder?.setPhotos(photos);
     if (webgl) buildPins();
     uiDirty = true;

@@ -97,10 +97,7 @@ export function placeOf(photo) {
   return photo.place || photo.computedPlace || null;
 }
 
-/** In the catalogue's default set: not a dark frame, not mostly missing. */
-export const inDefaultSet = (photo) => !photo.dark && !photo.mostlyMissing;
-
-/** For the viewfinder: not a dark frame, and at least 95% of the picture can be shown. */
+/** For the viewfinder and the latest picture: not a dark frame, and at least 95% of the picture can be shown. */
 export const isNearlyWhole = (photo) => !photo.dark && !((photo.raw?.completeness ?? photo.completeness) < 0.95);
 
 /**
