@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-10-31T16:00:10Z",
+ "generated_at": "2026-10-31T18:48:41Z",
  "satellite": {
   "name": "CTS-SAT-1",
   "alias": "FrontierSat",
@@ -35,8 +35,8 @@
     "packets": 118
    },
    "position": {
-    "lat": -57.8948,
-    "lon": 159.8942,
+    "lat": -57.9004,
+    "lon": 159.8918,
     "alt_km": 515.5,
     "place": "South Pacific Ocean",
     "ground_sunlit": false,
@@ -44,7 +44,7 @@
     "satellite_sunlit": true,
     "satellite_light": "sunlit",
     "sun_above_limb_deg": 7.5,
-    "tle_epoch": "2026-10-29T12:28:45Z",
+    "tle_epoch": "2026-10-30T10:32:56Z",
     "basis": "SGP4 from the most recent TLE before capture"
    },
    "unnamed": false
@@ -77,8 +77,8 @@
     "packets": 246
    },
    "position": {
-    "lat": -62.9586,
-    "lon": -179.5768,
+    "lat": -62.9639,
+    "lon": -179.5799,
     "alt_km": 516.9,
     "place": "Southern Ocean",
     "ground_sunlit": false,
@@ -86,7 +86,7 @@
     "satellite_sunlit": true,
     "satellite_light": "sunlit",
     "sun_above_limb_deg": 12.6,
-    "tle_epoch": "2026-10-29T12:28:45Z",
+    "tle_epoch": "2026-10-30T10:32:56Z",
     "basis": "SGP4 from the most recent TLE before capture"
    },
    "unnamed": false
@@ -119,8 +119,8 @@
     "packets": 118
    },
    "position": {
-    "lat": -68.3557,
-    "lon": -160.6326,
+    "lat": -68.3604,
+    "lon": -160.6372,
     "alt_km": 518.2,
     "place": null,
     "ground_sunlit": false,
@@ -128,7 +128,7 @@
     "satellite_sunlit": true,
     "satellite_light": "sunlit",
     "sun_above_limb_deg": 18.2,
-    "tle_epoch": "2026-10-29T12:28:45Z",
+    "tle_epoch": "2026-10-30T10:32:56Z",
     "basis": "SGP4 from the most recent TLE before capture"
    },
    "unnamed": false
