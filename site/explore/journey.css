@@ -506,7 +506,8 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
    framing doesn't move (and the same below for the viewfinder) */
 .jy-credits-open .jy-summary { opacity: 0; visibility: hidden; }
 .jy-summary:hover { background: var(--jy-raised); }
-.jy-summary-text { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+/* a long place name takes a second line, inside the bar's height, so the altitude is never cut off */
+.jy-summary-text { min-width: 0; }
 .jy-summary-name { margin-right: 0.25em; font-size: var(--jy-body); font-weight: 500; letter-spacing: 0; }
 /* The chevron turns even when the system prefers reduced motion (the site's choice,
    as the facts banner and the viewfinder); only ?motion=reduced (.jy-calm) stops it. */

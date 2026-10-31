@@ -317,7 +317,7 @@ control that is always there at the end view, so nobody has to find the satellit
 state and one set of details. Closes with the same control, Esc, or a click on empty space.
 
 - **Big screens (where the viewfinder shows):** a summary bar on Panel at the top of the viewfinder's
-  slot, reading "CTS-SAT-1 over Africa, 501 km up" with a chevron. Pressing it swaps the viewfinder
+  slot, reading "CTS-SAT-1 Currently Over Africa, Altitude : 501 km" with a chevron. Pressing it swaps the viewfinder
   for the details in the same place, under the bar, and folding them up brings back the same picture.
   No "Latest picture" here (the viewfinder is that), and the framing does not move.
 - **Laptops and smaller desktops:** the same bar top right under the nav, 380px wide, with the details

@@ -2053,12 +2053,12 @@ export function mountJourney(container, options = {}) {
   /** "the United States", "the North Pacific Ocean", or null where nothing has a name. */
   const placeNow = (s) => placeInSentence(placeAt(s.latDeg, s.lonDeg));
 
-  /** The bar's words after the name: "over Burkina Faso, 501 km up". */
+  /** The bar's words after the name: "Currently Over Burkina Faso, Altitude : 501 km". */
   function summaryWhere() {
     const s = sat.state;
     if (!s) return orbitStatus === 'failed' ? 'position unavailable' : '';
     if (!placeNamesReady) return '';
-    return `over ${placeNow(s) || `${fmtLatShort(s.latDeg)}, ${fmtLonShort(s.lonDeg)}`}, ${Math.round(s.altKm)} km up`;
+    return `Currently Over ${placeNow(s) || `${fmtLatShort(s.latDeg)}, ${fmtLonShort(s.lonDeg)}`}, Altitude : ${Math.round(s.altKm)} km`;
   }
 
   /** The live sentence's first half, which stays when the end view is short of room. */
