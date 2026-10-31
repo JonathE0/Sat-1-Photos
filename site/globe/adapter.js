@@ -89,10 +89,10 @@ function resolveUrl(path, base) {
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 /** The build's default title for a capture (build.py _title):
- * "17 Sep 2026, 07:11 UTC", or "17 Sep 2026" for a date alone. */
+ * "Sep 17, 2026, 07:11 UTC", or "Sep 17, 2026" for a date alone. */
 function timeTitle(iso, withTime = true) {
   const d = new Date(iso);
-  const day = `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+  const day = `${MONTHS[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
   if (!withTime) return day;
   const p2 = (n) => String(n).padStart(2, '0');
   return `${day}, ${p2(d.getUTCHours())}:${p2(d.getUTCMinutes())} UTC`;

@@ -13,16 +13,16 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
 const MONTHS_LONG = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September',
   'October', 'November', 'December'];
 
-/** "25 Oct 2026, 00:54 UTC" */
+/** "Oct 25, 2026, 00:54 UTC" */
 export function utcLong(ms) {
   const d = new Date(ms);
-  return `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}, ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())} UTC`;
+  return `${MONTHS[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}, ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())} UTC`;
 }
 
-/** "30 Oct, 03:58 UTC" */
+/** "Oct 30, 03:58 UTC" */
 export function utcShort(ms) {
   const d = new Date(ms);
-  return `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]}, ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())} UTC`;
+  return `${MONTHS[d.getUTCMonth()]} ${d.getUTCDate()}, ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())} UTC`;
 }
 
 const calgaryClock = new Intl.DateTimeFormat('en-US', {
@@ -35,7 +35,7 @@ const calgaryClock = new Intl.DateTimeFormat('en-US', {
   timeZoneName: 'short',
 });
 
-/** { time: "18:54", zone: "MDT", date: "24 Oct", otherDay: true } in Calgary; otherDay is
+/** { time: "18:54", zone: "MDT", date: "Oct 24", otherDay: true } in Calgary; otherDay is
  * whether that date differs from the UTC date, which is what most lines already show. */
 export function calgaryTime(ms) {
   const parts = {};
@@ -43,7 +43,7 @@ export function calgaryTime(ms) {
   return {
     time: `${parts.hour}:${parts.minute}`,
     zone: parts.timeZoneName || '',
-    date: `${parts.day} ${parts.month}`,
+    date: `${parts.month} ${parts.day}`,
     otherDay: Number(parts.day) !== new Date(ms).getUTCDate(),
   };
 }
@@ -62,10 +62,10 @@ export const fmtLon = (lon) => `${Math.abs(lon).toFixed(2)}\u00b0 ${lon >= 0 ? '
 export const fmtLatShort = (lat) => `${Math.round(Math.abs(lat))}\u00b0 ${lat >= 0 ? 'N' : 'S'}`;
 export const fmtLonShort = (lon) => `${Math.round(Math.abs(lon))}\u00b0 ${lon >= 0 ? 'E' : 'W'}`;
 
-/** "3 May 2026", from the launch time in astro.js. */
+/** "May 3, 2026", from the launch time in astro.js. */
 export const launchDate = (() => {
   const d = new Date(LAUNCH_MS);
-  return `${d.getUTCDate()} ${MONTHS_LONG[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+  return `${MONTHS_LONG[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
 })();
 
 function fractionWords(x) {
@@ -135,13 +135,13 @@ export function rowsWithData(img, photo) {
   return h;
 }
 
-/** "24 Oct 2026, 17:37 UTC", or the date alone when that is all there is. */
+/** "Oct 24, 2026, 17:37 UTC", or the date alone when that is all there is. */
 export function photoTime(photo) {
   const ms = photo.capturedAt ? Date.parse(photo.capturedAt) : NaN;
   if (Number.isFinite(ms)) return utcLong(ms);
   if (photo.captureDate) {
     const d = new Date(`${photo.captureDate}T00:00:00Z`);
-    return `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+    return `${MONTHS[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
   }
   return '';
 }

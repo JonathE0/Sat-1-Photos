@@ -57,11 +57,11 @@ export function utcInputs(ms) {
   };
 }
 
-/** "27 Oct, 22:38 UTC", with the year when it isn't `yearOf`'s. */
+/** "Oct 27, 22:38 UTC", with the year when it isn't `yearOf`'s. */
 function when(ms, yearOf = ms) {
   const d = new Date(ms);
-  const year = d.getUTCFullYear() !== new Date(yearOf).getUTCFullYear() ? ` ${d.getUTCFullYear()}` : '';
-  return `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]}${year}, ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())} UTC`;
+  const year = d.getUTCFullYear() !== new Date(yearOf).getUTCFullYear() ? `, ${d.getUTCFullYear()}` : '';
+  return `${MONTHS[d.getUTCMonth()]} ${d.getUTCDate()}${year}, ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())} UTC`;
 }
 
 /** "5 hours", "1 day", "40 days". */
@@ -123,14 +123,13 @@ export function elementsNote(ms, orbit) {
 
 // ---- the form -----------------------------------------------------------------------
 
-const localDay = new Intl.DateTimeFormat('en-GB', {
+const localDay = new Intl.DateTimeFormat('en-US', {
   timeZone: LOCAL_ZONE,
   weekday: 'long',
   day: 'numeric',
   month: 'long',
   year: 'numeric',
 });
-// en-US for the zone: en-GB names Calgary's "GMT-6" rather than "MDT"
 const localClock = new Intl.DateTimeFormat('en-US', {
   timeZone: LOCAL_ZONE,
   hour: '2-digit',
@@ -140,11 +139,11 @@ const localClock = new Intl.DateTimeFormat('en-US', {
   timeZoneName: 'short',
 });
 
-/** "Thursday 22 October 2026, 09:07:59 MDT" */
+/** "Thursday, October 22, 2026, 09:07:59 MDT" */
 export function calgaryWhen(ms) {
   const p = {};
   for (const part of [...localDay.formatToParts(ms), ...localClock.formatToParts(ms)]) p[part.type] = part.value;
-  return `${p.weekday} ${p.day} ${p.month} ${p.year}, ${p.hour}:${p.minute}:${p.second} ${p.timeZoneName}`;
+  return `${p.weekday}, ${p.month} ${p.day}, ${p.year}, ${p.hour}:${p.minute}:${p.second} ${p.timeZoneName}`;
 }
 
 const CLOSE_ICON =

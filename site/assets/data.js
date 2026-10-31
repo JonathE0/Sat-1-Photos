@@ -1,6 +1,6 @@
 // Loading images.json and member edits, and merging the two (see docs/DATA.md).
 
-import { clock, dayMonthYear, fold, toDate, isoDay } from './format.js';
+import { clock, monthDayYear, fold, toDate, isoDay } from './format.js';
 
 export const IMAGES_URL = 'data/images.json';
 export const API_URL = 'api/annotations';
@@ -178,10 +178,10 @@ export function mergePhoto(img, ann) {
   const builtTitle = text(img.title);
   const builtTime = toDate(img.captured_at);
   const builtDay = typeof img.capture_date === 'string' ? toDate(img.capture_date.slice(0, 10)) : null;
-  const timeTitle = (d) => `${dayMonthYear(d)}, ${clock(d)} UTC`;
+  const timeTitle = (d) => `${monthDayYear(d)}, ${clock(d)} UTC`;
   const titleFromTime = Boolean(builtTitle && (builtTime
     ? builtTitle === timeTitle(builtTime)
-    : builtDay && builtTitle === dayMonthYear(builtDay)));
+    : builtDay && builtTitle === monthDayYear(builtDay)));
   const timeChanged = Boolean(timeOverride && capturedDate
     && (!builtTime || capturedDate.getTime() !== builtTime.getTime()));
   const defaultTitle = timeChanged && titleFromTime ? timeTitle(capturedDate) : (builtTitle || img.id);

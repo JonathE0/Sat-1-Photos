@@ -430,7 +430,7 @@ def _title(a: Assembled, captured_at: datetime | None, capture_date: date | None
 
 
 def _day(d: date) -> str:
-    return f"{d.day} {d:%b %Y}"
+    return f"{d:%b} {d.day}, {d.year}"
 
 
 def _sort_key(record: dict) -> str:

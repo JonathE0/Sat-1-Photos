@@ -115,7 +115,7 @@
         { "title": "UCalgary team prepares to launch city's first student-built satellite", "outlet": "UCalgary News", "date": "2025-06-09", "url": "https://www.ucalgary.ca/news/ucalgary-team-prepares-launch-citys-first-student-built-satellite" },
         { "title": "Calgary's first student-built satellite successfully launched into orbit", "outlet": "Calgary Herald", "date": "2026-05-04", "url": "https://ca.news.yahoo.com/calgarys-first-student-built-satellite-202219187.html" }
       ],
-      "note": "UCalgary, LiveWire and the Calgary Herald (\"summer 2020\") give 2020; the team's wiki gives 1 January 2021 and calls it just over five years."
+      "note": "UCalgary, LiveWire and the Calgary Herald (\"summer 2020\") give 2020; the team's wiki gives January 1, 2021, and calls it just over five years."
     },
     {
       "id": "hundred-students",
@@ -284,7 +284,7 @@
     },
     {
       "id": "liftoff",
-      "text": "It lifted off on a SpaceX Falcon 9 from Vandenberg, California, at about 1 a.m. Calgary time on 3 May 2026.",
+      "text": "It lifted off on a SpaceX Falcon 9 from Vandenberg, California, at about 1 a.m. Calgary time on May 3, 2026.",
       "category": "launch",
       "sources": [
         { "title": "FrontierSat (CTS-SAT-1)", "outlet": "CalgaryToSpace", "date": null, "accessed": "2026-10-29", "url": "https://www.calgarytospace.ca/cts-sat-1" },
@@ -357,7 +357,7 @@
       "sources": [
         { "title": "FrontierSat (CTS-SAT 1)", "outlet": "Gunter's Space Page", "date": null, "accessed": "2026-10-29", "url": "https://space.skyrocket.de/doc_sdat/frontiersat.htm" }
       ],
-      "note": "Gunter's gives 97.40°; the published orbital elements on this site give 97.38° (27 Oct 2026)."
+      "note": "Gunter's gives 97.40°; the published orbital elements on this site give 97.38° (Oct 27, 2026)."
     },
     {
       "id": "lifetime",
@@ -398,7 +398,7 @@
     },
     {
       "id": "mothers-day",
-      "text": "On 10 May 2026 the team changed its beacon message to wish everyone a happy Mother's Day.",
+      "text": "On May 10, 2026, the team changed its beacon message to wish everyone a happy Mother's Day.",
       "category": "data",
       "sources": [
         { "title": "Mission Operations", "outlet": "CTS-SAT-1 wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Mission-Operations" }
@@ -406,7 +406,7 @@
     },
     {
       "id": "first-commands",
-      "text": "The team first sent it commands on 10 May 2026, a week after launch.",
+      "text": "The team first sent it commands on May 10, 2026, a week after launch.",
       "category": "data",
       "sources": [
         { "title": "Mission Operations", "outlet": "CTS-SAT-1 wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Mission-Operations" }
@@ -414,12 +414,12 @@
     },
     {
       "id": "first-picture",
-      "text": "It took its first picture on 1 June 2026. Getting that picture down to the ground took until 28 June.",
+      "text": "It took its first picture on June 1, 2026. Getting that picture down to the ground took until June 28.",
       "category": "data",
       "sources": [
         { "title": "Mission Operations", "outlet": "CTS-SAT-1 wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Mission-Operations" }
       ],
-      "note": "Matches this site's own picture list, whose earliest capture is 1 June 2026."
+      "note": "Matches this site's own picture list, whose earliest capture is June 1, 2026."
     },
     {
       "id": "satnogs",
@@ -432,7 +432,7 @@
     },
     {
       "id": "first-mpi-data",
-      "text": "Its first Mini Plasma Imager recording, two minutes long, was made on 21 July 2026 and was on the ground within hours.",
+      "text": "Its first Mini Plasma Imager recording, two minutes long, was made on July 21, 2026, and was on the ground within hours.",
       "category": "data",
       "sources": [
         { "title": "Mission Operations", "outlet": "CTS-SAT-1 wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Mission-Operations" }
@@ -440,7 +440,7 @@
     },
     {
       "id": "command-record",
-      "text": "On 30 June 2026 the team sent it 630 commands during a single pass overhead.",
+      "text": "On June 30, 2026, the team sent it 630 commands during a single pass overhead.",
       "category": "data",
       "sources": [
         { "title": "Mission Operations", "outlet": "CTS-SAT-1 wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Mission-Operations" }

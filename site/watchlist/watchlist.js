@@ -43,13 +43,13 @@
 
   // -- formatting -----------------------------------------------------------
 
-  const calgaryFmt = new Intl.DateTimeFormat('en-GB', { timeZone: TZ, weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+  const calgaryFmt = new Intl.DateTimeFormat('en-US', { timeZone: TZ, weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
   const weekdayFmt = new Intl.DateTimeFormat('en-GB', { timeZone: TZ, weekday: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
-  const utcFmt = new Intl.DateTimeFormat('en-GB', { timeZone: 'UTC', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+  const utcFmt = new Intl.DateTimeFormat('en-US', { timeZone: 'UTC', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
   const zoneFmt = new Intl.DateTimeFormat('en-US', { timeZone: TZ, timeZoneName: 'short' });
   const zone = (ms) => (zoneFmt.formatToParts(ms).find((p) => p.type === 'timeZoneName') || {}).value || '';
-  const calgary = (ms) => `${calgaryFmt.format(ms)} ${zone(ms)}`; // "Sat 31 Oct, 02:33 MDT"
-  const utc = (ms) => `${utcFmt.format(ms)} UTC`; // "31 Oct, 08:33 UTC"
+  const calgary = (ms) => `${calgaryFmt.format(ms)} ${zone(ms)}`; // "Sat, Oct 31, 02:33 MDT"
+  const utc = (ms) => `${utcFmt.format(ms)} UTC`; // "Oct 31, 08:33 UTC"
   // a narrow space between the thousands, as in assets/format.js: a comma is a decimal point across much of Europe
   const num = (x, digits = 0) => x.toLocaleString('en-GB', { maximumFractionDigits: digits, minimumFractionDigits: digits }).replace(/,/g, ' ');
 

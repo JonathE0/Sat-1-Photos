@@ -668,6 +668,13 @@ Europe a comma in a number is its decimal point, so "27,400" reads as 27.4. Deci
 `grouped()` in `site/assets/format.js`, `num` on the Watchlist, `_grouped` in `cts1_gallery/watch.py`.
 Commas between things stay: "22.3° N, 114.2° E".
 
+### Dates (31 Oct 2026, the user's choice)
+
+Month, day, year everywhere it's read: Oct 31, 2026; Oct 31, 09:41 UTC; Friday, October 30. Where a
+date ran short (Oct) or long (October) before, it still does. Anything older in this document that
+writes 31 Oct 2026 is from before this. Fields a person types in, and the data files, stay
+2026-10-31.
+
 ### Aurora, on both globes (`site/globe/aurora.js`)
 
 NOAA's OVATION forecast, fetched by the browser and again every 5 minutes, drawn as light 95 to

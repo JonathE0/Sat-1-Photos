@@ -23,7 +23,7 @@
 // is at least half there; the strip still starts with the newest.
 
 import { h, append, announce, copyText } from './dom.js';
-import { CAMERAS, clock, dayMonthYear, grouped, latLon, percent, plural, toDate } from './format.js';
+import { CAMERAS, clock, monthDayYear, grouped, latLon, percent, plural, toDate } from './format.js';
 import { applyFilters, FILTER_KEYS, readFilters } from './data.js';
 import { createFilterForm, describeFilters } from './filters.js';
 
@@ -55,9 +55,9 @@ function nobr(text) {
   return h('span', { class: 'cat-nobr' }, text);
 }
 
-// "24 Oct 2026, 17:37:32 UTC" with the date and the time each kept whole.
+// "Oct 24, 2026, 17:37:32 UTC" with the date and the time each kept whole.
 function utcParts(d, seconds = false) {
-  return [nobr(dayMonthYear(d)), ', ', nobr(`${clock(d, seconds)} UTC`)];
+  return [nobr(monthDayYear(d)), ', ', nobr(`${clock(d, seconds)} UTC`)];
 }
 
 function sameTime(a, b) {
@@ -90,7 +90,7 @@ function dayOf(p) {
 
 function dateText(p) {
   const d = dayOf(p);
-  return d ? dayMonthYear(d) : 'Date unknown';
+  return d ? monthDayYear(d) : 'Date unknown';
 }
 
 // The largest line: a member's title, else the place, else the date, else
@@ -100,12 +100,12 @@ export function headline(p) {
   return placeName(p) || (dayOf(p) ? dateText(p) : p.defaultTitle || p.id);
 }
 
-// "25 Oct 2026, 00:54 UTC", "24 Oct 2026, time unknown" or "Time unknown".
+// "Oct 25, 2026, 00:54 UTC", "Oct 24, 2026, time unknown" or "Time unknown".
 export function whenShort(p) {
   const d = toDate(p.capturedAt);
-  if (d) return `${dayMonthYear(d)}, ${clock(d)} UTC`;
+  if (d) return `${monthDayYear(d)}, ${clock(d)} UTC`;
   const day = dayOf(p);
-  return day ? `${dayMonthYear(day)}, time unknown` : 'Time unknown';
+  return day ? `${monthDayYear(day)}, time unknown` : 'Time unknown';
 }
 
 // For labels that are read aloud: the headline and the time, without saying a
@@ -118,7 +118,7 @@ function nameAndWhen(p) {
 
 let calgaryFormat = null;
 
-// "18:54 MDT on 24 Oct in Calgary" (the date only when it differs from UTC's),
+// "18:54 MDT on Oct 24 in Calgary" (the date only when it differs from UTC's),
 // as nodes with the time and the date each kept on one line.
 function calgaryLine(d) {
   try {
@@ -134,10 +134,10 @@ function calgaryLine(d) {
     });
     const parts = {};
     for (const part of calgaryFormat.formatToParts(d)) parts[part.type] = part.value;
-    const otherDay = `${parts.day} ${parts.month} ${parts.year}` !== dayMonthYear(d);
+    const otherDay = `${parts.month} ${parts.day}, ${parts.year}` !== monthDayYear(d);
     return [
       nobr(`${parts.hour}:${parts.minute} ${parts.timeZoneName}`),
-      otherDay ? [' on ', nobr(`${parts.day} ${parts.month}`)] : '',
+      otherDay ? [' on ', nobr(`${parts.month} ${parts.day}`)] : '',
       ' in Calgary',
     ];
   } catch {
@@ -1211,7 +1211,7 @@ export function createCatalogue(root, {
     if (!dl) return null;
     const first = toDate(dl.first);
     const last = toDate(dl.last);
-    const short = (d) => dayMonthYear(d).replace(/ \d{4}$/, '');
+    const short = (d) => monthDayYear(d).replace(/, \d{4}$/, '');
     // Lines break only at " to " and after commas, never inside a date.
     let range = null;
     if (first && last && short(first) === short(last)) {

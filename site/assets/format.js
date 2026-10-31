@@ -10,9 +10,9 @@ export function toDate(value) {
   return Number.isFinite(t) ? new Date(t) : null;
 }
 
-// "17 Sep 2026"
-export function dayMonthYear(d) {
-  return `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+// "Sep 17, 2026"
+export function monthDayYear(d) {
+  return `${MONTHS[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
 }
 
 // "07:11" or "07:11:48"
@@ -21,9 +21,9 @@ export function clock(d, seconds = false) {
   return seconds ? `${hm}:${p2(d.getUTCSeconds())}` : hm;
 }
 
-// "17 Sep 2026, 07:11:48 UTC"
+// "Sep 17, 2026, 07:11:48 UTC"
 export function utcLong(d, seconds = true) {
-  return `${dayMonthYear(d)}, ${clock(d, seconds)} UTC`;
+  return `${monthDayYear(d)}, ${clock(d, seconds)} UTC`;
 }
 
 // "2026-09-17"
@@ -31,9 +31,9 @@ export function isoDay(d) {
   return `${d.getUTCFullYear()}-${p2(d.getUTCMonth() + 1)}-${p2(d.getUTCDate())}`;
 }
 
-// "2026-09-17 07:11 UTC"
+// "Sep 17, 2026, 07:11 UTC"
 export function utcShort(d) {
-  return `${isoDay(d)} ${clock(d)} UTC`;
+  return utcLong(d, false);
 }
 
 // "2026-09-17 07:11:48", the format the edit form shows and accepts.
@@ -65,7 +65,7 @@ export function parseUtcInput(text) {
 
 let calgaryFormat = null;
 
-// "17 Sep 2026, 01:11:48 MDT", the same moment on Calgary's clocks.
+// "Sep 17, 2026, 01:11:48 MDT", the same moment on Calgary's clocks.
 export function calgary(d) {
   try {
     calgaryFormat ||= new Intl.DateTimeFormat('en-US', {
@@ -81,7 +81,7 @@ export function calgary(d) {
     });
     const parts = {};
     for (const part of calgaryFormat.formatToParts(d)) parts[part.type] = part.value;
-    return `${parts.day} ${parts.month} ${parts.year}, ${parts.hour}:${parts.minute}:${parts.second} ${parts.timeZoneName}`;
+    return `${parts.month} ${parts.day}, ${parts.year}, ${parts.hour}:${parts.minute}:${parts.second} ${parts.timeZoneName}`;
   } catch {
     return null;
   }

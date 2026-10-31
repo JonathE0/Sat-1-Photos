@@ -2,7 +2,7 @@
 
 import { h, mono, joined, announce, store, copyText } from './dom.js';
 import {
-  CAMERAS, basisText, bytes, calgary, cameraLong, clock, dayMonthYear, inputTime, isoDay, isoUTC,
+  CAMERAS, basisText, bytes, calgary, cameraLong, clock, monthDayYear, inputTime, isoDay, isoUTC,
   latLon, parseUtcInput, percent, plural, shortHash, statusWord, toDate, utcLong,
 } from './format.js';
 import { memberValues, saveAnnotation } from './data.js';
@@ -64,7 +64,7 @@ function detailAlt(p) {
   const d = toDate(p.capturedAt);
   let when = 'taken at an unknown time';
   if (d) when = `taken ${utcLong(d, false)}`;
-  else if (p.captureDate) when = `taken on ${dayMonthYear(toDate(p.captureDate))}`;
+  else if (p.captureDate) when = `taken on ${monthDayYear(toDate(p.captureDate))}`;
   // A computed place belongs to the computed time, not a member's edited one.
   const stale = !p.positionRecomputed && p.edited.captured_at && !p.edited.position && !sameTime(p.capturedAt, p.raw.captured_at);
   let where = '';
@@ -265,7 +265,7 @@ export function createDetail(root, ctx) {
       return out;
     }
     if (p.captureDate) {
-      return [dayMonthYear(toDate(p.captureDate)), sub('Date only; the time of day is unknown.')];
+      return [monthDayYear(toDate(p.captureDate)), sub('Date only; the time of day is unknown.')];
     }
     return ['Unknown', sub('Neither the file name nor the logs give a capture time.')];
   }
@@ -322,9 +322,9 @@ export function createDetail(root, ctx) {
     const last = toDate(dl.last);
     const out = [];
     if (first && last && isoDay(first) === isoDay(last)) {
-      out.push(`${dayMonthYear(first)}, ${clock(first)}–${clock(last)} UTC`);
+      out.push(`${monthDayYear(first)}, ${clock(first)}–${clock(last)} UTC`);
     } else if (first && last) {
-      out.push(`${dayMonthYear(first)}, ${clock(first)} –`, h('br'), `${dayMonthYear(last)}, ${clock(last)} UTC`);
+      out.push(`${monthDayYear(first)}, ${clock(first)} –`, h('br'), `${monthDayYear(last)}, ${clock(last)} UTC`);
     } else if (first || last) {
       out.push(utcLong(first || last, false));
     } else {
@@ -569,7 +569,7 @@ export function createDetail(root, ctx) {
       if (timeText) {
         const d = parseUtcInput(timeText);
         if (!d) errors.push([time, 'Write the capture time as YYYY-MM-DD HH:MM:SS, in UTC.']);
-        else if (launch && d < launch) errors.push([time, `That is before the launch on ${dayMonthYear(launch)}.`]);
+        else if (launch && d < launch) errors.push([time, `That is before the launch on ${monthDayYear(launch)}.`]);
         else if (d.getTime() > Date.now() + 36e5) errors.push([time, 'That capture time is in the future.']);
         else next.captured_at = isoUTC(d);
       }

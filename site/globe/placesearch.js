@@ -20,23 +20,22 @@ const SHOWN = 3;
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const pad = (n) => String(n).padStart(2, '0');
 
-const localDay = new Intl.DateTimeFormat('en-GB', { timeZone: LOCAL_ZONE, weekday: 'short', day: 'numeric', month: 'short' });
-// en-US for the zone: en-GB names Calgary's "GMT-6" rather than "MDT"
+const localDay = new Intl.DateTimeFormat('en-US', { timeZone: LOCAL_ZONE, weekday: 'short', day: 'numeric', month: 'short' });
 const localClock = new Intl.DateTimeFormat('en-US', {
   timeZone: LOCAL_ZONE, hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZoneName: 'short',
 });
 
-/** "Fri 31 Oct, 18:36 MDT" */
+/** "Fri, Oct 31, 18:36 MDT" */
 function calgary(ms) {
   const p = {};
   for (const part of localClock.formatToParts(ms)) p[part.type] = part.value;
-  return `${localDay.format(ms).replace(',', '')}, ${p.hour}:${p.minute} ${p.timeZoneName}`;
+  return `${localDay.format(ms)}, ${p.hour}:${p.minute} ${p.timeZoneName}`;
 }
 
-/** "1 Nov, 00:36 UTC" */
+/** "Nov 1, 00:36 UTC" */
 function utc(ms) {
   const d = new Date(ms);
-  return `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]}, ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())} UTC`;
+  return `${MONTHS[d.getUTCMonth()]} ${d.getUTCDate()}, ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())} UTC`;
 }
 
 /** "45 s", "4 min", "1 h 12 min" */

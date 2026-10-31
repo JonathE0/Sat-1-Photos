@@ -27,7 +27,7 @@ import { grouped } from '../assets/format.js';
 const FADE_IN_MS = 400;
 const FADE_OUT_MS = 240; // exits run at 60% of the entrance
 const LIVE_EVERY = 4; // every 4th fact is a live one, when live numbers are there
-const LAUNCH_LABEL = '3 May 2026';
+const LAUNCH_LABEL = 'May 3, 2026';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -41,13 +41,13 @@ function el(tag, className, text) {
   return node;
 }
 
-/** "2026-05-05" -> "5 May 2026"; anything else is returned as given. */
+/** "2026-05-05" -> "May 5, 2026"; anything else is returned as given. */
 export function formatDate(iso) {
   const m = /^(\d{4})-(\d{2})(?:-(\d{2}))?/.exec(String(iso || ''));
   if (!m) return iso ? String(iso) : '';
   const month = MONTHS[Number(m[2]) - 1];
   if (!month) return String(iso);
-  return m[3] ? `${Number(m[3])} ${month} ${m[1]}` : `${month} ${m[1]}`;
+  return m[3] ? `${month} ${Number(m[3])}, ${m[1]}` : `${month} ${m[1]}`;
 }
 
 function shuffle(list) {

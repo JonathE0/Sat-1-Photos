@@ -42,16 +42,16 @@ const MINUS = '−';
 // Short months as the picture titles write them (adapter.js timeTitle), not Intl's "Sept".
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-/** "24 Oct 2026", or "24 Oct" without the year. */
+/** "Oct 24, 2026", or "Oct 24" without the year. */
 function utcDay(ms, year = true) {
   const d = new Date(ms);
-  return `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]}${year ? ` ${d.getUTCFullYear()}` : ''}`;
+  return `${MONTHS[d.getUTCMonth()]} ${d.getUTCDate()}${year ? `, ${d.getUTCFullYear()}` : ''}`;
 }
 function utcTime(ms, seconds = true) {
   const d = new Date(ms);
   return `${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}${seconds ? `:${pad(d.getUTCSeconds())}` : ''}`;
 }
-/** "24 Oct 2026, 17:37 UTC" */
+/** "Oct 24, 2026, 17:37 UTC" */
 const utcWhen = (ms) => `${utcDay(ms)}, ${utcTime(ms, false)} UTC`;
 function isoUtc(ms) {
   return new Date(Math.round(ms / 1000) * 1000).toISOString().replace('.000Z', 'Z');
@@ -70,7 +70,7 @@ function localTime(ms, seconds = true) {
   for (const p of localFormat.formatToParts(ms)) parts[p.type] = p.value;
   return { time: `${parts.hour}:${parts.minute}${seconds ? `:${parts.second}` : ''}`, zone: parts.timeZoneName };
 }
-const localDay = new Intl.DateTimeFormat('en-GB', { timeZone: LOCAL_ZONE, weekday: 'long', day: 'numeric', month: 'long' });
+const localDay = new Intl.DateTimeFormat('en-US', { timeZone: LOCAL_ZONE, weekday: 'long', day: 'numeric', month: 'long' });
 
 const fmtLat = (lat) => `${Math.abs(lat).toFixed(2)}° ${lat >= 0 ? 'N' : 'S'}`;
 const fmtLon = (lon) => `${Math.abs(lon).toFixed(2)}° ${lon >= 0 ? 'E' : 'W'}`;
@@ -949,7 +949,7 @@ export function mountGlobe(container, options = {}) {
     }
     let day = '';
     for (const p of list) {
-      // grouped by Calgary day: "Friday 30 October"
+      // grouped by Calgary day: "Friday, October 30"
       if (localDay.format(p.riseMs) !== day) {
         day = localDay.format(p.riseMs);
         const h = document.createElement('li');
@@ -1666,7 +1666,7 @@ export function mountGlobe(container, options = {}) {
         return;
       }
       const p = findPhoto(hit.id);
-      // "Antarctica, 25 Oct, 00:54 UTC"
+      // "Antarctica, Oct 25, 00:54 UTC"
       tip.textContent = p ? `${p.place ? `${p.place}, ` : ''}${utcDay(p.ms, false)}, ${utcTime(p.ms, false)} UTC` : '';
     } else if (hit.type === 'satellite') {
       if (peek.id) hidePeek();

@@ -83,7 +83,7 @@ function cornerData(p) {
   };
 }
 
-/** "Came down 30 Oct, 04:48–04:54 UTC in 161 packets", or '' with nothing to say. */
+/** "Came down Oct 30, 04:48–04:54 UTC in 161 packets", or '' with nothing to say. */
 function downlinkLine(p) {
   const dl = p.raw?.downlink;
   if (!dl || typeof dl !== 'object') return '';

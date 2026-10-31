@@ -8,7 +8,8 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { applyAnnotations, comparePhotos, launchTime, toIsoUtc, toPhotos, whenKnown } from '../adapter.js';
-import { bytes, grouped, plural } from '../../assets/format.js';
+import { bytes, calgary, grouped, monthDayYear, plural, utcLong } from '../../assets/format.js';
+import { calgaryTime, launchDate, utcLong as exploreLong, utcShort as exploreShort } from '../../explore/journey-parts.js';
 import * as astro from '../astro.js';
 import { auroraNote, parseForecast, turnSince } from '../aurora.js';
 import * as wheel from '../colorwheel.js';
@@ -17,7 +18,7 @@ import * as map2d from '../map2d.js';
 import * as region from '../../explore/journey-region.js';
 import * as rp from '../regionpasses.js';
 import * as shot from '../shotcamera.js';
-import { elementsNote, FAR_DAYS, parseUtcInput, utcInputs, VERY_FAR_DAYS } from '../timepick.js';
+import { calgaryWhen, elementsNote, FAR_DAYS, parseUtcInput, utcInputs, VERY_FAR_DAYS } from '../timepick.js';
 
 const read = (rel) => JSON.parse(readFileSync(fileURLToPath(new URL(rel, import.meta.url)), 'utf8'));
 const tles = read('../../data/tle.json');
@@ -688,6 +689,19 @@ check('compass points', astro.compassPoint(0) === 'N' && astro.compassPoint(355)
   check('numbers: bytes and counts read the same', bytes(50462) === '49.3 KB (50 462 bytes)' && plural(1200, 'packet') === '1 200 packets' && plural(1, 'packet') === '1 packet');
   const facts = readFileSync(fileURLToPath(new URL('../../explore/facts.json', import.meta.url)), 'utf8');
   check('numbers: no thousands comma left in the facts', !/\d,\d{3}\b/.test(facts));
+}
+
+// ---- dates: month, day, year -------------------------------------------------------
+{
+  const ms = Date.UTC(2026, 9, 22, 15, 7, 59);
+  check('dates: the catalogue writes month, day, year', monthDayYear(new Date(ms)) === 'Oct 22, 2026' && utcLong(new Date(ms)) === 'Oct 22, 2026, 15:07:59 UTC');
+  check('dates: Calgary\'s clock too', calgary(new Date(ms)) === 'Oct 22, 2026, 09:07:59 MDT');
+  check('dates: Explore too', exploreLong(ms) === 'Oct 22, 2026, 15:07 UTC' && exploreShort(ms) === 'Oct 22, 15:07 UTC' && launchDate === 'May 3, 2026');
+  const evening = Date.UTC(2026, 9, 23, 2, 0);
+  check('dates: Explore\'s other day for Calgary', calgaryTime(evening).date === 'Oct 22' && calgaryTime(evening).otherDay);
+  check('dates: the time picker too', calgaryWhen(ms) === 'Thursday, October 22, 2026, 09:07:59 MDT', calgaryWhen(ms));
+  const facts = readFileSync(fileURLToPath(new URL('../../explore/facts.json', import.meta.url)), 'utf8');
+  check('dates: none day first in the facts', !/\b\d{1,2} (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\b/.test(facts));
 }
 
 // ---- aurora -----------------------------------------------------------------------
