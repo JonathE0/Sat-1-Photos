@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-01T07:00:40Z",
+ "generated_at": "2026-11-01T11:06:13Z",
  "satellite": {
   "name": "CTS-SAT-1",
   "alias": "FrontierSat",
@@ -8,32 +8,88 @@
  },
  "images": [
   {
-   "id": "unnamed-2026-11-01-0145",
-   "file": "camera/unnamed_2026-11-01_0145.img",
+   "id": "2026-10-31-155733z",
+   "file": "camera/2026-10-31_155733Z.img",
    "camera": "picam",
-   "title": "Unnamed capture, received Nov 1, 2026",
-   "src": "images/unnamed-2026-11-01-0145.jpg",
-   "thumb": "images/thumbs/unnamed-2026-11-01-0145.jpg",
+   "title": "Oct 31, 2026, 15:57 UTC",
+   "src": "images/2026-10-31-155733z.jpg",
+   "thumb": "images/thumbs/2026-10-31-155733z.jpg",
    "width": 640,
    "height": 480,
    "status": "partial",
-   "status_note": "117 of 325 lines arrived, but line 46 did not, and the camera's JPEGs can't be decoded past a gap: the picture is shown down to it.",
-   "completeness": 0.1415,
+   "status_note": "226 of 333 lines arrived, but line 23 did not, and the camera's JPEGs can't be decoded past a gap: the picture is shown down to it.",
+   "completeness": 0.0691,
+   "dark": false,
+   "file_size": 22389,
+   "sha256": "8fe0b77881f36095074302af5b7c313233e408b454d24dba7ac9cccf1b750e41",
+   "sha256_expected": "5211e8a54bb65b02e7f60d05fb9fdbb06e2521633948434ea513ba1425e06d51",
+   "captured_at": "2026-10-31T15:57:33Z",
+   "capture_date": "2026-10-31",
+   "capture_basis": "filename",
+   "satellite_clock": {
+    "correction_s": 0.0
+   },
+   "downlink": {
+    "first": "2026-11-01T07:16:01Z",
+    "last": "2026-11-01T07:20:06Z",
+    "packets": 160
+   },
+   "position": {
+    "lat": -55.8667,
+    "lon": 89.988,
+    "alt_km": 514.8,
+    "place": "Indian Ocean",
+    "ground_sunlit": false,
+    "sun_elevation_deg": -16.4,
+    "satellite_sunlit": true,
+    "satellite_light": "sunlit",
+    "sun_above_limb_deg": 5.6,
+    "tle_epoch": "2026-10-30T10:32:56Z",
+    "basis": "SGP4 from the most recent TLE before capture"
+   },
+   "unnamed": false
+  },
+  {
+   "id": "2026-10-31-152326z",
+   "file": "camera/2026-10-31_152326Z.img",
+   "camera": "picam",
+   "title": "Oct 31, 2026, 15:23 UTC",
+   "src": "images/2026-10-31-152326z.jpg",
+   "thumb": "images/thumbs/2026-10-31-152326z.jpg",
+   "width": 640,
+   "height": 480,
+   "status": "partial",
+   "status_note": "321 of 325 lines arrived, but line 116 did not, and the camera's JPEGs can't be decoded past a gap: the picture is shown down to it.",
+   "completeness": 0.3569,
    "dark": true,
    "file_size": 21853,
-   "sha256": "5258459e28cf7da2c226bfdf8df70e0b0dcd05005cea60dd02e4adabc0b71343",
-   "sha256_expected": null,
-   "captured_at": null,
-   "capture_date": "2026-11-01",
-   "capture_basis": "date only",
-   "satellite_clock": null,
-   "downlink": {
-    "first": "2026-11-01T06:44:42Z",
-    "last": "2026-11-01T06:47:52Z",
-    "packets": 46
+   "sha256": "e65b0ed9cf434355a039de577158bd7560369d749c86dc2bd3ae436fcfa89b96",
+   "sha256_expected": "db5337fba313327d11ca5c76b874c2e4a3053680dc249613cb05db41a8a1e86e",
+   "captured_at": "2026-10-31T15:23:26Z",
+   "capture_date": "2026-10-31",
+   "capture_basis": "filename",
+   "satellite_clock": {
+    "correction_s": 0.0
    },
-   "position": null,
-   "unnamed": true
+   "downlink": {
+    "first": "2026-11-01T06:47:21Z",
+    "last": "2026-11-01T06:57:20Z",
+    "packets": 254
+   },
+   "position": {
+    "lat": 71.9942,
+    "lon": 132.8334,
+    "alt_km": 512.1,
+    "place": "Sakha Republic, Russia",
+    "ground_sunlit": false,
+    "sun_elevation_deg": -32.1,
+    "satellite_sunlit": false,
+    "satellite_light": "shadow",
+    "sun_above_limb_deg": -10.2,
+    "tle_epoch": "2026-10-30T10:32:56Z",
+    "basis": "SGP4 from the most recent TLE before capture"
+   },
+   "unnamed": false
   },
   {
    "id": "2026-10-31-124802z",
