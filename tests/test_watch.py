@@ -306,7 +306,8 @@ class Feeds(unittest.TestCase):
                     self.assertGreaterEqual(o["sun_elevation_deg"], watch.DAY_SUN_MIN)
                 else:
                     self.assertLessEqual(o["sun_elevation_deg"], watch.DARK_SUN_MAX)
-                self.assertTrue(o["closest_at_calgary"].endswith("-06:00"))  # MDT, and from 1 Nov 2026 Alberta stays at UTC-6
+                self.assertTrue(o["closest_at_calgary"].endswith("-06:00"))  # Alberta Time, all year
+                self.assertEqual(o["calgary_zone"], "ABT")
 
     def test_a_feed_that_is_down_keeps_its_last_good_answer(self):
         first = self.run_watch(FakeFeeds())

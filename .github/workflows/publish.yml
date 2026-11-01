@@ -14,8 +14,8 @@ name: Update and publish
 
 on:
   schedule:
-    # 04:00 and 16:00 UTC: 10 PM and 10 AM in Calgary on daylight time
-    # (9 PM and 9 AM on standard time, Nov to Mar; cron can't follow DST).
+    # 04:00 and 16:00 UTC: 10 PM and 10 AM in Calgary, all year
+    # (Alberta Time is UTC-6 and the clocks no longer change).
     - cron: "0 4,16 * * *"
   push:
     branches: [main]

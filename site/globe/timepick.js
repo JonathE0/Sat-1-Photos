@@ -10,10 +10,10 @@
  * The helpers above createTimePicker are pure, so fixtures/verify.mjs checks
  * them under Node.
  */
+import { CALGARY_TIME_ZONE, CALGARY_ZONE_NAME } from '../assets/calgary-clock.js';
 
 const DAY_MS = 86_400_000;
 const HOUR_MS = 3_600_000;
-const LOCAL_ZONE = 'America/Edmonton';
 /** Past this many days from the elements, say how far off the position may
  * be; past VERY_FAR_DAYS, that the timing is a rough guess. SGP4's error
  * for a low, drag-affected orbit grows from a few kilometres at the epoch
@@ -124,26 +124,25 @@ export function elementsNote(ms, orbit) {
 // ---- the form -----------------------------------------------------------------------
 
 const localDay = new Intl.DateTimeFormat('en-US', {
-  timeZone: LOCAL_ZONE,
+  timeZone: CALGARY_TIME_ZONE,
   weekday: 'long',
   day: 'numeric',
   month: 'long',
   year: 'numeric',
 });
 const localClock = new Intl.DateTimeFormat('en-US', {
-  timeZone: LOCAL_ZONE,
+  timeZone: CALGARY_TIME_ZONE,
   hour: '2-digit',
   minute: '2-digit',
   second: '2-digit',
   hourCycle: 'h23',
-  timeZoneName: 'short',
 });
 
-/** "Thursday, October 22, 2026, 09:07:59 MDT" */
+/** "Thursday, October 22, 2026, 09:07:59 ABT" */
 export function calgaryWhen(ms) {
   const p = {};
   for (const part of [...localDay.formatToParts(ms), ...localClock.formatToParts(ms)]) p[part.type] = part.value;
-  return `${p.weekday}, ${p.month} ${p.day}, ${p.year}, ${p.hour}:${p.minute}:${p.second} ${p.timeZoneName}`;
+  return `${p.weekday}, ${p.month} ${p.day}, ${p.year}, ${p.hour}:${p.minute}:${p.second} ${CALGARY_ZONE_NAME}`;
 }
 
 const CLOSE_ICON =

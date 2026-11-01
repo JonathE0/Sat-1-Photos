@@ -13,8 +13,8 @@ downlink you know about, run the update by hand (below) to see it at once.
 
 When the site is published on GitHub Pages, the repository's own workflow,
 `.github/workflows/publish.yml`, runs the same update on GitHub's servers twice
-a day (04:00 and 16:00 UTC, which is 10 PM and 10 AM in Calgary on daylight
-time and an hour earlier on standard time) and publishes the result; see
+a day (04:00 and 16:00 UTC, which is 10 PM and 10 AM in Calgary all year) and
+publishes the result; see
 "Publishing" in the README. Use one schedule or the other, not both.
 
 ## What one run does

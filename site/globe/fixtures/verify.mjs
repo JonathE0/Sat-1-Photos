@@ -695,11 +695,17 @@ check('compass points', astro.compassPoint(0) === 'N' && astro.compassPoint(355)
 {
   const ms = Date.UTC(2026, 9, 22, 15, 7, 59);
   check('dates: the catalogue writes month, day, year', monthDayYear(new Date(ms)) === 'Oct 22, 2026' && utcLong(new Date(ms)) === 'Oct 22, 2026, 15:07:59 UTC');
-  check('dates: Calgary\'s clock too', calgary(new Date(ms)) === 'Oct 22, 2026, 09:07:59 MDT');
+  check('dates: Calgary\'s clock too', calgary(new Date(ms)) === 'Oct 22, 2026, 09:07:59 ABT');
   check('dates: Explore too', exploreLong(ms) === 'Oct 22, 2026, 15:07 UTC' && exploreShort(ms) === 'Oct 22, 15:07 UTC' && launchDate === 'May 3, 2026');
   const evening = Date.UTC(2026, 9, 23, 2, 0);
   check('dates: Explore\'s other day for Calgary', calgaryTime(evening).date === 'Oct 22' && calgaryTime(evening).otherDay);
-  check('dates: the time picker too', calgaryWhen(ms) === 'Thursday, October 22, 2026, 09:07:59 MDT', calgaryWhen(ms));
+  check('dates: the time picker too', calgaryWhen(ms) === 'Thursday, October 22, 2026, 09:07:59 ABT', calgaryWhen(ms));
+  // Alberta didn't fall back on Nov 1, 2026, whatever the browser's own time-zone data says
+  check('dates: Calgary stays on UTC-6 past Nov 1, 2026', calgary(new Date(Date.UTC(2026, 10, 1, 7, 59))) === 'Nov 1, 2026, 01:59:00 ABT' && calgary(new Date(Date.UTC(2026, 10, 1, 8, 1))) === 'Nov 1, 2026, 02:01:00 ABT');
+  const winter = Date.UTC(2027, 0, 15, 12);
+  const summer = Date.UTC(2027, 6, 15, 12);
+  check('dates: Calgary stays on UTC-6 in winter and summer', calgary(new Date(winter)) === 'Jan 15, 2027, 06:00:00 ABT' && calgary(new Date(summer)) === 'Jul 15, 2027, 06:00:00 ABT');
+  check('dates: Explore and the time picker on that clock', calgaryTime(winter).time === '06:00' && calgaryTime(winter).zone === 'ABT' && calgaryWhen(winter) === 'Friday, January 15, 2027, 06:00:00 ABT');
   const facts = readFileSync(fileURLToPath(new URL('../../explore/facts.json', import.meta.url)), 'utf8');
   check('dates: none day first in the facts', !/\b\d{1,2} (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\b/.test(facts));
 }

@@ -33,7 +33,8 @@ Never type a count, altitude or date into the markup: compute it from `site/data
    sha256 the satellite reported.
 8. **Light.** For each placed picture we know whether the ground below and the satellite itself
    were in sunlight.
-9. **Two clocks.** UTC, and Calgary time (MDT/MST).
+9. **Two clocks.** UTC, and Calgary time (Alberta Time, ABT: UTC-6 all year). `site/assets/calgary-clock.js` fixes it,
+   so a browser with old time-zone data can't fall back an hour.
 10. **The team's blue** #3C9DF5 and the white CalgaryToSpace logo.
 
 ### The idea
@@ -370,7 +371,7 @@ Copy, top to bottom:
    | Speed | 7.61 km/s |
    | Position | 21.40° N, 151.23° W |
    | Sunlight | In sunlight / In the Earth's shadow |
-   | Next over Calgary | 18:36 MDT, in 2 h 21 min |
+   | Next over Calgary | 18:36 ABT, in 2 h 21 min |
    | Orbits so far | 2,736 |
 
 5. "Worked out from orbital elements published 27 Oct, 22:38 UTC." (Small Muted)
@@ -448,7 +449,7 @@ was it taken?** So the picture is the largest thing, and its place is the larges
   direct link to a dark frame opens it with them shown.
 - **Info column**, top aligned with the picture:
   - h1 (Statement): the place, "Alberta, Canada". With no place, the date: "24 Oct 2026".
-  - Body Muted: "24 Oct 2026, 17:37 UTC" and, on the next line, "11:37 MDT in Calgary".
+  - Body Muted: "24 Oct 2026, 17:37 UTC" and, on the next line, "11:37 ABT in Calgary".
   - A status line in Body Ink, only when the picture is not checked and whole (copy below).
   - Actions: "Show on the globe" (the one primary: Ink fill), then text buttons "Compare",
     "Download", "Copy link", "All details". They come before the facts, so a long list of facts
@@ -643,7 +644,7 @@ the page. Put it behind a `<details>` with the summary "Keys" (Small 500 Ink). I
 **Clock bar.**
 - Line 1 (Value 16/500, tabular): "30 Oct 2026, 03:58:36 UTC". Drop the "· live" suffix: the
   disabled Now button already says it.
-- Line 2 (Small Muted): "21:58 MDT in Calgary".
+- Line 2 (Small Muted): "21:58 ABT in Calgary".
 - Speed buttons "1× 60× 600× 3600×" in Jost 13/500 tabular (not Mono). Scrub labels in Small: "A day
   earlier", the offset ("+2 h 14 min", or "Now"), "A day later".
 

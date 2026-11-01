@@ -10,7 +10,7 @@
 
   const DATA_URL = '../data/watchlist.json';
   const ORBIT_URL = '../globe/index.html';
-  const TZ = 'America/Edmonton';
+  const TZ = 'Etc/GMT+6'; // Calgary: Alberta Time, UTC-6 all year (assets/calgary-clock.js says why it's fixed)
   const STALE_HOURS = 3; // the list is rebuilt about once an hour
 
   const CATEGORIES = {
@@ -46,9 +46,7 @@
   const calgaryFmt = new Intl.DateTimeFormat('en-US', { timeZone: TZ, weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
   const weekdayFmt = new Intl.DateTimeFormat('en-GB', { timeZone: TZ, weekday: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
   const utcFmt = new Intl.DateTimeFormat('en-US', { timeZone: 'UTC', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
-  const zoneFmt = new Intl.DateTimeFormat('en-US', { timeZone: TZ, timeZoneName: 'short' });
-  const zone = (ms) => (zoneFmt.formatToParts(ms).find((p) => p.type === 'timeZoneName') || {}).value || '';
-  const calgary = (ms) => `${calgaryFmt.format(ms)} ${zone(ms)}`; // "Sat, Oct 31, 02:33 MDT"
+  const calgary = (ms) => `${calgaryFmt.format(ms)} ABT`; // "Sat, Oct 31, 02:33 ABT"
   const utc = (ms) => `${utcFmt.format(ms)} UTC`; // "Oct 31, 08:33 UTC"
   // a narrow space between the thousands, as in assets/format.js: a comma is a decimal point across much of Europe
   const num = (x, digits = 0) => x.toLocaleString('en-GB', { maximumFractionDigits: digits, minimumFractionDigits: digits }).replace(/,/g, ' ');

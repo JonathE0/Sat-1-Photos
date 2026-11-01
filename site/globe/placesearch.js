@@ -13,23 +13,23 @@ import { findPlaces, getPlace, loadCountries } from '../explore/journey-region.j
 import { rovingList } from './rovinglist.js';
 import { FAR_DAYS } from './timepick.js';
 import { bestPass, findRegionPassesAsync, fmtKm, SEARCH_DAYS } from './regionpasses.js';
+import { CALGARY_TIME_ZONE, CALGARY_ZONE_NAME } from '../assets/calgary-clock.js';
 
 const DAY_MS = 86_400_000;
-const LOCAL_ZONE = 'America/Edmonton';
 const SHOWN = 3;
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const pad = (n) => String(n).padStart(2, '0');
 
-const localDay = new Intl.DateTimeFormat('en-US', { timeZone: LOCAL_ZONE, weekday: 'short', day: 'numeric', month: 'short' });
+const localDay = new Intl.DateTimeFormat('en-US', { timeZone: CALGARY_TIME_ZONE, weekday: 'short', day: 'numeric', month: 'short' });
 const localClock = new Intl.DateTimeFormat('en-US', {
-  timeZone: LOCAL_ZONE, hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZoneName: 'short',
+  timeZone: CALGARY_TIME_ZONE, hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
 });
 
-/** "Fri, Oct 31, 18:36 MDT" */
+/** "Fri, Oct 31, 18:36 ABT" */
 function calgary(ms) {
   const p = {};
   for (const part of localClock.formatToParts(ms)) p[part.type] = part.value;
-  return `${localDay.format(ms)}, ${p.hour}:${p.minute} ${p.timeZoneName}`;
+  return `${localDay.format(ms)}, ${p.hour}:${p.minute} ${CALGARY_ZONE_NAME}`;
 }
 
 /** "Nov 1, 00:36 UTC" */

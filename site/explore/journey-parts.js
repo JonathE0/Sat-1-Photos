@@ -5,6 +5,7 @@
  */
 import * as THREE from '../globe/vendor/three.module.min.js';
 import { DEG, LAUNCH_MS } from '../globe/astro.js';
+import { CALGARY_TIME_ZONE, CALGARY_ZONE_NAME } from '../assets/calgary-clock.js';
 
 // ---- text ----------------------------------------------------------------------
 
@@ -26,23 +27,22 @@ export function utcShort(ms) {
 }
 
 const calgaryClock = new Intl.DateTimeFormat('en-US', {
-  timeZone: 'America/Edmonton',
+  timeZone: CALGARY_TIME_ZONE,
   day: 'numeric',
   month: 'short',
   hour: '2-digit',
   minute: '2-digit',
   hourCycle: 'h23',
-  timeZoneName: 'short',
 });
 
-/** { time: "18:54", zone: "MDT", date: "Oct 24", otherDay: true } in Calgary; otherDay is
+/** { time: "18:54", zone: "ABT", date: "Oct 24", otherDay: true } in Calgary; otherDay is
  * whether that date differs from the UTC date, which is what most lines already show. */
 export function calgaryTime(ms) {
   const parts = {};
   for (const p of calgaryClock.formatToParts(ms)) parts[p.type] = p.value;
   return {
     time: `${parts.hour}:${parts.minute}`,
-    zone: parts.timeZoneName || '',
+    zone: CALGARY_ZONE_NAME,
     date: `${parts.month} ${parts.day}`,
     otherDay: Number(parts.day) !== new Date(ms).getUTCDate(),
   };

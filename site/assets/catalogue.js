@@ -23,6 +23,7 @@
 // is at least half there; the strip still starts with the newest.
 
 import { h, append, announce, copyText } from './dom.js';
+import { CALGARY_TIME_ZONE, CALGARY_ZONE_NAME } from './calgary-clock.js';
 import { CAMERAS, clock, monthDayYear, grouped, latLon, percent, plural, toDate } from './format.js';
 import { applyFilters, FILTER_KEYS, readFilters } from './data.js';
 import { createFilterForm, describeFilters } from './filters.js';
@@ -118,25 +119,24 @@ function nameAndWhen(p) {
 
 let calgaryFormat = null;
 
-// "18:54 MDT on Oct 24 in Calgary" (the date only when it differs from UTC's),
+// "18:54 ABT on Oct 24 in Calgary" (the date only when it differs from UTC's),
 // as nodes with the time and the date each kept on one line.
 function calgaryLine(d) {
   try {
     calgaryFormat ||= new Intl.DateTimeFormat('en-US', {
-      timeZone: 'America/Edmonton',
+      timeZone: CALGARY_TIME_ZONE,
       day: 'numeric',
       month: 'short',
       year: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
       hourCycle: 'h23',
-      timeZoneName: 'short',
     });
     const parts = {};
     for (const part of calgaryFormat.formatToParts(d)) parts[part.type] = part.value;
     const otherDay = `${parts.month} ${parts.day}, ${parts.year}` !== monthDayYear(d);
     return [
-      nobr(`${parts.hour}:${parts.minute} ${parts.timeZoneName}`),
+      nobr(`${parts.hour}:${parts.minute} ${CALGARY_ZONE_NAME}`),
       otherDay ? [' on ', nobr(`${parts.month} ${parts.day}`)] : '',
       ' in Calgary',
     ];

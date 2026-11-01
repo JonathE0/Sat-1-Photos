@@ -228,7 +228,7 @@ more after a week (more when solar activity raises drag).
         {
           "closest_at": "2026-10-31T00:49:53Z",
           "closest_at_calgary": "2026-10-30T18:49:53-06:00",
-          "calgary_zone": "MDT",              // per the IANA tz database (Alberta stays at UTC-6 from 1 Nov 2026)
+          "calgary_zone": "ABT",              // Alberta Time: UTC-6 all year, with no clock changes
           "window": { "from": "…", "to": "…" },  // while the point below is within max_km of the event
           "distance_km": 184,                 // event to the point below the satellite, at closest; null for aurora
           "off_nadir_deg": 19.6,              // how far off straight down the event is then; null for aurora

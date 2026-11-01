@@ -20,6 +20,7 @@ import { fmtKm } from './regionpasses.js';
 import { createShotPanel } from './shotpanel.js';
 import { rovingList } from './rovinglist.js';
 import { grouped } from '../assets/format.js';
+import { CALGARY_TIME_ZONE, CALGARY_ZONE_NAME } from '../assets/calgary-clock.js';
 import { auroraNote } from './aurora.js';
 import { createPicturePins } from './picturepins.js';
 import { createScene, DEFAULT_DISTANCE } from './scene.js';
@@ -30,7 +31,6 @@ const SITE_ROOT = new URL('../', import.meta.url);
 const SPEEDS = [1, 60, 600, 3600];
 const DAY_MS = 86_400_000;
 const MIN_MS = 60_000;
-const LOCAL_ZONE = 'America/Edmonton';
 const PASS_COUNT = 4;
 const PASS_MASK_DEG = 10;
 const PANELS_KEY = 'cts-globe-panels';
@@ -58,19 +58,18 @@ function isoUtc(ms) {
 }
 
 const localFormat = new Intl.DateTimeFormat('en-US', {
-  timeZone: LOCAL_ZONE,
+  timeZone: CALGARY_TIME_ZONE,
   hour: '2-digit',
   minute: '2-digit',
   second: '2-digit',
   hourCycle: 'h23',
-  timeZoneName: 'short',
 });
 function localTime(ms, seconds = true) {
   const parts = {};
   for (const p of localFormat.formatToParts(ms)) parts[p.type] = p.value;
-  return { time: `${parts.hour}:${parts.minute}${seconds ? `:${parts.second}` : ''}`, zone: parts.timeZoneName };
+  return { time: `${parts.hour}:${parts.minute}${seconds ? `:${parts.second}` : ''}`, zone: CALGARY_ZONE_NAME };
 }
-const localDay = new Intl.DateTimeFormat('en-US', { timeZone: LOCAL_ZONE, weekday: 'long', day: 'numeric', month: 'long' });
+const localDay = new Intl.DateTimeFormat('en-US', { timeZone: CALGARY_TIME_ZONE, weekday: 'long', day: 'numeric', month: 'long' });
 
 const fmtLat = (lat) => `${Math.abs(lat).toFixed(2)}° ${lat >= 0 ? 'N' : 'S'}`;
 const fmtLon = (lon) => `${Math.abs(lon).toFixed(2)}° ${lon >= 0 ? 'E' : 'W'}`;

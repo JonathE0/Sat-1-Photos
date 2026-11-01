@@ -1,5 +1,6 @@
 // Formatting for times, places, sizes and labels. Everything shown as UTC is
 // built by hand so it reads the same in every browser and locale.
+import { CALGARY_TIME_ZONE, CALGARY_ZONE_NAME } from './calgary-clock.js';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const p2 = (n) => String(n).padStart(2, '0');
@@ -65,11 +66,11 @@ export function parseUtcInput(text) {
 
 let calgaryFormat = null;
 
-// "Sep 17, 2026, 01:11:48 MDT", the same moment on Calgary's clocks.
+// "Sep 17, 2026, 01:11:48 ABT", the same moment on Calgary's clocks.
 export function calgary(d) {
   try {
     calgaryFormat ||= new Intl.DateTimeFormat('en-US', {
-      timeZone: 'America/Edmonton',
+      timeZone: CALGARY_TIME_ZONE,
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -77,11 +78,10 @@ export function calgary(d) {
       minute: '2-digit',
       second: '2-digit',
       hourCycle: 'h23',
-      timeZoneName: 'short',
     });
     const parts = {};
     for (const part of calgaryFormat.formatToParts(d)) parts[part.type] = part.value;
-    return `${parts.month} ${parts.day}, ${parts.year}, ${parts.hour}:${parts.minute}:${parts.second} ${parts.timeZoneName}`;
+    return `${parts.month} ${parts.day}, ${parts.year}, ${parts.hour}:${parts.minute}:${parts.second} ${CALGARY_ZONE_NAME}`;
   } catch {
     return null;
   }

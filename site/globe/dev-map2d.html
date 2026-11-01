@@ -136,12 +136,12 @@
       }
     }
 
-    const fmt = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Edmonton', hour: '2-digit', minute: '2-digit',
-      second: '2-digit', hourCycle: 'h23', timeZoneName: 'short' });
+    const fmt = new Intl.DateTimeFormat('en-US', { timeZone: 'Etc/GMT+6', hour: '2-digit', minute: '2-digit',
+      second: '2-digit', hourCycle: 'h23' });
     function paintClock() {
       const iso = new Date(state.ms).toISOString();
       $('utc').textContent = `${iso.slice(0, 10)}, ${iso.slice(11, 19)} UTC`;
-      $('local').textContent = `${fmt.format(state.ms)} in Calgary`;
+      $('local').textContent = `${fmt.format(state.ms)} ABT in Calgary`;
     }
     function paintTransport() {
       $('play').textContent = state.playing ? 'Pause' : 'Play';

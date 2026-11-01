@@ -33,9 +33,8 @@ import re
 import urllib.error
 from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime, timedelta, timezone
 from pathlib import Path
-from zoneinfo import ZoneInfo
 
 import numpy as np
 
@@ -55,7 +54,7 @@ MAX_OPPORTUNITIES = 12  # per event, the best ones
 _STEP_S = 20.0  # track sampling; passes are then refined to well under a second
 _R_KM = 6371.0
 _GROUND_KM_S = 7.2  # how fast the point below a 500 km orbit moves
-_CALGARY = ZoneInfo("America/Edmonton")
+_CALGARY = timezone(timedelta(hours=-6), "ABT")  # Alberta Time: UTC-6 all year, as in site/assets/calgary-clock.js
 # The geomagnetic (dipole) north pole, IGRF 2025. Magnetic latitude from a
 # tilted dipole is good to a few degrees: enough to say "over the oval".
 _POLE_LAT, _POLE_LON = 80.8, -72.6
