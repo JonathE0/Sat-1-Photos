@@ -1,6 +1,6 @@
 # Keeps the published gallery current, with no person or AI in the loop.
 #
-# Twice a day, and on every push to the default branch, GitHub runs the
+# Every hour, and on every push to the default branch, GitHub runs the
 # same update the local scheduled task runs (python -m cts1_gallery update),
 # commits any new pictures and site data back to the repository, and
 # publishes site/ to GitHub Pages. A scheduled run that finds nothing new
@@ -14,9 +14,9 @@ name: Update and publish
 
 on:
   schedule:
-    # 04:00 and 16:00 UTC: 10 PM and 10 AM in Calgary, all year
-    # (Alberta Time is UTC-6 and the clocks no longer change).
-    - cron: "0 4,16 * * *"
+    # Every hour, off the busy top of the hour: runs set for 04:00 and 16:00
+    # UTC started 4 to 7 hours late. GitHub doesn't promise the minute.
+    - cron: "23 * * * *"
   push:
     branches: [main]
   workflow_dispatch:

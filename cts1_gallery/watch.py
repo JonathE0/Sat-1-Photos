@@ -43,7 +43,7 @@ from .orbit import Orbit, sun_elevation
 
 MAX_KM = 400.0  # "close enough": distance from the point below the satellite
 DAYS = 3.0  # how far ahead to look; TLEs older than a few days are rough anyway
-REFRESH = timedelta(minutes=55)  # each feed at most hourly (the publish runs every 30 min)
+REFRESH = timedelta(minutes=55)  # each feed at most hourly (the publish runs every hour)
 MIN_FIRE_HA = 2000.0  # 20 km², about 5,000 acres: smaller fires are a few pixels at most
 AURORA_KP = 4.0  # NOAA's "active" level; Kp 5 is a minor geomagnetic storm
 DAY_SUN_MIN = 5.0  # degrees above the horizon, at the event

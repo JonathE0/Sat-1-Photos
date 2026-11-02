@@ -12,5 +12,5 @@ window.CTS1_CONFIG = {
   // .github/workflows/publish.yml on GitHub Pages, or
   // scripts/install-schedule.ps1 on a local machine. "" hides that line, for
   // a copy that is only as current as its last push.
-  refreshSchedule: "twice a day, at 10 AM and 10 PM Calgary time",
+  refreshSchedule: "every hour",
 };

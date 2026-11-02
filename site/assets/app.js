@@ -312,7 +312,7 @@ function updateCounts() {
   ]);
 }
 
-// "twice a day, at …" from config.js; older configs give refreshMinutes instead.
+// "every hour" from config.js; older configs give refreshMinutes instead.
 function refreshText() {
   if (typeof config.refreshSchedule === 'string') return config.refreshSchedule.trim();
   const minutes = Number(config.refreshMinutes);

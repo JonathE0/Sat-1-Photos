@@ -7,14 +7,15 @@ prefer). There is no AI in the loop: the task starts
 records the result and exits.
 
 Pictures only arrive after the team commands a download and a ground station
-hears the pass, a few times a week, so most runs find nothing new; twice a day
-is plenty, with a picture showing up at most about 12 hours late. After a
-downlink you know about, run the update by hand (below) to see it at once.
+hears the pass, a few times a week, so most runs find nothing new; on a local
+machine twice a day is plenty, with a picture showing up at most about 12 hours
+late. After a downlink you know about, run the update by hand (below) to see it
+at once.
 
 When the site is published on GitHub Pages, the repository's own workflow,
-`.github/workflows/publish.yml`, runs the same update on GitHub's servers twice
-a day (04:00 and 16:00 UTC, which is 10 PM and 10 AM in Calgary all year) and
-publishes the result; see
+`.github/workflows/publish.yml`, runs the same update on GitHub's servers every
+hour (at 23 minutes past, off the busy top of the hour; GitHub doesn't promise
+the minute and runs late when it is busy) and publishes the result; see
 "Publishing" in the README. Use one schedule or the other, not both.
 
 ## What one run does
@@ -71,7 +72,7 @@ Then, from the repo root (no admin rights needed):
   a minute later. The pipeline republishes about every 15 minutes, so shorter
   intervals gain nothing.
 - Then set `refreshSchedule` in `site/config.js` to match; the site footer
-  says it ("It is rebuilt twice a day, at 10 AM and 10 PM Calgary time…").
+  says it ("It is rebuilt every hour…").
 - Run now: add `-RunNow` to start a run straight after registering.
 - Uninstall: `-Uninstall`.
 

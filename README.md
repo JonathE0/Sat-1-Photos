@@ -148,7 +148,7 @@ data/                local cache and logs (not committed)
 host, member edits are read-only.
 
 On GitHub, [`.github/workflows/publish.yml`](.github/workflows/publish.yml)
-does it for you. Twice a day (04:00 and 16:00 UTC: 10 PM and 10 AM in Calgary),
+does it for you. Every hour (at 23 minutes past, or later when GitHub is busy),
 and on every push to `main`, it runs the
 same `update` as the local schedule, commits any new pictures and site data
 back to the repository, and publishes `site/` to GitHub Pages. To turn it on,
