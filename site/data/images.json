@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-02T08:27:46Z",
+ "generated_at": "2026-11-02T22:28:51Z",
  "satellite": {
   "name": "CTS-SAT-1",
   "alias": "FrontierSat",
@@ -1478,11 +1478,11 @@
  ],
  "skipped": [
   {
-   "file": "camera/unnamed_2026-10-12_00ca.img",
+   "file": "camera/2026-10-11_095500Z.img",
    "reason": "the start of the file never arrived, and the picture can't be decoded without it"
   },
   {
-   "file": "camera/unnamed_2026-10-25_0158.img",
+   "file": "camera/2026-10-25173606z.img",
    "reason": "the start of the file never arrived, and the picture can't be decoded without it"
   },
   {
@@ -1490,7 +1490,7 @@
    "reason": "not enough of the file arrived to show any of the picture"
   },
   {
-   "file": "camera/unnamed_2026-10-16_0401.img",
+   "file": "camera/2026-10-16.img",
    "reason": "the start of the file never arrived, and the picture can't be decoded without it"
   },
   {
