@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-01T20:20:06Z",
+ "generated_at": "2026-11-02T02:19:26Z",
  "satellite": {
   "name": "CTS-SAT-1",
   "alias": "FrontierSat",
@@ -16,12 +16,12 @@
    "thumb": "images/thumbs/2026-10-31-155733z.jpg",
    "width": 640,
    "height": 480,
-   "status": "partial",
-   "status_note": "226 of 333 lines arrived, but line 23 did not, and the camera's JPEGs can't be decoded past a gap: the picture is shown down to it.",
-   "completeness": 0.0691,
+   "status": "verified",
+   "status_note": "Bit-exact: matches the sha256 the satellite sent.",
+   "completeness": 1.0,
    "dark": false,
    "file_size": 22389,
-   "sha256": "8fe0b77881f36095074302af5b7c313233e408b454d24dba7ac9cccf1b750e41",
+   "sha256": "5211e8a54bb65b02e7f60d05fb9fdbb06e2521633948434ea513ba1425e06d51",
    "sha256_expected": "5211e8a54bb65b02e7f60d05fb9fdbb06e2521633948434ea513ba1425e06d51",
    "captured_at": "2026-10-31T15:57:33Z",
    "capture_date": "2026-10-31",
@@ -31,8 +31,8 @@
    },
    "downlink": {
     "first": "2026-11-01T07:16:01Z",
-    "last": "2026-11-01T07:20:06Z",
-    "packets": 160
+    "last": "2026-11-01T23:06:18Z",
+    "packets": 341
    },
    "position": {
     "lat": -55.8657,
@@ -58,12 +58,12 @@
    "thumb": "images/thumbs/2026-10-31-152326z.jpg",
    "width": 640,
    "height": 480,
-   "status": "partial",
-   "status_note": "321 of 325 lines arrived, but line 116 did not, and the camera's JPEGs can't be decoded past a gap: the picture is shown down to it.",
-   "completeness": 0.3569,
+   "status": "verified",
+   "status_note": "Bit-exact: matches the sha256 the satellite sent.",
+   "completeness": 1.0,
    "dark": true,
    "file_size": 21853,
-   "sha256": "e65b0ed9cf434355a039de577158bd7560369d749c86dc2bd3ae436fcfa89b96",
+   "sha256": "db5337fba313327d11ca5c76b874c2e4a3053680dc249613cb05db41a8a1e86e",
    "sha256_expected": "db5337fba313327d11ca5c76b874c2e4a3053680dc249613cb05db41a8a1e86e",
    "captured_at": "2026-10-31T15:23:26Z",
    "capture_date": "2026-10-31",
@@ -73,8 +73,8 @@
    },
    "downlink": {
     "first": "2026-11-01T06:47:21Z",
-    "last": "2026-11-01T06:57:20Z",
-    "packets": 254
+    "last": "2026-11-01T21:30:22Z",
+    "packets": 441
    },
    "position": {
     "lat": 71.9968,
