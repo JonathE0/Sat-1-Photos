@@ -28,6 +28,7 @@
  * .cg-vf in globe.css on Orbit). Class prefix `vf-`.
  */
 import { plural } from '../assets/format.js';
+import { OPENING_PHOTO_ID } from '../assets/opening-photo.js';
 import {
   calgaryTime,
   fmtLat,
@@ -457,6 +458,8 @@ export function createViewfinder(container, {
       .filter(isNearlyWhole)
       .sort((a, b) => (b.sortTime || 0) - (a.sortTime || 0));
     index = deck.findIndex((p) => p.id === at);
+    // nothing up yet: the first step lands on the opening picture, and the run goes on from there
+    if (index < 0) index = Math.max(deck.findIndex((p) => p.id === OPENING_PHOTO_ID) - 1, -1);
     if (held) held = all.find((p) => p.id === held.id) || null;
     next = null;
     misses = 0;

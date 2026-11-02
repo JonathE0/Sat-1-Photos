@@ -76,6 +76,7 @@ import {
   utcShort,
 } from './journey-parts.js';
 import { loadCountries, placeAt, placeInSentence } from './journey-region.js';
+import { OPENING_PHOTO_ID } from '../assets/opening-photo.js';
 
 const MODULE_BASE = new URL('./', import.meta.url);
 const SITE_ROOT = new URL('../', import.meta.url);
@@ -2310,7 +2311,8 @@ export function mountJourney(container, options = {}) {
       ref.latestImg.src = new URL(pic.src || pic.thumb, siteRoot).href;
       const place = placeOf(pic);
       ref.latestImg.alt = place ? `Picture over ${place}` : 'The latest picture';
-      ref.latestTitle.textContent = pic === latest ? 'Latest picture' : 'Selected picture';
+      if (pic !== latest) ref.latestTitle.textContent = 'Selected picture';
+      else ref.latestTitle.textContent = pic.id === OPENING_PHOTO_ID ? 'Featured picture' : 'Latest picture';
       put(ref.latestPlace, place || photoTime(pic));
       put(ref.latestTime, place ? photoTime(pic) : '');
       const status = statusLine(pic);
@@ -3276,9 +3278,10 @@ export function mountJourney(container, options = {}) {
   // ---- photos ---------------------------------------------------------------------------
   function setPhotos(list) {
     photos = Array.isArray(list) ? list.filter((p) => p && p.id) : [];
-    // the newest nearly whole picture, the one the viewfinder opens on
+    // the one the viewfinder opens on: the opening picture, else the newest nearly whole
     const shown = photos.filter(isNearlyWhole);
-    latest = (shown.length ? shown : photos).reduce((best, p) => (!best || (p.sortTime || 0) > (best.sortTime || 0) ? p : best), null);
+    latest = shown.find((p) => p.id === OPENING_PHOTO_ID)
+      || (shown.length ? shown : photos).reduce((best, p) => (!best || (p.sortTime || 0) > (best.sortTime || 0) ? p : best), null);
     ref.latest.dataset.id = '';
     const n = photos.length;
     ref.allText.textContent = n ? `See all ${grouped(n)} pictures` : 'See the pictures';

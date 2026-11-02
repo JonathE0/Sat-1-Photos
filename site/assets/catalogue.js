@@ -24,6 +24,7 @@
 
 import { h, append, announce, copyText } from './dom.js';
 import { CALGARY_TIME_ZONE, CALGARY_ZONE_NAME } from './calgary-clock.js';
+import { OPENING_PHOTO_ID } from './opening-photo.js';
 import { CAMERAS, clock, monthDayYear, grouped, latLon, percent, plural, toDate } from './format.js';
 import { applyFilters, FILTER_KEYS, readFilters } from './data.js';
 import { createFilterForm, describeFilters } from './filters.js';
@@ -926,8 +927,8 @@ export function createCatalogue(root, {
     shown = matched.filter((p) => !isTucked(p));
     if (size === 1) {
       if (!byId.has(currentId)) {
-        // No picture named: the newest that is worth opening.
-        currentId = (shown.find(isWorthOpening) || shown[0])?.id || null;
+        // No picture named: the opening picture, else the newest that is worth opening.
+        currentId = (shown.find((p) => p.id === OPENING_PHOTO_ID) || shown.find(isWorthOpening) || shown[0])?.id || null;
       } else if (shown.length && !shown.some((p) => p.id === currentId)) {
         currentId = nearestShown(currentId);
       }
