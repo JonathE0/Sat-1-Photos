@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-02T02:19:26Z",
+ "generated_at": "2026-11-02T05:07:37Z",
  "satellite": {
   "name": "CTS-SAT-1",
   "alias": "FrontierSat",
@@ -86,6 +86,48 @@
     "satellite_sunlit": false,
     "satellite_light": "shadow",
     "sun_above_limb_deg": -10.2,
+    "tle_epoch": "2026-10-31T05:27:57Z",
+    "basis": "SGP4 from the most recent TLE before capture"
+   },
+   "unnamed": false
+  },
+  {
+   "id": "2026-10-31-142221z",
+   "file": "camera/2026-10-31_142221Z.img",
+   "camera": "picam",
+   "title": "Oct 31, 2026, 14:22 UTC",
+   "src": "images/2026-10-31-142221z.jpg",
+   "thumb": "images/thumbs/2026-10-31-142221z.jpg",
+   "width": 640,
+   "height": 480,
+   "status": "verified",
+   "status_note": "Bit-exact: matches the sha256 the satellite sent.",
+   "completeness": 1.0,
+   "dark": false,
+   "file_size": 44901,
+   "sha256": "6f1590dfa912f5a0aeebfbccf6bb2064c4c2a48308b676bc4c53bee18c3103d6",
+   "sha256_expected": "6f1590dfa912f5a0aeebfbccf6bb2064c4c2a48308b676bc4c53bee18c3103d6",
+   "captured_at": "2026-10-31T14:22:21Z",
+   "capture_date": "2026-10-31",
+   "capture_basis": "filename",
+   "satellite_clock": {
+    "correction_s": 0.0
+   },
+   "downlink": {
+    "first": "2026-11-01T05:38:27Z",
+    "last": "2026-11-02T03:51:12Z",
+    "packets": 770
+   },
+   "position": {
+    "lat": -53.5864,
+    "lon": 114.6854,
+    "alt_km": 514.1,
+    "place": "Indian Ocean",
+    "ground_sunlit": false,
+    "sun_elevation_deg": -18.7,
+    "satellite_sunlit": true,
+    "satellite_light": "sunlit",
+    "sun_above_limb_deg": 3.3,
     "tle_epoch": "2026-10-31T05:27:57Z",
     "basis": "SGP4 from the most recent TLE before capture"
    },
@@ -1446,10 +1488,6 @@
   {
    "file": "camera/unnamed_2026-11-01_0183.img",
    "reason": "the start of the file never arrived, and the picture can't be decoded without it"
-  },
-  {
-   "file": "camera/2026-10-31_142221Z.img",
-   "reason": "not enough of the file arrived to show any of the picture"
   },
   {
    "file": "camera/unnamed_2026-10-16_0401.img",
