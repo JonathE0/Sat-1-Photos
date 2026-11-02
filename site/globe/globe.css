@@ -606,10 +606,21 @@
   background: color-mix(in srgb, var(--cg-bg) 60%, transparent);
 }
 
-/* chosen: a size larger, on top of its neighbours */
+/* chosen: a size larger, on top of its neighbours. Sizes, not `scale`: that would
+   multiply the translate that places the pin, and throw it away from its place. */
 .cg-pin.is-selected {
   z-index: 200 !important;
-  scale: 1.5;
+  width: calc(48 * var(--cg-u) + 4px);
+  height: calc(36 * var(--cg-u) + 4px);
+}
+
+.cg-pin.cg-pin-square.is-selected {
+  width: calc(36 * var(--cg-u) + 4px);
+}
+
+.cg-pin.cg-pin-dark.is-selected {
+  width: 15px;
+  height: 15px;
 }
 
 .cg-pile-count {
