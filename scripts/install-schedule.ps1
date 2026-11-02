@@ -9,8 +9,14 @@
     as the current user, only while that user is logged on, stores no password and needs
     no admin rights. Re-running replaces the task. See docs\SCHEDULING.md.
 
+    With -Publish it registers a second task instead, which runs scripts\start_publish.py
+    every hour to start the GitHub workflow that updates and publishes the public site.
+
 .EXAMPLE
     powershell -ExecutionPolicy Bypass -File scripts\install-schedule.ps1 -RunNow
+
+.EXAMPLE
+    powershell -ExecutionPolicy Bypass -File scripts\install-schedule.ps1 -Publish -RunNow
 
 .EXAMPLE
     powershell -ExecutionPolicy Bypass -File scripts\install-schedule.ps1 -At 08:00,20:00
@@ -25,7 +31,8 @@ param(
     [string[]]$At = @("10:00", "22:00"),
     [ValidateRange(1, 1440)]
     [int]$IntervalMinutes = 0,
-    [string]$TaskName = "CTS-SAT-1 Gallery Update",
+    [string]$TaskName,
+    [switch]$Publish,
     [switch]$Uninstall,
     [switch]$RunNow
 )
@@ -34,8 +41,20 @@ $ErrorActionPreference = "Stop"
 
 $repo = Split-Path -Parent $PSScriptRoot
 $pythonw = Join-Path $repo ".venv\Scripts\pythonw.exe"
-$updateScript = Join-Path $repo "scripts\scheduled_update.py"
 $logDir = Join-Path $repo "data\logs"
+
+if ($Publish) {
+    if (-not $TaskName) { $TaskName = "CTS-SAT-1 Hourly Publish" }
+    if (-not $IntervalMinutes) { $IntervalMinutes = 60 }
+    $updateScript = Join-Path $repo "scripts\start_publish.py"
+    $logs = @("publish.log")
+    $about = "Starts the GitHub workflow that updates and publishes the CTS-SAT-1 (FrontierSat) site"
+} else {
+    if (-not $TaskName) { $TaskName = "CTS-SAT-1 Gallery Update" }
+    $updateScript = Join-Path $repo "scripts\scheduled_update.py"
+    $logs = @("update.log", "last_run.json")
+    $about = "Syncs CTS-SAT-1 (FrontierSat) downlink data and rebuilds the image gallery"
+}
 
 if ($Uninstall) {
     if (Get-ScheduledTask -TaskName $TaskName -TaskPath "\" -ErrorAction SilentlyContinue) {
@@ -107,7 +126,7 @@ $taskParams = @{
     Trigger     = $trigger
     Settings    = $settings
     Principal   = $principal
-    Description = "Syncs CTS-SAT-1 (FrontierSat) downlink data and rebuilds the image gallery $when (python -m cts1_gallery update; plain Python, no AI). Logs: $logDir"
+    Description = "$about $when (plain Python, no AI). Logs: $logDir"
     Force       = $true
 }
 Register-ScheduledTask @taskParams | Out-Null
@@ -124,5 +143,4 @@ Write-Host ("  Next run: {0:yyyy-MM-dd HH:mm}" -f $info.NextRunTime)
 if ($RunNow) {
     Write-Host "  Started:  a run is going now, in the background"
 }
-Write-Host "  Logs:     $logDir\update.log"
-Write-Host "            $logDir\last_run.json"
+foreach ($log in $logs) { Write-Host "  Log:      $logDir\$log" }

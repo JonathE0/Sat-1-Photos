@@ -18,6 +18,22 @@ hour (at 23 minutes past, off the busy top of the hour; GitHub doesn't promise
 the minute and runs late when it is busy) and publishes the result; see
 "Publishing" in the README. Use one schedule or the other, not both.
 
+## Starting the published update from this PC
+
+GitHub's schedule can't be relied on: its 04:00 and 16:00 UTC runs started 4 to
+7 hours late, and the first hourly runs didn't start at all for over 3 hours.
+So a second task, "CTS-SAT-1 Hourly Publish", asks GitHub for a run every hour:
+
+    powershell -ExecutionPolicy Bypass -File scripts\install-schedule.ps1 -Publish [-RunNow] [-Uninstall]
+
+It runs `scripts/start_publish.py` under `pythonw.exe`, which runs
+`gh workflow run publish.yml` and adds a line to `data/logs/publish.log`. It
+only needs `gh` signed in with a token allowed to start workflows, and nothing
+is built on the PC, so it leaves local `main` alone. It works only while the PC
+is on and you are logged in, with one catch-up run after that, and GitHub's own
+schedule stays as the fallback. It stops when the `gh` token expires; the log
+then shows the error.
+
 ## What one run does
 
 1. An incremental sync of the ground-station pipeline's parquet tables.
