@@ -28,8 +28,12 @@ const AU_KM = 149_597_870.7;
 /** Falcon 9 lift-off with the CAS500-2 rideshare (SatNOGS DB). */
 export const LAUNCH_MS = Date.UTC(2026, 4, 3, 6, 59);
 
-/** University of Calgary ground station. */
-export const CALGARY = Object.freeze({ name: 'Calgary', latDeg: 51.0777, lonDeg: -114.13, heightKm: 1.1 });
+/**
+ * University of Calgary ground station at the Rothney Observatory (RAO), south-west of the
+ * city: SatNOGS's position for it. RAO stands at about 1.27 km; 1.45 km comes closest to the
+ * seconds and tenths the SatWatch Discord bot prints for the same passes.
+ */
+export const CALGARY = Object.freeze({ name: 'Calgary', latDeg: 50.868039, lonDeg: -114.291142, heightKm: 1.45 });
 
 export const clamp = (x, lo, hi) => Math.min(hi, Math.max(lo, x));
 
@@ -347,11 +351,14 @@ function crossing(f, level, fromMs, dir, stepMs = 15_000, limitMs = 40 * MS_PER_
 }
 
 /**
- * The next `count` passes of the satellite above `minElevationDeg` as seen
- * by `observer`, starting with any pass in progress at `fromMs`. Rise and
- * set are the moments it crosses `minElevationDeg`.
+ * The next `count` passes of the satellite as seen by `observer`, starting
+ * with any pass in progress at `fromMs`. Rise and set are the moments it
+ * crosses `minElevationDeg`, and a pass has to reach `minPeakDeg`. The
+ * defaults list what the SatWatch Discord bot lists: horizon to horizon,
+ * leaving out passes that stay under 5 degrees.
  */
-export function findPasses(orbit, observer, fromMs, { count = 4, minElevationDeg = 10, maxDays = 4 } = {}) {
+export function findPasses(orbit, observer, fromMs, { count = 4, minElevationDeg = 0, minPeakDeg = 5, maxDays = 4 } = {}) {
+  const lowestPeak = Math.max(minElevationDeg, minPeakDeg);
   const el = (ms) => orbit.elevationDeg(observer, ms);
   const azAt = (ms) => {
     const pv = orbit.eciAt(ms);
@@ -366,10 +373,10 @@ export function findPasses(orbit, observer, fromMs, { count = 4, minElevationDeg
   let e1 = el(t1);
   for (let t2 = t1 + step; t2 <= end && passes.length < count; t2 += step) {
     const e2 = el(t2);
-    if (e1 >= e0 && e1 > e2 && e1 > minElevationDeg - 8) {
+    if (e1 >= e0 && e1 > e2 && e1 > lowestPeak - 8) {
       const maxMs = maximise(el, t0, t2);
       const maxElevationDeg = el(maxMs);
-      if (maxElevationDeg >= minElevationDeg) {
+      if (maxElevationDeg >= lowestPeak) {
         const setMs = crossing(el, minElevationDeg, maxMs, +1);
         if (setMs > fromMs) {
           const riseMs = crossing(el, minElevationDeg, maxMs, -1);

@@ -1,0 +1,25 @@
+{
+  "about": "FrontierSat (NORAD 69015) @ RAO as the SatWatch Discord bot listed it on Nov 2, 2026, with the site's newest elements that day. Rise and set are in UTC, cut to the minute; seconds are cut; peak is to 0.1 degree. Two lower passes in this stretch (4.1 and 0.5 degrees) aren't listed.",
+  "tle": {
+    "epoch": "2026-10-31T22:48:22.565Z",
+    "line1": "1 69015U 26100AM  26304.95026117  .00003648  00000-0  15606-3 0  9998",
+    "line2": "2 69015  97.3832 200.5825 0006109 290.1561  69.9019 15.23437369 27632"
+  },
+  "from": "2026-11-02T05:00:00Z",
+  "days": 2.125,
+  "passes": [
+    { "rise": "2026-11-02T05:15", "set": "2026-11-02T05:23", "seconds": 520, "peak": 8.7 },
+    { "rise": "2026-11-02T06:48", "set": "2026-11-02T06:59", "seconds": 691, "peak": 87.7 },
+    { "rise": "2026-11-02T08:22", "set": "2026-11-02T08:31", "seconds": 545, "peak": 11.1 },
+    { "rise": "2026-11-02T15:58", "set": "2026-11-02T16:07", "seconds": 519, "peak": 9.4 },
+    { "rise": "2026-11-02T17:29", "set": "2026-11-02T17:41", "seconds": 688, "peak": 76.8 },
+    { "rise": "2026-11-02T19:05", "set": "2026-11-02T19:14", "seconds": 550, "peak": 10.5 },
+    { "rise": "2026-11-03T06:27", "set": "2026-11-03T06:38", "seconds": 684, "peak": 49.9 },
+    { "rise": "2026-11-03T08:01", "set": "2026-11-03T08:11", "seconds": 603, "peak": 17.0 },
+    { "rise": "2026-11-03T15:38", "set": "2026-11-03T15:45", "seconds": 432, "peak": 5.5 },
+    { "rise": "2026-11-03T17:09", "set": "2026-11-03T17:20", "seconds": 675, "peak": 44.0 },
+    { "rise": "2026-11-03T18:43", "set": "2026-11-03T18:53", "seconds": 616, "peak": 17.4 },
+    { "rise": "2026-11-04T06:06", "set": "2026-11-04T06:17", "seconds": 662, "peak": 29.3 },
+    { "rise": "2026-11-04T07:39", "set": "2026-11-04T07:50", "seconds": 646, "peak": 26.1 }
+  ]
+}

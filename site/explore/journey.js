@@ -2229,7 +2229,7 @@ export function mountJourney(container, options = {}) {
     const now = performance.now();
     if (stale && now - passTried > 1500) {
       passTried = now;
-      const list = findPasses(orbit, observer, ms, { count: 1, minElevationDeg: 10, maxDays: 2 });
+      const list = findPasses(orbit, observer, ms, { count: 1, minElevationDeg: 0, minPeakDeg: 5, maxDays: 2 });
       passCache = { fromMs: ms, pass: list[0] || null };
     }
     return passCache?.pass || null;

@@ -594,15 +594,16 @@ never by an arrow. Every figure carries its unit or a word ("36° high", not "36
 Under it, in Small: "Worked out from orbital elements of 27 Oct, 22:38 UTC (2 days old)." Over 7
 days old, it turns Ink and adds: "so the position may be off by tens of kilometres."
 
-**Passes panel.** Under the h2, in Small: "Times in Calgary, for passes higher than 10°." Then the
-status line in Value Ink: "Next pass in 2 h 21 min" or "In view now, 34° up in the SW". Drop the
+**Passes panel.** Under the h2, in Small: "Seen from the RAO ground station, horizon to horizon,
+for passes reaching 5°. Times in Calgary." The list follows the SatWatch Discord bot's: the same
+place, cutoff and low passes left out, its length cut to the second. Then the status line in Value Ink: "Next pass in 2 h 21 min" or "In view now, 34° up in the SW". Drop the
 "Rise / Max / Set / Max el" column header and the three UTC columns. Group by day, and give each
 pass two lines:
 
 ```
 Friday 30 October                     <- Small, weight 600, Muted
-18:36–18:44              36° high     <- Value 16/500 Ink, tabular; the height right-aligned
-From NNE to S                         <- Small Muted
+18:36–18:44            36.2° high     <- Value 16/500 Ink, tabular; the height right-aligned
+8m 40s, from NNE to S                 <- Small Muted
 ```
 
 UTC goes into the row's `title` and `aria-label` ("Rises 00:36 UTC, 31 Oct"). The clock already

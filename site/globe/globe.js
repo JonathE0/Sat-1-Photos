@@ -32,7 +32,7 @@ const SPEEDS = [1, 60, 600, 3600];
 const DAY_MS = 86_400_000;
 const MIN_MS = 60_000;
 const PASS_COUNT = 4;
-const PASS_MASK_DEG = 10;
+const PASS_PEAK_DEG = 5;
 const PANELS_KEY = 'cts-globe-panels';
 const HEAD_KEY = 'cts-globe-head';
 
@@ -86,6 +86,12 @@ function fmtDuration(ms) {
   const min = Math.max(0, Math.round(ms / MIN_MS));
   if (min < 60) return `${min} min`;
   return `${Math.floor(min / 60)} h ${min % 60} min`;
+}
+
+/** "11m 31s", cut to the second rather than rounded, as SatWatch prints it. */
+function fmtPassLength(ms) {
+  const secs = Math.floor(ms / 1000);
+  return `${Math.floor(secs / 60)}m ${pad(secs % 60)}s`;
 }
 
 function fmtOffset(ms, exact = false) {
@@ -230,7 +236,7 @@ const TEMPLATE = `
       </div>
       <div data-ref="placeSlot"></div>
       <div class="cg-calgary-passes" data-ref="calgaryPasses">
-        <p class="cg-fine cg-passes-note cg-fold-body">Times in Calgary, for passes higher than ${PASS_MASK_DEG}°.</p>
+        <p class="cg-fine cg-passes-note cg-fold-body">Seen from the RAO ground station, horizon to horizon, for passes reaching ${PASS_PEAK_DEG}°. Times in Calgary.</p>
         <p class="cg-status" data-ref="gs"></p>
         <ol class="cg-list cg-passes cg-fold-body" data-ref="passes" role="list" aria-label="Next passes over Calgary. Arrow keys move between them."></ol>
       </div>
@@ -942,7 +948,7 @@ export function mountGlobe(container, options = {}) {
       if (destroyed) return;
       passes.lastRun = performance.now();
       passes.fromMs = state.ms;
-      passes.list = astro.findPasses(orbit, observer, state.ms, { count: PASS_COUNT, minElevationDeg: PASS_MASK_DEG });
+      passes.list = astro.findPasses(orbit, observer, state.ms, { count: PASS_COUNT, minElevationDeg: 0, minPeakDeg: PASS_PEAK_DEG });
       paintPasses();
       uiDirty = true;
     }, wait);
@@ -986,11 +992,11 @@ export function mountGlobe(container, options = {}) {
       const when = document.createElement('span');
       when.textContent = `${localTime(p.riseMs, false).time}–${localTime(p.setMs, false).time}`;
       const high = document.createElement('span');
-      high.textContent = `${Math.round(p.maxElevationDeg)}° high`;
+      high.textContent = `${p.maxElevationDeg.toFixed(1)}° high`;
       row.append(when, high);
       const sub = document.createElement('span');
       sub.className = 'cg-fine';
-      sub.textContent = `From ${astro.compassPoint(p.riseAzimuthDeg)} to ${astro.compassPoint(p.setAzimuthDeg)}`;
+      sub.textContent = `${fmtPassLength(p.setMs - p.riseMs)}, from ${astro.compassPoint(p.riseAzimuthDeg)} to ${astro.compassPoint(p.setAzimuthDeg)}`;
       b.append(row, sub);
       b.title = `Show this pass. Rises ${utcTime(p.riseMs, false)} UTC, ${utcDay(p.riseMs, false)}`;
       b.addEventListener('click', () => {
@@ -1697,7 +1703,7 @@ export function mountGlobe(container, options = {}) {
       if (peek.id) hidePeek();
       tip.textContent = state.follow ? 'CTS-SAT-1' : 'Click to follow CTS-SAT-1';
     } else if (hit.type === 'station') {
-      tip.textContent = 'University of Calgary ground station';
+      tip.textContent = 'University of Calgary ground station, Rothney Observatory (RAO)';
     } else {
       tip.textContent = 'The Sun is overhead here';
     }

@@ -125,9 +125,10 @@ for (const r of ref.photos) {
   check('orbit number in the first days is small', orbit.revolutionAt(Date.UTC(2026, 4, 3, 9)) === 1);
 }
 
-// ---- passes over Calgary vs brute force ----------------------------------------------
+// ---- passes at the reference's station vs brute force ---------------------------------
 {
-  const observer = astro.makeObserver(astro.CALGARY);
+  const { lat, lon, height_km: heightKm } = ref.passes.station;
+  const observer = astro.makeObserver({ latDeg: lat, lonDeg: lon, heightKm });
   const want = ref.passes.list;
   const got = astro.findPasses(orbit, observer, Date.parse(ref.passes.from), {
     count: want.length + 1,
@@ -145,6 +146,28 @@ for (const r of ref.photos) {
       `pass ${w.rise.slice(11, 19)}: rise/set within 2 s, max elevation within 0.05 deg`,
       Math.abs(dRise) <= 2 && Math.abs(dSet) <= 2 && dMax < 0.05 && Math.abs(g.maxMs - Date.parse(w.max)) < 5000,
       `rise ${dRise.toFixed(2)} s, set ${dSet.toFixed(2)} s, max ${g.maxElevationDeg.toFixed(2)} deg`,
+    );
+  });
+}
+
+// ---- the site's passes vs the SatWatch Discord bot's, with the same day's elements ------
+{
+  const watch = read('./satwatch_passes.json');
+  const minute = (ms) => new Date(ms).toISOString().slice(0, 16);
+  const got = astro.findPasses(new astro.Orbit([watch.tle]), astro.makeObserver(astro.CALGARY), Date.parse(watch.from), {
+    count: watch.passes.length + 5,
+    maxDays: watch.days,
+  });
+  check(`lists the same ${watch.passes.length} passes as SatWatch, skipping the two lower ones`, got.length === watch.passes.length, `${got.length} found`);
+  watch.passes.forEach((w, k) => {
+    const g = got[k];
+    if (!g) return;
+    const seconds = Math.floor((g.setMs - g.riseMs) / 1000);
+    const peak = +g.maxElevationDeg.toFixed(1);
+    check(
+      `SatWatch pass ${w.rise}: same minutes, within 1 s long and 0.1 deg high`,
+      minute(g.riseMs) === w.rise && minute(g.setMs) === w.set && Math.abs(seconds - w.seconds) <= 1 && Math.abs(peak - w.peak) < 0.11,
+      `${seconds} s vs ${w.seconds}, ${peak} deg vs ${w.peak}`,
     );
   });
 }
