@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-02T05:07:37Z",
+ "generated_at": "2026-11-02T08:27:46Z",
  "satellite": {
   "name": "CTS-SAT-1",
   "alias": "FrontierSat",
@@ -1486,8 +1486,8 @@
    "reason": "the start of the file never arrived, and the picture can't be decoded without it"
   },
   {
-   "file": "camera/unnamed_2026-11-01_0183.img",
-   "reason": "the start of the file never arrived, and the picture can't be decoded without it"
+   "file": "camera/2026-10-31_134855Z.img",
+   "reason": "not enough of the file arrived to show any of the picture"
   },
   {
    "file": "camera/unnamed_2026-10-16_0401.img",
