@@ -1,10 +1,11 @@
 /**
- * The pictures on Orbit's globe as little pictures, as on Explore: a thumbnail
- * where each was taken, piled up where they fall close together, with a count.
+ * The pictures on Orbit's globe and map as little pictures, as on Explore: a
+ * thumbnail where each was taken, piled up where they fall close together, with
+ * a count.
  *
  * They only show. The pointer passes through, so a drag that starts on one still
- * turns the globe, and scene.pick() decides what's under the pointer as it always
- * has. For the keyboard and screen readers the Pictures list is the way in.
+ * moves the view, and the view's pick() decides what's under the pointer as it
+ * always has. For the keyboard and screen readers the Pictures list is the way in.
  *
  *   const pins = createPicturePins(layer);
  *   pins.setPins([{ id, thumb, dark, square }]);   // newest first: the newest tops a pile

@@ -164,7 +164,7 @@ const TEMPLATE = `
         <button type="button" data-ref="zoomIn" aria-label="Zoom in" title="Zoom in (+)">+</button>
       </div>
       <button type="button" class="cg-btn cg-previews-btn" data-ref="previewsBtn" hidden
-        title="Show or hide the pictures on the globe">${ICONS.eye}<span data-ref="previewsText">Hide photo previews</span></button>
+        title="Show or hide the pictures on the globe and the map">${ICONS.eye}<span data-ref="previewsText">Hide photo previews</span></button>
     </div>
   </div>
 
@@ -489,22 +489,18 @@ export function mountGlobe(container, options = {}) {
     root.classList.add('cg-nogl-on');
   }
   scene.setStation(astro.CALGARY.latDeg, astro.CALGARY.lonDeg);
-  // the pictures as little pictures, over the globe (the map keeps its marks)
-  const picturePins = full && !root.classList.contains('cg-nogl-on') ? createPicturePins(el.pinLayer) : null;
+  // the pictures as little pictures, over the globe and the map
+  const picturePins = full ? createPicturePins(el.pinLayer) : null;
   let previewsHidden = Boolean(picturePins) && previewsHiddenChoice.get();
 
-  /** Hidden, the scene draws its small squares in their place, which still take a click. As on Explore. */
+  /** Hidden, the views draw their small squares in their place, which still take a click. As on Explore. */
   function setPreviewsHidden(hidden) {
     previewsHidden = hidden;
     previewsHiddenChoice.set(hidden);
-    scene.setPinsDrawn(hidden);
+    for (const v of [scene, map]) v.setPinsDrawn(hidden);
     el.pinLayer.hidden = hidden;
     el.previewsBtn.classList.toggle('is-hidden', hidden);
     el.previewsText.textContent = hidden ? 'Show photo previews' : 'Hide photo previews';
-  }
-  if (picturePins) {
-    setPreviewsHidden(previewsHidden);
-    el.previewsBtn.hidden = false;
   }
 
   // The flat map shares the stage, under the labels and tooltip. It needs
@@ -524,6 +520,10 @@ export function mountGlobe(container, options = {}) {
   canvas.after(map.element);
   map.setStation(astro.CALGARY.latDeg, astro.CALGARY.lonDeg);
   const onMap = () => state.view === 'map';
+  if (picturePins) {
+    setPreviewsHidden(previewsHidden);
+    el.previewsBtn.hidden = false;
+  }
 
   // The orbit's colour: team blue unless this visitor has picked another.
   function paintOrbit(hex) {
@@ -823,7 +823,7 @@ export function mountGlobe(container, options = {}) {
     // only the view on screen draws
     if (onMap()) {
       if (state.follow) map.follow();
-      map.frame(now);
+      if (map.frame(now)) placePins();
     } else {
       if (state.follow) scene.follow();
       if (scene.frame(now)) placePins();
@@ -1034,10 +1034,10 @@ export function mountGlobe(container, options = {}) {
     paintTicks();
   }
 
-  /** The thumbnails follow the globe, and the preview over one follows its pin. */
+  /** The thumbnails follow the view on screen, and the preview over one follows its pin. */
   function placePins() {
     if (!picturePins) return;
-    const points = scene.pinsOnScreen();
+    const points = (onMap() ? map : scene).pinsOnScreen();
     picturePins.place(points, uiScale);
     if (peek.id) {
       const s = points.get(peek.id);
@@ -1117,7 +1117,7 @@ export function mountGlobe(container, options = {}) {
 
   function showPeek(hit) {
     clearTimeout(peek.timer);
-    const ids = picturePins && !previewsHidden && !onMap() ? picturePins.pileOf(hit.id) : [hit.id];
+    const ids = picturePins && !previewsHidden ? picturePins.pileOf(hit.id) : [hit.id];
     const key = ids.join(',');
     if (peek.key !== key) {
       peek.key = key;
@@ -1530,6 +1530,7 @@ export function mountGlobe(container, options = {}) {
       markDirty();
       pushScene(true);
       if (next === 'globe') scene.frame(performance.now(), true);
+      placePins();
     }
     if (write) writeHash();
   }
@@ -1704,8 +1705,8 @@ export function mountGlobe(container, options = {}) {
     tip.hidden = false;
     tip.style.transform = `translate(${Math.round(hit.x)}px, ${Math.round(hit.y)}px)`;
   }
-  /** How near the pointer counts as on a mark: a thumbnail on the globe is bigger than a map mark. */
-  const pinReach = (px) => (picturePins && !previewsHidden && !onMap() ? px + 8 : px) * uiScale;
+  /** How near the pointer counts as on a mark: a thumbnail is bigger than a small square. */
+  const pinReach = (px) => (picturePins && !previewsHidden ? px + 8 : px) * uiScale;
   function onPointerUp(e, surface, view) {
     if (view.controls.dragged) return;
     const r = surface.getBoundingClientRect();

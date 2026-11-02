@@ -558,7 +558,7 @@
   cursor: pointer;
 }
 
-/* The pictures on the globe, as on Explore. They only show: the pointer goes through. */
+/* The pictures on the globe and the map, as on Explore. They only show: the pointer goes through. */
 .cg-pins {
   position: absolute;
   inset: 0;
@@ -567,7 +567,6 @@
   pointer-events: none;
 }
 
-.cg-mode-map .cg-pins,
 .cg-pins[hidden] {
   display: none;
 }

@@ -223,8 +223,13 @@
   overflow: hidden;
   clip-path: inset(50%);
 }
-/* the map's zoom has this corner, and the thumbnails are the globe's */
-.cg-narrow.cg-mode-map .cg-previews-btn { display: none; }
+/* left of the map's zoom, which has Aurora's corner there */
+.cg-narrow.cg-mode-map .cg-previews-btn { right: 64px; }
+@media (min-width: 760px), (min-width: 480px) and (orientation: landscape) {
+  .cg-narrow.cg-mode-map:is([data-tab="sat"], [data-tab="passes"], [data-tab="photos"]) .cg-previews-btn {
+    right: calc(min(360px, 45%) + 64px);
+  }
+}
 
 .cg-narrow .cg-seg button {
   height: 44px;

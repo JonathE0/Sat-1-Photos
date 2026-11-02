@@ -474,6 +474,7 @@ export function createMap(container, opts = {}) {
   let ring = null; // footprint: { lats, lons, minLon, maxLon }
   let station = null;
   let pins = [];
+  let pinsDrawn = true;
   let selectedId = null;
   let hoverId = null;
   let trackColor = BLUE;
@@ -536,6 +537,20 @@ export function createMap(container, opts = {}) {
   function setPins(list) {
     pins = list.map((p) => ({ id: p.id, latDeg: p.latDeg, lonDeg: p.lonDeg }));
     overDirty = true;
+  }
+
+  /** Where each picture is on the canvas, in the copy of the world nearest the free frame's
+   * middle; left out when it's off the canvas. */
+  function pinsOnScreen() {
+    const reach = 24 * scale;
+    const out = new Map();
+    for (const p of pins) {
+      const y = view.y(p.latDeg);
+      if (y < -reach || y > view.h + reach) continue;
+      const nearest = view.xs(p.lonDeg, reach).sort((a, b) => Math.abs(a - view.cx) - Math.abs(b - view.cx))[0];
+      if (nearest !== undefined) out.set(p.id, { x: nearest, y });
+    }
+    return out;
   }
 
   function setSelected(id) {
@@ -942,14 +957,16 @@ export function createMap(container, opts = {}) {
 
     if (rippleStart !== null) drawRipples();
 
-    const order = pins.filter((p) => p.id !== selectedId && p.id !== hoverId);
-    for (const id of [hoverId, selectedId]) {
-      const p = id && pins.find((q) => q.id === id);
-      if (p && !order.includes(p)) order.push(p);
-    }
-    for (const p of order) {
-      const fill = p.id === selectedId || p.id === hoverId ? INK : MUTED;
-      for (const x of view.xs(p.lonDeg, m)) square(x, view.y(p.latDeg), pinSize(p.id), fill);
+    if (pinsDrawn) {
+      const order = pins.filter((p) => p.id !== selectedId && p.id !== hoverId);
+      for (const id of [hoverId, selectedId]) {
+        const p = id && pins.find((q) => q.id === id);
+        if (p && !order.includes(p)) order.push(p);
+      }
+      for (const p of order) {
+        const fill = p.id === selectedId || p.id === hoverId ? INK : MUTED;
+        for (const x of view.xs(p.lonDeg, m)) square(x, view.y(p.latDeg), pinSize(p.id), fill);
+      }
     }
 
     const satXs = sat ? view.xs(sat.lonDeg, m) : [];
@@ -1062,6 +1079,12 @@ export function createMap(container, opts = {}) {
     setStation,
     setTrackColor,
     setPins,
+    pinsOnScreen,
+    /** Draw the pins as squares here, or leave them to thumbnails over the canvas (picturepins.js). */
+    setPinsDrawn(on) {
+      pinsDrawn = on;
+      overDirty = true;
+    },
     highlightPins() {
       rippleStart = performance.now();
       overDirty = true;

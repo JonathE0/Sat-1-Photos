@@ -388,7 +388,7 @@ States:
   position may be off by tens of kilometres."
 - No elements: "Couldn't work out where it is: no orbital elements loaded." and "Try again".
 - Off live time: line 2 becomes "At 05:12 in Calgary, 2 h 14 min ahead of now"; values follow the
-  simulated time; the latest picture stays the newest one.
+  simulated time; the picture section doesn't change with them.
 - Picture failed: inside its 4:3 frame on Panel, "The picture didn't load." and "Try again".
 
 ### Reduced motion, and "Play the intro"
@@ -693,10 +693,10 @@ without one and a line says so.
 
 ### Picture previews on Orbit
 
-As on Explore: thumbnails on the globe's pins (`site/globe/picturepins.js`), which only show, so
-a drag from one still turns the globe; a larger preview on hover, a list for a pile; and the
+As on Explore: thumbnails on the globe's and the map's pins (`site/globe/picturepins.js`), which only
+show, so a drag from one still moves the view; a larger preview on hover, a list for a pile; and the
 viewfinder (`site/explore/viewfinder.js`) at the top of the Pictures panel, where a chosen picture
-goes up. The map keeps its marks. Where Passes and Pictures don't both fit in the right column,
+goes up. Where Passes and Pictures don't both fit in the right column,
 Pictures stays open and Passes folds to its heading and next-pass line; opening one folds the other.
 The picture's card leaves out its thumbnail while the viewfinder shows it.
 
@@ -708,11 +708,19 @@ longer name still fits a 320px phone. Smaller labels and the other pages still s
 
 ### Hide photo previews
 
-A button on both pages, its words saying what it will do, and the choice is shared between them. It
-turns the thumbnails on the globe into small marks that still take a click, and leaves the place and time
-on hover, no picture. The viewfinder and the lists stay as they are. On Explore it sits in the bottom-right
-row; on Orbit beside Aurora, or under it where the row has no room. On phones both pages show only an eye,
-struck through while they're hidden.
+A button on both pages, its words saying what it will do, and the choice is shared between them and
+between Orbit's globe and map. It turns the thumbnails into small marks that still take a click, and leaves
+the place and time on hover, no picture. The viewfinder and the lists stay as they are. On Explore it sits in
+the bottom-right row; on Orbit beside Aurora, or under it where the row has no room. On phones both pages show
+only an eye, struck through while they're hidden.
+
+### The opening picture
+
+The user's choice (1 Nov 2026), for now: the viewfinder, a phone's picture section and the Pictures page
+open on the complete Hong Kong frame, because the newer ones are mostly flashes of light
+(`site/assets/opening-photo.js`; '' goes back to the newest). On a phone its heading says "Featured picture",
+since it isn't the latest. Lists stay newest first, and the viewfinder carries on from there through older
+pictures, wrapping round to the newest.
 
 ### Following, on Explore
 
