@@ -53,7 +53,9 @@ html.credits-open.credits-gutter { scrollbar-gutter: stable; }
 }
 .credits-close:hover { color: var(--cr-ink); }
 
-.credits-logo { display: block; width: auto; height: 32px; margin: 0 0 16px; }
+.credits-logos { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; margin: 0 0 16px; }
+.credits-logo { display: block; width: auto; height: 32px; }
+.credits-partner { height: 56px; }
 .credits p { margin: 0 0 12px; color: #C3CCD5; }
 .credits a {
   color: var(--cr-ink);
