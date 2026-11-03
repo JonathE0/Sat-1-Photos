@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-02T22:28:51Z",
+ "generated_at": "2026-11-03T05:03:15Z",
  "satellite": {
   "name": "CTS-SAT-1",
   "alias": "FrontierSat",
@@ -1495,6 +1495,10 @@
   },
   {
    "file": "camera/2026-07-04_cam.img",
+   "reason": "the capture failed on board: the file holds no picture"
+  },
+  {
+   "file": "camera/2026-11-03_012100Z.img",
    "reason": "the capture failed on board: the file holds no picture"
   },
   {
