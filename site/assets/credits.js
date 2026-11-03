@@ -41,17 +41,12 @@ function build() {
   dialog.className = 'credits';
   dialog.setAttribute('aria-labelledby', 'credits-title');
   const logo = new URL('assets/calgarytospace-logo.png', SITE).href;
-  const schulich = new URL('assets/schulich-logo.png', SITE).href;
   dialog.innerHTML = `
     <div class="credits-head">
       <h2 class="credits-title" id="credits-title" tabindex="-1">Credits</h2>
       <button type="button" class="credits-close" data-close>Close</button>
     </div>
-    <div class="credits-logos">
-      <img class="credits-logo" src="${logo}" width="640" height="204" alt="CalgaryToSpace">
-      <img class="credits-logo credits-partner" src="${schulich}" width="342" height="168"
-        alt="Schulich School of Engineering, University of Calgary">
-    </div>
+    <img class="credits-logo" src="${logo}" width="640" height="204" alt="CalgaryToSpace">
     <ul class="credits-links">
       <li><a href="https://www.calgarytospace.ca/">calgarytospace.ca</a></li>
       <li><a href="https://frontiersat.mooo.com/">FrontierSat dashboard</a>, live beacon data</li>

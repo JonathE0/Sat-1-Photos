@@ -3,7 +3,7 @@
    it, or laid over the globe (.is-over, and Explore on the main site), where its
    links are Ink and only they take the pointer, so the globe drags up to them.
 
-   Six links, the logos and on the main site the name button share one line, so
+   Six links, the logo and on the main site the name button share one line, so
    the sizes step down with the width. Below 390 the text is 12px, under the
    design's 13px, because 13px doesn't fit with the logo. */
 
@@ -42,13 +42,6 @@
   display: block;
   width: auto;
   height: 34px;
-}
-
-/* The Schulich School of Engineering's logo, beside the team's own */
-.brand-partner {
-  display: block;
-  width: auto;
-  height: 40px;
 }
 
 .wordmark {
@@ -145,7 +138,6 @@ body[data-view="explore"] .site-nav .nav-links > a[aria-current="page"] { text-d
 @media (max-width: 699px) {
   .nav-links { gap: 14px; }
   .brand-logo { height: 28px; }
-  .brand-partner { height: 34px; }
 }
 
 @media (max-width: 599px) {
@@ -153,12 +145,6 @@ body[data-view="explore"] .site-nav .nav-links > a[aria-current="page"] { text-d
   .nav-links { gap: 10px; }
   .brand { gap: 10px; }
   .brand-logo { height: 22px; }
-  .brand-partner { height: 28px; }
-}
-
-/* Phones have no room for it beside the links: it stays in Credits */
-@media (max-width: 489px) {
-  .brand-partner { display: none; }
 }
 
 @media (max-width: 430px) {
