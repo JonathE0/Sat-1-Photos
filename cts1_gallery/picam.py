@@ -1,4 +1,4 @@
-"""The PiCAM ASCII image format CTS-SAT-1 stores camera captures in.
+"""The PiCAM ASCII image format FrontierSat stores camera captures in.
 
 A capture is written to the satellite's filesystem as text:
 

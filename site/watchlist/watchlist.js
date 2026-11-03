@@ -161,7 +161,7 @@
     const generated = Date.parse(data.generated_at);
     const tle = Date.parse(data.tle_epoch);
 
-    $('lead').replaceChildren('Things happening on Earth that ', el('span', { class: 'name', text: 'CTS-SAT-1' }),
+    $('lead').replaceChildren('Things happening on Earth that ', el('span', { class: 'name', text: 'FrontierSat' }),
       ` will pass over in the next ${span(windowEnd - Date.parse(data.window.from))}, in the right light for a picture.`);
     $('status').replaceChildren('Made ', relative(generated, now), `, at ${utc(generated)}. Passes worked out from orbital elements of ${utc(tle)}.`);
 
@@ -545,7 +545,7 @@
     const aurora = data.aurora;
     const paras = [
       'A scheduled job, with no person or AI in the loop, collects open events from public feeds about once an hour and works out from the satellite\'s orbital elements when the ground below it next comes close to each one.',
-      `A pass counts when the point directly below CTS-SAT-1 comes within ${num(data.max_km)} km of the event. The camera's footprint isn't documented, so that distance is a guess: a lens like the Raspberry Pi camera's would see about 300 km either side of straight down from 500 km up.`,
+      `A pass counts when the point directly below FrontierSat comes within ${num(data.max_km)} km of the event. The camera's footprint isn't documented, so that distance is a guess: a lens like the Raspberry Pi camera's would see about 300 km either side of straight down from 500 km up.`,
       `The light has to be right too: for most events the sun at least ${num(r.day_sun_min_deg)}° up where the event is, and for aurora the ground at least ${num(-r.dark_sun_max_deg)}° past sunset. Aurora is listed when NOAA forecasts Kp ${num(r.aurora_kp, 1)} or more, and a pass counts when the satellite crosses the oval in the dark while it lasts.`,
       `Wildfires smaller than ${num(r.min_fire_ha)} hectares and prescribed burns are left out, and so are earthquakes and droughts, which can't be seen from orbit. Storms move: they're placed along their forecast track where GDACS publishes one, or carried on along their recent track for up to a day, and no further.`,
       'Times come from the newest orbital elements. The older those are by the time of a pass, the less exact its time: a day or two old is good to a few seconds, a week old can be off by a minute or more.',

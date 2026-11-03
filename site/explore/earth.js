@@ -23,7 +23,7 @@
  *   // each frame: earth.update(dt, camera); renderer.render(scene, camera);
  *   await earth.ready;                            // full-resolution maps in
  *
- * Night side: Black Marble city lights (calibrated against CTS-SAT-1's own
+ * Night side: Black Marble city lights (calibrated against FrontierSat's own
  * night frames: warm-white metro cores, amber towns), dimmed and spread under
  * thick cloud, over a faint airglow + moonlight floor (Moon from a low-precision
  * ephemeris, phase-aware) that keeps land and coasts just readable.

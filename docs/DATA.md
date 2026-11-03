@@ -18,8 +18,7 @@ The site is static: everything it shows comes from five JSON files in
 {
   "generated_at": "2026-10-29T10:30:00Z",  // when the picture list last changed (a run with nothing new keeps it)
   "satellite": {
-    "name": "CTS-SAT-1",
-    "alias": "FrontierSat",
+    "name": "FrontierSat",
     "norad_id": 69015,
     "launched_at": "2026-05-03T06:59:00Z"
   },
@@ -132,7 +131,7 @@ dialog shows it as "Last updated 12 minutes ago".
 
 ## `watchlist.json`
 
-Things happening on Earth worth photographing, and CTS-SAT-1's coming passes
+Things happening on Earth worth photographing, and FrontierSat's coming passes
 over each in the right light. Shown by `site/watchlist/`. Plain scheduled
 code (`cts1_gallery/watch.py`), no AI in the loop:
 

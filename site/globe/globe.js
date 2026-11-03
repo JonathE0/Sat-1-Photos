@@ -1,5 +1,5 @@
 /**
- * CTS-SAT-1 orbit globe.
+ * FrontierSat orbit globe.
  *
  *   import { mountGlobe } from './globe/globe.js';
  *   const globe = mountGlobe(element, { photoId: '2026-09-17-071148z' });
@@ -148,7 +148,7 @@ const ICONS = {
 const TEMPLATE = `
   <div class="cg-stage">
     <canvas class="cg-canvas" tabindex="0" role="img"
-      aria-label="Globe showing CTS-SAT-1, its orbit, the ground station and where the pictures were taken"></canvas>
+      aria-label="Globe showing FrontierSat, its orbit, the ground station and where the pictures were taken"></canvas>
     <div class="cg-pins" data-ref="pinLayer" aria-hidden="true"></div>
     <div class="cg-labels" aria-hidden="true"></div>
     <div class="cg-tip" hidden></div>
@@ -178,10 +178,10 @@ const TEMPLATE = `
     <header class="cg-head">
       <a class="cg-back" data-ref="back" hidden>All pictures</a>
       <h1 class="cg-title"><button type="button" class="cg-fold" data-ref="headFold" aria-expanded="true"
-        title="Show or hide where it is">CTS-SAT-1${ICONS.chevron}</button></h1>
+        title="Show or hide where it is">FrontierSat${ICONS.chevron}</button></h1>
       <div data-ref="headBody">
         <p class="cg-over" data-ref="over" hidden></p>
-        <p class="cg-fine cg-sub">Also called FrontierSat. NORAD 69015.</p>
+        <p class="cg-fine cg-sub">NORAD 69015.</p>
         <p class="cg-fine cg-credit">Earth imagery: NASA. Orbits: Space-Track.org. Places © <a
           href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>.
           Borders: <a href="https://www.naturalearthdata.com/" target="_blank" rel="noopener">Natural Earth</a>.
@@ -1701,7 +1701,7 @@ export function mountGlobe(container, options = {}) {
       tip.textContent = p ? `${p.place ? `${p.place}, ` : ''}${utcDay(p.ms, false)}, ${utcTime(p.ms, false)} UTC` : '';
     } else if (hit.type === 'satellite') {
       if (peek.id) hidePeek();
-      tip.textContent = state.follow ? 'CTS-SAT-1' : 'Click to follow CTS-SAT-1';
+      tip.textContent = state.follow ? 'FrontierSat' : 'Click to follow FrontierSat';
     } else if (hit.type === 'station') {
       tip.textContent = 'University of Calgary ground station, Rothney Observatory (RAO)';
     } else {

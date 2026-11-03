@@ -1,4 +1,4 @@
-// Settings for the CTS-SAT-1 picture gallery.
+// Settings for the FrontierSat picture gallery.
 // This file is optional: if it is missing, the site uses the values below.
 window.CTS1_CONFIG = {
   // The gallery's GitHub repository. When it is set, copies of the site that

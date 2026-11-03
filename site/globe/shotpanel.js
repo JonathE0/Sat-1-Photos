@@ -120,7 +120,7 @@ export function createShotPanel({ getOrbit }) {
     const paintPlace = () => {
       const place = placeAt(state.latDeg, state.lonDeg);
       f('place').textContent = place ? `Over ${place}` : 'Not over a named place';
-      title = `Simulated picture from CTS-SAT-1${place ? ` over ${place}` : ''}, ${utcWhen(ms)}`;
+      title = `Simulated picture from FrontierSat${place ? ` over ${place}` : ''}, ${utcWhen(ms)}`;
       labelFrame();
     };
     paintPlace();

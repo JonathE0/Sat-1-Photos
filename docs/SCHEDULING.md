@@ -170,7 +170,7 @@ the repo is under Desktop or Documents.
 systemd user units. `~/.config/systemd/user/cts1-gallery-update.service`:
 
     [Unit]
-    Description=CTS-SAT-1 gallery update
+    Description=FrontierSat gallery update
 
     [Service]
     Type=oneshot
@@ -179,7 +179,7 @@ systemd user units. `~/.config/systemd/user/cts1-gallery-update.service`:
 `~/.config/systemd/user/cts1-gallery-update.timer`:
 
     [Unit]
-    Description=Run the CTS-SAT-1 gallery update at 10:00 and 22:00
+    Description=Run the FrontierSat gallery update at 10:00 and 22:00
 
     [Timer]
     OnCalendar=*-*-* 10,22:00:00

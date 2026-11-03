@@ -1,5 +1,5 @@
 /**
- * When CTS-SAT-1's ground track crosses a place: the next few passes after
+ * When FrontierSat's ground track crosses a place: the next few passes after
  * a time, each with how long the point under it stays inside the place, how
  * near the place's middle it comes and whether the ground there is in
  * daylight; and which pass is the best chance of a picture.

@@ -1,5 +1,5 @@
 /**
- * Draws what CTS-SAT-1's main camera would see at a moment: one 640 x 480
+ * Draws what FrontierSat's main camera would see at a moment: one 640 x 480
  * frame, rendered offscreen by its own small WebGLRenderer, which is gone
  * again once the frame is done. Clear sky, because clouds can't be forecast;
  * the same frame with a sample cloud map comes back alongside it.

@@ -755,7 +755,7 @@ export function createScene(canvas, labelLayer, opts = {}) {
     return label;
   }
   const worldPos = new THREE.Vector3();
-  const satLabel = addLabel('CTS-SAT-1', 'cg-label-sat', () =>
+  const satLabel = addLabel('FrontierSat', 'cg-label-sat', () =>
     satellite.points.visible ? worldPos.copy(satellite.position) : null,
   );
   const gsLabel = addLabel('Calgary', 'cg-label-gs', () =>

@@ -1,5 +1,5 @@
 """The watchlist: things happening on Earth worth photographing from orbit,
-and when CTS-SAT-1 next passes over each in the right light. Writes
+and when FrontierSat next passes over each in the right light. Writes
 `site/data/watchlist.json` (format in docs/DATA.md).
 
 Plain scheduled code, no AI in the loop. Events come from free public feeds

@@ -71,7 +71,7 @@ function build() {
       <p>Sky: the <a href="http://tdc-www.harvard.edu/catalogs/bsc5.html">Yale Bright Star Catalogue</a>
         (Hoffleit and Warren, 1991) and the Moon from NASA's Scientific Visualization Studio
         (<a href="https://svs.gsfc.nasa.gov/4720">CGI Moon Kit</a>).</p>
-      <p>CubeSat model: NASA IceCube, a 3U like CTS-SAT-1, by NASA/Christopher R. Meaney (NASA 3D Resources,
+      <p>CubeSat model: NASA IceCube, a 3U like FrontierSat, by NASA/Christopher R. Meaney (NASA 3D Resources,
         public domain); drawn far larger than life.</p>
     </section>
     <div class="credits-news"></div>`;

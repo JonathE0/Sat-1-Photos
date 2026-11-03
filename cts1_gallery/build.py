@@ -31,8 +31,7 @@ ImageFile.LOAD_TRUNCATED_IMAGES = True
 RENDER_VERSION = 3  # bump to re-render every image after changing how
 THUMB_WIDTH = 480
 SATELLITE = {
-    "name": "CTS-SAT-1",
-    "alias": "FrontierSat",
+    "name": "FrontierSat",
     "norad_id": 69015,
     "launched_at": "2026-05-03T06:59:00Z",
 }

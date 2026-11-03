@@ -15,7 +15,7 @@ Never type a count, altitude or date into the markup: compute it from `site/data
 
 ### What only this satellite has
 
-1. **The name.** CTS-SAT-1, also called FrontierSat. Calgary To Space's first satellite, a 3U
+1. **The name.** FrontierSat. Calgary To Space's first satellite, a 3U
    CubeSat (10 × 10 × 34 cm) built by University of Calgary students. NORAD 69015.
 2. **The date.** Launched 3 May 2026.
 3. **The orbit.** About 500 km up (498–526 km in the data), 7.6 km a second, once round the Earth
@@ -39,7 +39,7 @@ Never type a count, altitude or date into the markup: compute it from `site/data
 
 ### The idea
 
-> On this page, **the ground directly beneath CTS-SAT-1** becomes **the camera's destination and
+> On this page, **the ground directly beneath FrontierSat** becomes **the camera's destination and
 > the pin**. The story starts on Calgary and ends looking down past the satellite at the patch of
 > Earth it is over right now, framed the way its own camera frames the world (black sky, the thin
 > blue edge of the atmosphere, ground below, as in its 6 Aug picture). Every picture sits on the
@@ -86,7 +86,7 @@ Calgary, and the last picture it sent, all one click away from the satellite its
 | Raised | `#1A2129` | Two steps up: hover on a control, loading bars inside the panel | |
 | Ink | `#E6EBF0` | All text including the display line; primary button fill | 16.8:1 |
 | Muted | `#8A96A3` | Secondary text only (labels, captions, meta) | 6.7:1 (6.1 on Panel) |
-| Team blue | `#3C9DF5` | **CTS-SAT-1's orbit line, and the focus ring. Nothing else.** | 7.0:1 |
+| Team blue | `#3C9DF5` | **FrontierSat's orbit line, and the focus ring. Nothing else.** | 7.0:1 |
 
 - Retire `--bg #090C10`, `--stage`, `--bright`, `--hair`, `--rule`, `--field`, `--empty` and the
   globe's `--cg-*` greys and its orange `#FF4F00`. Link underlines at rest: Ink at 40%
@@ -119,13 +119,13 @@ Five sizes, far apart:
 
 | Role | Size (desktop / phone) | Weight | Leading | Tracking | Used for |
 | --- | --- | --- | --- | --- | --- |
-| Display | `clamp(60px, 10vw, 144px)` | 700 | 0.9 | -0.03em | "CTS-SAT-1", the landing's h1, nowhere else |
+| Display | `clamp(60px, 10vw, 144px)` | 700 | 0.9 | -0.03em | "FrontierSat", the landing's h1, nowhere else |
 | Statement | `clamp(24px, 1rem + 1.2vw, 32px)` | 500 | 1.2 | -0.01em | Story lines, landing h2, catalogue h1 (the picture's place) |
 | Lead / Title | 20px | 400 lead, 600 title | 1.4 | 0 | Supporting sentence, panel title, "Notes" |
 | Body | 16px | 400 text, 500 controls | 1.5 | 0 | Running text, fact values, nav, buttons |
 | Small | 13px | 400 (500 for the satellite label) | 1.45 | +0.01em | Labels, captions, month labels, clock subline, credits |
 
-Nothing under 13px. No uppercase, no letter-spaced caps (CTS-SAT-1 is a name, not styling).
+Nothing under 13px. No uppercase, no letter-spaced caps (FrontierSat is a name, not styling).
 Running text in Ink; Muted is for secondary notes only. Measure: 26ch for statements, 62ch for
 paragraphs.
 
@@ -153,7 +153,7 @@ paragraphs.
 - One section, 400svh tall, holding a sticky 100svh stage (canvas plus a text layer). Progress `p`
   runs 0 to 1 over the 300svh the stage is held. Native scroll only: no Lenis, no wheel capture,
   no scroll snapping. The camera follows its scroll target through a damped lerp in the render
-  loop (time constant about 120ms) so wheel steps don't stutter. `aria-label="CTS-SAT-1 right now"`.
+  loop (time constant about 120ms) so wheel steps don't stutter. `aria-label="FrontierSat right now"`.
 - **Text sits on black sky, never over the Earth.** The framings below keep sky free for it. Check
   at 1440 × 900, 1280 × 720, 390 × 844 and 375 × 812; if text and Earth meet, move the Earth.
 - **The satellite always fits (updated 30 Oct 2026, from the site audit).** The line above it says to
@@ -191,7 +191,7 @@ no line is ever left half-transparent), and they reverse when the visitor scroll
 and the bottom. It faces Calgary, lit by the real sun for this moment: if Calgary is in night, its
 city lights show, and that is right. It turns at real speed. Nothing else is in frame.
 
-> **CTS-SAT-1** (h1, Display)
+> **FrontierSat** (h1, Display)
 >
 > Calgary To Space's first satellite, built by University of Calgary students and in orbit since
 > 3 May 2026. (Lead 20/400, Ink, max 40ch)
@@ -271,8 +271,8 @@ The only loud motion on the site.
   earthshine to stay visible.
 - Drawn at a fixed screen size, about 44px long (36px on a phone), far larger than life; the
   footer credit says so.
-- Label "CTS-SAT-1" (Small 13/500, Ink) 12px to its right, no box. Model and label are one button,
-  at least 44 × 44, named "CTS-SAT-1: where it is now and its latest picture".
+- Label "FrontierSat" (Small 13/500, Ink) 12px to its right, no box. Model and label are one button,
+  at least 44 × 44, named "FrontierSat: where it is now and its latest picture".
 - Orbit: one full orbit as a 2px Team blue line: the coming half at 100%, the half already flown at
   35%. Two flat steps, no fade, no dashes.
 
@@ -321,7 +321,7 @@ control that is always there at the end view, so nobody has to find the satellit
 state and one set of details. Closes with the same control, Esc, or a click on empty space.
 
 - **Big screens (where the viewfinder shows):** a summary bar on Panel at the top of the viewfinder's
-  slot, reading "CTS-SAT-1 Currently Over Africa, Altitude : 501 km", with two tabs and Hide on the same
+  slot, reading "FrontierSat Currently Over Africa, Altitude : 501 km", with two tabs and Hide on the same
   row. "Pictures" is the viewfinder and "Stats" the details, in the same place under the bar; going back
   to Pictures brings back the same picture. No "Latest picture" here (the viewfinder is that), and the
   framing does not move.
@@ -360,8 +360,8 @@ state and one set of details. Closes with the same control, Esc, or a click on e
 
 Copy, top to bottom:
 
-1. **CTS-SAT-1** (Title 20/600). On the right: "Follow" / "Following" (`aria-pressed`) and "Close".
-2. "Also called FrontierSat." (Small Muted)
+1. **FrontierSat** (Title 20/600). On the right: "Follow" / "Following" (`aria-pressed`) and "Close".
+2. "NORAD 69015." (Small Muted)
 3. "Over the North Pacific Ocean" (Lead 20/400 Ink)
 4. Facts: a 120px | 1fr grid, 10px row gap, no rules; labels Small Muted, values Body Ink tabular.
 
@@ -544,7 +544,7 @@ machine strings someone copies character by character, and on this page there ar
 
 | Role | CSS | Used for |
 | --- | --- | --- |
-| Title | `font: 600 20px/1.2 var(--cg-sans); letter-spacing: -0.01em` | "CTS-SAT-1" in the header |
+| Title | `font: 600 20px/1.2 var(--cg-sans); letter-spacing: -0.01em` | "FrontierSat" in the header |
 | Value | `font: 400 16px/1.4 var(--cg-sans)`; panel headings and list titles take weight 600 or 500 | Panel headings, readout values, pass times, picture rows, the clock's first line, the status line |
 | Small | `font: 400 13px/1.45 var(--cg-sans); color: var(--cg-muted)` | Labels (`dt`), second lines, the credit, scrub labels, the clock's second line, tabs and buttons (weight 500, Ink) |
 
@@ -627,7 +627,7 @@ thumbnail at the row's left edge, the same picture as its pin.
 "Open in the catalogue". Today the time is split onto two Mono lines; make it one line, no Mono.
 
 **Header (left column).** "← Gallery" becomes "All pictures" (Small 500, Ink, underlined, no arrow).
-Then the h1 "CTS-SAT-1" (Title), and in Small Muted: "Also called FrontierSat. NORAD 69015." The
+Then the h1 "FrontierSat" (Title), and in Small Muted: "NORAD 69015." The
 credit as sentences, in Small Muted: "Earth imagery: NASA. Orbits: Space-Track.org. Places ©
 OpenStreetMap contributors."
 
@@ -652,7 +652,7 @@ the page. Put it behind a `<details>` with the summary "Keys" (Small 500 Ink). I
 **Labels and tooltips on the globe.**
 - `.cg-label` becomes `font: 500 13px/1.2 var(--cg-sans); letter-spacing: 0`. The 2px halo in the
   ground colour can stay, for legibility over cloud; it must not be a glow.
-- Tooltips: "Antarctica, 25 Oct, 00:54 UTC" and "Click to follow CTS-SAT-1".
+- Tooltips: "Antarctica, 25 Oct, 00:54 UTC" and "Click to follow FrontierSat".
 - Notes that are joined with " · " become separate sentences.
 
 ### Colour and chrome (with the type change, same pass)
@@ -705,7 +705,7 @@ The picture's card leaves out its thumbnail while the viewfinder shows it.
 
 The user's choice (31 Oct 2026): the big title reads FRONTIER SAT in capitals, with NORAD ID 69015 under
 it, then "Calgary's first student-built satellite. In orbit since May 3, 2026." The size is set so the
-longer name still fits a 320px phone. Smaller labels and the other pages still say CTS-SAT-1.
+longer name still fits a 320px phone. On 3 Nov 2026 the smaller labels and the other pages changed to FrontierSat too.
 
 ### Hide photo previews
 

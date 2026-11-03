@@ -1,4 +1,4 @@
-// CTS-SAT-1 picture gallery: data loading, hash routes and the shared chrome.
+// FrontierSat picture gallery: data loading, hash routes and the shared chrome.
 //   #/              explore: the scroll story and the live satellite (site/explore/)
 //   #/pictures      the catalogue (filters and selection in the query: #/pictures?id=…&camera=picam)
 //   #/photo/<id>    one picture, with every detail and the edit form
@@ -229,7 +229,7 @@ function route() {
   setView(next.view);
 
   if (next.view === 'explore') {
-    document.title = 'CTS-SAT-1 · Interactive picture visualizer';
+    document.title = 'FrontierSat · Interactive picture visualizer';
     if (next.credits) history.replaceState(history.state, '', '#/');
     if (previous !== 'explore') showJourney();
     if (state.navigated && previous !== 'explore') $('#main').focus({ preventScroll: true });
@@ -239,7 +239,7 @@ function route() {
 
   if (next.view === 'pictures') {
     state.galleryQuery = next.query;
-    document.title = 'Pictures · CTS-SAT-1';
+    document.title = 'Pictures · FrontierSat';
     if (previous !== 'pictures') window.scrollTo(0, 0);
     gallery.show(new URLSearchParams(next.query));
     const backOnTile = previous === 'detail' && state.lastPhotoId && gallery.focusTile(state.lastPhotoId);
@@ -254,7 +254,7 @@ function route() {
     state.pendingFocus = null;
     state.lastPhotoId = next.id;
     if (!state.loaded) {
-      document.title = 'CTS-SAT-1';
+      document.title = 'FrontierSat';
       views.detail.replaceChildren(h('p', { class: 'notice', role: 'status' }, 'Loading the picture…'));
       return;
     }
@@ -263,7 +263,7 @@ function route() {
     return;
   }
 
-  document.title = 'About · CTS-SAT-1';
+  document.title = 'About · FrontierSat';
   if (previous !== 'about') window.scrollTo(0, 0);
   if (state.navigated && previous !== 'about') views.about.querySelector('.about-title')?.focus({ preventScroll: true });
 }

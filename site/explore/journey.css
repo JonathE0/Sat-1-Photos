@@ -620,7 +620,7 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
 .jy-tabs { display: flex; flex: 1; }
 .jy-tabs .jy-tab { flex: 1; }
 .jy-cycle { box-shadow: inset 1px 0 0 var(--jy-raised); }
-.jy-cycle[hidden] { display: none; }
+.jy-tab[hidden] { display: none; }
 .jy-dock-toggle { flex: none; box-shadow: inset 1px 0 0 var(--jy-raised); }
 /* The chevron turns even when the system prefers reduced motion (the site's choice,
    as the facts banner and the viewfinder); only ?motion=reduced (.jy-calm) stops it. */

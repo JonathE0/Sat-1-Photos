@@ -1,4 +1,4 @@
-// CTS-SAT-1 3D model for the explore page.
+// FrontierSat 3D model for the explore page.
 //
 // createSatellite() loads a glTF/GLB model of the spacecraft and returns an Object3D in a
 // fixed frame, so the model can be swapped (e.g. for the team's own CAD) without touching
@@ -20,7 +20,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from './vendor/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from './vendor/libs/meshopt_decoder.module.js';
 
-/** Default model: a public-domain NASA 3U CubeSat used until the CTS-SAT-1 CAD is found
+/** Default model: a public-domain NASA 3U CubeSat used until the FrontierSat CAD is found
  *  (see models/CREDITS.md). */
 export const DEFAULT_MODEL_URL = new URL('./models/cubesat-3u.glb', import.meta.url).href;
 
@@ -122,7 +122,7 @@ function assemble(model, source, error, earthshine) {
 
   // object3d (placed by the page) > scaler (setScale) > model, hit proxy, outline
   const object3d = new THREE.Group();
-  object3d.name = 'CTS-SAT-1';
+  object3d.name = 'FrontierSat';
   const scaler = new THREE.Group();
   scaler.name = 'satellite-scale';
   object3d.add(scaler);

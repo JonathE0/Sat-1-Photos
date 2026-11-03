@@ -1,8 +1,7 @@
 {
   "generated_at": "2026-10-29T10:30:00Z",
   "satellite": {
-    "name": "CTS-SAT-1",
-    "alias": "FrontierSat",
+    "name": "FrontierSat",
     "norad_id": 69015,
     "launched_at": "2026-05-03T06:59:00Z"
   },

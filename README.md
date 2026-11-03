@@ -1,12 +1,12 @@
-# CTS-SAT-1 picture archive
+# FrontierSat picture archive
 
 **Website: [jonathe0.github.io/Sat-1-Photos](https://jonathe0.github.io/Sat-1-Photos/)**
 
-Every picture CTS-SAT-1 (FrontierSat, NORAD 69015) has sent down since its
+Every picture FrontierSat (NORAD 69015) has sent down since its
 launch on 3 May 2026, rebuilt from the radio packets, with where and when each
 was taken, an orbit globe, and room for team members to add what they know.
 
-CTS-SAT-1 is Calgary To Space's first student-built satellite, a 3U CubeSat
+FrontierSat is Calgary To Space's first student-built satellite, a 3U CubeSat
 from the University of Calgary. Its packets are heard by the SatNOGS network
 of amateur ground stations and decoded by the team's ground-station pipeline;
 this project takes it from there.

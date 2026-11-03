@@ -3,7 +3,7 @@
   "facts": [
     {
       "id": "first-student-satellite",
-      "text": "CTS-SAT-1, also called FrontierSat, is Calgary's first student-built satellite.",
+      "text": "FrontierSat is Calgary's first student-built satellite.",
       "category": "mission",
       "sources": [
         { "title": "UCalgary, we have liftoff: Team set to launch city's first student-built satellite into orbit to study STEVE", "outlet": "UCalgary News", "date": "2026-05-01", "url": "https://ucalgary.ca/news/ucalgary-we-have-liftoff-team-set-launch-citys-first-student-built-satellite-orbit-study-steve" },
@@ -41,7 +41,7 @@
       "text": "It's the Mini Plasma Imager's first flight in orbit; an earlier version had flown on a suborbital rocket.",
       "category": "mission",
       "sources": [
-        { "title": "FrontierSat (CTS-SAT-1)", "outlet": "CalgaryToSpace", "date": null, "accessed": "2026-10-29", "url": "https://www.calgarytospace.ca/cts-sat-1" },
+        { "title": "FrontierSat", "outlet": "CalgaryToSpace", "date": null, "accessed": "2026-10-29", "url": "https://www.calgarytospace.ca/cts-sat-1" },
         { "title": "UCalgary, we have liftoff: Team set to launch city's first student-built satellite into orbit to study STEVE", "outlet": "UCalgary News", "date": "2026-05-01", "url": "https://ucalgary.ca/news/ucalgary-we-have-liftoff-team-set-launch-citys-first-student-built-satellite-orbit-study-steve" }
       ]
     },
@@ -50,7 +50,7 @@
       "text": "The Mini Plasma Imager is a scaled-down cousin of the ion imagers flying on ESA's Swarm satellites since 2013.",
       "category": "mission",
       "sources": [
-        { "title": "FrontierSat (CTS-SAT-1)", "outlet": "CalgaryToSpace", "date": null, "accessed": "2026-10-29", "url": "https://www.calgarytospace.ca/cts-sat-1" },
+        { "title": "FrontierSat", "outlet": "CalgaryToSpace", "date": null, "accessed": "2026-10-29", "url": "https://www.calgarytospace.ca/cts-sat-1" },
         { "title": "One large step for students: Calgary's first student designed satellite to launch this fall", "outlet": "LiveWire Calgary", "date": "2025-06-17", "url": "https://livewirecalgary.com/2025/06/17/one-large-step-for-students-calgarys-first-student-designed-satellite-to-launch-this-fall/" }
       ],
       "note": "The team's page says the imager is based on Swarm's thermal ion imagers; LiveWire says it is a miniature of an instrument flying since 2013."
@@ -76,8 +76,8 @@
       "text": "It also tests a new boom of 3D-printed carbon fibre, stowed for launch and designed to reach 1 143 mm when it opens.",
       "category": "hardware",
       "sources": [
-        { "title": "Deployable Composite Lattice Boom", "outlet": "CTS-SAT-1 wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Deployable-Composite-Lattice-Boom" },
-        { "title": "FrontierSat (CTS-SAT-1)", "outlet": "CalgaryToSpace", "date": null, "accessed": "2026-10-29", "url": "https://www.calgarytospace.ca/cts-sat-1" }
+        { "title": "Deployable Composite Lattice Boom", "outlet": "FrontierSat wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Deployable-Composite-Lattice-Boom" },
+        { "title": "FrontierSat", "outlet": "CalgaryToSpace", "date": null, "accessed": "2026-10-29", "url": "https://www.calgarytospace.ca/cts-sat-1" }
       ]
     },
     {
@@ -85,7 +85,7 @@
       "text": "The boom was planned to stay stowed for most of the mission and open near the end, after at least six months of plasma data.",
       "category": "mission",
       "sources": [
-        { "title": "Deployable Composite Lattice Boom", "outlet": "CTS-SAT-1 wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Deployable-Composite-Lattice-Boom" }
+        { "title": "Deployable Composite Lattice Boom", "outlet": "FrontierSat wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Deployable-Composite-Lattice-Boom" }
       ],
       "note": "Whether the boom has been opened yet is not published; the fact states the plan only."
     },
@@ -150,7 +150,7 @@
       "category": "team",
       "sources": [
         { "title": "One large step for students: Calgary's first student designed satellite to launch this fall", "outlet": "LiveWire Calgary", "date": "2025-06-17", "url": "https://livewirecalgary.com/2025/06/17/one-large-step-for-students-calgarys-first-student-designed-satellite-to-launch-this-fall/" },
-        { "title": "FrontierSat (CTS-SAT-1)", "outlet": "CalgaryToSpace", "date": null, "accessed": "2026-10-29", "url": "https://www.calgarytospace.ca/cts-sat-1" }
+        { "title": "FrontierSat", "outlet": "CalgaryToSpace", "date": null, "accessed": "2026-10-29", "url": "https://www.calgarytospace.ca/cts-sat-1" }
       ]
     },
     {
@@ -158,7 +158,7 @@
       "text": "Three of its seven solar panels were made by the team; the other four were bought ready-made.",
       "category": "hardware",
       "sources": [
-        { "title": "Solar Panels", "outlet": "CTS-SAT-1 wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Solar-Panels" }
+        { "title": "Solar Panels", "outlet": "FrontierSat wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Solar-Panels" }
       ]
     },
     {
@@ -185,8 +185,8 @@
       "category": "team",
       "sources": [
         { "title": "UCalgary students count down to success with anticipated satellite launch", "outlet": "UCalgary News", "date": "2023-07-20", "url": "https://ucalgary.ca/news/ucalgary-students-count-down-success-anticipated-satellite-launch" },
-        { "title": "Camera", "outlet": "CTS-SAT-1 wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Camera" },
-        { "title": "GNSS Receiver", "outlet": "CTS-SAT-1 wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/GNSS-Receiver" }
+        { "title": "Camera", "outlet": "FrontierSat wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Camera" },
+        { "title": "GNSS Receiver", "outlet": "FrontierSat wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/GNSS-Receiver" }
       ],
       "note": "UCalgary names \"Hexagon (NovAtel)\"."
     },
@@ -196,7 +196,7 @@
       "category": "hardware",
       "sources": [
         { "title": "One large step for students: Calgary's first student designed satellite to launch this fall", "outlet": "LiveWire Calgary", "date": "2025-06-17", "url": "https://livewirecalgary.com/2025/06/17/one-large-step-for-students-calgarys-first-student-designed-satellite-to-launch-this-fall/" },
-        { "title": "FrontierSat (CTS-SAT-1)", "outlet": "CalgaryToSpace", "date": null, "accessed": "2026-10-29", "url": "https://www.calgarytospace.ca/cts-sat-1" }
+        { "title": "FrontierSat", "outlet": "CalgaryToSpace", "date": null, "accessed": "2026-10-29", "url": "https://www.calgarytospace.ca/cts-sat-1" }
       ],
       "note": "Interesting Engineering, Universe Space Tech and spacebahd say about 30 cm."
     },
@@ -205,7 +205,7 @@
       "text": "It weighs 2.897 kg, give or take 1%.",
       "category": "hardware",
       "sources": [
-        { "title": "Overall CTS SAT 1 Properties", "outlet": "CTS-SAT-1 wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Overall-CTS-SAT-1-Properties" }
+        { "title": "Overall FrontierSat Properties", "outlet": "FrontierSat wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Overall-CTS-SAT-1-Properties" }
       ],
       "note": "Gunter's Space Page lists 5 kg; the team's own figure is used."
     },
@@ -214,7 +214,7 @@
       "text": "The Mini Plasma Imager weighs 0.36 kg and fits in a box 48 × 96 × 96 mm.",
       "category": "hardware",
       "sources": [
-        { "title": "Mini Plasma Imager (MPI)", "outlet": "CTS-SAT-1 wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Mini-Plasma-Imager-(MPI)" }
+        { "title": "Mini Plasma Imager (MPI)", "outlet": "FrontierSat wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Mini-Plasma-Imager-(MPI)" }
       ]
     },
     {
@@ -222,7 +222,7 @@
       "text": "The Mini Plasma Imager takes 32 ion images a second, in runs of up to 15 to 20 minutes each orbit.",
       "category": "hardware",
       "sources": [
-        { "title": "Mini Plasma Imager (MPI)", "outlet": "CTS-SAT-1 wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Mini-Plasma-Imager-(MPI)" }
+        { "title": "Mini Plasma Imager (MPI)", "outlet": "FrontierSat wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Mini-Plasma-Imager-(MPI)" }
       ]
     },
     {
@@ -230,7 +230,7 @@
       "text": "Its main camera is a SkyFox Labs piCAM that takes 640 × 480 pictures with a 60° view, corner to corner.",
       "category": "hardware",
       "sources": [
-        { "title": "Camera", "outlet": "CTS-SAT-1 wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Camera" }
+        { "title": "Camera", "outlet": "FrontierSat wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Camera" }
       ]
     },
     {
@@ -238,7 +238,7 @@
       "text": "From about 500 km up, each pixel of the main camera covers roughly 710 m of ground.",
       "category": "hardware",
       "sources": [
-        { "title": "Camera", "outlet": "CTS-SAT-1 wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Camera" }
+        { "title": "Camera", "outlet": "FrontierSat wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Camera" }
       ]
     },
     {
@@ -246,7 +246,7 @@
       "text": "The main camera is there mostly to watch the boom unfold. Pictures of Earth and the aurora are its other jobs.",
       "category": "hardware",
       "sources": [
-        { "title": "Camera", "outlet": "CTS-SAT-1 wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Camera" }
+        { "title": "Camera", "outlet": "FrontierSat wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Camera" }
       ]
     },
     {
@@ -262,7 +262,7 @@
       "text": "It works out its own position and the exact time with a NovAtel OEM719 GNSS receiver.",
       "category": "hardware",
       "sources": [
-        { "title": "GNSS Receiver", "outlet": "CTS-SAT-1 wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/GNSS-Receiver" }
+        { "title": "GNSS Receiver", "outlet": "FrontierSat wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/GNSS-Receiver" }
       ]
     },
     {
@@ -279,7 +279,7 @@
       "text": "Its onboard computer was designed by the students around an STM32L4R5 chip, with firmware written in C.",
       "category": "hardware",
       "sources": [
-        { "title": "Onboard Computer (OBC)", "outlet": "CTS-SAT-1 wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Onboard-Computer-(OBC)" }
+        { "title": "Onboard Computer (OBC)", "outlet": "FrontierSat wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Onboard-Computer-(OBC)" }
       ]
     },
     {
@@ -287,7 +287,7 @@
       "text": "It lifted off on a SpaceX Falcon 9 from Vandenberg, California, at about 1 a.m. Calgary time on May 3, 2026.",
       "category": "launch",
       "sources": [
-        { "title": "FrontierSat (CTS-SAT-1)", "outlet": "CalgaryToSpace", "date": null, "accessed": "2026-10-29", "url": "https://www.calgarytospace.ca/cts-sat-1" },
+        { "title": "FrontierSat", "outlet": "CalgaryToSpace", "date": null, "accessed": "2026-10-29", "url": "https://www.calgarytospace.ca/cts-sat-1" },
         { "title": "Calgary's first student-built satellite is officially in orbit", "outlet": "LiveWire Calgary", "date": "2026-05-05", "url": "https://livewirecalgary.com/2026/05/05/calgary-student-built-satellite-orbit/" },
         { "title": "FrontierSat", "outlet": "SatNOGS DB", "date": null, "accessed": "2026-10-29", "url": "https://db.satnogs.org/satellite/GGCH-4346-1583-9419-5634/" }
       ],
@@ -299,7 +299,7 @@
       "category": "launch",
       "sources": [
         { "title": "SpaceX deploys seven Canadian satellites on CAS500-2 mission, marking University of Calgary's first", "outlet": "SpaceQ", "date": "2026-05-04", "url": "https://spaceq.ca/spacex-deploys-seven-canadian-satellites-on-cas500-2-mission-marking-university-of-calgarys-first/" },
-        { "title": "Mission Operations", "outlet": "CTS-SAT-1 wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Mission-Operations" }
+        { "title": "Mission Operations", "outlet": "FrontierSat wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Mission-Operations" }
       ],
       "note": "SpaceQ counts 44 secondary payloads; the wiki counts 45 satellites in total."
     },
@@ -310,7 +310,7 @@
       "sources": [
         { "title": "FrontierSat", "outlet": "SatNOGS DB", "date": null, "accessed": "2026-10-29", "url": "https://db.satnogs.org/satellite/GGCH-4346-1583-9419-5634/" },
         { "title": "Calgary's first student-built satellite is officially in orbit", "outlet": "LiveWire Calgary", "date": "2026-05-05", "url": "https://livewirecalgary.com/2026/05/05/calgary-student-built-satellite-orbit/" },
-        { "title": "FrontierSat (CTS-SAT-1)", "outlet": "CalgaryToSpace", "date": null, "accessed": "2026-10-29", "url": "https://www.calgarytospace.ca/cts-sat-1" }
+        { "title": "FrontierSat", "outlet": "CalgaryToSpace", "date": null, "accessed": "2026-10-29", "url": "https://www.calgarytospace.ca/cts-sat-1" }
       ],
       "note": "SatNOGS lists launch 06:59:00 and deployment 08:15:52 UTC; the team's wiki derives 02:17:19 MDT from power-system uptime."
     },
@@ -338,7 +338,7 @@
       "text": "The flight satellite passed its launch vibration test in Airdrie, Alberta, in June 2025; the test cost under $5 000.",
       "category": "launch",
       "sources": [
-        { "title": "Vibe Test", "outlet": "CTS-SAT-1 wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Vibe-Test" },
+        { "title": "Vibe Test", "outlet": "FrontierSat wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Vibe-Test" },
         { "title": "Student-built satellite set to study rare atmospheric phenomenon in space", "outlet": "Interesting Engineering", "date": "2025-08-12", "url": "https://interestingengineering.com/space/calgarys-first-student-built-satellite" }
       ]
     },
@@ -347,7 +347,7 @@
       "text": "Its orbit is sun-synchronous, so it crosses the equator at about the same local time every day.",
       "category": "orbit",
       "sources": [
-        { "title": "FrontierSat (CTS-SAT-1)", "outlet": "CalgaryToSpace", "date": null, "accessed": "2026-10-29", "url": "https://www.calgarytospace.ca/cts-sat-1" }
+        { "title": "FrontierSat", "outlet": "CalgaryToSpace", "date": null, "accessed": "2026-10-29", "url": "https://www.calgarytospace.ca/cts-sat-1" }
       ]
     },
     {
@@ -355,7 +355,7 @@
       "text": "Its orbit is tilted about 97.4° to the equator, so it reaches as far as 82.6° north and south.",
       "category": "orbit",
       "sources": [
-        { "title": "FrontierSat (CTS-SAT 1)", "outlet": "Gunter's Space Page", "date": null, "accessed": "2026-10-29", "url": "https://space.skyrocket.de/doc_sdat/frontiersat.htm" }
+        { "title": "FrontierSat", "outlet": "Gunter's Space Page", "date": null, "accessed": "2026-10-29", "url": "https://space.skyrocket.de/doc_sdat/frontiersat.htm" }
       ],
       "note": "Gunter's gives 97.40°; the published orbital elements on this site give 97.38° (Oct 27, 2026)."
     },
@@ -384,7 +384,7 @@
       "text": "Volunteer SatNOGS stations heard its first beacon at 3:44 a.m. Calgary time on launch day, under 90 minutes after release.",
       "category": "data",
       "sources": [
-        { "title": "Mission Operations", "outlet": "CTS-SAT-1 wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Mission-Operations" }
+        { "title": "Mission Operations", "outlet": "FrontierSat wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Mission-Operations" }
       ]
     },
     {
@@ -393,7 +393,7 @@
       "category": "data",
       "sources": [
         { "title": "FrontierSat: A plasma-imaging cubesat that loves SatNOGS", "outlet": "Libre Space Community", "date": "2026-05-27", "url": "https://community.libre.space/t/frontiersat-a-plasma-imaging-cubesat-that-loves-satnogs/14830" },
-        { "title": "Lessons Learned During Operations", "outlet": "CTS-SAT-1 wiki", "date": "2026-06-14", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Lessons-Learned-During-Operations" }
+        { "title": "Lessons Learned During Operations", "outlet": "FrontierSat wiki", "date": "2026-06-14", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Lessons-Learned-During-Operations" }
       ]
     },
     {
@@ -401,7 +401,7 @@
       "text": "On May 10, 2026, the team changed its beacon message to wish everyone a happy Mother's Day.",
       "category": "data",
       "sources": [
-        { "title": "Mission Operations", "outlet": "CTS-SAT-1 wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Mission-Operations" }
+        { "title": "Mission Operations", "outlet": "FrontierSat wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Mission-Operations" }
       ]
     },
     {
@@ -409,7 +409,7 @@
       "text": "The team first sent it commands on May 10, 2026, a week after launch.",
       "category": "data",
       "sources": [
-        { "title": "Mission Operations", "outlet": "CTS-SAT-1 wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Mission-Operations" }
+        { "title": "Mission Operations", "outlet": "FrontierSat wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Mission-Operations" }
       ]
     },
     {
@@ -417,7 +417,7 @@
       "text": "It took its first picture on June 1, 2026. Getting that picture down to the ground took until June 28.",
       "category": "data",
       "sources": [
-        { "title": "Mission Operations", "outlet": "CTS-SAT-1 wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Mission-Operations" }
+        { "title": "Mission Operations", "outlet": "FrontierSat wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Mission-Operations" }
       ],
       "note": "Matches this site's own picture list, whose earliest capture is June 1, 2026."
     },
@@ -426,7 +426,7 @@
       "text": "Volunteer SatNOGS ground stations around the world are its main way of sending data home, picture files included.",
       "category": "data",
       "sources": [
-        { "title": "Mission Operations", "outlet": "CTS-SAT-1 wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Mission-Operations" },
+        { "title": "Mission Operations", "outlet": "FrontierSat wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Mission-Operations" },
         { "title": "FrontierSat: A plasma-imaging cubesat that loves SatNOGS", "outlet": "Libre Space Community", "date": "2026-05-27", "url": "https://community.libre.space/t/frontiersat-a-plasma-imaging-cubesat-that-loves-satnogs/14830" }
       ]
     },
@@ -435,7 +435,7 @@
       "text": "Its first Mini Plasma Imager recording, two minutes long, was made on July 21, 2026, and was on the ground within hours.",
       "category": "data",
       "sources": [
-        { "title": "Mission Operations", "outlet": "CTS-SAT-1 wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Mission-Operations" }
+        { "title": "Mission Operations", "outlet": "FrontierSat wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Mission-Operations" }
       ]
     },
     {
@@ -443,7 +443,7 @@
       "text": "On June 30, 2026, the team sent it 630 commands during a single pass overhead.",
       "category": "data",
       "sources": [
-        { "title": "Mission Operations", "outlet": "CTS-SAT-1 wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Mission-Operations" }
+        { "title": "Mission Operations", "outlet": "FrontierSat wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Mission-Operations" }
       ]
     },
     {
@@ -451,7 +451,7 @@
       "text": "In June 2026 the team reached it from just 2° above the horizon, using 30 W of transmit power.",
       "category": "data",
       "sources": [
-        { "title": "Mission Operations", "outlet": "CTS-SAT-1 wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Mission-Operations" }
+        { "title": "Mission Operations", "outlet": "FrontierSat wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Mission-Operations" }
       ]
     }
   ],

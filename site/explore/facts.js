@@ -1,5 +1,5 @@
 /**
- * A small rotating banner of facts about CTS-SAT-1, and the "In the news" list.
+ * A small rotating banner of facts about FrontierSat, and the "In the news" list.
  *
  *   createFactTicker(container, { facts, live, intervalMs = 9000, reducedMotion, onHide })
  *     -> { start(), stop(), next(), prev(), reveal(), dispose() }
@@ -195,7 +195,7 @@ export function createFactTicker(container, { facts, live, intervalMs = 9000, re
   // ---- markup ----
   const root = el('div', 'cf');
   root.setAttribute('role', 'group');
-  root.setAttribute('aria-label', 'Facts about CTS-SAT-1');
+  root.setAttribute('aria-label', 'Facts about FrontierSat');
   if (reduced) root.classList.add('cf-calm'); // crossfade only, no slide
 
   // the fact and its source fade; the buttons stay put, so focus is never lost

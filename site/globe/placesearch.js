@@ -1,7 +1,7 @@
 /**
  * "Passes over another place" for the orbit page: type a country, sea or
  * continent, pick it from a short list, and see the next three times
- * CTS-SAT-1's ground track crosses it after the time showing, with the best
+ * FrontierSat's ground track crosses it after the time showing, with the best
  * chance of a picture marked and why. It lives in the Passes panel; globe.js
  * swaps the Calgary list for it while a place is chosen.
  *

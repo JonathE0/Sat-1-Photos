@@ -323,7 +323,7 @@ export function createMap(container, opts = {}) {
   over.setAttribute('role', 'img');
   over.setAttribute(
     'aria-label',
-    'Map of the world showing CTS-SAT-1, its ground track, Calgary and where the pictures were taken',
+    'Map of the world showing FrontierSat, its ground track, Calgary and where the pictures were taken',
   );
   root.append(base, over);
   container.appendChild(root);
@@ -979,13 +979,13 @@ export function createMap(container, opts = {}) {
     octx.lineWidth = 3 * scale;
     octx.strokeStyle = 'rgba(5, 7, 10, 0.85)';
     octx.fillStyle = INK;
-    for (const x of satXs) halo('CTS-SAT-1', x + 12 * scale, view.y(sat.latDeg));
+    for (const x of satXs) halo('FrontierSat', x + 12 * scale, view.y(sat.latDeg));
     if (station) {
       // the satellite's name wins: Calgary's moves aside, or waits, while they overlap
       const h = 16 * scale;
       const reach = 8 * scale;
       const satY = sat ? view.y(sat.latDeg) : 0;
-      const satW = octx.measureText('CTS-SAT-1').width;
+      const satW = octx.measureText('FrontierSat').width;
       const avoid = satXs.flatMap((x) => [
         labelBox('right', { x, y: satY, w: satW, h, gap: 12 * scale }),
         { left: x - reach, top: satY - reach, right: x + reach, bottom: satY + reach },

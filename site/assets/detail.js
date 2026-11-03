@@ -73,7 +73,7 @@ function detailAlt(p) {
   else if (!stale && p.position) where = ` over ${latLon(p.position.lat, p.position.lon)}`;
   const parts = [];
   if (p.title !== p.defaultTitle) parts.push(`${p.title}.`);
-  parts.push(`${camera} image from CTS-SAT-1, ${when}${where}.`);
+  parts.push(`${camera} image from FrontierSat, ${when}${where}.`);
   if (p.status === 'partial') parts.push('Parts of the image are missing.');
   if (p.status === 'truncated') parts.push('Only the top of the frame exists.');
   return parts.join(' ');
@@ -403,7 +403,7 @@ export function createDetail(root, ctx) {
       items.push(h('a', { href: `globe/index.html?photo=${encodeURIComponent(p.id)}` }, 'Show on globe'));
     }
     const fileName = String(p.src || '').split('/').pop() || `${p.id}.jpg`;
-    items.push(h('a', { href: p.src, download: `cts-sat-1-${fileName}` }, 'Download image'));
+    items.push(h('a', { href: p.src, download: `frontiersat-${fileName}` }, 'Download image'));
     const copy = h('button', { type: 'button', class: 'linkish' }, 'Copy link');
     let timer = 0;
     copy.addEventListener('click', async () => {
@@ -758,7 +758,7 @@ export function createDetail(root, ctx) {
   /* Whole view */
 
   function renderMissing(id) {
-    document.title = 'Picture not found · CTS-SAT-1';
+    document.title = 'Picture not found · FrontierSat';
     root.replaceChildren(h('div', { class: 'notice' },
       h('h1', { class: 'detail-title', id: 'detail-title', tabindex: '-1' }, 'Picture not found'),
       h('p', null, `There is no picture with the id “${id}”. It may have been renamed when the list was rebuilt.`),
@@ -776,7 +776,7 @@ export function createDetail(root, ctx) {
     const { list, index } = ctx.getList(id);
     const prev = index > 0 ? list[index - 1] : null;
     const next = index >= 0 && index < list.length - 1 ? list[index + 1] : null;
-    document.title = `${headline(p)} · CTS-SAT-1`;
+    document.title = `${headline(p)} · FrontierSat`;
     const globe = globeHref();
 
     const scrollY = window.scrollY;

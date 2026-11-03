@@ -1127,7 +1127,7 @@ export function createCatalogue(root, {
     compareBtn.hidden = size > 1;
     download.href = p.src;
     const fileName = String(p.src || '').split('/').pop() || `${p.id}.jpg`;
-    download.setAttribute('download', `cts-sat-1-${fileName}`);
+    download.setAttribute('download', `frontiersat-${fileName}`);
     detailsLink.href = `#/photo/${encodeURIComponent(p.id)}`;
     detailsName.textContent = ` for ${nameAndWhen(p)}`;
   }

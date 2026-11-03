@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Installs (or removes) the Windows scheduled task that keeps the CTS-SAT-1 gallery up to date.
+    Installs (or removes) the Windows scheduled task that keeps the FrontierSat gallery up to date.
 
 .DESCRIPTION
     Registers a per-user task that runs scripts\scheduled_update.py with the project's
@@ -48,12 +48,12 @@ if ($Publish) {
     if (-not $IntervalMinutes) { $IntervalMinutes = 60 }
     $updateScript = Join-Path $repo "scripts\start_publish.py"
     $logs = @("publish.log")
-    $about = "Starts the GitHub workflow that updates and publishes the CTS-SAT-1 (FrontierSat) site"
+    $about = "Starts the GitHub workflow that updates and publishes the FrontierSat site"
 } else {
     if (-not $TaskName) { $TaskName = "CTS-SAT-1 Gallery Update" }
     $updateScript = Join-Path $repo "scripts\scheduled_update.py"
     $logs = @("update.log", "last_run.json")
-    $about = "Syncs CTS-SAT-1 (FrontierSat) downlink data and rebuilds the image gallery"
+    $about = "Syncs FrontierSat downlink data and rebuilds the image gallery"
 }
 
 if ($Uninstall) {

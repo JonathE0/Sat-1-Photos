@@ -207,7 +207,7 @@ export function createTimePicker({ launchMs, getOrbit, onPick, onClose = () => {
     } else if (ms < launchMs) {
       ok = false;
       local.textContent = `In Calgary: ${calgaryWhen(ms)}.`;
-      note.textContent = `That is before launch. CTS-SAT-1 went up on ${when(launchMs, 0)}; pick a time after that.`;
+      note.textContent = `That is before launch. FrontierSat went up on ${when(launchMs, 0)}; pick a time after that.`;
       note.dataset.level = 'far';
     } else {
       local.textContent = `In Calgary: ${calgaryWhen(ms)}.`;

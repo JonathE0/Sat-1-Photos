@@ -1,4 +1,4 @@
-"""Reassemble the image files CTS-SAT-1 has downlinked, from bulk packets.
+"""Reassemble the image files FrontierSat has downlinked, from bulk packets.
 
 A file comes down as BULK_FILE_DOWNLINK packets, each carrying a byte offset
 and up to ~195 bytes, but no file name or id. Which packets belong to which

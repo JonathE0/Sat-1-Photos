@@ -20,7 +20,7 @@ The preview's caveat says the pointing varies by up to 12° in October and 62° 
 
 ## What the team says
 
-From the public [CTS-SAT-1 wiki](https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Camera): a
+From the public [FrontierSat wiki](https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Camera): a
 SkyFox piCAM Flight Model, 640 × 480 JPEG, fixed focus, with a 60° diagonal field of view. They work
 out 710 ± 20 m a pixel from 500 km. The fit below agrees to within a few percent.
 

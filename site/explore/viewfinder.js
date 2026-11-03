@@ -139,7 +139,7 @@ export function createViewfinder(container, {
   // ---- markup ----
   const root = el('div', 'vf');
   root.setAttribute('role', 'group');
-  root.setAttribute('aria-label', 'Pictures from CTS-SAT-1');
+  root.setAttribute('aria-label', 'Pictures from FrontierSat');
   if (reduced) root.classList.add('vf-calm');
 
   const frameEl = el('div', 'vf-frame');

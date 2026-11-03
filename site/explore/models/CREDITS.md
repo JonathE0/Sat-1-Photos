@@ -1,8 +1,8 @@
 # Satellite model
 
-`cubesat-3u.glb` is a **stand-in** for CTS-SAT-1. It is NASA's model of
+`cubesat-3u.glb` is a **stand-in** for FrontierSat. It is NASA's model of
 **IceCube** (also written ICECube; "Earth-1"), a 3U CubeSat built by NASA Goddard
-that flew in 2017 with an 883 GHz cloud-ice radiometer. It is not CTS-SAT-1. It is
+that flew in 2017 with an 883 GHz cloud-ice radiometer. It is not FrontierSat. It is
 used because it is a realistic 3U with body-mounted solar cells, until the team's own
 CAD model is found. It has no UHF antennas and no boom.
 
@@ -50,15 +50,15 @@ of the frame).
 - -Y is the nadir face (the face that looks at the Earth)
 - 1 unit = 1 metre
 
-## Swapping in the CTS-SAT-1 CAD model
+## Swapping in the FrontierSat CAD model
 
 Export the CAD to glTF/GLB, then shrink it, for example:
 
-    npx @gltf-transform/cli@4.1.1 optimize cts-sat-1-raw.glb cts-sat-1.glb --compress meshopt --texture-compress webp --texture-size 1024
+    npx @gltf-transform/cli@4.1.1 optimize frontiersat-raw.glb frontiersat.glb --compress meshopt --texture-compress webp --texture-size 1024
 
 and either replace `cubesat-3u.glb` or pass the new URL:
 
-    createSatellite({ modelUrl: new URL('./models/cts-sat-1.glb', import.meta.url).href,
+    createSatellite({ modelUrl: new URL('./models/frontiersat.glb', import.meta.url).href,
                       rotation: [0, 0, 0],      // degrees, XYZ, to reach the frame above
                       metresPerUnit: 'auto',    // guesses mm / cm / m
                       centre: 'origin' })       // or 'bbox' if the CAD origin is at a corner

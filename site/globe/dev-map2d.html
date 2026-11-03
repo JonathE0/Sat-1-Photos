@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Map test · CTS-SAT-1</title>
+  <title>Map test · FrontierSat</title>
   <meta name="robots" content="noindex">
   <meta name="color-scheme" content="dark">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -175,7 +175,7 @@
       if (!hit) { tip.hidden = true; map.canvas.style.cursor = ''; return; }
       const p = photos.find((q) => q.id === hit.id);
       tip.textContent = hit.type === 'photo' ? `${p?.place || p?.title}, ${p?.capturedAtUTC}` :
-        hit.type === 'satellite' ? 'Click to follow CTS-SAT-1' : hit.type === 'station' ? 'University of Calgary ground station' : 'The Sun is overhead here';
+        hit.type === 'satellite' ? 'Click to follow FrontierSat' : hit.type === 'station' ? 'University of Calgary ground station' : 'The Sun is overhead here';
       tip.hidden = false;
       tip.style.transform = `translate(${Math.round(hit.x)}px, ${Math.round(hit.y)}px)`;
       map.canvas.style.cursor = hit.type === 'photo' || hit.type === 'satellite' ? 'pointer' : '';

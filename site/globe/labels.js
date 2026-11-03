@@ -1,7 +1,7 @@
 /**
  * Where to put a marker's label so it stays clear of something more
  * important: to the right of the marker if it can, else to its left, below
- * or above; null means hide it for now. Used for "Calgary" when CTS-SAT-1 is
+ * or above; null means hide it for now. Used for "Calgary" when FrontierSat is
  * overhead, on the globe and the map alike.
  *
  * A label leaves its usual place as soon as it overlaps, but only comes back

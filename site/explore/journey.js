@@ -1,6 +1,6 @@
 /**
  * The landing's scroll story: the Earth alone, the camera swinging to where
- * CTS-SAT-1 is right now, then the satellite, its orbit and the pictures'
+ * FrontierSat is right now, then the satellite, its orbit and the pictures'
  * pins, handed over to the visitor. See docs/design-direction.md section 3.
  *
  *   import { mountJourney } from './explore/journey.js';
@@ -212,14 +212,14 @@ const ICON_CONTROLS = '<svg viewBox="0 0 20 20" width="20" height="20" aria-hidd
 function template(id, siteRoot) {
   const logo = new URL('assets/calgarytospace-logo.png', siteRoot).href;
   return `
-  <section class="jy" aria-label="CTS-SAT-1 right now">
+  <section class="jy" aria-label="FrontierSat right now">
     <div class="jy-stage">
       <!-- This order is the tab order and the reading order: what is on screen, from the top.
            How things stack is z-index in journey.css, not this. resize() swaps the last two when
            the corner row sits above the time row. -->
       <div class="jy-dock">
         <div class="jy-summary" data-ref="summary">
-          <p class="jy-summary-text"><span class="jy-summary-name">CTS-SAT-1</span> <span data-ref="summaryWhere"></span></p>
+          <p class="jy-summary-text"><span class="jy-summary-name">FrontierSat</span> <span data-ref="summaryWhere"></span></p>
           <div class="jy-summary-tools">
             <div class="jy-tabs" role="group" aria-label="Show in this panel">
               <button type="button" class="jy-tab" data-ref="tabStats" aria-pressed="false" aria-controls="jy-panel-${id}">Stats</button>
@@ -236,13 +236,13 @@ function template(id, siteRoot) {
       <aside class="jy-panel" id="jy-panel-${id}" data-ref="panel" hidden aria-labelledby="jy-panel-title-${id}">
         <button type="button" class="jy-grab" data-ref="grab" aria-hidden="true" tabindex="-1"><span></span></button>
         <div class="jy-panel-head">
-          <h2 class="jy-panel-title" id="jy-panel-title-${id}" tabindex="-1">CTS-SAT-1</h2>
+          <h2 class="jy-panel-title" id="jy-panel-title-${id}" tabindex="-1">FrontierSat</h2>
           <div class="jy-panel-tools">
             <button type="button" class="jy-textbtn" data-ref="follow" aria-pressed="true">Following</button>
             <button type="button" class="jy-textbtn" data-ref="close">Close</button>
           </div>
         </div>
-        <p class="jy-small jy-muted" data-ref="aka">Also called FrontierSat.</p>
+        <p class="jy-small jy-muted" data-ref="aka">NORAD 69015.</p>
         <p class="jy-lead jy-over" data-ref="over"></p>
         <div class="jy-panel-body" data-ref="panelBody">
           <p class="jy-panel-zoom"><button type="button" class="jy-textbtn" data-ref="zoomSat">Zoom in on the satellite</button></p>
@@ -301,7 +301,7 @@ function template(id, siteRoot) {
         <p>Sky: the <a class="jy-link" href="http://tdc-www.harvard.edu/catalogs/bsc5.html">Yale Bright Star Catalogue</a>
           (Hoffleit and Warren, 1991) and the Moon from NASA's Scientific Visualization Studio
           (<a class="jy-link" href="https://svs.gsfc.nasa.gov/4720">CGI Moon Kit</a>).</p>
-        <p>CubeSat model: NASA IceCube, a 3U like CTS-SAT-1, by NASA/Christopher R. Meaney (NASA 3D Resources,
+        <p>CubeSat model: NASA IceCube, a 3U like FrontierSat, by NASA/Christopher R. Meaney (NASA 3D Resources,
           public domain); drawn far larger than life.</p>
         <div class="jy-news-slot" data-ref="newsSlot"></div>
       </section>
@@ -321,13 +321,13 @@ function template(id, siteRoot) {
       </div>
 
       <canvas class="jy-canvas" tabindex="-1"
-        aria-label="The Earth and CTS-SAT-1. Drag or use the arrow keys to look around; plus and minus zoom."></canvas>
+        aria-label="The Earth and FrontierSat. Drag or use the arrow keys to look around; plus and minus zoom."></canvas>
       <canvas class="jy-still" hidden aria-hidden="true"></canvas>
       <div class="jy-marks"></div>
       <canvas class="jy-over-canvas" aria-hidden="true"></canvas>
       <div class="jy-marks jy-marks-sat" data-ref="satMarks">
         <button type="button" class="jy-sat" data-ref="sat" hidden
-          aria-label="CTS-SAT-1: where it is now"><span class="jy-sat-label" aria-hidden="true">CTS-SAT-1</span></button>
+          aria-label="FrontierSat: where it is now"><span class="jy-sat-label" aria-hidden="true">FrontierSat</span></button>
       </div>
       <div class="jy-card" data-ref="card" hidden></div>
       <div class="jy-sky-label" data-ref="skyLabel" aria-hidden="true"></div>
@@ -1870,6 +1870,10 @@ export function mountJourney(container, options = {}) {
     ref.tabPictures.setAttribute('aria-pressed', String(pictures));
     ref.tabStats.setAttribute('aria-pressed', String(state.panel && state.tab === 'stats'));
     ref.cycle.hidden = !webgl || !viewfinderHere();
+    // while Cycle is on it stands for both; they come back when it's turned off
+    const cycling = cycleOn && !ref.cycle.hidden;
+    ref.tabStats.hidden = cycling;
+    ref.tabPictures.hidden = cycling;
     ref.panel.dataset.tab = state.tab;
     paintPhoneBar();
   }
@@ -2009,7 +2013,7 @@ export function mountJourney(container, options = {}) {
     };
     if (motionOverride === 'reduced') done();
     else setTimeout(done, 160);
-    if (restoreFocus) (frame.narrow ? ref.barStats : ref.tabStats).focus({ preventScroll: true });
+    if (restoreFocus) (frame.narrow ? ref.barStats : ref.tabStats.hidden ? ref.cycle : ref.tabStats).focus({ preventScroll: true });
   }
 
   function setSheet(open) {
@@ -2241,7 +2245,7 @@ export function mountJourney(container, options = {}) {
     const ms = state.simMs;
     ref.follow.textContent = state.follow ? 'Following' : 'Follow';
     ref.follow.setAttribute('aria-pressed', String(state.follow));
-    if (state.live) put(ref.aka, 'Also called FrontierSat.');
+    if (state.live) put(ref.aka, 'NORAD 69015.');
     else {
       const off = ms - Date.now();
       put(ref.aka, `At ${calgaryTime(ms).time} in Calgary, ${duration(off)} ${off >= 0 ? 'ahead of' : 'behind'} now`);
@@ -3237,6 +3241,7 @@ export function mountJourney(container, options = {}) {
     cycleOn = on;
     ref.cycle.setAttribute('aria-pressed', String(on));
     if (remember) cycleOffChoice.set(!on);
+    paintTabs();
     syncCycle();
   }
 

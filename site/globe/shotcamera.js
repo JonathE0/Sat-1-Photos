@@ -1,5 +1,5 @@
 /**
- * Where CTS-SAT-1's main camera (the picam) looks: the geometry behind the
+ * Where FrontierSat's main camera (the picam) looks: the geometry behind the
  * "Preview picture" frames, fitted to its real pictures. The numbers and how
  * they were found are in docs/picam-calibration.md.
  *

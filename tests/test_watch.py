@@ -22,7 +22,7 @@ from cts1_gallery.watch import Event, Params
 
 FIXTURES = Path(__file__).with_name("fixtures") / "watch"
 NOW = datetime(2026, 10, 30, 5, 0, tzinfo=UTC)
-# CTS-SAT-1's elements of 27 Oct 2026, 22:38 UTC (Space-Track, via tle_history).
+# FrontierSat's elements of 27 Oct 2026, 22:38 UTC (Space-Track, via tle_history).
 TLE = {
     "norad_id": 69015, "epoch": datetime(2026, 10, 27, 22, 38, 42, 964512, tzinfo=UTC),
     "inclination": 97.38330078125, "raan": 196.63980102539062, "eccentricity": 0.0006318999803625047,
