@@ -6,9 +6,22 @@
 //   credits.open();  // also opened by clicking the button
 //
 // The text is fixed here; the "In the news" list comes from explore/facts.json
-// and is loaded the first time the dialog opens.
+// and is loaded the first time the dialog opens. "Last updated" comes from
+// data/updated.json, fetched again each time it opens.
+
+import { calgary, plural, toDate } from './format.js';
 
 const SITE = new URL('../', import.meta.url);
+
+// "just now", "12 minutes ago", "3 hours ago", "2 days ago"
+function ago(ms) {
+  const minutes = Math.floor(ms / 60000);
+  if (minutes < 1) return 'just now'; // also a viewer whose clock runs a little behind
+  if (minutes < 60) return `${plural(minutes, 'minute')} ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 48) return `${plural(hours, 'hour')} ago`;
+  return `${plural(Math.floor(hours / 24), 'day')} ago`;
+}
 
 function ensureStyles() {
   for (const href of ['assets/credits.css', 'explore/facts.css']) {
@@ -40,6 +53,7 @@ function build() {
       <li><a href="https://github.com/CalgaryToSpace">github.com/CalgaryToSpace</a></li>
     </ul>
     <p class="credits-made">Website designed by Jonathan Eng and <span>Claude <span aria-hidden="true">🛰️</span></span></p>
+    <p class="credits-updated" hidden>Last updated <time></time></p>
     <section class="credits-section">
       <h3>Thank you</h3>
       <p>To the mission operations team, who do a great job of keeping FrontierSat running and getting its
@@ -87,6 +101,32 @@ export function mountCredits(button) {
     }
   }
 
+  const updatedLine = dialog.querySelector('.credits-updated');
+  const updatedTime = updatedLine.querySelector('time');
+  let updatedAt = null;
+  let ticking = 0;
+
+  function showUpdated() {
+    if (!updatedAt) return;
+    updatedTime.textContent = ago(Date.now() - updatedAt.getTime());
+    updatedTime.dateTime = updatedAt.toISOString();
+    updatedTime.title = calgary(updatedAt) || '';
+    updatedLine.hidden = false;
+  }
+
+  async function loadUpdated() {
+    try {
+      const res = await fetch(new URL('data/updated.json', SITE).href, { cache: 'no-cache' });
+      const at = res.ok ? toDate((await res.json())?.updated_at) : null;
+      if (at) {
+        updatedAt = at;
+        showUpdated();
+      }
+    } catch {
+      // no stamp yet (a copy of the site no update has run on): the line stays hidden
+    }
+  }
+
   function open() {
     if (dialog.open) return;
     const page = document.documentElement;
@@ -96,11 +136,16 @@ export function mountCredits(button) {
     button?.setAttribute('aria-expanded', 'true');
     dialog.querySelector('.credits-title').focus({ preventScroll: true });
     loadNews();
+    showUpdated(); // the last answer straight away, then a fresh one
+    loadUpdated();
+    clearInterval(ticking);
+    ticking = setInterval(showUpdated, 30 * 1000);
   }
 
   // the close event can come a good while after a busy frame, so the page isn't left waiting on it
   function freePage() {
     document.documentElement.classList.remove('credits-open', 'credits-gutter');
+    clearInterval(ticking);
   }
 
   function close() {

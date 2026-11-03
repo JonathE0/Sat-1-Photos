@@ -9,6 +9,7 @@ data/logs/
 data/update.lock
 # Rebuilt by `python -m cts1_gallery watch` on every publish run; never committed
 site/data/watchlist.json
+site/data/updated.json
 
 # Partial writes
 *.tmp

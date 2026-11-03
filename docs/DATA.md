@@ -1,6 +1,6 @@
 # Data files
 
-The site is static: everything it shows comes from four JSON files in
+The site is static: everything it shows comes from five JSON files in
 `site/data/`, plus member edits served by `serve.py`.
 
 | File | Written by | Committed |
@@ -9,6 +9,7 @@ The site is static: everything it shows comes from four JSON files in
 | `site/data/tle.json` | `python -m cts1_gallery update` | yes |
 | `site/data/annotations.json` | `serve.py`, when members save edits | yes |
 | `site/data/watchlist.json` | `python -m cts1_gallery watch` | no: each publish run writes it |
+| `site/data/updated.json` | `python -m cts1_gallery update` (not `--offline`) | no: each publish run writes it |
 | `site/images/*.jpg` (main camera), `site/images/*.png` (attitude camera), `site/images/thumbs/*.jpg` | `python -m cts1_gallery update` | yes |
 
 ## `images.json`
@@ -120,6 +121,14 @@ by their downlink time.
 
 An array of `{ "epoch", "line1", "line2" }` (two-line elements, oldest
 first), used by the orbit globe.
+
+## `updated.json`
+
+`{ "updated_at": "2026-11-03T04:23:10Z" }`: when an update last synced the
+ground-station data and rebuilt the site, whether or not it found anything
+new (`images.json`'s `generated_at` only moves when the pictures change).
+On the published site that is the run behind the current deploy. The Credits
+dialog shows it as "Last updated 12 minutes ago".
 
 ## `watchlist.json`
 

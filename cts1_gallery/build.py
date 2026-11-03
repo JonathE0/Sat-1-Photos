@@ -169,6 +169,8 @@ def build(paths: dict[str, Path], site: Path, cache_dir: Path, *, log=print, for
     _prune(images_dir, {r["src"] for r in records} | {r["thumb"] for r in records}, site)
 
     tle_count = _write_tle(paths["tle_history"], site / "data" / "tle.json", log)
+    if online:
+        write_updated(site)
     counts = Counter(r["status"] for r in records)
     log(
         f"  {len(records)} pictures ({', '.join(f'{n} {s}' for s, n in counts.most_common())}), "
@@ -442,6 +444,12 @@ def _iso(t: datetime | None) -> str | None:
 
 
 # -- files ---------------------------------------------------------------------
+
+
+def write_updated(site: Path, now: datetime | None = None) -> None:
+    """site/data/updated.json: when the site's data was last refreshed, whether or not
+    anything was new. The Credits dialog shows it as "Last updated ... ago"."""
+    _write_json(site / "data" / "updated.json", {"updated_at": _iso(now or datetime.now(UTC))})
 
 
 def _write_tle(tle_history: Path, out: Path, log) -> int:
