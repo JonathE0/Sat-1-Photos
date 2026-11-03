@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-03T11:59:59Z",
+ "generated_at": "2026-11-03T16:28:50Z",
  "satellite": {
   "name": "CTS-SAT-1",
   "alias": "FrontierSat",
@@ -391,7 +391,7 @@
    "capture_date": "2026-10-30",
    "capture_basis": "filename",
    "satellite_clock": {
-    "correction_s": -15.8
+    "correction_s": -15.9
    },
    "downlink": {
     "first": "2026-10-30T22:04:06Z",
@@ -433,7 +433,7 @@
    "capture_date": "2026-10-30",
    "capture_basis": "filename",
    "satellite_clock": {
-    "correction_s": -15.8
+    "correction_s": -15.9
    },
    "downlink": {
     "first": "2026-10-30T04:48:00Z",
@@ -475,7 +475,7 @@
    "capture_date": "2026-10-30",
    "capture_basis": "filename",
    "satellite_clock": {
-    "correction_s": -15.8
+    "correction_s": -15.9
    },
    "downlink": {
     "first": "2026-10-30T03:13:08Z",
