@@ -56,6 +56,7 @@ function build() {
       <li><a href="https://www.calgarytospace.ca/">calgarytospace.ca</a></li>
       <li><a href="https://frontiersat.mooo.com/">FrontierSat dashboard</a>, live beacon data</li>
       <li><a href="https://github.com/CalgaryToSpace">github.com/CalgaryToSpace</a></li>
+      <li><a href="https://github.com/JonathE0/Sat-1-Photos">github.com/JonathE0/Sat-1-Photos</a>, this site and all its pictures</li>
     </ul>
     <p class="credits-made">Website designed by Jonathan Eng and <span>Claude <span aria-hidden="true">🛰️</span></span></p>
     <p class="credits-updated" hidden>Last updated <time></time></p>

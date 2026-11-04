@@ -54,7 +54,7 @@ import {
   sunElevationDeg,
   sunPosition,
 } from '../globe/astro.js';
-import { grouped } from '../assets/format.js';
+import { grouped, toDate } from '../assets/format.js';
 import { createScreenLine } from './journey-line.js';
 import {
   calgaryTime,
@@ -207,6 +207,9 @@ const ICON_EYE = '<svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="t
 const ICON_STATS = '<svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><path d="M4 16.5V10M10 16.5V4M16 16.5v-9" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>';
 const ICON_PICTURES = '<svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><path d="M3 4.5h14v11H3zM3 13l4-4 3 3 2.5-2.5L17 14" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>';
 const ICON_FACTS = '<svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><circle cx="10" cy="10" r="7" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10 9v5M10 6v1.5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>';
+const ICON_GRIP = '<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M1 3l8 8M1 7l4 4" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>';
+/** The site's repository, from config.js where the page has it. */
+const REPO_URL = (typeof window !== 'undefined' && window.CTS1_CONFIG?.repoUrl) || 'https://github.com/JonathE0/Sat-1-Photos';
 const ICON_CONTROLS = '<svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><path d="M3 6h7M14 6h3M3 14h3M10 14h7" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10 3.8h4v4.4h-4zM6 11.8h4v4.4H6z" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>';
 
 function template(id, siteRoot) {
@@ -217,7 +220,7 @@ function template(id, siteRoot) {
       <!-- This order is the tab order and the reading order: what is on screen, from the top.
            How things stack is z-index in journey.css, not this. resize() swaps the last two when
            the corner row sits above the time row. -->
-      <div class="jy-dock">
+      <div class="jy-dock" data-ref="dock">
         <div class="jy-summary" data-ref="summary">
           <p class="jy-summary-text"><span class="jy-summary-name">FrontierSat</span> <span data-ref="summaryWhere"></span></p>
           <div class="jy-summary-tools">
@@ -272,6 +275,8 @@ function template(id, siteRoot) {
           </section>
         </div>
       </aside>
+        <button type="button" class="jy-dock-grip" data-ref="dockGrip" aria-label="Resize the picture and stats panel"
+          title="Drag to resize. Double-click for the usual size.">${ICON_GRIP}</button>
       </div>
 
       <section class="jy-credits" id="jy-credits-${id}" data-ref="credits" hidden role="dialog" aria-modal="false"
@@ -342,6 +347,12 @@ function template(id, siteRoot) {
         </div>
         <button type="button" class="jy-btn jy-now" data-ref="now">Now</button>
       </div>
+
+      <p class="jy-meta" data-ref="meta">
+        <span>Want to see all our photos? Check out the GitHub at
+          <a class="jy-link" href="${REPO_URL}">${REPO_URL.replace(/^https?:\/\//, '')}</a></span>
+        <span class="jy-meta-updated" data-ref="updated" hidden></span>
+      </p>
 
       <div class="jy-corner" data-ref="corner">
         <button type="button" class="jy-textbtn jy-again" data-ref="again" title="Play the intro again">${ICON_REPLAY}<span>Play the intro again</span></button>
@@ -900,6 +911,7 @@ export function mountJourney(container, options = {}) {
     }
     root.classList.toggle('jy-composed', composedNow);
     placeFacts();
+    placeMeta();
 
     // beat 1: the whole Earth
     let diam;
@@ -1985,6 +1997,76 @@ export function mountJourney(container, options = {}) {
     }
   });
 
+  // ---- the dock's size where the viewfinder shows, dragged from its bottom-left corner ----
+  // The picture's height sets the whole box (journey.css), and the CSS keeps it on screen.
+  const DOCK_SIZE_KEY = 'cts-dock-picture-h';
+  const DOCK_PICTURE_MIN = 200;
+  let dockDrag = null;
+
+  /** The picture's height, as the dock's CSS works it out now. */
+  function dockPictureHeight() {
+    const probe = document.createElement('div');
+    probe.style.cssText = 'position:absolute;visibility:hidden;height:var(--vf-pic-h)';
+    ref.dock.append(probe);
+    const h = probe.offsetHeight;
+    probe.remove();
+    return h;
+  }
+
+  function sizeDock(h) {
+    if (h) ref.dock.style.setProperty('--vf-user-h', `${Math.round(Math.max(DOCK_PICTURE_MIN, h))}px`);
+    else ref.dock.style.removeProperty('--vf-user-h');
+    ref.dock.classList.toggle('jy-dock-sized', Boolean(h));
+  }
+
+  /** The size settles: remember it as it shows (the CSS may have held it back), and frame around it. */
+  function dockSized() {
+    try {
+      if (ref.dock.classList.contains('jy-dock-sized')) localStorage.setItem(DOCK_SIZE_KEY, String(dockPictureHeight()));
+      else localStorage.removeItem(DOCK_SIZE_KEY);
+    } catch { /* no storage: it lasts until the page closes */ }
+    reframe();
+    measureSettled();
+  }
+
+  try {
+    const saved = Number(localStorage.getItem(DOCK_SIZE_KEY));
+    if (saved > 0) sizeDock(saved);
+  } catch { /* no storage: the usual size */ }
+
+  listen(ref.dockGrip, 'pointerdown', (e) => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    ref.dockGrip.setPointerCapture(e.pointerId);
+    dockDrag = { id: e.pointerId, x: e.clientX, y: e.clientY, h: dockPictureHeight() };
+  });
+  listen(ref.dockGrip, 'pointermove', (e) => {
+    if (!dockDrag || e.pointerId !== dockDrag.id) return;
+    // out to the left or down makes it bigger; the picture is 4:3, so across counts three quarters
+    const across = ((dockDrag.x - e.clientX) * 3) / 4;
+    const down = e.clientY - dockDrag.y;
+    sizeDock(dockDrag.h + (Math.abs(across) > Math.abs(down) ? across : down));
+  });
+  const endDockDrag = (e) => {
+    if (!dockDrag || e.pointerId !== dockDrag.id) return;
+    dockDrag = null;
+    dockSized();
+  };
+  listen(ref.dockGrip, 'pointerup', endDockDrag);
+  listen(ref.dockGrip, 'pointercancel', endDockDrag);
+  listen(ref.dockGrip, 'dblclick', () => {
+    sizeDock(null);
+    dockSized();
+  });
+  listen(ref.dockGrip, 'keydown', (e) => {
+    const step = { ArrowLeft: 24, ArrowDown: 24, ArrowRight: -24, ArrowUp: -24 }[e.key];
+    if (e.key === 'Home') sizeDock(null);
+    else if (step) sizeDock(dockPictureHeight() + step);
+    else return;
+    e.preventDefault();
+    dockSized();
+  });
+
   /** A panel slides in: where pins hide follows where it lands, not where it starts. */
   function measureSettled() {
     setTimeout(() => !destroyed && measureText(), 280);
@@ -2014,6 +2096,34 @@ export function mountJourney(container, options = {}) {
     if (motionOverride === 'reduced') done();
     else setTimeout(done, 160);
     if (restoreFocus) (frame.narrow ? ref.barStats : ref.tabStats.hidden ? ref.cycle : ref.tabStats).focus({ preventScroll: true });
+  }
+
+  /** The repo line goes beside the time toolbar, as wide as the room left before the corner row. */
+  function placeMeta() {
+    const s = stageRect();
+    const time = ref.time.getBoundingClientRect();
+    const corner = ref.corner.getBoundingClientRect();
+    const left = time.right - s.left + 16;
+    // below 1200px the corner row sits above the time row (journey.css), so it's in the way only above that
+    const sameRow = corner.bottom > time.top + 1;
+    const right = (sameRow ? corner.left : s.right - 16) - s.left - 16;
+    ref.meta.style.left = `${left}px`;
+    ref.meta.style.maxWidth = `${Math.max(0, right - left)}px`;
+    ref.meta.classList.toggle('is-cramped', right - left < 230);
+  }
+
+  /** "Last updated Nov 3, 22:00 in Calgary", from the stamp each publish leaves; nothing without one. */
+  async function loadUpdated() {
+    try {
+      const res = await fetch(new URL('data/updated.json', siteRoot).href, { cache: 'no-cache' });
+      const at = res.ok ? toDate((await res.json())?.updated_at) : null;
+      if (!at || destroyed) return;
+      const c = calgaryTime(at.getTime());
+      ref.updated.textContent = `Last updated ${c.date}, ${c.time} in Calgary`;
+      ref.updated.hidden = false;
+    } catch {
+      // a copy of the site no update has run on: the line stays hidden
+    }
   }
 
   function setSheet(open) {
@@ -3314,6 +3424,9 @@ export function mountJourney(container, options = {}) {
     needsFrame = true;
   });
   textObserver.observe(ref.b1);
+  const metaObserver = new ResizeObserver(() => placeMeta());
+  metaObserver.observe(ref.time);
+  metaObserver.observe(ref.corner);
   textObserver.observe(ref.b2);
   textObserver.observe(ref.factsSlot); // the banner fills in after the facts load
   textObserver.observe(ref.viewfinderSlot); // it appears once there are pictures, on big screens
@@ -3357,6 +3470,7 @@ export function mountJourney(container, options = {}) {
 
   // ---- start ------------------------------------------------------------------------------
   loadOrbit();
+  loadUpdated();
   setPhotos(opts.photos);
   applyMode();
   resetCamera();
@@ -3471,6 +3585,7 @@ export function mountJourney(container, options = {}) {
       stopLoop();
       resizeObserver.disconnect();
       textObserver.disconnect();
+      metaObserver.disconnect();
       io.disconnect();
       clearTimeout(card.timer);
       clearTimeout(cycleTimer);

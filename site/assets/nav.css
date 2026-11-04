@@ -8,7 +8,7 @@
    design's 13px, because 13px doesn't fit with the logo. */
 
 :root {
-  --nav-bar: 60px; /* the bar itself, without a rule */
+  --nav-bar: 68px; /* the bar itself, without a rule */
   --nav-pad: 24px;
 }
 
@@ -41,7 +41,7 @@
 .brand-logo {
   display: block;
   width: auto;
-  height: 40px;
+  height: 48px;
 }
 
 /* The Schulich School of Engineering's logo, beside the team's own: on its own white
@@ -49,8 +49,8 @@
 .brand-partner {
   display: block;
   width: auto;
-  height: 48px;
-  border-radius: 6px;
+  height: 58px;
+  border-radius: 7px;
 }
 
 .wordmark {
@@ -139,15 +139,25 @@ body[data-view="explore"] .site-nav .nav-links > a[aria-current="page"] { text-d
 
 /* Stepping down with the width */
 
-@media (max-width: 899px) {
+@media (max-width: 999px) {
   .wordmark { display: none; }
+}
+
+@media (max-width: 899px) {
   .nav-links { gap: 16px; }
+  .brand-logo { height: 44px; }
+  .brand-partner { height: 52px; border-radius: 6px; }
+}
+
+@media (max-width: 779px) {
+  .brand-logo { height: 36px; }
+  .brand-partner { height: 44px; border-radius: 5px; }
 }
 
 @media (max-width: 699px) {
   .nav-links { gap: 14px; }
-  .brand-logo { height: 32px; }
-  .brand-partner { height: 40px; border-radius: 5px; }
+  .brand-logo { height: 28px; }
+  .brand-partner { height: 34px; border-radius: 4px; }
 }
 
 @media (max-width: 599px) {
