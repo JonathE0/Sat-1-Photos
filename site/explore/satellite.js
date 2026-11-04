@@ -20,9 +20,8 @@ import * as THREE from 'three';
 import { GLTFLoader } from './vendor/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from './vendor/libs/meshopt_decoder.module.js';
 
-/** Default model: a public-domain NASA 3U CubeSat used until the FrontierSat CAD is found
- *  (see models/CREDITS.md). */
-export const DEFAULT_MODEL_URL = new URL('./models/cubesat-3u.glb', import.meta.url).href;
+/** Default model: FrontierSat's outside, from the team's CAD (see models/CREDITS.md). */
+export const DEFAULT_MODEL_URL = new URL('./models/frontiersat.glb', import.meta.url).href;
 
 /** 3U CubeSat envelope (CDS rev 14): 100 x 100 x 340.5 mm. Used by the stand-in. */
 const U3 = { w: 0.1, l: 0.3405, rail: 0.0085 };

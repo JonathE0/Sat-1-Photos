@@ -77,8 +77,9 @@ function build() {
       <p>Sky: the <a href="http://tdc-www.harvard.edu/catalogs/bsc5.html">Yale Bright Star Catalogue</a>
         (Hoffleit and Warren, 1991) and the Moon from NASA's Scientific Visualization Studio
         (<a href="https://svs.gsfc.nasa.gov/4720">CGI Moon Kit</a>).</p>
-      <p>CubeSat model: NASA IceCube, a 3U like FrontierSat, by NASA/Christopher R. Meaney (NASA 3D Resources,
-        public domain); drawn far larger than life.</p>
+      <p>Satellite model: CalgaryToSpace's own CAD of FrontierSat (the V11 frame), outside only and
+        simplified for the web, with the sun sensors, magnetometer and UHF antenna as their makers' CAD
+        draws them (CubeSpace, ISISPACE); drawn far larger than life.</p>
     </section>
     <div class="credits-news"></div>`;
   return dialog;

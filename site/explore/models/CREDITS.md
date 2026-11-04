@@ -1,47 +1,35 @@
 # Satellite model
 
-`cubesat-3u.glb` is a **stand-in** for FrontierSat. It is NASA's model of
-**IceCube** (also written ICECube; "Earth-1"), a 3U CubeSat built by NASA Goddard
-that flew in 2017 with an 883 GHz cloud-ice radiometer. It is not FrontierSat. It is
-used because it is a realistic 3U with body-mounted solar cells, until the team's own
-CAD model is found. It has no UHF antennas and no boom.
+`frontiersat.glb` is FrontierSat's outside, from CalgaryToSpace's own CAD of the
+satellite: the V11 frame assembly, from the team's Pack and Go of its latest frame
+design. It replaced a NASA stand-in (IceCube, a 3U) on 2026-11-04.
 
 | | |
 |---|---|
-| Title | CubeSat – ICECube |
-| Author / credit | NASA/Christopher R. Meaney (NASA Goddard Space Flight Center) |
-| Source page | https://science.nasa.gov/3d-resources/cubesat-icecube |
-| File used | https://assets.science.nasa.gov/content/dam/science/cds/3d/resources/model/cubesat---icecube/CubeSat%20-%20ICECube.glb (309,684 bytes, sha256 `7ad1a4be4beb2c1b62b6fc48a9538db6c914d871099681745e188deb1925f31a`). It is byte-identical to `3D Models/CubeSat - ICECube/CubeSat - ICECube.glb` in https://github.com/nasa/NASA-3D-Resources (commit 3fc74df, 2025-03-20). |
-| Licence | Public domain (U.S. Government work). From the NASA 3D Resources README: "These assets are free and without copyright." NASA's media guidelines (https://www.nasa.gov/nasa-brand-center/images-and-media/) say NASA images, audio, video and 3D models "generally are not subject to copyright in the United States", that "NASA should be acknowledged as the source of the material", and that NASA does not endorse any product, service or activity. The model has no NASA insignia or logotype on it. |
-| Credit line to show | 3D model: NASA/Christopher R. Meaney (CubeSat – ICECube, NASA 3D Resources), modified. |
+| Source | `V11 Frame Assembly.SLDASM`, the meshes SolidWorks stores in the file |
+| Kept | the frame and walls, the five solar panels and their cells, the sun sensors (CubeSpace CubeSense) and coarse sun sensors, the magnetometer (CubeSpace CubeMag, stowed), the UHF antenna (ISISPACE, stowed), the GNSS antenna and the camera |
+| Left out | everything inside (the boards of the main stack, the MPI's body, the burn-wire board), connectors, fasteners, and the boom, which is still stowed in orbit (the CAD has it part-way out) |
+| Size | 111,486 triangles, 2,132,460 bytes, sha256 `427568842d8db40350b90867fe6bbb9da3225a28aab15f45c0d526a4ad15476b` |
+| Credit line to show | Satellite model: CalgaryToSpace's own CAD of FrontierSat (the V11 frame), outside only and simplified for the web, with the sun sensors, magnetometer and UHF antenna as their makers' CAD draws them (CubeSpace, ISISPACE) |
 
-## What was changed
+The SolidWorks files, and the scripts that turn them into this file, stay off GitHub:
+only this mesh is published. Colours are named by what each part is made of, so
+`../satellite.js` gives them its space materials; they aren't the CAD's own appearances.
 
-Converted with glTF-Transform 4.1.1 (Node), from a script kept outside the site:
+## How it was made
 
-1. Decoded the Draco mesh compression.
-2. Removed a hidden part: a flat 9 x 2 cm label (2,414 triangles, material
-   `Default`) that sat at the centre of the body, inside the box.
-3. Re-framed to the site convention (below): rotated +90° about X (the source's long
-   axis +Y becomes +Z; the instrument face, source +Z, becomes the nadir face -Y),
-   then centred on the body.
-4. Rescaled to metres. The body cross-section (2 source units) became 0.100 m. The
-   source is about 20 % too long for its width, so the long axis was scaled on its
-   own to the real 3U length of 0.3405 m (factor 0.828 relative to the cross-section).
-   This also gives the solar cells their real 2:1 shape.
-5. Materials: the 21 source materials (all flat, roughness 0.81, no metal) were mapped
-   to 11 named PBR materials for a lit-by-the-Sun look: `solar-cell` (dark blue, glossy),
-   `solar-cell-interconnect`, `solar-panel-pcb`, `aluminium`, `aluminium-anodised-dark`,
-   `black-anodised`, `gold-kapton`, `silver-foil`, `white-paint`, `yellow-label`,
-   `instrument-aperture`. The 7 tile shades the source used on the cells were kept as a
-   vertex colour on the one `solar-cell` material.
-6. Merged primitives by material (one mesh, 11 draw calls), welded vertices, and
-   compressed with `EXT_meshopt_compression` + `KHR_mesh_quantization` (14-bit
-   positions, 8-bit normals). No textures.
+1. Read the tessellations SolidWorks stores in the assembly (no SolidWorks needed),
+   placed each part by the assembly's own transforms, and grouped them by what they are
+   (structure, solar panels, sun sensors, ...).
+2. Turned it into the frame below: the file's +X (the nadir wall, where the camera looks)
+   became -Y, its long axis stays Z with the MPI's face at +Z, and the body's centre
+   (the box of the frame and panels, 110.6 x 108.1 x 340.5 mm) became the origin.
+3. Simplified it by merging vertices within 0.6 to 2 mm of each other that share about
+   the same normal, from 660,619 triangles to 111,486, with 16-bit indices and 8-bit
+   normals (`KHR_mesh_quantization`). No textures.
 
-Result: 352,248 bytes (sha256 `97b5f39c3f61b61dee69243ff2da2919726217d1476d95d7f153bb5d4e3cd596`),
-55,704 triangles, bounds 11.7 x 10.6 x 34.3 cm (x includes the cells standing proud
-of the frame).
+Node names say what each group is; `satellite.js` leaves the ones naming an antenna,
+the boom or a deployable out of the click box and the highlight outline.
 
 ## Frame used by `../satellite.js`
 
@@ -49,21 +37,3 @@ of the frame).
 - +Z is the long (3U) axis
 - -Y is the nadir face (the face that looks at the Earth)
 - 1 unit = 1 metre
-
-## Swapping in the FrontierSat CAD model
-
-Export the CAD to glTF/GLB, then shrink it, for example:
-
-    npx @gltf-transform/cli@4.1.1 optimize frontiersat-raw.glb frontiersat.glb --compress meshopt --texture-compress webp --texture-size 1024
-
-and either replace `cubesat-3u.glb` or pass the new URL:
-
-    createSatellite({ modelUrl: new URL('./models/frontiersat.glb', import.meta.url).href,
-                      rotation: [0, 0, 0],      // degrees, XYZ, to reach the frame above
-                      metresPerUnit: 'auto',    // guesses mm / cm / m
-                      centre: 'origin' })       // or 'bbox' if the CAD origin is at a corner
-
-Name the materials after what they are (for example "solar cell", "aluminium rail",
-"kapton") and `satellite.js` gives them the same space look. Parts whose node names
-contain `antenna`, `boom`, `whip`, `tape spring` or `deployable` are left out of the
-click box and the highlight outline. Then update this file with the new credits.
