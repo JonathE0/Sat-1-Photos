@@ -1045,6 +1045,7 @@ export function mountJourney(container, options = {}) {
   let blend = null; // { from: {P, q, lx, ly}, t0, dur }
   const mLook = new THREE.Matrix4();
   const heading = new THREE.Vector3();
+  const followUp = new THREE.Vector3();
 
   function lookQuat(P, T, up, out) {
     mLook.lookAt(P, T, up);
@@ -1070,18 +1071,24 @@ export function mountJourney(container, options = {}) {
     return geoScene(CALGARY.latDeg, CALGARY.lonDeg, 1, theta, out).normalize();
   }
 
-  /** Behind the satellite (or wherever the visitor turned it), looking at it. */
+  /**
+   * Behind the satellite (or wherever the visitor turned it), looking at it. The visitor can
+   * turn all the way round it, over the top and underneath: up on screen is the way the pitch
+   * grows, so it turns with the camera and nothing flips (above the satellite this is the
+   * same view as the heading up).
+   */
   function followRig(out, yaw, pitch, dist) {
     const lim = zoomLimits();
     // closer than the end view: level out so the limb sits behind it, and centre it
     const zin = dist < lim.def ? clamp(Math.log(lim.def / dist) / Math.log(lim.def / lim.min), 0, 1) : 0;
     const k = zin * zin * (3 - 2 * zin);
-    const p = clamp(pitch + (CLOSE_PITCH - Math.atan2(frame.a, frame.b)) * k, 2 * DEG, 89 * DEG);
+    const p = pitch + (CLOSE_PITCH - Math.atan2(frame.a, frame.b)) * k;
     heading.copy(sat.F).multiplyScalar(Math.cos(yaw)).addScaledVector(sat.R, Math.sin(yaw));
     out.P.copy(sat.S)
       .addScaledVector(heading, -Math.cos(p) * dist)
       .addScaledVector(sat.U, Math.sin(p) * dist);
-    lookQuat(out.P, sat.S, heading, out.q);
+    followUp.copy(heading).multiplyScalar(Math.sin(p)).addScaledVector(sat.U, Math.cos(p));
+    lookQuat(out.P, sat.S, followUp, out.q);
     out.lx = lerp(frame.lens1.x, 0.5, k);
     out.ly = lerp(frame.lens1.y, 0.5, k);
     return out;
@@ -2693,7 +2700,7 @@ export function mountJourney(container, options = {}) {
     if (state.follow) {
       ensureCustom();
       state.yaw -= (dx * Math.PI) / H;
-      state.pitch = clamp(state.pitch + (dy * Math.PI * 0.6) / H, 2 * DEG, 89 * DEG);
+      state.pitch = wrapPi(state.pitch + (dy * Math.PI * 0.6) / H); // all the way round
     } else {
       const k = (2 * frame.tanHalf * Math.max(0.15, state.cdist - 0.95)) / H;
       state.theta -= dx * k;
@@ -3157,7 +3164,7 @@ export function mountJourney(container, options = {}) {
       state.follow = true;
       state.custom = !!c.custom;
       state.yaw = num(c.yaw, 0);
-      state.pitch = clamp(num(c.pitch, 0.5), 2 * DEG, 89 * DEG);
+      state.pitch = wrapPi(num(c.pitch, 0.5));
       state.dist = state.distTarget = clamp(num(c.distance, 0.25), 0.002, 4);
     }
     state.selectedId = typeof s.selectedId === 'string' ? s.selectedId : null;
