@@ -656,7 +656,40 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
 /* a long place name takes a second line, so the altitude is never cut off */
 .jy-summary-text { flex: 1 1 100%; min-width: 0; margin: 0; padding: 8px 12px; }
 .jy-summary-name { margin-right: 0.25em; font-size: var(--jy-body); font-weight: 500; letter-spacing: 0; }
-.jy-summary-tools { display: flex; flex: 1 1 100%; box-shadow: inset 0 1px 0 var(--jy-raised); }
+.jy-summary-tools { position: relative; display: flex; flex: 1 1 100%; box-shadow: inset 0 1px 0 var(--jy-raised); }
+/* Cycle's speed, from a right-click on it: under the tabs, over the picture or the details */
+.jy-cycle-menu {
+  position: absolute;
+  z-index: 5;
+  top: calc(100% + 4px);
+  right: 0;
+  min-width: 200px;
+  padding: 6px 0;
+  background: var(--jy-panel);
+  box-shadow: 0 0 0 1px var(--jy-raised);
+}
+.jy-cycle-menu[hidden] { display: none; }
+.jy-cycle-menu-title { margin: 0; padding: 4px 12px 6px; color: var(--jy-muted); font-size: var(--jy-small); }
+.jy-cycle-speed {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 32px;
+  margin: 0;
+  border: 0;
+  padding: 0 12px;
+  background: none;
+  color: var(--jy-ink);
+  font: inherit;
+  font-size: var(--jy-small);
+  text-align: left;
+  cursor: pointer;
+}
+.jy-cycle-speed::before { content: ''; flex: none; width: 1em; }
+.jy-cycle-speed[aria-checked="true"]::before { content: '\2713'; }
+.jy-cycle-speed:hover,
+.jy-cycle-speed:focus-visible { background: var(--jy-raised); outline: none; }
 .jy-tabs { display: flex; flex: 1; }
 .jy-tabs .jy-tab { flex: 1; }
 .jy-cycle { box-shadow: inset 1px 0 0 var(--jy-raised); }

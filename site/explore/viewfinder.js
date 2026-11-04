@@ -13,6 +13,7 @@
  *
  * takeTurn() is asked when a picture's time is up: true if something else is going
  * up in its place, and then next() brings on the next picture when that's done.
+ * setDwell(ms) changes how long each picture stays (0 for the usual 12 s).
  *
  * Each picture comes down the way the real one did: top first, in packet-sized
  * bands at uneven intervals, with a faint line at the leading edge. Between
@@ -396,6 +397,8 @@ export function createViewfinder(container, {
     });
   }
 
+  let dwellMs = DWELL_MS;
+
   function schedule() {
     clearTimeout(timer);
     timer = 0;
@@ -403,7 +406,7 @@ export function createViewfinder(container, {
     if (shown && (hovered || focused)) return;
     timer = setTimeout(() => {
       if (!shown || !takeTurn?.()) step(1, false);
-    }, shown ? DWELL_MS : firstMs);
+    }, shown ? dwellMs : firstMs);
   }
 
   // ---- events ----
@@ -475,6 +478,11 @@ export function createViewfinder(container, {
     setPhotos,
     show,
     next: () => step(1, false),
+    /** How long each picture stays, from the one showing now; 0 for the usual. */
+    setDwell(ms) {
+      dwellMs = ms > 0 ? ms : DWELL_MS;
+      if (running) schedule();
+    },
     /** Show pictures: the first after a moment, then one every 12 s. */
     start() {
       if (disposed || running) return;

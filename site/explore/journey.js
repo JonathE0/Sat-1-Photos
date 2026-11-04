@@ -164,9 +164,11 @@ const factsHiddenChoice = rememberedChoice('cts-facts-hidden');
 const auroraHiddenChoice = rememberedChoice('cts-aurora-hidden');
 const cycleOffChoice = rememberedChoice('cts-cycle-off');
 const previewsHiddenChoice = rememberedChoice('cts-previews-hidden'); // shared with Orbit
-/** Stats' and Orbit's turns when the panel cycles; Pictures' turn is one picture (DWELL_MS in viewfinder.js). */
-const CYCLE_STATS_MS = 10000;
-const CYCLE_MAP_MS = 12000;
+/** How long each of Stats, Pictures (one picture) and Orbit shows when the panel cycles, in
+ * seconds: the choices on the Cycle button's right-click menu, and the one it starts on. */
+const CYCLE_SPEEDS = [5, 8, 12, 20, 30];
+const CYCLE_SECONDS = 12;
+const CYCLE_SPEED_KEY = 'cts-cycle-seconds';
 /** The map's zoom as a visitor last left it, as a multiple of its widest; it opens at twice that. */
 const MAP_ZOOM_KEY = 'cts-map-zoom';
 /** Screens with room for the picture viewfinder; keep in step with .jy-vf-slot in journey.css. */
@@ -238,7 +240,11 @@ function template(id, siteRoot) {
               <button type="button" class="jy-tab" data-ref="tabPictures" aria-pressed="false">Pictures</button>
               <button type="button" class="jy-tab" data-ref="tabMap" aria-pressed="false" hidden>Orbit</button>
               <button type="button" class="jy-tab jy-cycle" data-ref="cycle" aria-pressed="false" hidden
-                title="Take turns showing Stats, Pictures and Orbit">Cycle</button>
+                aria-haspopup="menu" title="Take turns showing Stats, Pictures and Orbit. Right-click to choose how long each shows.">Cycle</button>
+            </div>
+            <div class="jy-cycle-menu" data-ref="cycleMenu" role="menu" aria-label="How long each panel shows" hidden>
+              <p class="jy-cycle-menu-title" aria-hidden="true">Each panel shows for</p>
+              ${CYCLE_SPEEDS.map((sec) => `<button type="button" class="jy-cycle-speed" role="menuitemradio" aria-checked="false" data-seconds="${sec}">${sec} seconds</button>`).join('')}
             </div>
             <button type="button" class="jy-tab jy-dock-toggle" data-ref="dockToggle" aria-expanded="true"
               aria-label="Hide this panel"><span data-ref="dockToggleText">Hide</span> ${ICON_DOWN}</button>
@@ -3411,6 +3417,7 @@ export function mountJourney(container, options = {}) {
             return cycleOn;
           },
         });
+        viewfinder.setDwell(cycleOn ? cycleSeconds * 1000 : 0);
         // a pin clicked while it was still on its way
         if (state.previewId) viewfinder.show(photos.find((p) => p.id === state.previewId));
         syncViewfinder();
@@ -3659,9 +3666,82 @@ export function mountJourney(container, options = {}) {
     cycleOn = on;
     ref.cycle.setAttribute('aria-pressed', String(on));
     if (remember) cycleOffChoice.set(!on);
+    // the pictures keep to Cycle's pace while it runs, and their usual 12 s otherwise
+    viewfinder?.setDwell(on ? cycleSeconds * 1000 : 0);
     paintTabs();
     syncCycle();
   }
+
+  // ---- Cycle's speed: right-click (or the menu key) on Cycle -----------------------------------
+  let cycleSeconds = CYCLE_SECONDS;
+  try {
+    const saved = Number(localStorage.getItem(CYCLE_SPEED_KEY));
+    if (CYCLE_SPEEDS.includes(saved)) cycleSeconds = saved;
+  } catch { /* no storage: the usual pace */ }
+
+  const speedItems = () => [...ref.cycleMenu.querySelectorAll('[data-seconds]')];
+
+  function paintCycleMenu() {
+    for (const b of speedItems()) b.setAttribute('aria-checked', String(Number(b.dataset.seconds) === cycleSeconds));
+  }
+
+  function setCycleSeconds(sec) {
+    cycleSeconds = sec;
+    try {
+      if (sec === CYCLE_SECONDS) localStorage.removeItem(CYCLE_SPEED_KEY);
+      else localStorage.setItem(CYCLE_SPEED_KEY, String(sec));
+    } catch { /* no storage: it lasts until the page closes */ }
+    paintCycleMenu();
+    if (cycleOn) viewfinder?.setDwell(sec * 1000);
+    syncCycle(); // the panel up now starts its turn again at the new pace
+  }
+
+  function openCycleMenu() {
+    paintCycleMenu();
+    ref.cycleMenu.hidden = false;
+    ref.cycle.setAttribute('aria-expanded', 'true');
+    (ref.cycleMenu.querySelector('[aria-checked="true"]') || speedItems()[0]).focus({ preventScroll: true });
+  }
+
+  function closeCycleMenu({ restoreFocus = false } = {}) {
+    if (ref.cycleMenu.hidden) return;
+    ref.cycleMenu.hidden = true;
+    ref.cycle.removeAttribute('aria-expanded');
+    if (restoreFocus) ref.cycle.focus({ preventScroll: true });
+  }
+
+  listen(ref.cycle, 'contextmenu', (e) => {
+    e.preventDefault();
+    if (ref.cycleMenu.hidden) openCycleMenu();
+    else closeCycleMenu();
+  });
+  listen(ref.cycleMenu, 'click', (e) => {
+    const item = e.target.closest('[data-seconds]');
+    if (!item) return;
+    setCycleSeconds(Number(item.dataset.seconds));
+    closeCycleMenu({ restoreFocus: true });
+  });
+  listen(ref.cycleMenu, 'keydown', (e) => {
+    const items = speedItems();
+    const at = items.indexOf(document.activeElement);
+    if (e.key === 'Escape' || e.key === 'Tab') {
+      if (e.key === 'Escape') e.preventDefault();
+      closeCycleMenu({ restoreFocus: e.key === 'Escape' });
+    } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      const step = e.key === 'ArrowDown' ? 1 : -1;
+      items[(at + step + items.length) % items.length].focus();
+    } else if (e.key === 'Home' || e.key === 'End') {
+      e.preventDefault();
+      items[e.key === 'Home' ? 0 : items.length - 1].focus();
+    }
+  });
+  // anywhere else closes it, the right-click that opened it aside
+  listen(document, 'pointerdown', (e) => {
+    if (ref.cycleMenu.hidden || ref.cycleMenu.contains(e.target)) return;
+    if (e.button === 2 && ref.cycle.contains(e.target)) return;
+    closeCycleMenu();
+  });
 
   /** Stats' turn and the map's: each runs while it's up and nobody is reading it or moving it.
    * Pictures come next after Stats, the map after Pictures (takeTurn), then Stats. */
@@ -3674,9 +3754,9 @@ export function mountJourney(container, options = {}) {
         state.mapUp = false;
         closePanel();
         viewfinder?.next();
-      }, CYCLE_STATS_MS);
+      }, cycleSeconds * 1000);
     } else if (!state.panel && state.mapUp) {
-      cycleTimer = setTimeout(() => openPanel({ focus: false, byCycle: true }), CYCLE_MAP_MS);
+      cycleTimer = setTimeout(() => openPanel({ focus: false, byCycle: true }), cycleSeconds * 1000);
     }
   }
 
