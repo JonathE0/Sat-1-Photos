@@ -1991,7 +1991,7 @@ export function mountJourney(container, options = {}) {
     paintTabs();
     if (frame.narrow) setSheet(true);
     if (state.locked && state.shown) runTicker();
-    requestAnimationFrame(() => ref.panel.classList.add('is-on'));
+    requestAnimationFrame(() => state.panel && ref.panel.classList.add('is-on'));
     uiDirty = true;
     paintPanel(true);
     reframe();
@@ -3429,6 +3429,7 @@ export function mountJourney(container, options = {}) {
 
   /** It runs at the end of the story, on big screens, unless the panel is put away or the details, the map or the credits have taken its place. */
   function syncViewfinder() {
+    cycleHover = false; // what shows now may have come up under a still pointer
     const here = webgl && state.locked && state.shown && !state.panel && !state.creditsOpen && !state.dockHidden && bigQuery.matches;
     const on = here && !state.mapUp;
     if (on) loadViewfinder();
@@ -3486,8 +3487,12 @@ export function mountJourney(container, options = {}) {
         try {
           zoom = Number(localStorage.getItem(MAP_ZOOM_KEY)) || 2;
         } catch { /* no storage */ }
-        map.zoomBy(zoom); // from its widest, where it opens
-        syncViewfinder();
+        // straight there from its widest, not as a glide that a hidden map would drop
+        const glide = map.controls.reducedMotion;
+        map.controls.reducedMotion = true;
+        map.zoomBy(zoom);
+        map.controls.reducedMotion = glide;
+        syncMap(whereOn); // shown if its turn is on, without starting the turn again
       } catch (e) {
         console.warn('[journey] no map', e); // the tab shows an empty frame; the rest goes on
       }
@@ -3523,7 +3528,7 @@ export function mountJourney(container, options = {}) {
         globeFailed = true;
         ref.kindGlobe.hidden = true;
       }
-      syncViewfinder();
+      syncMap(whereOn); // shown if its turn is on, without starting the turn again
     })();
   }
 
@@ -3566,14 +3571,22 @@ export function mountJourney(container, options = {}) {
     syncViewfinder();
   }
 
+  let whereHideTimer = 0;
   function syncMap(on) {
     whereOn = on;
     const globeOn = on && globeHere();
     if (globeOn) loadGlobe();
     if (on && !globeOn) loadMap();
-    ref.globeCanvas.hidden = !globeOn;
-    ref.globeLabels.hidden = !globeOn;
-    map?.setVisible(on && !globeOn);
+    const show = () => {
+      ref.globeCanvas.hidden = !globeOn;
+      ref.globeLabels.hidden = !globeOn;
+      map?.setVisible(on && !globeOn);
+    };
+    clearTimeout(whereHideTimer);
+    // going away, it stays drawn (still) while its panel fades out (150 ms), so the switch is a
+    // cross-fade rather than an empty frame
+    if (on) show();
+    else whereHideTimer = setTimeout(() => !whereOn && show(), 160);
     paintOrbitView();
     if (on) {
       sizeMap();
@@ -3675,6 +3688,7 @@ export function mountJourney(container, options = {}) {
   function zoomWhere(factor) {
     if (globe && !ref.globeCanvas.hidden) {
       globe.controls.setDistance(globe.controls.distance / factor);
+      if (sat.state && !mapPanned) aimGlobe(state.simMs, sat.state);
       saveGlobeZoom();
     } else if (map) {
       map.zoomBy(factor);
@@ -3782,6 +3796,11 @@ export function mountJourney(container, options = {}) {
   function syncCycle() {
     clearTimeout(cycleTimer);
     const up = state.locked && state.shown && !state.creditsOpen && !state.dockHidden;
+    const paused = cycleOn && up && viewfinderHere() && (cycleHover || cycleFocus);
+    ref.cycle.classList.toggle('is-paused', paused);
+    ref.cycle.title = paused
+      ? 'Paused while the pointer or the keyboard is on the panel. Right-click to choose how long each shows.'
+      : 'Take turns showing Stats, Pictures and Orbit. Right-click to choose how long each shows.';
     if (!cycleOn || !up || cycleHover || cycleFocus || document.hidden || !viewfinderHere()) return;
     if (state.panel && state.tab === 'stats') {
       cycleTimer = setTimeout(() => {
@@ -3790,13 +3809,18 @@ export function mountJourney(container, options = {}) {
         viewfinder?.next();
       }, cycleSeconds * 1000);
     } else if (!state.panel && state.mapUp) {
-      cycleTimer = setTimeout(() => openPanel({ focus: false, byCycle: true }), cycleSeconds * 1000);
+      cycleTimer = setTimeout(() => {
+        state.mapUp = false;
+        openPanel({ focus: false, byCycle: true });
+      }, cycleSeconds * 1000);
     }
   }
 
   listen(ref.cycle, 'click', () => setCycle(!cycleOn, { remember: true }));
-  for (const held of [ref.panel, ref.mapSlot]) {
-    listen(held, 'pointerenter', () => {
+  // a pointer that moves onto it, not one a panel came up under (that doesn't stop it)
+  for (const held of [ref.panel, ref.mapSlot, ref.viewfinderSlot]) {
+    listen(held, 'pointermove', () => {
+      if (cycleHover) return;
       cycleHover = true;
       syncCycle();
     });

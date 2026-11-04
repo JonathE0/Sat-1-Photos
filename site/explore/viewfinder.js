@@ -199,6 +199,8 @@ export function createViewfinder(container, {
   let held = null; // a picture put up by show(): it stays until the visitor steps on
   let run = 0; // the latest step; an older one that was still loading gives way
   let misses = 0; // pictures in a row that wouldn't load
+  let failed = false; // none would: its turn still ends, so Cycle goes on
+  let pendingFrom = null; // where a step under way set out from, to go back to if stopped
   let running = false;
   let hovered = false;
   let focused = false;
@@ -327,6 +329,7 @@ export function createViewfinder(container, {
   /** Step through the deck: the next picture is ready before the shutter closes on this one. */
   function step(dir, manual) {
     if (disposed || !deck.length) return;
+    const from = index;
     if (held && !deck.includes(held)) {
       // a picture from outside the run: on to its neighbours in time
       const older = deck.findIndex((p) => (p.sortTime || 0) < (held.sortTime || 0));
@@ -338,6 +341,7 @@ export function createViewfinder(container, {
     held = null;
     const photo = deck[index];
     const mine = ++run;
+    if (pendingFrom === null) pendingFrom = from;
     clearTimeout(timer);
     timer = 0;
     fetchPicture(photo).then((img) => {
@@ -349,13 +353,19 @@ export function createViewfinder(container, {
         } else {
           root.classList.remove('is-shut');
           root.hidden = !shown;
+          pendingFrom = null;
+          misses = 0; // try them all again next time
+          failed = true;
+          schedule();
         }
         return;
       }
       misses = 0;
+      failed = false;
       next = null;
       const swap = () => {
         if (disposed || mine !== run) return;
+        pendingFrom = null;
         paint(photo, img);
         schedule();
         if (manual) announce(photo);
@@ -405,7 +415,7 @@ export function createViewfinder(container, {
     if (held || !running || disposed || !deck.length || document.hidden) return;
     if (shown && (hovered || focused)) return;
     timer = setTimeout(() => {
-      if (!shown || !takeTurn?.()) step(1, false);
+      if (!(shown || failed) || !takeTurn?.()) step(1, false);
     }, shown ? dwellMs : firstMs);
   }
 
@@ -489,11 +499,20 @@ export function createViewfinder(container, {
       running = true;
       schedule();
     },
-    /** Stop rotating; a picture still arriving finishes at once and stays. */
+    /** Stop rotating; a picture still arriving finishes at once and stays, and one still
+     * loading or behind the shutter is called off, to come up next time instead. */
     stop() {
       running = false;
       clearTimeout(timer);
       timer = 0;
+      if (pendingFrom !== null) {
+        ++run;
+        clearTimeout(swapTimer);
+        swapTimer = 0;
+        root.classList.remove('is-shut');
+        index = pendingFrom;
+        pendingFrom = null;
+      }
       finishReveal();
     },
     dispose() {

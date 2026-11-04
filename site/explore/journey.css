@@ -694,6 +694,9 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
 .jy-tabs .jy-tab { flex: 1; }
 .jy-cycle { box-shadow: inset 1px 0 0 var(--jy-raised); }
 .jy-tab[hidden] { display: none; }
+/* holding a turn while the pointer or the keyboard is on the panel */
+.jy-cycle.is-paused { color: var(--jy-muted); }
+.jy-cycle[aria-pressed="true"].is-paused { box-shadow: inset 1px 0 0 var(--jy-raised), inset 0 -2px 0 var(--jy-muted); }
 .jy-dock-toggle { flex: none; box-shadow: inset 1px 0 0 var(--jy-raised); }
 /* The chevron turns even when the system prefers reduced motion (the site's choice,
    as the facts banner and the viewfinder); only ?motion=reduced (.jy-calm) stops it. */
@@ -775,7 +778,7 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
   /* the dock's bottom-left corner: drag out to make it bigger, in to make it smaller */
   .jy-dock-grip {
     position: absolute;
-    z-index: 1;
+    z-index: 4; /* over the details, which now fill the box */
     left: 0;
     bottom: 0;
     display: grid;
@@ -799,11 +802,14 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
     visibility: visible;
     transition: opacity 240ms var(--jy-ease-out), visibility 0s, color 180ms var(--jy-ease-out);
   }
-  /* the stats are as tall as their words, so the grip is the picture's only: it would float
-     below them otherwise */
-  .jy-panel-open .jy-dock-grip,
   .jy-dock-hidden .jy-dock-grip,
-  .jy-credits-open .jy-dock-grip { opacity: 0; visibility: hidden; }
+  .jy-credits-open .jy-dock-grip {
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 120ms var(--jy-ease-exit), visibility 0s linear 120ms, color 180ms var(--jy-ease-out);
+  }
+  /* no picture yet (none loaded, or none nearly whole): nothing to size */
+  .jy-root .jy-vf-slot[hidden] ~ .jy-dock-grip { display: none; }
   .jy-dock-grip:hover { color: var(--jy-ink); }
   .jy-dock-grip:focus-visible { outline: 2px solid var(--jy-blue); outline-offset: 2px; }
 
@@ -827,11 +833,28 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
     visibility: visible;
     transition: opacity 240ms var(--jy-ease-out), visibility 0s;
   }
-  .jy-root.jy-panel-open .jy-dock-meta,
   .jy-root.jy-dock-hidden .jy-dock-meta,
   .jy-root.jy-credits-open .jy-dock-meta,
-  .jy-root .jy-vf-slot[hidden] ~ .jy-dock-meta { opacity: 0; visibility: hidden; }
-  .jy-root:not(.jy-panel-open):not(.jy-dock-hidden):not(.jy-credits-open) .jy-meta:not(.jy-dock-meta) { display: none; }
+  .jy-root .jy-vf-slot[hidden] ~ .jy-dock-meta {
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 120ms var(--jy-ease-exit), visibility 0s linear 120ms;
+  }
+  .jy-root:not(.jy-dock-hidden):not(.jy-credits-open):has(.jy-vf-slot:not([hidden])) .jy-meta:not(.jy-dock-meta) { display: none; }
+
+  /* The details take the picture's place in the same box and over it, so a switch is a
+     cross-fade: the box keeps its size, nothing shows through or below them, and they don't
+     slide over the bar (which stays on top, with Cycle's menu) */
+  .jy-summary { position: relative; z-index: 3; }
+  .jy-root .jy-panel {
+    position: relative;
+    z-index: 2;
+    align-self: stretch;
+    align-content: start;
+    margin-top: var(--vf-gap);
+    transform: none;
+  }
+  .jy-root .jy-panel.is-on { transform: none; }
 }
 /* The map (journey.js, with site/globe/map2d.js): where it is now, as the Orbit page draws it,
    in the viewfinder's place as a third tab and a third turn of Cycle */
@@ -1090,6 +1113,8 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
 }
 .jy-root.jy-calm .jy-panel,
 .jy-root.jy-calm .jy-panel.is-on { transform: none; transition: opacity 150ms linear !important; }
+/* closing (or not yet open): no clicks or hover for what's fading */
+.jy-root .jy-panel:not(.is-on) { pointer-events: none; }
 .jy-panel p,
 .jy-credits p { margin: 0; }
 /* open details wait out the story: shown again when the visitor comes back down */
