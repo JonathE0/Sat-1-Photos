@@ -556,6 +556,11 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
 .jy-zoom .jy-sq { width: var(--jy-row); height: auto; min-height: var(--jy-ctl); }
 .jy-zoom .jy-sq + .jy-sq { box-shadow: inset 1px 0 0 var(--jy-raised); }
 .jy-root[data-mode="still"] .jy-zoom { display: none; }
+/* full screen, beside the zoom: one square, its corners pointing out, or in once it's on */
+.jy-fullscreen { width: var(--jy-row); height: auto; min-height: var(--jy-ctl); }
+.jy-fullscreen[hidden] { display: none; }
+.jy-fullscreen[aria-pressed="true"] .jy-fs-enter,
+.jy-fullscreen:not([aria-pressed="true"]) .jy-fs-leave { display: none; }
 
 /* the facts ticker (facts.js) sits above the time controls, at the end only */
 .jy-facts-slot {

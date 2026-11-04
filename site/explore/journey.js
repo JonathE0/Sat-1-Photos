@@ -207,6 +207,7 @@ const ICON_EYE = '<svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="t
 const ICON_STATS = '<svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><path d="M4 16.5V10M10 16.5V4M16 16.5v-9" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>';
 const ICON_PICTURES = '<svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><path d="M3 4.5h14v11H3zM3 13l4-4 3 3 2.5-2.5L17 14" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>';
 const ICON_FACTS = '<svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><circle cx="10" cy="10" r="7" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10 9v5M10 6v1.5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>';
+const ICON_FULLSCREEN = '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path class="jy-fs-enter" d="M2.5 6V2.5H6M10 2.5h3.5V6M13.5 10v3.5H10M6 13.5H2.5V10" fill="none" stroke="currentColor" stroke-width="1.5"/><path class="jy-fs-leave" d="M6 2.5V6H2.5M10 2.5V6h3.5M13.5 10H10v3.5M2.5 10H6v3.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>';
 const ICON_GRIP = '<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M1 3l8 8M1 7l4 4" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>';
 /** The site's repository, from config.js where the page has it. */
 const REPO_URL = (typeof window !== 'undefined' && window.CTS1_CONFIG?.repoUrl) || 'https://github.com/JonathE0/Sat-1-Photos';
@@ -368,6 +369,8 @@ function template(id, siteRoot) {
           <button type="button" class="jy-sq" data-ref="zoomOut" aria-label="Zoom out">${ICON_MINUS}</button>
           <button type="button" class="jy-sq" data-ref="zoomIn" aria-label="Zoom in">${ICON_PLUS}</button>
         </div>
+        <button type="button" class="jy-sq jy-fullscreen" data-ref="fullscreen" aria-pressed="false"
+          aria-label="Full screen" title="Full screen" hidden>${ICON_FULLSCREEN}</button>
       </div>
 
       <div class="jy-tabbar" data-ref="tabbar" role="group" aria-label="Explore">
@@ -2098,6 +2101,31 @@ export function mountJourney(container, options = {}) {
     else setTimeout(done, 160);
     if (restoreFocus) (frame.narrow ? ref.barStats : ref.tabStats.hidden ? ref.cycle : ref.tabStats).focus({ preventScroll: true });
   }
+
+  // ---- full screen: the browser's own, so its tabs and address bar go too (as F11) --------
+  // Where the browser has none (an iPhone's Safari), there's no button.
+  const page = document.documentElement;
+  const fullscreenNow = () => document.fullscreenElement || document.webkitFullscreenElement || null;
+
+  function paintFullscreen() {
+    const on = Boolean(fullscreenNow());
+    ref.fullscreen.setAttribute('aria-pressed', String(on));
+    ref.fullscreen.setAttribute('aria-label', on ? 'Leave full screen' : 'Full screen');
+    ref.fullscreen.title = on ? 'Leave full screen (Esc)' : 'Full screen';
+  }
+
+  ref.fullscreen.hidden = !(document.fullscreenEnabled || document.webkitFullscreenEnabled);
+  listen(ref.fullscreen, 'click', () => {
+    try {
+      const done = fullscreenNow()
+        ? (document.exitFullscreen || document.webkitExitFullscreen).call(document)
+        : (page.requestFullscreen || page.webkitRequestFullscreen).call(page);
+      done?.catch?.(() => {}); // refused (a policy, or not from a click): nothing changes
+    } catch { /* as above */ }
+  });
+  listen(document, 'fullscreenchange', paintFullscreen);
+  listen(document, 'webkitfullscreenchange', paintFullscreen);
+  paintFullscreen();
 
   /** The repo line goes beside the time toolbar, as wide as the room left before the corner row. */
   function placeMeta() {
