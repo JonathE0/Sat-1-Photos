@@ -2363,18 +2363,20 @@ export function mountJourney(container, options = {}) {
         : 'Working out where it is right now.';
     }
     if (!placeNamesReady) return 'Working out where it is right now.';
-    const when = state.live ? 'Right now' : `At ${calgaryTime(state.simMs).time} in Calgary`;
+    const when = `At ${calgaryTime(state.simMs).time} in Calgary`;
     const alt = Math.round(s.altKm);
     const place = placeNow(s);
     return place
-      ? `${when} it\u2019s over ${place}, ${alt} km up.`
-      : `${when} it\u2019s ${alt} km above ${fmtLatShort(s.latDeg)}, ${fmtLonShort(s.lonDeg)}.`;
+      ? `${when}, FrontierSat is passing over ${place}, ${alt} km above the Earth\u2019s surface.`
+      : `${when}, FrontierSat is passing ${alt} km above ${fmtLatShort(s.latDeg)}, ${fmtLonShort(s.lonDeg)}.`;
   }
 
   function liveMore() {
     if (!sat.state || !placeNamesReady) return '';
     const period = Math.round(orbit.periodMinutes(state.simMs));
-    return `It completes one orbit of the Earth every ${period} minutes, on a near-polar path.`;
+    // to the nearest 100, as the facts give it
+    const kmh = Math.round((sat.state.speedKmS * 3600) / 100) * 100;
+    return `It completes one orbit of the Earth every ${period} minutes, moving at approximately ${grouped(kmh)} km/h!`;
   }
 
   function hintText() {
