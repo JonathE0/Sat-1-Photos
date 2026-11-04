@@ -490,6 +490,8 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
 .jy-root[data-mode="still"] .jy-meta,
 .jy-narrow .jy-meta,
 .jy-meta.is-cramped { display: none; }
+/* its copy under the picture, where the viewfinder shows (below) */
+.jy-dock-meta { display: none; }
 
 .jy-now { min-height: var(--jy-ctl); padding: 0 16px; }
 .jy-now[aria-disabled="true"] { background: none; box-shadow: inset 1px 0 0 var(--jy-raised); color: var(--jy-muted); cursor: default; }
@@ -734,7 +736,7 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
      the bottom-right controls and short of the headline's side */
   .jy-dock.jy-dock-sized {
     --vf-pic-h: min(var(--vf-user-h),
-      calc(100vh - var(--jy-nav) - var(--jy-ctl) - var(--vf-gap) - var(--vf-band-top) - var(--vf-band-bottom) - var(--vf-caption) - var(--jy-bottom) - var(--jy-row) - 24px),
+      calc(100vh - var(--jy-nav) - var(--jy-ctl) - var(--vf-gap) - var(--vf-band-top) - var(--vf-band-bottom) - var(--vf-caption) - var(--jy-bottom) - var(--jy-row) - 96px),
       calc((62vw - 2 * var(--vf-inset)) * 3 / 4));
   }
   /* the dock's bottom-left corner: drag out to make it bigger, in to make it smaller */
@@ -771,6 +773,32 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
   .jy-credits-open .jy-dock-grip { opacity: 0; visibility: hidden; }
   .jy-dock-grip:hover { color: var(--jy-ink); }
   .jy-dock-grip:focus-visible { outline: 2px solid var(--jy-blue); outline-offset: 2px; }
+
+  /* The repo and the last update, under the picture while it shows (the sized dock leaves
+     room for them above the bottom controls); the bottom row's copy gives way to it */
+  .jy-root .jy-dock-meta {
+    position: absolute;
+    top: calc(100% + 8px);
+    bottom: auto;
+    left: 0;
+    right: 0;
+    display: flex;
+    min-height: 0;
+    padding: 8px 12px;
+    pointer-events: auto;
+    opacity: 0;
+    visibility: hidden;
+  }
+  .jy-root.jy-locked .jy-dock-meta {
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 240ms var(--jy-ease-out), visibility 0s;
+  }
+  .jy-root.jy-panel-open .jy-dock-meta,
+  .jy-root.jy-dock-hidden .jy-dock-meta,
+  .jy-root.jy-credits-open .jy-dock-meta,
+  .jy-root .jy-vf-slot[hidden] ~ .jy-dock-meta { opacity: 0; visibility: hidden; }
+  .jy-root:not(.jy-panel-open):not(.jy-dock-hidden):not(.jy-credits-open) .jy-meta:not(.jy-dock-meta) { display: none; }
 }
 /* on the shortest of these the frame is narrow and the caption's lines may wrap */
 @media (min-width: 1360px) and (max-height: 859px) and (min-height: 760px) and (min-aspect-ratio: 4/5) {

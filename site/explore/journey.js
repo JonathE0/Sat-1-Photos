@@ -211,6 +211,10 @@ const ICON_FULLSCREEN = '<svg viewBox="0 0 16 16" width="16" height="16" aria-hi
 const ICON_GRIP = '<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M1 3l8 8M1 7l4 4" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>';
 /** The site's repository, from config.js where the page has it. */
 const REPO_URL = (typeof window !== 'undefined' && window.CTS1_CONFIG?.repoUrl) || 'https://github.com/JonathE0/Sat-1-Photos';
+/** Where the pictures' repository is, and (filled in by loadUpdated) when the site last changed. */
+const META_LINES = `<span>Want to see all our photos? Check out the GitHub at
+          <a class="jy-link" href="${REPO_URL}">${REPO_URL.replace(/^https?:\/\//, '')}</a></span>
+        <span class="jy-meta-updated" hidden></span>`;
 const ICON_CONTROLS = '<svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><path d="M3 6h7M14 6h3M3 14h3M10 14h7" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10 3.8h4v4.4h-4zM6 11.8h4v4.4H6z" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>';
 
 function template(id, siteRoot) {
@@ -278,6 +282,8 @@ function template(id, siteRoot) {
       </aside>
         <button type="button" class="jy-dock-grip" data-ref="dockGrip" aria-label="Resize the picture and stats panel"
           title="Drag to resize. Double-click for the usual size.">${ICON_GRIP}</button>
+        <!-- under the picture where the viewfinder shows; the copy on the bottom row is for the rest -->
+        <p class="jy-meta jy-dock-meta">${META_LINES}</p>
       </div>
 
       <section class="jy-credits" id="jy-credits-${id}" data-ref="credits" hidden role="dialog" aria-modal="false"
@@ -350,11 +356,7 @@ function template(id, siteRoot) {
         <button type="button" class="jy-btn jy-now" data-ref="now">Now</button>
       </div>
 
-      <p class="jy-meta" data-ref="meta">
-        <span>Want to see all our photos? Check out the GitHub at
-          <a class="jy-link" href="${REPO_URL}">${REPO_URL.replace(/^https?:\/\//, '')}</a></span>
-        <span class="jy-meta-updated" data-ref="updated" hidden></span>
-      </p>
+      <p class="jy-meta" data-ref="meta">${META_LINES}</p>
 
       <div class="jy-corner" data-ref="corner">
         <button type="button" class="jy-textbtn jy-again" data-ref="again" title="Play the intro again">${ICON_REPLAY}<span>Play the intro again</span></button>
@@ -2148,8 +2150,10 @@ export function mountJourney(container, options = {}) {
       const at = res.ok ? toDate((await res.json())?.updated_at) : null;
       if (!at || destroyed) return;
       const c = calgaryTime(at.getTime());
-      ref.updated.textContent = `Last updated ${c.date}, ${c.time} in Calgary`;
-      ref.updated.hidden = false;
+      for (const line of root.querySelectorAll('.jy-meta-updated')) {
+        line.textContent = `Last updated ${c.date}, ${c.time} in Calgary`;
+        line.hidden = false;
+      }
     } catch {
       // a copy of the site no update has run on: the line stays hidden
     }
