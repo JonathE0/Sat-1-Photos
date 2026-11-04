@@ -850,16 +850,14 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
     visibility: hidden;
     transition: opacity 150ms var(--jy-ease-exit), visibility 0s linear 150ms;
   }
-  .jy-root.jy-locked.jy-map-on .jy-map-slot {
+  /* up only while nothing else has its place: Stats, the panel put away, the credits */
+  .jy-root.jy-locked.jy-map-on:not(.jy-panel-open):not(.jy-dock-hidden):not(.jy-credits-open) .jy-map-slot {
     opacity: 1;
     visibility: visible;
     pointer-events: auto;
     transition: opacity 240ms var(--jy-ease-out), visibility 0s;
   }
-  .jy-root.jy-map-on .jy-vf-slot,
-  .jy-root.jy-panel-open .jy-map-slot,
-  .jy-root.jy-dock-hidden .jy-map-slot,
-  .jy-root.jy-credits-open .jy-map-slot {
+  .jy-root.jy-map-on .jy-vf-slot {
     opacity: 0;
     visibility: hidden;
     pointer-events: none;

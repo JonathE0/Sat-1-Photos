@@ -3597,6 +3597,42 @@ export function mountJourney(container, options = {}) {
     return { samples, period };
   }
 
+  /**
+   * The globe's view: over a point behind the satellite on its path and off to the side (3 to 4),
+   * so its orbit is seen at an angle, a ring rather than a line, rather than straight down on it.
+   * How far off is worked out from the zoom so the satellite always shows a little under halfway
+   * from the middle of the panel to its edge: up to 20 degrees zoomed out, about 1 zoomed right in.
+   * It moves with the satellite.
+   */
+  const GLOBE_SAT_OFF = Math.atan(Math.tan(17.5 * DEG) * 0.45); // the camera's 35-degree view, 0.45 of its half
+  const GLOBE_OFF_MAX = 20 * DEG;
+  function aimGlobe(ms, s) {
+    const d = globe.controls.distance;
+    const r = 1 + s.altKm / EARTH_RADIUS_KM;
+    // the angle at the Earth's centre that puts the satellite GLOBE_SAT_OFF from the view's middle
+    const off = clamp(Math.asin(Math.min(1, (d * Math.sin(GLOBE_SAT_OFF)) / r)) - GLOBE_SAT_OFF, 0, GLOBE_OFF_MAX);
+    const aside = off * 0.8;
+    const back = off > 1e-3 ? orbit?.stateAt(ms - ((off * 0.6) / (2 * Math.PI)) * orbit.periodMinutes(ms) * MIN_MS) : null;
+    if (!back) {
+      globe.flyToGround(s.latDeg, s.lonDeg, { distance: d, immediate: true });
+      return;
+    }
+    const unit = (latDeg, lonDeg) => {
+      const la = latDeg * DEG;
+      const lo = lonDeg * DEG;
+      return [Math.cos(la) * Math.cos(lo), Math.cos(la) * Math.sin(lo), Math.sin(la)];
+    };
+    const a = unit(back.latDeg, back.lonDeg);
+    const b = unit(s.latDeg, s.lonDeg);
+    // across the path: the normal of the great circle from where it was to where it is
+    const n = [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+    const nl = Math.hypot(...n) || 1;
+    const c = a.map((v, i) => v * Math.cos(aside) + (n[i] / nl) * Math.sin(aside));
+    const latDeg = Math.asin(clamp(c[2] / Math.hypot(...c), -1, 1)) / DEG;
+    const lonDeg = Math.atan2(c[1], c[0]) / DEG;
+    globe.flyToGround(latDeg, lonDeg, { distance: d, immediate: true });
+  }
+
   /** Each frame while it shows: the clock and the satellite five times a second (it moves less
    * than a pixel between), the track every 10 s, and the view. */
   function drawWhere(now, ms) {
@@ -3617,11 +3653,9 @@ export function mountJourney(container, options = {}) {
         globe.setTrack(t.samples, t.period);
         whereTrackAt = { ms };
       }
-      if (s && !globeAimed) {
-        globe.flyToSatellite({ immediate: true });
-        globeAimed = true;
-      }
-      if (!mapPanned) globe.follow();
+      // at an angle, from where it opens on: kept there until the visitor turns it
+      if (s && !mapPanned && (feed || !globeAimed)) aimGlobe(ms, s);
+      globeAimed = globeAimed || Boolean(s);
       globe.frame(now);
     } else if (map?.visible) {
       if (feed) {
