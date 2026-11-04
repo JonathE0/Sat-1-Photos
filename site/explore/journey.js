@@ -163,8 +163,11 @@ const factsHiddenChoice = rememberedChoice('cts-facts-hidden');
 const auroraHiddenChoice = rememberedChoice('cts-aurora-hidden');
 const cycleOffChoice = rememberedChoice('cts-cycle-off');
 const previewsHiddenChoice = rememberedChoice('cts-previews-hidden'); // shared with Orbit
-/** Stats' turn when the panel cycles; Pictures' turn is one picture (DWELL_MS in viewfinder.js). */
+/** Stats' and the map's turns when the panel cycles; Pictures' turn is one picture (DWELL_MS in viewfinder.js). */
 const CYCLE_STATS_MS = 10000;
+const CYCLE_MAP_MS = 12000;
+/** The map's zoom as a visitor last left it, as a multiple of its widest; it opens at twice that. */
+const MAP_ZOOM_KEY = 'cts-map-zoom';
 /** Screens with room for the picture viewfinder; keep in step with .jy-vf-slot in journey.css. */
 const VIEWFINDER_MEDIA = '(min-width: 1360px) and (min-height: 760px) and (min-aspect-ratio: 4/5)';
 /** Close up, the camera levels out to this pitch so the limb sits behind the satellite. */
@@ -232,14 +235,25 @@ function template(id, siteRoot) {
             <div class="jy-tabs" role="group" aria-label="Show in this panel">
               <button type="button" class="jy-tab" data-ref="tabStats" aria-pressed="false" aria-controls="jy-panel-${id}">Stats</button>
               <button type="button" class="jy-tab" data-ref="tabPictures" aria-pressed="false">Pictures</button>
+              <button type="button" class="jy-tab" data-ref="tabMap" aria-pressed="false" hidden>Map</button>
               <button type="button" class="jy-tab jy-cycle" data-ref="cycle" aria-pressed="false" hidden
-                title="Take turns showing Stats and Pictures">Cycle</button>
+                title="Take turns showing Stats, Pictures and the map">Cycle</button>
             </div>
             <button type="button" class="jy-tab jy-dock-toggle" data-ref="dockToggle" aria-expanded="true"
               aria-label="Hide this panel"><span data-ref="dockToggleText">Hide</span> ${ICON_DOWN}</button>
           </div>
         </div>
         <div class="jy-vf-slot" data-ref="viewfinderSlot" hidden></div>
+        <!-- where the viewfinder shows, the Orbit page's flat map can take its place -->
+        <div class="jy-map-slot" data-ref="mapSlot">
+          <div class="jy-map-stage" data-ref="mapStage"></div>
+          <div class="jy-map-zoom" role="group" aria-label="Zoom the map">
+            <button type="button" class="jy-sq" data-ref="mapOut" aria-label="Zoom the map out">${ICON_MINUS}</button>
+            <button type="button" class="jy-sq" data-ref="mapIn" aria-label="Zoom the map in">${ICON_PLUS}</button>
+          </div>
+          <p class="jy-map-caption">Where it is now, as the <a class="jy-link" href="${new URL('globe/index.html', siteRoot).href}">Orbit page</a>
+            draws it: its path about one orbit back and two ahead, and the ground it can see.</p>
+        </div>
 
       <aside class="jy-panel" id="jy-panel-${id}" data-ref="panel" hidden aria-labelledby="jy-panel-title-${id}">
         <button type="button" class="jy-grab" data-ref="grab" aria-hidden="true" tabindex="-1"><span></span></button>
@@ -471,6 +485,7 @@ export function mountJourney(container, options = {}) {
     cdistTarget: 3,
     panel: false,
     tab: 'stats', // what the details show: 'stats', or 'pictures' where the viewfinder doesn't show
+    mapUp: false, // where the viewfinder shows, the map in its place
     dockHidden: false, // the whole panel put away
     dockResume: null, // the tab that was open when it was
     factsHidden: false,
@@ -1870,6 +1885,7 @@ export function mountJourney(container, options = {}) {
     if (viewfinderHere()) {
       closeCredits();
       setDockHidden(false);
+      state.mapUp = false;
       closePanel();
       viewfinder?.show(photo);
       syncViewfinder();
@@ -1889,16 +1905,20 @@ export function mountJourney(container, options = {}) {
 
   const viewfinderHere = () => bigQuery.matches && !ref.viewfinderSlot.hidden;
 
-  /** Where the viewfinder shows, Pictures is it and one tab is always chosen; elsewhere they drop down. */
+  /** Where the viewfinder shows, Pictures or the map is in its place and one tab is always chosen; elsewhere they drop down. */
   function paintTabs() {
-    const pictures = viewfinderHere() ? !state.panel : state.panel && state.tab === 'pictures';
+    const big = viewfinderHere();
+    const pictures = big ? !state.panel && !state.mapUp : state.panel && state.tab === 'pictures';
     ref.tabPictures.setAttribute('aria-pressed', String(pictures));
+    ref.tabMap.setAttribute('aria-pressed', String(big && !state.panel && state.mapUp));
     ref.tabStats.setAttribute('aria-pressed', String(state.panel && state.tab === 'stats'));
-    ref.cycle.hidden = !webgl || !viewfinderHere();
-    // while Cycle is on it stands for both; they come back when it's turned off
+    ref.cycle.hidden = !webgl || !big;
+    // while Cycle is on it stands for all three; they come back when it's turned off
     const cycling = cycleOn && !ref.cycle.hidden;
     ref.tabStats.hidden = cycling;
     ref.tabPictures.hidden = cycling;
+    ref.tabMap.hidden = cycling || !webgl || !big;
+    root.classList.toggle('jy-map-on', big && state.mapUp);
     ref.panel.dataset.tab = state.tab;
     paintPhoneBar();
   }
@@ -1986,8 +2006,18 @@ export function mountJourney(container, options = {}) {
   function chooseTab(tab) {
     setCycle(false); // the visitor has chosen: it stays on that one
     if (viewfinderHere()) {
-      if (tab === 'pictures') closePanel();
-      else if (!state.panel) openPanel({ focus: false });
+      if (tab === 'stats') {
+        if (!state.panel) openPanel({ focus: false });
+        return;
+      }
+      // Pictures or the map, in the viewfinder's place
+      if (tab === 'map' && !state.mapUp) mapPanned = false;
+      state.mapUp = tab === 'map';
+      if (state.panel) closePanel();
+      else {
+        paintTabs();
+        syncViewfinder();
+      }
     } else if (state.panel && state.tab === tab) {
       closePanel();
     } else {
@@ -1998,6 +2028,7 @@ export function mountJourney(container, options = {}) {
 
   listen(ref.tabStats, 'click', () => chooseTab('stats'));
   listen(ref.tabPictures, 'click', () => chooseTab('pictures'));
+  listen(ref.tabMap, 'click', () => chooseTab('map'));
   listen(ref.dockToggle, 'click', () => {
     if (state.dockHidden) {
       setDockHidden(false);
@@ -2999,6 +3030,7 @@ export function mountJourney(container, options = {}) {
     const theta = gmstAt(ms);
     updateSatellite(ms, theta);
     paintText(now);
+    drawMap(now, ms);
 
     if (!renderer) return;
     // idle at 1x: 30 frames a second is plenty
@@ -3333,22 +3365,24 @@ export function mountJourney(container, options = {}) {
   let viewfinder = null;
   let viewfinderLoading = null;
 
+  /** A stylesheet, once: it resolves when it has loaded (or failed), so a frame never shows unstyled. */
+  function loadStyles(href) {
+    if ([...document.querySelectorAll('link[rel="stylesheet"]')].some((l) => l.href === href)) return Promise.resolve();
+    return new Promise((done) => {
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = href;
+      link.onload = link.onerror = done;
+      document.head.appendChild(link);
+    });
+  }
+
   function loadViewfinder() {
     if (viewfinderLoading) return;
     viewfinderLoading = (async () => {
       try {
         const mod = await import('./viewfinder.js');
-        const href = new URL('viewfinder.css', MODULE_BASE).href;
-        if (![...document.querySelectorAll('link[rel="stylesheet"]')].some((l) => l.href === href)) {
-          // the styles first, so the frame never shows unstyled
-          await new Promise((done) => {
-            const link = document.createElement('link');
-            link.rel = 'stylesheet';
-            link.href = href;
-            link.onload = link.onerror = done;
-            document.head.appendChild(link);
-          });
-        }
+        await loadStyles(new URL('viewfinder.css', MODULE_BASE).href);
         if (destroyed) return;
         viewfinder = mod.createViewfinder(ref.viewfinderSlot, {
           photos,
@@ -3359,7 +3393,12 @@ export function mountJourney(container, options = {}) {
           // (the site's choice); ?motion=reduced still keeps it still
           reducedMotion: motionOverride === 'reduced',
           takeTurn: () => {
-            if (cycleOn) openPanel({ focus: false, byCycle: true });
+            if (cycleOn) {
+              mapPanned = false;
+              state.mapUp = true;
+              paintTabs();
+              syncViewfinder();
+            }
             return cycleOn;
           },
         });
@@ -3372,14 +3411,111 @@ export function mountJourney(container, options = {}) {
     })();
   }
 
-  /** It runs at the end of the story, on big screens, unless the panel is put away or the details or the credits have taken its place. */
+  /** It runs at the end of the story, on big screens, unless the panel is put away or the details, the map or the credits have taken its place. */
   function syncViewfinder() {
-    const on = webgl && state.locked && state.shown && !state.panel && !state.creditsOpen && !state.dockHidden && bigQuery.matches;
+    const here = webgl && state.locked && state.shown && !state.panel && !state.creditsOpen && !state.dockHidden && bigQuery.matches;
+    const on = here && !state.mapUp;
     if (on) loadViewfinder();
     if (on) viewfinder?.start();
     else viewfinder?.stop();
+    syncMap(here && state.mapUp);
     syncCycle();
   }
+
+  // ---- the map: where it is now, as the Orbit page's flat map (site/globe/map2d.js) draws it -----
+  // It takes the viewfinder's place, as a third tab and a third turn of Cycle. It follows the
+  // satellite until the visitor drags it (then until its next turn), and keeps the zoom they set.
+  let map = null;
+  let mapLoading = null;
+  let mapPanned = false;
+  let mapTrackAt = null; // { ms } of the track it has
+
+  function loadMap() {
+    if (mapLoading) return;
+    mapLoading = (async () => {
+      try {
+        const mod = await import('../globe/map2d.js');
+        await loadStyles(new URL('../globe/map2d.css', MODULE_BASE).href);
+        if (destroyed) return;
+        map = mod.createMap(ref.mapStage, {
+          textureBase: new URL('../globe/textures/', MODULE_BASE).href,
+          preferSmallTextures: true,
+          reducedMotion: motionOverride === 'reduced',
+          onUserMove(kind) {
+            if (kind === 'pan') mapPanned = true;
+            else saveMapZoom();
+          },
+        });
+        map.setStation(CALGARY.latDeg, CALGARY.lonDeg);
+        sizeMap();
+        // as the visitor last left it, else twice the widest
+        let zoom = 2;
+        try {
+          zoom = Number(localStorage.getItem(MAP_ZOOM_KEY)) || 2;
+        } catch { /* no storage */ }
+        map.zoomBy(zoom); // from its widest, where it opens
+        syncViewfinder();
+      } catch (e) {
+        console.warn('[journey] no map', e); // the tab shows an empty frame; the rest goes on
+      }
+    })();
+  }
+
+  function sizeMap() {
+    if (!map) return;
+    map.resize(ref.mapStage.clientWidth, ref.mapStage.clientHeight, 1, { top: 0, right: 0, bottom: 0, left: 0 });
+  }
+
+  function saveMapZoom() {
+    // after a zoom button's short glide
+    setTimeout(() => {
+      if (!map) return;
+      try {
+        localStorage.setItem(MAP_ZOOM_KEY, String(Math.round((map.view.k / map.view.minK) * 100) / 100));
+      } catch { /* no storage: it lasts until the page closes */ }
+    }, 320);
+  }
+
+  function syncMap(on) {
+    if (on) loadMap();
+    if (!map) return;
+    map.setVisible(on);
+    if (on) {
+      sizeMap();
+      mapTrackAt = null;
+    }
+  }
+
+  /** Each frame while it shows: the clock, the satellite, its track every 10 s, and the view. */
+  function drawMap(now, ms) {
+    if (!map?.visible) return;
+    map.setTime(ms);
+    map.setSatellite(sat.state);
+    if (orbit && sat.state && (!mapTrackAt || Math.abs(ms - mapTrackAt.ms) > 10_000)) {
+      const stepMs = 30_000;
+      const n = Math.ceil((orbit.periodMinutes(ms) * MIN_MS) / stepMs);
+      const samples = [];
+      for (let i = -n; i <= 2 * n; i++) {
+        const t = ms + i * stepMs;
+        if (t < LAUNCH_MS) continue;
+        const s = orbit.stateAt(t);
+        if (s) samples.push({ latDeg: s.latDeg, lonDeg: s.lonDeg, dtMin: (t - ms) / MIN_MS });
+      }
+      map.setTrack(samples);
+      mapTrackAt = { ms };
+    }
+    if (!mapPanned) map.follow();
+    map.frame(now);
+  }
+
+  listen(ref.mapIn, 'click', () => {
+    map?.zoomBy(1.5);
+    saveMapZoom();
+  });
+  listen(ref.mapOut, 'click', () => {
+    map?.zoomBy(1 / 1.5);
+    saveMapZoom();
+  });
 
   // ---- Stats and Pictures in turn, where they share a place -------------------------------
   // Pictures' turn ends when the viewfinder asks (takeTurn), so whatever holds its rotation up
@@ -3397,39 +3533,47 @@ export function mountJourney(container, options = {}) {
     syncCycle();
   }
 
-  /** Stats' turn: it runs while Stats is up and nobody is reading it. */
+  /** Stats' turn and the map's: each runs while it's up and nobody is reading it or moving it.
+   * Pictures come next after Stats, the map after Pictures (takeTurn), then Stats. */
   function syncCycle() {
     clearTimeout(cycleTimer);
-    const statsUp = state.locked && state.shown && state.panel && state.tab === 'stats' && !state.creditsOpen && !state.dockHidden;
-    if (!cycleOn || !statsUp || cycleHover || cycleFocus || document.hidden || !viewfinderHere()) return;
-    cycleTimer = setTimeout(() => {
-      closePanel();
-      viewfinder?.next();
-    }, CYCLE_STATS_MS);
+    const up = state.locked && state.shown && !state.creditsOpen && !state.dockHidden;
+    if (!cycleOn || !up || cycleHover || cycleFocus || document.hidden || !viewfinderHere()) return;
+    if (state.panel && state.tab === 'stats') {
+      cycleTimer = setTimeout(() => {
+        state.mapUp = false;
+        closePanel();
+        viewfinder?.next();
+      }, CYCLE_STATS_MS);
+    } else if (!state.panel && state.mapUp) {
+      cycleTimer = setTimeout(() => openPanel({ focus: false, byCycle: true }), CYCLE_MAP_MS);
+    }
   }
 
   listen(ref.cycle, 'click', () => setCycle(!cycleOn, { remember: true }));
-  listen(ref.panel, 'pointerenter', () => {
-    cycleHover = true;
-    syncCycle();
-  });
-  listen(ref.panel, 'pointerleave', () => {
-    cycleHover = false;
-    syncCycle();
-  });
-  listen(ref.panel, 'focusin', (e) => {
-    try {
-      cycleFocus = e.target.matches(':focus-visible');
-    } catch {
-      cycleFocus = true; // older browsers: treat as keyboard focus
-    }
-    syncCycle();
-  });
-  listen(ref.panel, 'focusout', (e) => {
-    if (e.relatedTarget && ref.panel.contains(e.relatedTarget)) return;
-    cycleFocus = false;
-    syncCycle();
-  });
+  for (const held of [ref.panel, ref.mapSlot]) {
+    listen(held, 'pointerenter', () => {
+      cycleHover = true;
+      syncCycle();
+    });
+    listen(held, 'pointerleave', () => {
+      cycleHover = false;
+      syncCycle();
+    });
+    listen(held, 'focusin', (e) => {
+      try {
+        cycleFocus = e.target.matches(':focus-visible');
+      } catch {
+        cycleFocus = true; // older browsers: treat as keyboard focus
+      }
+      syncCycle();
+    });
+    listen(held, 'focusout', (e) => {
+      if (e.relatedTarget && held.contains(e.relatedTarget)) return;
+      cycleFocus = false;
+      syncCycle();
+    });
+  }
   listen(document, 'visibilitychange', syncCycle);
 
   // ---- photos ---------------------------------------------------------------------------
@@ -3465,6 +3609,8 @@ export function mountJourney(container, options = {}) {
   });
   textObserver.observe(ref.b1);
   const metaObserver = new ResizeObserver(() => placeMeta());
+  const mapObserver = new ResizeObserver(() => sizeMap());
+  mapObserver.observe(ref.mapStage);
   metaObserver.observe(ref.time);
   metaObserver.observe(ref.corner);
   textObserver.observe(ref.b2);
@@ -3626,6 +3772,8 @@ export function mountJourney(container, options = {}) {
       resizeObserver.disconnect();
       textObserver.disconnect();
       metaObserver.disconnect();
+      mapObserver.disconnect();
+      map?.dispose();
       io.disconnect();
       clearTimeout(card.timer);
       clearTimeout(cycleTimer);
