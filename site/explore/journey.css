@@ -764,6 +764,9 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
     visibility: visible;
     transition: opacity 240ms var(--jy-ease-out), visibility 0s, color 180ms var(--jy-ease-out);
   }
+  /* the stats are as tall as their words, so the grip is the picture's only: it would float
+     below them otherwise */
+  .jy-panel-open .jy-dock-grip,
   .jy-dock-hidden .jy-dock-grip,
   .jy-credits-open .jy-dock-grip { opacity: 0; visibility: hidden; }
   .jy-dock-grip:hover { color: var(--jy-ink); }
