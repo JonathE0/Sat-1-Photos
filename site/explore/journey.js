@@ -51,6 +51,7 @@ import {
   gmst as gmstAt,
   makeObserver,
   satelliteLight,
+  subsolarPoint,
   sunElevationDeg,
   sunPosition,
 } from '../globe/astro.js';
@@ -163,7 +164,7 @@ const factsHiddenChoice = rememberedChoice('cts-facts-hidden');
 const auroraHiddenChoice = rememberedChoice('cts-aurora-hidden');
 const cycleOffChoice = rememberedChoice('cts-cycle-off');
 const previewsHiddenChoice = rememberedChoice('cts-previews-hidden'); // shared with Orbit
-/** Stats' and the map's turns when the panel cycles; Pictures' turn is one picture (DWELL_MS in viewfinder.js). */
+/** Stats' and Orbit's turns when the panel cycles; Pictures' turn is one picture (DWELL_MS in viewfinder.js). */
 const CYCLE_STATS_MS = 10000;
 const CYCLE_MAP_MS = 12000;
 /** The map's zoom as a visitor last left it, as a multiple of its widest; it opens at twice that. */
@@ -235,24 +236,32 @@ function template(id, siteRoot) {
             <div class="jy-tabs" role="group" aria-label="Show in this panel">
               <button type="button" class="jy-tab" data-ref="tabStats" aria-pressed="false" aria-controls="jy-panel-${id}">Stats</button>
               <button type="button" class="jy-tab" data-ref="tabPictures" aria-pressed="false">Pictures</button>
-              <button type="button" class="jy-tab" data-ref="tabMap" aria-pressed="false" hidden>Map</button>
+              <button type="button" class="jy-tab" data-ref="tabMap" aria-pressed="false" hidden>Orbit</button>
               <button type="button" class="jy-tab jy-cycle" data-ref="cycle" aria-pressed="false" hidden
-                title="Take turns showing Stats, Pictures and the map">Cycle</button>
+                title="Take turns showing Stats, Pictures and Orbit">Cycle</button>
             </div>
             <button type="button" class="jy-tab jy-dock-toggle" data-ref="dockToggle" aria-expanded="true"
               aria-label="Hide this panel"><span data-ref="dockToggleText">Hide</span> ${ICON_DOWN}</button>
           </div>
         </div>
         <div class="jy-vf-slot" data-ref="viewfinderSlot" hidden></div>
-        <!-- where the viewfinder shows, the Orbit page's flat map can take its place -->
+        <!-- where the viewfinder shows, the Orbit page's globe or flat map can take its place -->
         <div class="jy-map-slot" data-ref="mapSlot">
-          <div class="jy-map-stage" data-ref="mapStage"></div>
-          <div class="jy-map-zoom" role="group" aria-label="Zoom the map">
-            <button type="button" class="jy-sq" data-ref="mapOut" aria-label="Zoom the map out">${ICON_MINUS}</button>
-            <button type="button" class="jy-sq" data-ref="mapIn" aria-label="Zoom the map in">${ICON_PLUS}</button>
+          <div class="jy-map-stage" data-ref="mapStage">
+            <canvas class="jy-globe-canvas" data-ref="globeCanvas" hidden
+              aria-label="Globe showing FrontierSat, its orbit and Calgary. Drag to turn it."></canvas>
+            <div class="cg-labels" data-ref="globeLabels" hidden></div>
+          </div>
+          <div class="jy-map-kind" role="group" aria-label="Show it on">
+            <button type="button" class="jy-tab" data-ref="kindGlobe" aria-pressed="false">Globe</button>
+            <button type="button" class="jy-tab" data-ref="kindMap" aria-pressed="false">Map</button>
+          </div>
+          <div class="jy-map-zoom" role="group" aria-label="Zoom">
+            <button type="button" class="jy-sq" data-ref="mapOut" aria-label="Zoom out">${ICON_MINUS}</button>
+            <button type="button" class="jy-sq" data-ref="mapIn" aria-label="Zoom in">${ICON_PLUS}</button>
           </div>
           <p class="jy-map-caption">Where it is now, as the <a class="jy-link" href="${new URL('globe/index.html', siteRoot).href}">Orbit page</a>
-            draws it: its path about one orbit back and two ahead, and the ground it can see.</p>
+            draws it: its path, the ground it can see, and Calgary.</p>
         </div>
 
       <aside class="jy-panel" id="jy-panel-${id}" data-ref="panel" hidden aria-labelledby="jy-panel-title-${id}">
@@ -3030,7 +3039,7 @@ export function mountJourney(container, options = {}) {
     const theta = gmstAt(ms);
     updateSatellite(ms, theta);
     paintText(now);
-    drawMap(now, ms);
+    drawWhere(now, ms);
 
     if (!renderer) return;
     // idle at 1x: 30 frames a second is plenty
@@ -3422,13 +3431,30 @@ export function mountJourney(container, options = {}) {
     syncCycle();
   }
 
-  // ---- the map: where it is now, as the Orbit page's flat map (site/globe/map2d.js) draws it -----
-  // It takes the viewfinder's place, as a third tab and a third turn of Cycle. It follows the
-  // satellite until the visitor drags it (then until its next turn), and keeps the zoom they set.
+  // ---- the Orbit turn: where it is now, on the Orbit page's own globe or flat map -------------
+  // (site/globe/scene.js and map2d.js). It takes the viewfinder's place, as a third tab and a
+  // third turn of Cycle, on whichever of the two the visitor chose last (the globe at first). It
+  // follows the satellite until the visitor turns or drags it (then until its next turn), and
+  // keeps the zoom they set on each.
+  const ORBIT_VIEW_KEY = 'cts-orbit-view';
+  const GLOBE_DISTANCE_KEY = 'cts-globe-distance';
+  const GLOBE_TEXTURES = new URL('../globe/textures/', MODULE_BASE).href;
+  let orbitView = 'globe';
+  try {
+    if (localStorage.getItem(ORBIT_VIEW_KEY) === 'map') orbitView = 'map';
+  } catch { /* no storage: the globe */ }
   let map = null;
   let mapLoading = null;
+  let globe = null;
+  let globeLoading = null;
+  let globeFailed = false;
+  let globeAimed = false;
+  let whereOn = false;
   let mapPanned = false;
-  let mapTrackAt = null; // { ms } of the track it has
+  let whereFedAt = 0;
+  let whereTrackAt = null; // { ms } of the track the view showing has
+
+  const globeHere = () => orbitView === 'globe' && !globeFailed;
 
   function loadMap() {
     if (mapLoading) return;
@@ -3438,7 +3464,7 @@ export function mountJourney(container, options = {}) {
         await loadStyles(new URL('../globe/map2d.css', MODULE_BASE).href);
         if (destroyed) return;
         map = mod.createMap(ref.mapStage, {
-          textureBase: new URL('../globe/textures/', MODULE_BASE).href,
+          textureBase: GLOBE_TEXTURES,
           preferSmallTextures: true,
           reducedMotion: motionOverride === 'reduced',
           onUserMove(kind) {
@@ -3461,9 +3487,44 @@ export function mountJourney(container, options = {}) {
     })();
   }
 
+  function loadGlobe() {
+    if (globeLoading) return;
+    globeLoading = (async () => {
+      try {
+        const mod = await import('../globe/scene.js');
+        if (destroyed) return;
+        globe = mod.createScene(ref.globeCanvas, ref.globeLabels, {
+          textureBase: GLOBE_TEXTURES,
+          preferSmallTextures: true,
+          reducedMotion: motionOverride === 'reduced',
+          onUserMove(kind) {
+            if (kind === 'rotate') mapPanned = true;
+            else saveGlobeZoom();
+          },
+        });
+        globe.setStation(CALGARY.latDeg, CALGARY.lonDeg);
+        // as the visitor last left it, else a little closer than the Orbit page opens
+        let distance = 3;
+        try {
+          distance = Number(localStorage.getItem(GLOBE_DISTANCE_KEY)) || 3;
+        } catch { /* no storage */ }
+        globe.controls.setDistance(distance);
+        sizeMap();
+      } catch (e) {
+        // no second 3D view in this browser: the flat map instead, and no choice
+        console.warn('[journey] no globe', e);
+        globeFailed = true;
+        ref.kindGlobe.hidden = true;
+      }
+      syncViewfinder();
+    })();
+  }
+
   function sizeMap() {
-    if (!map) return;
-    map.resize(ref.mapStage.clientWidth, ref.mapStage.clientHeight, 1, { top: 0, right: 0, bottom: 0, left: 0 });
+    const w = ref.mapStage.clientWidth;
+    const h = ref.mapStage.clientHeight;
+    map?.resize(w, h, 1, { top: 0, right: 0, bottom: 0, left: 0 });
+    globe?.resize(w, h, 1);
   }
 
   function saveMapZoom() {
@@ -3476,46 +3537,115 @@ export function mountJourney(container, options = {}) {
     }, 320);
   }
 
+  function saveGlobeZoom() {
+    if (!globe) return;
+    try {
+      localStorage.setItem(GLOBE_DISTANCE_KEY, String(Math.round(globe.controls.distance * 100) / 100));
+    } catch { /* no storage: it lasts until the page closes */ }
+  }
+
+  function paintOrbitView() {
+    ref.kindGlobe.setAttribute('aria-pressed', String(globeHere()));
+    ref.kindMap.setAttribute('aria-pressed', String(!globeHere()));
+  }
+
+  function setOrbitView(view) {
+    if (view === orbitView) return;
+    orbitView = view;
+    try {
+      localStorage.setItem(ORBIT_VIEW_KEY, view);
+    } catch { /* no storage: it lasts until the page closes */ }
+    mapPanned = false;
+    syncViewfinder();
+  }
+
   function syncMap(on) {
-    if (on) loadMap();
-    if (!map) return;
-    map.setVisible(on);
+    whereOn = on;
+    const globeOn = on && globeHere();
+    if (globeOn) loadGlobe();
+    if (on && !globeOn) loadMap();
+    ref.globeCanvas.hidden = !globeOn;
+    ref.globeLabels.hidden = !globeOn;
+    map?.setVisible(on && !globeOn);
+    paintOrbitView();
     if (on) {
       sizeMap();
-      mapTrackAt = null;
+      whereTrackAt = null;
+      whereFedAt = 0;
     }
   }
 
-  /** Each frame while it shows: the clock, the satellite, its track every 10 s, and the view. */
-  function drawMap(now, ms) {
-    if (!map?.visible) return;
-    map.setTime(ms);
-    map.setSatellite(sat.state);
-    if (orbit && sat.state && (!mapTrackAt || Math.abs(ms - mapTrackAt.ms) > 10_000)) {
-      const stepMs = 30_000;
-      const n = Math.ceil((orbit.periodMinutes(ms) * MIN_MS) / stepMs);
-      const samples = [];
-      for (let i = -n; i <= 2 * n; i++) {
-        const t = ms + i * stepMs;
-        if (t < LAUNCH_MS) continue;
-        const s = orbit.stateAt(t);
-        if (s) samples.push({ latDeg: s.latDeg, lonDeg: s.lonDeg, dtMin: (t - ms) / MIN_MS });
+  /** The track: on the globe one orbit each way, with heights; on the map one back and two ahead. */
+  function trackSamples(ms, aheadOrbits) {
+    const period = orbit.periodMinutes(ms);
+    const stepMs = 30_000;
+    const n = Math.ceil((period * MIN_MS) / stepMs);
+    const samples = [];
+    for (let i = -n; i <= aheadOrbits * n; i++) {
+      const t = ms + i * stepMs;
+      if (t < LAUNCH_MS) continue;
+      const s = orbit.stateAt(t);
+      if (s) samples.push({ latDeg: s.latDeg, lonDeg: s.lonDeg, altKm: s.altKm, gmst: s.gmst, dtMin: (t - ms) / MIN_MS });
+    }
+    return { samples, period };
+  }
+
+  /** Each frame while it shows: the clock and the satellite five times a second (it moves less
+   * than a pixel between), the track every 10 s, and the view. */
+  function drawWhere(now, ms) {
+    if (!whereOn) return;
+    const s = sat.state;
+    const feed = now - whereFedAt >= 200;
+    if (feed) whereFedAt = now;
+    const newTrack = feed && orbit && s && (!whereTrackAt || Math.abs(ms - whereTrackAt.ms) > 10_000);
+    if (globe && !ref.globeCanvas.hidden) {
+      if (feed) {
+        globe.setTime(gmstAt(ms), sunPosition(ms), ms);
+        const ss = subsolarPoint(ms);
+        globe.setSubsolar(ss.latDeg, ss.lonDeg);
+        globe.setSatellite(s);
       }
-      map.setTrack(samples);
-      mapTrackAt = { ms };
+      if (newTrack) {
+        const t = trackSamples(ms, 1);
+        globe.setTrack(t.samples, t.period);
+        whereTrackAt = { ms };
+      }
+      if (s && !globeAimed) {
+        globe.flyToSatellite({ immediate: true });
+        globeAimed = true;
+      }
+      if (!mapPanned) globe.follow();
+      globe.frame(now);
+    } else if (map?.visible) {
+      if (feed) {
+        map.setTime(ms);
+        map.setSatellite(s);
+      }
+      if (newTrack) {
+        map.setTrack(trackSamples(ms, 2).samples);
+        whereTrackAt = { ms };
+      }
+      if (!mapPanned) map.follow();
+      map.frame(now);
     }
-    if (!mapPanned) map.follow();
-    map.frame(now);
   }
 
-  listen(ref.mapIn, 'click', () => {
-    map?.zoomBy(1.5);
-    saveMapZoom();
-  });
-  listen(ref.mapOut, 'click', () => {
-    map?.zoomBy(1 / 1.5);
-    saveMapZoom();
-  });
+  /** In (above 1) or out, on whichever shows. */
+  function zoomWhere(factor) {
+    if (globe && !ref.globeCanvas.hidden) {
+      globe.controls.setDistance(globe.controls.distance / factor);
+      saveGlobeZoom();
+    } else if (map) {
+      map.zoomBy(factor);
+      saveMapZoom();
+    }
+  }
+
+  listen(ref.mapIn, 'click', () => zoomWhere(1.4));
+  listen(ref.mapOut, 'click', () => zoomWhere(1 / 1.4));
+  listen(ref.kindGlobe, 'click', () => setOrbitView('globe'));
+  listen(ref.kindMap, 'click', () => setOrbitView('map'));
+  paintOrbitView();
 
   // ---- Stats and Pictures in turn, where they share a place -------------------------------
   // Pictures' turn ends when the viewfinder asks (takeTurn), so whatever holds its rotation up
@@ -3774,6 +3904,7 @@ export function mountJourney(container, options = {}) {
       metaObserver.disconnect();
       mapObserver.disconnect();
       map?.dispose();
+      globe?.dispose();
       io.disconnect();
       clearTimeout(card.timer);
       clearTimeout(cycleTimer);
