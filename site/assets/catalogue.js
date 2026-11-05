@@ -143,21 +143,6 @@ export function createCatalogue(root, {
     if (src) img.src = src;
   });
 
-  // Swipe sideways on the picture to step (touch and pen only).
-  let swipe = null;
-  frame.addEventListener('pointerdown', (e) => {
-    if (e.pointerType === 'mouse' || !e.isPrimary) return;
-    swipe = { x: e.clientX, y: e.clientY, id: e.pointerId };
-  });
-  frame.addEventListener('pointerup', (e) => {
-    if (!swipe || e.pointerId !== swipe.id) return;
-    const dx = e.clientX - swipe.x;
-    const dy = e.clientY - swipe.y;
-    swipe = null;
-    if (Math.abs(dx) > 48 && Math.abs(dx) > 1.5 * Math.abs(dy)) step(dx < 0 ? 1 : -1, 'swipe');
-  });
-  frame.addEventListener('pointercancel', () => { swipe = null; });
-
   /* Viewer: compare cells, four kept and as many shown as asked for */
 
   function makeCell(i) {

@@ -63,6 +63,9 @@ body {
 }
 
 main { flex: 1 0 auto; outline: none; }
+/* while a picture or the list is loading, the page holds a screen's height, so the footer doesn't
+   show and then jump away when it arrives */
+body:is([data-view="detail"], [data-view="pictures"]) main { min-height: calc(100svh - var(--nav-h)); }
 
 img { display: block; max-width: 100%; }
 
