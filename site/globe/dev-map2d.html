@@ -83,7 +83,7 @@
 
     const map = createMap($('stage'), {
       textureBase: new URL('textures/', import.meta.url).href,
-      reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches,
+      reducedMotion: new URLSearchParams(location.search).get('motion') === 'reduced', // as the site: only ?motion=reduced
       onUserMove(kind) {
         if (kind === 'pan' && state.follow) setFollow(false);
       },

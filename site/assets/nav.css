@@ -268,3 +268,13 @@ body[data-view="explore"] .site-nav .nav-links > a[aria-current="page"] { text-d
   .nav-links.has-more .nav-more-btn { padding: 0 4px; }
   .nav-links.has-more .nav-more-btn { padding-right: 0; }
 }
+
+/* A phone on its side: the phone's 52px bar, so the page keeps the height, and only the
+   team's logo (the Schulich logo stays in Credits) */
+@media (max-height: 500px) and (orientation: landscape) {
+  :root { --nav-bar: 52px; }
+  .brand-partner { display: none; }
+}
+@media (max-height: 500px) and (orientation: landscape) and (min-width: 600px) {
+  .brand-logo { height: 32px; }
+}

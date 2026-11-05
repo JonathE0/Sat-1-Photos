@@ -41,6 +41,11 @@
   const small = (text, cls = '') => el('span', { class: `small ${cls}`.trim(), text });
   const announce = (text) => { $('announce').textContent = text; };
 
+  // Only ?motion=reduced stills the page, as across the site: it keeps its motion whatever the
+  // system asks (watchlist.css .motion-reduced).
+  const stillMotion = new URLSearchParams(location.search).get('motion') === 'reduced';
+  if (stillMotion) document.documentElement.classList.add('motion-reduced');
+
   // -- formatting -----------------------------------------------------------
 
   const calgaryFmt = new Intl.DateTimeFormat('en-US', { timeZone: TZ, weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
@@ -163,12 +168,15 @@
 
     $('lead').replaceChildren('Things happening on Earth that ', el('span', { class: 'name', text: 'FrontierSat' }),
       ` will pass over in the next ${span(windowEnd - Date.parse(data.window.from))}, in the right light for a picture.`);
-    $('status').replaceChildren('Made ', relative(generated, now), `, at ${utc(generated)}. Passes worked out from its orbit as published ${utc(tle)}.`);
+    // One line says how old the list is, and when that's old enough to matter, what that means.
+    // On a phone the orbit's date gives way (watchlist.css): each event says how old it is by then.
+    const stale = now - generated > STALE_HOURS * 3600e3;
+    $('status').replaceChildren('Made ', relative(generated, now), `, at ${utc(generated)}`,
+      stale ? ', so newer events and passes are missing.' : '.',
+      el('span', { class: 'status-orbit', text: ` Passes worked out from its orbit as published ${utc(tle)}.` }));
+    $('status').classList.toggle('ink', stale);
 
     const notes = [];
-    if (now - generated > STALE_HOURS * 3600e3) {
-      notes.push(el('p', { class: 'ink', text: `This list was made ${span(now - generated)} ago, so newer events and passes are missing.` }));
-    }
     for (const s of data.sources) {
       const why = s.error ? ` (${s.error})` : '';
       if (s.status === 'stale' && s.fetched_at) {
@@ -307,7 +315,40 @@
     }
     if (opening) openIds.add(id); else openIds.delete(id);
     syncOpen();
-    if (opening && !sideBySide.matches) li.scrollIntoView({ block: 'nearest' });
+    if (opening && !sideBySide.matches) reveal(li);
+  }
+
+  // What a row opens grows down from it. The page scrolls only when that would start off the
+  // screen, or so near its foot that little of it shows, or when the row's top is under the
+  // sticky bars; then in a short glide, to put the row's top just under them. (By hand: a
+  // browser makes behavior: 'smooth' a jump when the system asks for less motion.)
+  let glide = 0;
+  function reveal(li) {
+    const row = li.querySelector('.row-line').getBoundingClientRect();
+    // the nav, and under it the filter bar where it sticks (as it will once the page has scrolled)
+    const filters = $('filters');
+    const sticks = !filters.hidden && getComputedStyle(filters).position === 'sticky';
+    const bars = document.querySelector('.top').getBoundingClientRect().bottom + (sticks ? filters.offsetHeight : 0);
+    const room = window.innerHeight - row.bottom; // what of the opened part can show
+    if (row.top >= bars && room >= Math.min(160, window.innerHeight / 4)) return;
+    const from = window.scrollY;
+    const by = row.top - bars;
+    cancelAnimationFrame(glide);
+    if (stillMotion) {
+      window.scrollTo(0, from + by);
+      return;
+    }
+    const start = performance.now();
+    const step = (now) => {
+      const t = Math.min(1, (now - start) / 320);
+      window.scrollTo(0, from + by * (1 - Math.pow(1 - t, 3)));
+      if (t < 1) glide = requestAnimationFrame(step);
+    };
+    glide = requestAnimationFrame(step);
+  }
+  // a finger or a wheel takes over from the glide
+  for (const type of ['wheel', 'touchstart', 'keydown']) {
+    window.addEventListener(type, () => cancelAnimationFrame(glide), { passive: true });
   }
 
   sideBySide.addEventListener('change', () => {

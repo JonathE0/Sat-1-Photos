@@ -147,6 +147,9 @@ const ICONS = {
   stats: '<svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><path d="M4 16.5V10M10 16.5V4M16 16.5v-9" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>',
   passes: '<svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><path d="M2 15.5h16M4 15.5a6 6 0 0 1 12 0" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="10" cy="9.5" r="1.9" fill="currentColor"/></svg>',
   pictures: '<svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><path d="M3 4.5h14v11H3zM3 13l4-4 3 3 2.5-2.5L17 14" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>',
+  // Copy link, as an icon in the Globe / Map row on a phone: two links of a chain, then a tick once copied
+  link: '<svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><path d="M8.5 11.5l3-3M7.2 9.3L5.4 11.1a2.6 2.6 0 0 0 3.7 3.7l1.8-1.8M12.8 10.7l1.8-1.8a2.6 2.6 0 0 0-3.7-3.7L9.1 7" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>',
+  copied: '<svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><path d="M4.5 10.5l3.5 3.5 7.5-8" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>',
 };
 
 /** Steps for the zoom buttons and the + and − keys: the map's scale, the globe's height above the ground. */
@@ -169,8 +172,10 @@ const TEMPLATE = `
         <button type="button" data-view="globe" aria-pressed="true" title="Globe (M)">Globe</button>
         <button type="button" data-view="map" aria-pressed="false" title="Map (M)">Map</button>
       </div>
+      <button type="button" class="cg-btn cg-icon-btn cg-share cg-head-share" data-ref="share2"
+        aria-label="Copy a link to this view" title="Copy link">${ICONS.link}</button>
     </div>
-    <div class="cg-views-side">
+    <div class="cg-views-side" data-ref="viewsSide">
       <button type="button" class="cg-btn cg-aurora-btn" data-ref="auroraBtn" aria-pressed="true"
         title="Show or hide NOAA’s aurora forecast (A)">Aurora</button>
       <button type="button" class="cg-btn cg-previews-btn" data-ref="previewsBtn" hidden
@@ -197,7 +202,6 @@ const TEMPLATE = `
         <p class="cg-fine cg-credit" data-ref="auroraNote" hidden></p>
         <p class="cg-fine cg-note" data-ref="note" hidden></p>
       </div>
-      <button type="button" class="cg-btn cg-share cg-head-share" data-ref="share2">Copy link</button>
     </header>
     <section class="cg-panel" data-panel="sat" data-ref="satPanel" aria-label="Stats">
       <div class="cg-panel-head">
@@ -294,7 +298,8 @@ const TEMPLATE = `
     <button type="button" class="cg-time" data-ref="timeBtn" aria-haspopup="dialog" aria-expanded="false"
       title="Go to a date and time (T)">
       <span class="cg-vh">Go to a time. Showing </span>
-      <span class="cg-utc"><span data-ref="utc" aria-live="off">—</span> <span class="cg-utc-tail"><span
+      <span class="cg-utc"><span data-ref="utc" aria-live="off">—</span><span class="cg-utc-year"
+        data-ref="utcYear"></span>, <span class="cg-utc-tail"><span
         data-ref="utcTime" aria-live="off"></span>${ICONS.calendar}</span></span>
       <span class="cg-fine" data-ref="local"></span>
     </button>
@@ -315,8 +320,10 @@ const TEMPLATE = `
       <input type="range" data-ref="scrub" min="-1440" max="1440" step="1" value="0"
         aria-label="Time, up to a day either side of the focus time">
       <div class="cg-scrub-labels cg-fine" aria-hidden="true">
-        <span><span class="cg-scrub-long">A day earlier</span><span class="cg-scrub-short">−1 day</span></span><span
-          data-ref="offset">Now</span><span><span class="cg-scrub-long">A day later</span><span class="cg-scrub-short">+1 day</span></span>
+        <span><span class="cg-scrub-long" data-ref="scrubEarly">A day earlier</span><span class="cg-scrub-short"
+          data-ref="scrubEarlyShort">−1 day</span></span><span
+          data-ref="offset">Now</span><span><span class="cg-scrub-long" data-ref="scrubLate">A day later</span><span
+          class="cg-scrub-short" data-ref="scrubLateShort">+1 day</span></span>
       </div>
     </div>
     <button type="button" class="cg-btn cg-panels-btn" data-ref="panels" aria-expanded="true"
@@ -336,6 +343,7 @@ function noScene() {
     auroraStatus: null,
     setPinsDrawn: nothing,
     pinsOnScreen: () => new Map(),
+    marks: () => [],
     setViewCentre: nothing,
     satelliteScreen: () => null,
     setTrackColor: nothing,
@@ -431,7 +439,6 @@ export function mountGlobe(container, options = {}) {
   const viewsRow = rovingList(el.views, { axis: 'horizontal' });
   rovingList(el.zoom, { axis: 'horizontal' });
 
-  const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
   const observer = astro.makeObserver(astro.CALGARY);
 
   const state = {
@@ -464,8 +471,10 @@ export function mountGlobe(container, options = {}) {
   // ---- scene -----------------------------------------------------------------
   // the aurora and the picture previews; an embed keeps to the picture it's showing
   const full = opts.ui !== 'compact';
-  // only ?motion=reduced stills them, as on Explore: the site keeps its motion otherwise
+  // Only ?motion=reduced stills the page (the camera's glides, the views' easing, the aurora's
+  // shimmer, the viewfinder), as on Explore: the site keeps its motion whatever the system asks.
   const stillMotion = new URLSearchParams(location.search).get('motion') === 'reduced';
+  root.classList.toggle('cg-still', stillMotion);
   // the visitor's choices, shared with Explore
   const remembered = (key) => ({
     get() {
@@ -490,7 +499,7 @@ export function mountGlobe(container, options = {}) {
     scene = createScene(canvas, root.querySelector('.cg-labels'), {
       textureBase: opts.textureBase,
       preferSmallTextures: Math.min(container.clientWidth || 1024, window.innerWidth) < 700,
-      reducedMotion: reducedMotionQuery.matches,
+      reducedMotion: stillMotion,
       wheelZoom: opts.wheelZoom,
       aurora: full,
       auroraOn,
@@ -533,7 +542,7 @@ export function mountGlobe(container, options = {}) {
   const map = createMap(root.querySelector('.cg-stage'), {
     textureBase: opts.textureBase,
     preferSmallTextures: Math.min(container.clientWidth || 1024, window.innerWidth) < 700,
-    reducedMotion: reducedMotionQuery.matches,
+    reducedMotion: stillMotion,
     wheelZoom: opts.wheelZoom,
     onUserMove(kind) {
       state.userMovedCamera = true;
@@ -557,7 +566,7 @@ export function mountGlobe(container, options = {}) {
     root.style.setProperty('--cg-orbit', hex);
   }
   const wheel = createColorWheel({ onChange: paintOrbit });
-  el.viewsMain.appendChild(wheel.button);
+  el.share2.before(wheel.button); // Globe / Map, the colour, then Copy link (a phone's icon)
   root.appendChild(wheel.element);
   paintOrbit(wheel.colour);
 
@@ -572,6 +581,7 @@ export function mountGlobe(container, options = {}) {
   }
 
   const head = root.querySelector('.cg-head');
+  const tabsRow = root.querySelector('.cg-tabs');
   let uiScale = 1;
   /** Room the page keeps above the corners for its own nav (--cg-top, px). */
   const pageTop = () => parseFloat(getComputedStyle(root).getPropertyValue('--cg-top')) || 0;
@@ -664,6 +674,15 @@ export function mountGlobe(container, options = {}) {
     root.classList.toggle('cg-narrow', narrow);
     root.style.setProperty('--cg-head-h', `${head.offsetHeight}px`);
     root.style.setProperty('--cg-dock-h', `${el.dock.offsetHeight}px`);
+    // The bar's height with its clock showing: the zoom and the buttons beside it rest on that,
+    // and move by transform to keep above a sheet (placeFloats), so opening one shifts nothing.
+    if (el.timeBtn.getClientRects().length) root.style.setProperty('--cg-dock-rest-h', `${el.dock.offsetHeight}px`);
+    // the tabs' row at the foot of the bar, which a phone's sheet stands on, over the clock
+    const dockBox = el.dock.getBoundingClientRect();
+    root.style.setProperty('--cg-tabs-h', `${Math.round(dockBox.bottom - tabsRow.getBoundingClientRect().top)}px`);
+    // the Globe / Map row: on a phone the title and "Over …" keep to the left of it
+    root.style.setProperty('--cg-views-w', `${el.viewsMain.offsetWidth}px`);
+    fitScrub();
     const cardSpace = el.card.hidden ? 0 : el.card.offsetHeight + 12 * uiScale;
     root.style.setProperty('--cg-card-space', `${cardSpace}px`);
     el.fold.disabled = narrow; // a tab's sheet shows it whole
@@ -679,10 +698,35 @@ export function mountGlobe(container, options = {}) {
     const need = head.offsetHeight + 12 * uiScale + satFull;
     setSatFold(satFoldedByUser ?? (!el.card.hidden && need > room));
   };
+
+  /** The time slider's reach either side of the focus time, in minutes: a day where the slider is
+   * long, 90 minutes (about an orbit) where it's short, as on a phone, so a drag moves the time
+   * about a minute a pixel rather than a quarter of an hour, and the satellite doesn't leap. */
+  let scrubMin = 1440;
+  function fitScrub() {
+    const width = el.scrub.offsetWidth;
+    if (!width) return; // not laid out: it keeps its reach
+    const next = width < 480 ? 90 : 1440;
+    if (next === scrubMin) return;
+    scrubMin = next;
+    const day = next === 1440;
+    el.scrub.min = String(-next);
+    el.scrub.max = String(next);
+    el.scrub.setAttribute('aria-label', `Time, up to ${day ? 'a day' : '90 minutes'} either side of the focus time`);
+    el.scrubEarly.textContent = day ? 'A day earlier' : '−90 min';
+    el.scrubLate.textContent = day ? 'A day later' : '+90 min';
+    el.scrubEarlyShort.textContent = day ? '−1 day' : '−90 min';
+    el.scrubLateShort.textContent = day ? '+1 day' : '+90 min';
+    if (Math.abs(state.ms - state.focusMs) > next * MIN_MS) state.focusMs = state.ms;
+    // the ticks and the handle follow at the next paint (the resize observer and the clock)
+  }
+
   /** The map's free frame: the stage less what the columns, the header (narrow)
    * and the clock bar cover. Its grid labels sit inside it and it centres there. */
   let freeStage = null; // in the tabbed layout: { left, top, right, bottom }, stage px
   let sheetViewMoved = false;
+  let typing = false; // a phone's keyboard is up for the place search: see setTyping
+  let floats = { x: 0, y: 0 }; // where placeFloats has moved the zoom and the buttons beside it
   const colLeft = root.querySelector('.cg-col-left');
   const colRight = root.querySelector('.cg-col-right');
   const clock = root.querySelector('.cg-clock');
@@ -694,24 +738,30 @@ export function mountGlobe(container, options = {}) {
     if (opts.ui === 'compact') {
       inset.bottom = r.bottom - clock.getBoundingClientRect().top + gap;
     } else if (root.classList.contains('cg-narrow')) {
+      // while a phone's keyboard is up for the place search its sheet stands over the stage:
+      // the views stay as they were until it goes
+      if (typing) return;
       // what the header, a picture's card, the bottom bar and an open sheet leave
-      const free = { left: 0, top: head.getBoundingClientRect().bottom - r.top, right: r.width, bottom: el.dock.getBoundingClientRect().top - r.top };
+      const dock = el.dock.getBoundingClientRect();
+      const free = { left: 0, top: head.getBoundingClientRect().bottom - r.top, right: r.width, bottom: dock.top - r.top };
       if (el.card.getClientRects().length) free.top = Math.max(free.top, el.card.getBoundingClientRect().bottom - r.top);
       const sheet = state.tab ? root.querySelector(`[data-panel="${state.tab}"]`)?.getBoundingClientRect() : null;
+      const side = sheet?.width && sheet.left - r.left > 1;
       if (sheet?.width) {
-        if (sheet.left - r.left > 1) free.right = sheet.left - r.left;
+        if (side) free.right = sheet.left - r.left;
         else free.bottom = sheet.top - r.top;
       }
       freeStage = free;
       inset.top = free.top + 8;
       inset.bottom = r.height - free.bottom;
       inset.right = r.width - free.right;
-      // the zoom and the buttons beside it stand at the frame's lower right, unless a sheet below covers them
-      const lefts = [el.zoom, el.auroraBtn, el.previewsBtn]
-        .filter((b) => b.getClientRects().length)
-        .map((b) => b.getBoundingClientRect().left);
-      inset.labelRight = sheet?.width && free.bottom === sheet.top - r.top ? 0 : Math.max(64, free.right - (Math.min(...lefts, r.right) - r.left) + 8);
+      placeFloats(r, dock, sheet?.width ? sheet : null, side);
+      // the zoom and the buttons beside it stand at the frame's lower right: the longitudes along
+      // its foot stop short of them (globe.css: the zoom 12px in, the others 64px)
+      const sideW = el.viewsSide.offsetWidth;
+      inset.labelRight = sideW ? 64 + sideW + 8 : 64;
     } else {
+      placeFloats(r, null, null, false);
       inset.top = pageTop(); // the map starts under the site nav, which sits on Space
       inset.bottom = r.bottom - clock.getBoundingClientRect().top + gap;
       if (state.panels) {
@@ -725,6 +775,27 @@ export function mountGlobe(container, options = {}) {
     // the globe centres in the same space
     if (freeStage) scene.setViewCentre((freeStage.left + freeStage.right) / 2, (freeStage.top + freeStage.bottom) / 2);
     else scene.setViewCentre();
+  }
+
+  /**
+   * On a phone the zoom, Aurora and the eye rest just above the bar, as it is with its clock
+   * showing (--cg-dock-rest-h, globe.css). A sheet along the bottom lifts them to just above
+   * it, where they can still be tapped; one at the side moves them to its left. They move by
+   * transform (eased in globe.css), so the page's layout doesn't shift under the visitor.
+   */
+  function placeFloats(r, dock, sheet, side) {
+    let x = 0;
+    let y = 0;
+    if (dock) {
+      const rest = parseFloat(root.style.getPropertyValue('--cg-dock-rest-h')) || dock.height;
+      const restFoot = r.bottom - rest; // where they stand on: the top of the bar with its clock
+      y = (sheet && !side ? sheet.top : dock.top) - restFoot;
+      if (sheet && side) x = sheet.left - r.right;
+    }
+    if (x === floats.x && y === floats.y) return;
+    floats = { x, y };
+    root.style.setProperty('--cg-float-x', `${Math.round(x)}px`);
+    root.style.setProperty('--cg-float-y', `${Math.round(y)}px`);
   }
 
   /** While a sheet is open the stage is a small window: keep the satellite in
@@ -753,9 +824,12 @@ export function mountGlobe(container, options = {}) {
   resizeObserver.observe(el.card);
   resizeObserver.observe(head);
   resizeObserver.observe(el.satPanel);
+  resizeObserver.observe(el.viewsMain); // its width sets the room for the title on a phone
   // a sheet's height follows its content: the views only need to re-centre
   const sheetObserver = new ResizeObserver(() => resizeMap());
   for (const panel of root.querySelectorAll('[data-panel]')) sheetObserver.observe(panel);
+  // the zoom has come to rest above a sheet, or back: the pictures keep out from under it
+  listen(el.zoom, 'transitionend', () => placePins());
   layout();
   scene.resize(root.clientWidth || 800, root.clientHeight || 600, uiScale);
   resizeMap();
@@ -764,11 +838,6 @@ export function mountGlobe(container, options = {}) {
     el.back.href = opts.backHref;
     el.back.hidden = false;
   }
-
-  listen(reducedMotionQuery, 'change', () => {
-    scene.controls.reducedMotion = reducedMotionQuery.matches;
-    map.controls.reducedMotion = reducedMotionQuery.matches;
-  });
 
   // ---- clock -----------------------------------------------------------------
   let lastFrame = performance.now();
@@ -814,7 +883,7 @@ export function mountGlobe(container, options = {}) {
     state.ms = ms;
     state.live = false;
     if (!keepPlaying) state.playing = false;
-    if (Math.abs(ms - state.focusMs) > DAY_MS) state.focusMs = ms;
+    if (Math.abs(ms - state.focusMs) > scrubMin * MIN_MS) state.focusMs = ms;
     paintTransport();
     paintTicks();
     markDirty();
@@ -838,7 +907,7 @@ export function mountGlobe(container, options = {}) {
     lastFrame = now;
     if (state.playing) {
       state.ms = state.live ? Date.now() : state.ms + dt * state.speed;
-      if (Math.abs(state.ms - state.focusMs) > DAY_MS) {
+      if (Math.abs(state.ms - state.focusMs) > scrubMin * MIN_MS) {
         state.focusMs = state.ms;
         paintTicks();
       }
@@ -1098,8 +1167,23 @@ export function mountGlobe(container, options = {}) {
   /** The thumbnails follow the view on screen, and the preview over one follows its pin. */
   function placePins() {
     if (!picturePins) return;
-    const points = (onMap() ? map : scene).pinsOnScreen();
-    picturePins.place(points, uiScale);
+    const view = onMap() ? map : scene;
+    const points = view.pinsOnScreen();
+    // In the tabbed layout (phones) a pile is one pin with its count, and a pin keeps inside
+    // the stage's free frame, off the names and marks of FrontierSat and Calgary, and out
+    // from under the buttons over the stage (picturepins.js).
+    if (root.classList.contains('cg-narrow')) {
+      const r = root.getBoundingClientRect();
+      const over = [el.zoom, el.viewsSide, wheel.button]
+        .filter((b) => b.getClientRects().length)
+        .map((b) => {
+          const box = b.getBoundingClientRect();
+          return { left: box.left - r.left, top: box.top - r.top, right: box.right - r.left, bottom: box.bottom - r.top };
+        });
+      picturePins.place(points, uiScale, { compact: true, bounds: freeStage, avoid: [...view.marks(), ...over] });
+    } else {
+      picturePins.place(points, uiScale);
+    }
     if (peek.id) {
       const s = points.get(peek.id);
       if (s) placePeek(s);
@@ -1307,12 +1391,13 @@ export function mountGlobe(container, options = {}) {
   function paintTicks() {
     const box = el.ticks;
     box.replaceChildren();
-    const start = state.focusMs - DAY_MS;
+    const reach = scrubMin * MIN_MS; // the slider's reach either side
+    const start = state.focusMs - reach;
     for (const p of listed()) {
-      if (!p.placed || p.ms < start || p.ms > start + 2 * DAY_MS) continue;
+      if (!p.placed || p.ms < start || p.ms > start + 2 * reach) continue;
       const tick = document.createElement('span');
       tick.className = p.id === state.selectedId ? 'cg-tick cg-tick-on' : 'cg-tick';
-      tick.style.left = `${((p.ms - start) / (2 * DAY_MS)) * 100}%`;
+      tick.style.left = `${((p.ms - start) / (2 * reach)) * 100}%`;
       box.appendChild(tick);
     }
   }
@@ -1434,9 +1519,10 @@ export function mountGlobe(container, options = {}) {
   }
 
   function paintClock() {
-    // no-break spaces in the date: on a phone the line may only break after it, and the
-    // calendar keeps to the time
-    put(el.utc, `${utcDay(state.ms).replace(/ /g, ' ')},`);
+    // "Nov 5" ", 2026" ", 08:06:58 UTC": the line never wraps, and the narrowest phones
+    // leave the year out (globe.css) so it fits beside the speed and Now
+    put(el.utc, utcDay(state.ms, false));
+    put(el.utcYear, `, ${new Date(state.ms).getUTCFullYear()}`);
     put(el.utcTime, `${utcTime(state.ms)} UTC`);
     const local = localTime(state.ms, false);
     put(el.local, `${local.time} ${local.zone}`); // "23:19 Calgary time"
@@ -1583,8 +1669,8 @@ export function mountGlobe(container, options = {}) {
     if (picker.isOpen && (sheetAlongBottom() || clockAway())) picker.close({ restoreFocus: false });
   }
 
-  /** On a phone the clock bar makes way while a sheet is open (globe.css). */
-  const clockAway = () => !el.timeBtn.getClientRects().length;
+  /** On a phone the clock bar makes way while a sheet is open (globe.css: hidden under it). */
+  const clockAway = () => !el.timeBtn.getClientRects().length || getComputedStyle(clock).visibility === 'hidden';
 
   // where they don't both fit, opening one folds the other
   const swapRightColumn = () => {
@@ -1694,6 +1780,39 @@ export function mountGlobe(container, options = {}) {
   el.placeSlot.replaceWith(placeSearch.element);
   loadCountries();
 
+  // Typing a place on a phone: its keyboard would cover the box and the suggestions under it.
+  // While the box has the focus its sheet stands from under the header to the top of the
+  // keyboard (globe.css .cg-typing; visualViewport says where that is), scrolled to the box.
+  const placeBox = placeSearch.element.querySelector('.cg-place-input');
+  const touchQuery = window.matchMedia('(pointer: coarse)');
+  const vv = window.visualViewport;
+  function followKeyboard() {
+    const bottom = root.getBoundingClientRect().bottom;
+    const kb = vv ? Math.max(0, bottom - (vv.offsetTop + vv.height)) : 0;
+    root.style.setProperty('--cg-kb', `${Math.round(kb)}px`);
+    el.passesPanel.scrollTop = Math.max(0, placeSearch.element.offsetTop - 8);
+  }
+  function setTyping(on) {
+    if (on === typing) return;
+    typing = on;
+    root.classList.toggle('cg-typing', on);
+    for (const type of ['resize', 'scroll']) {
+      if (on) vv?.addEventListener(type, followKeyboard);
+      else vv?.removeEventListener(type, followKeyboard);
+    }
+    if (on) followKeyboard();
+    else {
+      root.style.removeProperty('--cg-kb');
+      resizeMap(); // the sheet is back in its place: the views fit what it leaves
+    }
+  }
+  const typingHere = () => touchQuery.matches && root.classList.contains('cg-narrow');
+  listen(placeBox, 'focus', () => setTyping(typingHere()));
+  listen(placeBox, 'blur', () => setTyping(false));
+  cleanups.push(() => {
+    for (const type of ['resize', 'scroll']) vv?.removeEventListener(type, followKeyboard);
+  });
+
   /** On narrow screens, put the sheet away so the globe shows what was picked. */
   function closeSheet() {
     if (state.tab && root.classList.contains('cg-narrow')) setTab(state.tab);
@@ -1722,7 +1841,7 @@ export function mountGlobe(container, options = {}) {
   listen(el.panels, 'click', () => setPanels(!state.panels));
   // it opens at the foot of a column that may be full: bring it into view
   listen(el.keys, 'toggle', () => {
-    if (el.keys.open) el.keys.scrollIntoView({ block: 'nearest', behavior: reducedMotionQuery.matches ? 'auto' : 'smooth' });
+    if (el.keys.open) el.keys.scrollIntoView({ block: 'nearest', behavior: stillMotion ? 'auto' : 'smooth' });
   });
   for (const b of el.views.querySelectorAll('[data-view]')) listen(b, 'click', () => setView(b.dataset.view));
   listen(el.zoomIn, 'click', () => zoomView(1));
@@ -1740,6 +1859,8 @@ export function mountGlobe(container, options = {}) {
       }
     }
     placeSearch.focus();
+    // (the box's focus event does this too, but not while the page itself lacks the focus)
+    if (document.activeElement === placeBox) setTyping(typingHere());
   });
 
   /** The Keys list, from its own line or the ? key. */
@@ -1784,6 +1905,15 @@ export function mountGlobe(container, options = {}) {
         ok = false;
       }
       area.remove();
+    }
+    if (button === el.share2) {
+      // the icon in the Globe / Map row: a tick, and the words in the line under the buttons
+      button.innerHTML = ok ? ICONS.copied : ICONS.link;
+      toast(ok ? 'Link copied' : 'Copy failed');
+      setTimeout(() => {
+        if (!destroyed) button.innerHTML = ICONS.link;
+      }, 1600);
+      return;
     }
     const before = 'Copy link';
     button.textContent = ok ? 'Copied' : 'Copy failed';

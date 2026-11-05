@@ -389,6 +389,8 @@ body[data-view="explore"] .name-ctl { display: none; }
 .pi-status { max-width: 62ch; margin-top: 12px; color: var(--fg); }
 
 .pi-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+/* why Show on the globe is greyed, in small words on a line of its own under it */
+.pi-why { flex: 1 0 100%; margin: -4px 0 4px; color: var(--label); font-size: 13px; line-height: 1.45; letter-spacing: 0.01em; }
 
 .pi-facts {
   display: grid;
@@ -440,11 +442,15 @@ body[data-view="explore"] .name-ctl { display: none; }
   .pi-list-link { position: relative; }
   .pi-inline-btn::after,
   .pi-list-link::after { content: ""; position: absolute; inset: -13px -6px; }
+  /* the hash's Copy: a 44px box of its own, its line no taller (the margin takes the padding back) */
+  .pi-copy { min-width: 44px; margin: -10px 0; padding: 10px 0; }
+  .pi-copy::after { content: none; }
 }
 
 .pi-tech { margin-top: 20px; }
+/* the whole row opens it */
 .pi-tech > summary {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   min-height: 36px;
   list-style: none;
@@ -559,6 +565,10 @@ body[data-view="explore"] .name-ctl { display: none; }
 .panel-top a:hover { text-decoration: underline; text-underline-offset: 3px; }
 .panel-count { color: var(--label); }
 .panel-links { display: flex; flex-wrap: wrap; gap: 4px 16px; font-weight: 500; }
+@media (pointer: coarse) {
+  .panel-top { align-items: center; }
+  .panel-links a { display: inline-flex; align-items: center; min-height: 44px; }
+}
 
 .detail-title {
   margin: 24px 0 0;
@@ -693,10 +703,35 @@ body[data-view="explore"] .name-ctl { display: none; }
   cursor: pointer;
 }
 .about-link:hover { text-decoration-color: currentColor; }
+/* 44px tall to tap, without spreading its sentence's lines (the margin takes the padding back) */
 @media (pointer: coarse) {
-  .about-link { position: relative; }
-  .about-link::after { content: ""; position: absolute; inset: -12px -6px; }
+  .about-link { margin: -10px 0; padding: 10px 0; }
 }
+
+/* Open on bigger screens, folded on phones (the script after the footer in index.html):
+   About's list of files that can't be shown, and the footer's Data list */
+.fold > summary { list-style: none; }
+.fold > summary::-webkit-details-marker { display: none; }
+.fold > summary > h2 { margin: 0; }
+.about .fold { margin-top: 40px; }
+.about .fold > summary { margin-bottom: 8px; }
+.site-foot .fold > summary { margin-bottom: 6px; }
+@media (max-width: 599px), (max-height: 500px) {
+  .fold > summary {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    margin: 0;
+    cursor: pointer;
+  }
+  .fold > summary::before { content: "+"; display: inline-block; flex: none; width: 1.1em; color: var(--fg); font: 500 16px/1 var(--mono); }
+  .fold[open] > summary::before { content: "\2212"; }
+  .fold > summary:hover > h2 { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; }
+  .about .fold { margin-top: 28px; }
+  .about .fold > summary { margin-bottom: 0; }
+  .site-foot .fold > summary { margin: -12px 0 0; } /* its 44px row starts where a heading's line would */
+}
+.fold-n { color: var(--label); font-weight: 400; }
 
 /* Footer */
 
@@ -727,13 +762,14 @@ body[data-view="explore"] .name-ctl { display: none; }
   text-decoration-color: var(--underline);
 }
 .site-foot a:hover { text-decoration-color: currentColor; }
-/* One line each, every link at least 24px tall (44px on touch), so none sits
-   closer than 24px to the next */
-.foot-list { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; }
-.foot-list li { max-width: 34em; }
-.foot-list a { display: inline-flex; align-items: center; min-height: 24px; vertical-align: middle; }
+/* Every line the same height, with a link or without: 24px apart, so no link sits closer
+   than 24px to the next; on touch each line is a 44px row and its link fills the row's
+   height (padding on an inline link doesn't spread the lines) */
+.foot-list { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }
+.foot-list li { max-width: 34em; line-height: 24px; }
 @media (pointer: coarse) {
-  .foot-list a { min-height: 44px; }
+  .foot-list li { padding: 12px 0; line-height: 20px; }
+  .foot-list a { padding: 13px 0; }
 }
 
 /* Views */
@@ -783,6 +819,18 @@ body[data-view="explore"] .name-ctl { display: none; }
   .detail-title { font-size: 24px; margin-top: 18px; }
 }
 
+/* A phone on its side: the picture takes the screen's height under the nav, with the
+   arrows beside it (side by side with the facts), or Newer and Older under it */
+@media (max-height: 500px) and (orientation: landscape) {
+  .detail { grid-template-columns: minmax(0, 1fr) minmax(280px, 34%); min-height: 0; }
+  .stage { height: calc(100svh - var(--nav-h) - 1px); min-height: 0; padding: 0 64px; }
+  .shot img { max-height: calc(100svh - var(--nav-h) - 24px); }
+}
+@media (max-height: 500px) and (orientation: landscape) and (max-width: 799px) {
+  .stage { height: auto; padding: 12px 0 0; }
+  .shot img { width: auto; }
+}
+
 @media (max-width: 599px) {
   /* the edit form on a picture asks for the name itself */
   .name-ctl { display: none; }
@@ -812,6 +860,6 @@ body[data-view="explore"] .name-ctl { display: none; }
   .about-list dt { padding-bottom: 0; border-bottom: 0; }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  * { transition: none !important; }
-}
+/* ?motion=reduced (app.js) keeps the pages still. The system's own reduced-motion setting doesn't:
+   the owner chose to keep the site's motion (as on the home page, Orbit and Watchlist). */
+html[data-motion="reduced"] * { transition: none !important; }

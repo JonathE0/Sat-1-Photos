@@ -5,13 +5,14 @@
 //   the time, Calgary first and UTC second      whenBlock(p)
 //   what is wrong with it, if anything          statusBlock(p)
 //   Show on the globe, Download, Copy link      createPhotoActions(...)
-//   Taken, Where, Light, Camera, Came down, Status, People, Tags      photoFacts(p, ...)
+//   Where, Light, Camera, Came down, Status, People, Tags      photoFacts(p, ...)
 //   a closed "Technical details"                technicalDetails(p)
-//   Notes                                       photoNotes(p, ...)
+//   Notes, when there are some                  photoNotes(p, ...)
 //
-// The data's own terms (sha256, the orbit model and its epoch, the status note from
-// images.json, the cameras' code names) are only inside Technical details; the rest is
-// written here in plain words. Styles: style.css, "Photo details".
+// Each fact is said once in plain words. The data's own terms (sha256, the time to the
+// second and where it was read from, the orbit model and its epoch, the status note from
+// images.json, the cameras' code names) are only inside Technical details.
+// Styles: style.css, "Photo details".
 
 import { h, announce, copyText } from './dom.js';
 import { CALGARY_TIME_ZONE, CALGARY_ZONE_NAME } from './calgary-clock.js';
@@ -83,13 +84,6 @@ export function calgaryStamp(d, seconds = false) {
   const c = calgaryParts(d);
   if (!c) return utcLong(d, seconds);
   return `${c.month} ${c.day}, ${c.year}, ${c.hour}:${c.minute}${seconds ? `:${c.second}` : ''} ${CALGARY_ZONE_NAME}`;
-}
-
-// The same, as nodes that break only between the date and the time.
-function calgaryNodes(d, seconds = false) {
-  const c = calgaryParts(d);
-  if (!c) return utcNodes(d, seconds);
-  return [nobr(`${c.month} ${c.day}, ${c.year}`), ', ', nobr(`${c.hour}:${c.minute}${seconds ? `:${c.second}` : ''} ${CALGARY_ZONE_NAME}`)];
 }
 
 // "Oct 30, 2026, 02:45 UTC"
@@ -296,16 +290,26 @@ function checkSentence(p) {
 
 /* The header: the time and the status sentence */
 
-// "20:45 on Oct 29 in Calgary" over "Oct 30, 2026, 02:45 UTC".
+// "20:45 on Oct 29 in Calgary" over "Oct 30, 2026, 02:45 UTC", and who corrected it. The
+// facts below don't say the time again; to the second, it is in Technical details.
 export function whenBlock(p) {
   const d = toDate(p.capturedAt);
   const el = h('p', { class: 'pi-when' });
+  const line = (content, local = false) => el.append(h('span', { class: `pi-when-line${local ? ' pi-when-local' : ''}` }, content));
   if (d) {
     const local = calgaryAt(d);
-    if (local) el.append(h('span', { class: 'pi-when-line pi-when-local' }, local));
-    el.append(h('span', { class: 'pi-when-line' }, utcNodes(d)));
+    if (local) line(local, true);
+    line(utcNodes(d));
+    if (p.edited.captured_at) line(`Corrected by ${p.edited.captured_at}`);
+  } else if (p.captureDate) {
+    // the day, unless it is already the picture's name
+    const day = dayText(p);
+    const named = !day || day === headline(p);
+    if (!named) line(day, true);
+    line('Time unknown: only the date is known', named);
   } else {
-    el.append(h('span', { class: 'pi-when-line pi-when-local' }, p.captureDate ? 'Time unknown' : 'Date unknown'));
+    line('Date unknown', true);
+    line('Neither the file name nor the satellite’s records give a time');
   }
   return el;
 }
@@ -333,10 +337,11 @@ export function createPhotoActions({ idPrefix, copyUrl = () => location.href }) 
   const globeOff = h('button', {
     type: 'button', class: 'btn btn-primary', 'aria-disabled': 'true', 'aria-describedby': whyId, hidden: true,
   }, 'Show on the globe');
-  const globeWhy = h('span', { class: 'vh', id: whyId }, 'Only the date of this picture is known, so it isn’t on the globe.');
+  // under the buttons, in small words, when the globe button is greyed
+  const globeWhy = h('span', { class: 'pi-why', id: whyId, hidden: true }, 'Without a time, it can’t be shown on the globe.');
   const download = h('a', { class: 'btn btn-secondary' }, 'Download');
   const copy = h('button', { type: 'button', class: 'btn btn-secondary' }, 'Copy link');
-  const el = h('div', { class: 'pi-actions' }, globeLink, globeOff, download, copy, globeWhy);
+  const el = h('div', { class: 'pi-actions' }, globeLink, globeOff, globeWhy, download, copy);
   let current = null;
   let timer = 0;
   copy.addEventListener('click', async () => {
@@ -366,6 +371,7 @@ export function createPhotoActions({ idPrefix, copyUrl = () => location.href }) 
 
 /* The facts */
 
+// Where a capture time comes from (images.json capture_basis), for Technical details.
 const BASIS = {
   filename: 'From the file name',
   'capture log': 'From the camera’s capture log',
@@ -373,24 +379,6 @@ const BASIS = {
   'ADCS file list': 'From the attitude camera’s list of files',
   'capture reply': 'From the satellite’s reply to the capture command',
 };
-
-function takenValue(p) {
-  const d = toDate(p.capturedAt);
-  if (d) {
-    const out = [calgaryNodes(d, true), utcNodes(d, true)];
-    if (p.edited.captured_at) {
-      out.push(`Corrected by ${p.edited.captured_at}`);
-      const original = toDate(p.raw.captured_at);
-      if (original && !sameTime(original, d)) out.push(`First worked out as ${calgaryStamp(original, true)}`);
-    } else {
-      const basis = BASIS[p.raw.capture_basis];
-      if (basis) out.push(basis);
-    }
-    return out;
-  }
-  if (p.captureDate) return [dayText(p), 'Time unknown: only the date is known'];
-  return ['Time unknown', 'Neither the file name nor the satellite’s records give a time'];
-}
 
 function whereValue(p) {
   const pos = p.position;
@@ -411,7 +399,6 @@ function whereValue(p) {
   }
   if (positionIsStale(p)) return ['Not worked out for the corrected time', 'The globe works it out from the corrected time.'];
   if (p.capturedAt) return ['Position unknown', 'No published orbit covers this time.'];
-  if (p.captureDate) return ['Position unknown', 'Only the date of this picture is known, so it isn’t on the globe.'];
   return ['Position unknown', 'There is no time to work it out from.'];
 }
 
@@ -459,9 +446,9 @@ function statusValue(p) {
 }
 
 // listLink(item, key): a person or tag, as a link or a button ('member' or 'tag').
+// The time isn't a row of its own: it is under the picture's name (whenBlock).
 export function photoFacts(p, { listLink }) {
   const rows = [
-    ['Taken', takenValue(p)],
     ['Where', whereValue(p)],
   ];
   const light = lightValue(p);
@@ -497,18 +484,37 @@ function hashValue(p) {
   const raw = p.raw;
   const hash = typeof raw.sha256 === 'string' ? raw.sha256 : '';
   if (!hash) return null;
-  const copy = h('button', { type: 'button', class: 'pi-inline-btn', 'aria-label': 'Copy the full sha256' }, 'Copy');
+  const copy = h('button', { type: 'button', class: 'pi-inline-btn pi-copy', 'aria-label': 'Copy the full sha256' }, 'Copy');
   copy.addEventListener('click', async () => {
     const ok = await copyText(hash);
     copy.textContent = ok ? 'Copied' : 'Copy failed';
     announce(ok ? 'sha256 copied' : 'Could not copy the sha256');
     window.setTimeout(() => { copy.textContent = 'Copy'; }, 2000);
   });
+  // Whether it matches is the Status row's to say; here only a different hash the satellite sent.
   const expected = typeof raw.sha256_expected === 'string' ? raw.sha256_expected : '';
-  let second = 'The satellite sent no sha256 for this file';
-  if (expected && expected.toLowerCase() === hash.toLowerCase()) second = 'Matches the sha256 the satellite sent';
-  else if (expected) second = ['The satellite sent ', code(`${expected.slice(0, 12)}…`, { title: expected })];
+  const second = expected && expected.toLowerCase() !== hash.toLowerCase()
+    ? ['The satellite sent ', code(`${expected.slice(0, 12)}…`, { title: expected })]
+    : null;
   return [[code(`${hash.slice(0, 12)}…`, { title: hash }), ' ', copy], second];
+}
+
+// The capture time to the second, on the satellite's clock (UTC), and where it was read from.
+function timeFromValue(p) {
+  const raw = p.raw;
+  const d = toDate(p.capturedAt);
+  if (!raw.capture_basis && !d) return null;
+  const basis = BASIS[raw.capture_basis];
+  const original = toDate(raw.captured_at);
+  const out = [raw.capture_basis ? code(String(raw.capture_basis)) : 'Not recorded'];
+  if (d && p.edited.captured_at && original && !sameTime(original, d)) {
+    out.push(`Corrected to ${utcLong(d, true)}`);
+    out.push(`First worked out as ${utcLong(original, true)}${basis ? `, ${basis[0].toLowerCase()}${basis.slice(1)}` : ''}`);
+  } else if (d) {
+    out.push(basis ? `${basis}: ${utcLong(d, true)}` : utcLong(d, true));
+  }
+  out.push(clockText(raw.satellite_clock));
+  return out;
 }
 
 export function technicalDetails(p, { open = false } = {}) {
@@ -520,7 +526,8 @@ export function technicalDetails(p, { open = false } = {}) {
   const hash = hashValue(p);
   if (hash) rows.push(['sha256', hash]);
   rows.push(['Data status', [code(String(p.status || 'unknown')), typeof raw.status_note === 'string' ? raw.status_note : null]]);
-  if (raw.capture_basis) rows.push(['Time from', [code(String(raw.capture_basis)), clockText(raw.satellite_clock)]]);
+  const timeFrom = timeFromValue(p);
+  if (timeFrom) rows.push(['Time from', timeFrom]);
   if (isObject(raw.position) && raw.position.basis) {
     const epoch = toDate(raw.position.tle_epoch);
     rows.push(['Position from', [String(raw.position.basis), epoch ? `TLE epoch ${utcLong(epoch, false)}` : null]]);
@@ -538,10 +545,12 @@ export function technicalDetails(p, { open = false } = {}) {
 /* Notes */
 
 // level: the heading's level (3 on Pictures, under its page heading; 2 on a picture's page).
+// Null when there are none: no heading over an empty section.
 export function photoNotes(p, { level = 2, idPrefix }) {
+  if (!p.notes) return null;
   const id = `${idPrefix}-notes-heading`;
   return h('section', { class: 'pi-notes', 'aria-labelledby': id },
     h(`h${level}`, { class: 'pi-notes-heading', id }, 'Notes'),
-    h('p', { class: `pi-notes-text${p.notes ? '' : ' pi-muted'}` }, p.notes || 'No notes yet.'),
-    p.notes && p.edited.notes ? h('p', { class: 'pi-second' }, `Written by ${p.edited.notes}`) : null);
+    h('p', { class: 'pi-notes-text' }, p.notes),
+    p.edited.notes ? h('p', { class: 'pi-second' }, `Written by ${p.edited.notes}`) : null);
 }

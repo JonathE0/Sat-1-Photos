@@ -16,8 +16,8 @@
 //
 // Dark frames (images.json "dark": black, noise, or the Sun as a lone dot)
 // and mostly missing pictures (less than a fifth can be shown) are left out
-// of the strip and the stepping until their switch after the count brings
-// them in. A link straight to one still opens it, with its switch on.
+// of the strip and the stepping until their box under "Also show" in Filters
+// brings them in. A link straight to one still opens it, with its box ticked.
 //
 // With no id in the URL it opens on the newest picture that isn't dark and
 // is at least half there; the strip still starts with the newest.
@@ -187,33 +187,26 @@ export function createCatalogue(root, {
   olderBtn.addEventListener('click', () => { if (olderBtn.getAttribute('aria-disabled') !== 'true') step(1, 'button'); });
   const steps = h('div', { class: 'cat-steps' }, newerBtn, olderBtn);
 
-  // In Small, after the count, one line each (they stack):
-  //   "21 pictures."
-  //   "7 dark frames hidden: nothing but black, … Show them"
-  //   "2 mostly missing pictures hidden: less than a fifth … Show them"
-  // so the numbers agree with the strip and what is tucked away is a click
-  // away at any width.
+  // The count, one line of a fixed height under the controls, so nothing under it moves
+  // when the pictures arrive or a filter changes:
+  //   "29 pictures · 13 hidden"
+  //   "5 of 29 pictures · 2 hidden · Clear filters"
+  // Counted from what the strip holds, so the numbers agree with it. "13 hidden" opens
+  // Filters at the two boxes that bring the tucked-away kinds in.
   const countText = h('span', { class: 'cat-count-text' });
-  const clearBtn = h('button', { type: 'button', class: 'cat-inline-btn', hidden: true }, 'Clear filters');
+  const hiddenBtn = h('button', { type: 'button', class: 'cat-inline-btn', 'aria-controls': 'cat-filters' });
+  hiddenBtn.addEventListener('click', () => setFiltersOpen(true, { focus: 'also' }));
+  const hiddenPart = h('span', { class: 'cat-count-part', hidden: true }, h('span', { 'aria-hidden': 'true' }, ' · '), hiddenBtn);
+  const clearBtn = h('button', { type: 'button', class: 'cat-inline-btn' }, 'Clear filters');
   clearBtn.addEventListener('click', () => clearFilters());
-  const makeSwitch = (kind) => {
-    const text = h('span', { class: 'cat-switch-text' });
-    const btn = h('button', { type: 'button', class: 'cat-inline-btn', 'data-switch': kind });
-    btn.addEventListener('click', () => toggleSwitch(kind));
-    const line = h('span', { class: 'cat-count-line cat-switch-line', hidden: true }, text, ' ', btn);
-    return { text, btn, line };
-  };
-  const switches = { dark: makeSwitch('dark'), missing: makeSwitch('missing') };
-  const count = h('div', { class: 'cat-count' },
-    h('span', { class: 'cat-count-line' }, countText, ' ', clearBtn),
-    switches.dark.line,
-    switches.missing.line);
+  const clearPart = h('span', { class: 'cat-count-part', hidden: true }, h('span', { 'aria-hidden': 'true' }, ' · '), clearBtn);
+  const count = h('p', { class: 'cat-count' }, countText, hiddenPart, clearPart);
   const filterToggle = h('button', {
     type: 'button', class: 'cat-text-btn cat-filter-toggle', 'aria-expanded': 'false', 'aria-controls': 'cat-filters',
   }, 'Filters');
   filterToggle.addEventListener('click', () => setFiltersOpen(filterUi.form.hidden));
-  // Controls on one row (Filters at its right), the count and the switches
-  // on their own full-width row under it, one line each.
+  // Controls on one row (Filters at its right), the count on its own row under it
+  // (on the narrowest phones, beside Filters on the second row).
   const dockEnd = h('div', { class: 'cat-dock-end' }, count);
   const dockRow = h('div', { class: 'cat-dock-row' }, modes, steps, filterToggle, dockEnd);
 
@@ -224,6 +217,41 @@ export function createCatalogue(root, {
   });
   filterUi.form.id = 'cat-filters';
   filterUi.form.hidden = true;
+
+  // On a phone the filters are a sheet over the bottom of the screen (on its side, down
+  // the right), with its own heading and Done; on a bigger screen they open in the dock.
+  const sheetQuery = window.matchMedia('(max-width: 599px), (max-height: 500px) and (orientation: landscape)');
+  const sheetTitle = h('h2', { class: 'cat-sheet-title', id: 'cat-filters-title', tabindex: '-1' }, 'Filters');
+  const doneBtn = h('button', { type: 'button', class: 'cat-text-btn cat-sheet-done' }, 'Done');
+  doneBtn.addEventListener('click', () => setFiltersOpen(false)); // focus goes back to Filters
+  filterUi.form.prepend(h('div', { class: 'cat-sheet-head' }, sheetTitle, doneBtn));
+
+  // Dark frames and mostly missing pictures, left out of the strip until their box is
+  // ticked (dark=1, missing=1 in the URL).
+  const makeCheck = (kind, words, why) => {
+    const id = `cat-also-${kind}`;
+    const input = h('input', { type: 'checkbox', class: 'cat-check-box', id, name: kind, 'aria-describedby': `${id}-why` });
+    input.addEventListener('change', () => toggleSwitch(kind, input.checked));
+    const n = h('span', { class: 'cat-check-n' });
+    const el = h('div', { class: 'cat-check' },
+      h('label', { class: 'cat-check-label', for: id }, input, h('span', null, words, ' ', n)),
+      h('span', { class: 'cat-check-why', id: `${id}-why` }, why));
+    return { input, n, el };
+  };
+  const checks = {
+    dark: makeCheck('dark', 'Dark frames', capitalize(`${DARK_WHY}.`)),
+    missing: makeCheck('missing', 'Mostly missing', capitalize(`${MISSING_WHY}.`)),
+  };
+  const also = h('fieldset', { class: 'cat-also' },
+    h('legend', { class: 'filter-label' }, 'Also show'), checks.dark.el, checks.missing.el);
+  filterUi.form.append(also);
+
+  // A tap outside the sheet puts it away (a scroll doesn't: no click).
+  document.addEventListener('click', (e) => {
+    if (filterUi.form.hidden || !sheetQuery.matches || !(e.target instanceof Node)) return;
+    if (filterUi.form.contains(e.target) || filterToggle.contains(e.target) || hiddenBtn.contains(e.target)) return;
+    setFiltersOpen(false);
+  });
 
   const strip = h('ol', { class: 'cat-strip', 'aria-label': 'Pictures, newest first' });
   const stripNote = h('p', { class: 'cat-strip-note', hidden: true });
@@ -283,13 +311,13 @@ export function createCatalogue(root, {
     lead.replaceChildren(h('p', { class: 'pi-when' },
       h('span', { class: 'pi-when-line' }, h('span', { class: 'cat-ghost', style: 'width: 55%' })),
       h('span', { class: 'pi-when-line' }, h('span', { class: 'cat-ghost', style: 'width: 40%' }))));
-    const widths = [80, 70, 90, 55, 85, 60];
+    const widths = [70, 90, 55, 85, 60];
     facts.replaceChildren(h('dl', { class: 'pi-facts' },
-      ['Taken', 'Where', 'Light', 'Camera', 'Came down', 'Status'].flatMap((label, i) => [
+      ['Where', 'Light', 'Camera', 'Came down', 'Status'].flatMap((label, i) => [
         h('dt', null, label), h('dd', null, h('span', { class: 'cat-ghost', style: `width: ${widths[i]}%` })),
       ])));
     notes.hidden = true;
-    actions.hidden = true;
+    // the buttons keep their place, unseen until there is a picture for them (catalogue.css)
     strip.replaceChildren(...Array.from({ length: 14 }, () => h('li', { class: 'cat-strip-item' },
       h('span', { class: 'cat-month' }), h('span', { class: 'cat-thumb-ghost' }))));
   }
@@ -370,12 +398,22 @@ export function createCatalogue(root, {
 
   /* Filters and dark frames */
 
-  // While the filters are open the stage gives up their row's height, so
-  // the strip stays on screen (measure() picks up the taller dock).
-  function setFiltersOpen(open) {
+  // In the dock, while the filters are open the stage gives up their row's
+  // height, so the strip stays on screen (measure() picks up the taller dock).
+  // As a sheet they lie over the page, and focus goes to the sheet's heading.
+  // focus: 'also', to the first of the two boxes (from "13 hidden").
+  function setFiltersOpen(open, { focus = null } = {}) {
+    const wasIn = filterUi.form.contains(document.activeElement);
     filterUi.form.hidden = !open;
     filterToggle.setAttribute('aria-expanded', String(open));
     measure();
+    if (!open) {
+      if (wasIn) filterToggle.focus({ preventScroll: true });
+      return;
+    }
+    const box = focus === 'also' && Object.values(checks).map((c) => c.input).find(isVisible);
+    if (box) box.focus({ preventScroll: !sheetQuery.matches });
+    else if (sheetQuery.matches) sheetTitle.focus({ preventScroll: true });
   }
 
   function setFilter(key, value) {
@@ -420,9 +458,9 @@ export function createCatalogue(root, {
     show[kind] = on;
     keepFocus(() => render());
     writeUrl();
-    // From the no-match note, whose button goes away: on to the one in the dock.
-    const btn = switches[kind].btn;
-    if (!isVisible(document.activeElement) && isVisible(btn)) btn.focus({ preventScroll: true });
+    // From the no-match note, whose button goes away: on to its box in Filters, if open.
+    const box = checks[kind].input;
+    if (!isVisible(document.activeElement) && isVisible(box)) box.focus({ preventScroll: true });
     const words = SWITCH_WORDS[kind];
     const n = matched.filter(words.test).length;
     announce(`${plural(n, words.one, words.many)} ${on ? 'brought into the strip' : 'hidden'}.`);
@@ -705,23 +743,28 @@ export function createCatalogue(root, {
     // Counted from what the strip holds, so the numbers agree with it.
     const isNarrowed = narrowed();
     countText.textContent = isNarrowed
-      ? `${shown.length} of ${plural(totalCount(), 'picture')}.`
-      : `${plural(shown.length, 'picture')}.`;
-    clearBtn.hidden = !isNarrowed || (size === 1 && !shown.length); // the stage offers it then
-    // One line per kind that the filters let through; the reason only when
-    // no filter is set, to keep the dock short.
-    for (const [kind, why] of [['dark', DARK_WHY], ['missing', MISSING_WHY]]) {
-      const { text, btn, line } = switches[kind];
+      ? `${shown.length} of ${plural(totalCount(), 'picture')}`
+      : plural(shown.length, 'picture');
+    clearPart.hidden = !isNarrowed || (size === 1 && !shown.length); // the stage offers it then
+    // How many the filters let through but the strip leaves out, and what they are.
+    const tucked = matched.filter(isTucked);
+    hiddenPart.hidden = !tucked.length;
+    hiddenBtn.textContent = `${tucked.length} hidden`;
+    const kinds = ['dark', 'missing'].map((kind) => {
       const words = SWITCH_WORDS[kind];
-      const n = matched.filter(words.test).length;
-      line.hidden = !n;
-      if (!n) continue;
-      const what = plural(n, words.one, words.many);
-      const tail = isNarrowed ? '.' : `: ${why}.`;
-      text.textContent = show[kind] ? `Showing ${what}${tail}` : `${what} hidden${tail}`;
-      btn.textContent = show[kind] ? 'Hide them' : 'Show them';
-      btn.setAttribute('aria-label', `${show[kind] ? 'Hide' : 'Show'} the ${what}`);
+      const n = tucked.filter(words.test).length;
+      return n ? plural(n, words.one, words.many) : '';
+    }).filter(Boolean);
+    hiddenBtn.setAttribute('aria-label', `${tucked.length} hidden: ${kinds.join(' and ')}. Open the filters to show them`);
+    // The two boxes in Filters: always in place (a kind the pictures don't have at all
+    // isn't offered), with how many of that kind the filters let through.
+    for (const kind of ['dark', 'missing']) {
+      const words = SWITCH_WORDS[kind];
+      checks[kind].el.hidden = !photos.some(words.test);
+      checks[kind].input.checked = show[kind];
+      checks[kind].n.textContent = `(${matched.filter(words.test).length})`;
     }
+    also.hidden = Object.values(checks).every((c) => c.el.hidden);
   }
 
   function renderView() {
@@ -855,7 +898,9 @@ export function createCatalogue(root, {
       tech = freshTech;
       facts.replaceChildren(freshFacts, tech);
     }
-    notes.replaceChildren(photoNotes(p, { level: 3, idPrefix: 'cat' }));
+    const fresh = photoNotes(p, { level: 3, idPrefix: 'cat' }); // none: no Notes heading
+    notes.replaceChildren(...(fresh ? [fresh] : []));
+    notes.hidden = !fresh;
   }
 
   function fillEmptyInfo() {

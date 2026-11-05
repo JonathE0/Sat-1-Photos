@@ -225,8 +225,10 @@ const ICON_GRIP = '<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="
     they're for people looking at a screen they can't use, such as a TV in a hallway. */
 const SITE_URL = 'https://jonathe0.github.io/Sat-1-Photos/';
 const SITE_TEXT = 'jonathe0.github.io/Sat-1-Photos';
-/** SITE_URL as a QR code (version 3, error correction M, made with segno, checked with zxing-cpp). */
-const QR_SVG = '<svg xmlns="http://www.w3.org/2000/svg" class="jy-qr-svg" aria-hidden="true" shape-rendering="crispEdges" viewBox="0 0 35 35"><path fill="#fff" d="M0 0h35v35h-35z"/><path stroke="#05070a" d="M3 3.5h7m1 0h2m1 0h3m3 0h2m3 0h7m-29 1h1m5 0h1m1 0h3m2 0h1m2 0h4m2 0h1m5 0h1m-29 1h1m1 0h3m1 0h1m1 0h3m1 0h2m4 0h3m1 0h1m1 0h3m1 0h1m-29 1h1m1 0h3m1 0h1m2 0h1m1 0h1m1 0h1m1 0h4m3 0h1m1 0h3m1 0h1m-29 1h1m1 0h3m1 0h1m1 0h1m1 0h1m1 0h3m1 0h1m1 0h2m2 0h1m1 0h3m1 0h1m-29 1h1m5 0h1m2 0h3m1 0h2m1 0h1m5 0h1m5 0h1m-29 1h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7m-18 1h1m1 0h1m4 0h3m-21 1h1m2 0h6m1 0h1m1 0h1m1 0h1m1 0h2m3 0h1m2 0h1m1 0h3m-29 1h3m1 0h2m1 0h1m1 0h4m2 0h1m1 0h3m1 0h1m1 0h2m1 0h2m-27 1h2m3 0h4m3 0h3m1 0h2m1 0h1m3 0h1m1 0h1m-27 1h1m1 0h1m1 0h1m2 0h1m1 0h2m1 0h1m1 0h1m1 0h2m2 0h1m1 0h4m2 0h1m-29 1h1m1 0h2m2 0h3m5 0h2m3 0h1m2 0h2m4 0h1m-26 1h1m1 0h1m4 0h1m3 0h1m1 0h3m3 0h7m-28 1h1m1 0h2m1 0h1m2 0h3m2 0h2m1 0h1m1 0h3m4 0h1m1 0h1m-26 1h1m4 0h1m3 0h1m7 0h1m1 0h2m2 0h1m1 0h1m-28 1h2m1 0h3m1 0h1m5 0h1m3 0h3m2 0h1m1 0h1m-26 1h2m1 0h3m2 0h1m1 0h2m3 0h2m1 0h3m3 0h1m1 0h2m-28 1h4m2 0h1m1 0h1m3 0h4m3 0h1m2 0h1m2 0h1m2 0h1m-29 1h3m1 0h2m1 0h1m2 0h1m2 0h2m6 0h1m1 0h1m1 0h2m-27 1h2m2 0h1m1 0h2m1 0h3m1 0h1m1 0h1m3 0h9m-20 1h2m2 0h5m3 0h1m3 0h2m-26 1h7m1 0h1m2 0h1m1 0h1m1 0h2m1 0h3m1 0h1m1 0h2m-26 1h1m5 0h1m1 0h1m3 0h2m3 0h1m1 0h2m3 0h1m3 0h1m-29 1h1m1 0h3m1 0h1m1 0h1m3 0h2m2 0h1m2 0h7m1 0h1m-28 1h1m1 0h3m1 0h1m1 0h3m1 0h4m2 0h2m8 0h1m-29 1h1m1 0h3m1 0h1m3 0h1m2 0h4m1 0h1m1 0h1m2 0h2m1 0h3m-29 1h1m5 0h1m2 0h4m9 0h1m2 0h2m1 0h1m-29 1h7m1 0h3m3 0h3m3 0h2m1 0h1"/></svg>';
+/** The links page (site/links/: the website, the dashboard, Instagram and LinkedIn), which the QR
+    code opens: version 3, error correction L, made with segno and read back with zxing-cpp. */
+const LINKS_URL = 'https://jonathe0.github.io/Sat-1-Photos/links/';
+const QR_SVG = '<svg xmlns="http://www.w3.org/2000/svg" class="jy-qr-svg" aria-hidden="true" shape-rendering="crispEdges" viewBox="0 0 35 35"><path fill="#fff" d="M0 0h35v35h-35z"/><path stroke="#05070a" d="M3 3.5h7m1 0h2m4 0h1m1 0h1m1 0h3m1 0h7m-29 1h1m5 0h1m9 0h1m5 0h1m5 0h1m-29 1h1m1 0h3m1 0h1m1 0h1m2 0h3m1 0h1m3 0h2m1 0h1m1 0h3m1 0h1m-29 1h1m1 0h3m1 0h1m1 0h2m1 0h1m1 0h2m2 0h2m1 0h1m1 0h1m1 0h3m1 0h1m-29 1h1m1 0h3m1 0h1m1 0h4m1 0h4m2 0h1m2 0h1m1 0h3m1 0h1m-29 1h1m5 0h1m2 0h1m2 0h1m1 0h1m1 0h4m2 0h1m5 0h1m-29 1h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7m-20 1h1m1 0h1m5 0h1m2 0h1m-21 1h4m2 0h1m1 0h1m5 0h5m2 0h1m2 0h3m1 0h1m-28 1h3m1 0h1m1 0h3m4 0h1m1 0h5m1 0h3m3 0h1m-28 1h1m1 0h2m1 0h3m4 0h2m2 0h1m2 0h2m4 0h2m-28 1h1m7 0h1m2 0h4m1 0h1m1 0h3m1 0h1m5 0h1m-28 1h1m3 0h2m1 0h2m1 0h3m1 0h3m2 0h1m4 0h2m-27 1h2m5 0h1m2 0h2m1 0h2m1 0h1m2 0h1m2 0h1m3 0h3m-28 1h1m3 0h2m1 0h2m4 0h1m2 0h4m3 0h1m1 0h3m-27 1h3m5 0h1m1 0h1m1 0h3m4 0h1m1 0h1m3 0h1m-27 1h2m2 0h2m1 0h1m1 0h2m1 0h1m1 0h1m3 0h3m1 0h3m1 0h1m-24 1h1m3 0h1m1 0h1m4 0h3m2 0h1m2 0h1m1 0h3m-28 1h1m3 0h1m1 0h1m7 0h4m2 0h1m2 0h1m2 0h1m-25 1h2m1 0h1m2 0h1m3 0h1m1 0h1m2 0h3m1 0h1m2 0h1m1 0h1m-26 1h2m1 0h1m1 0h2m2 0h2m2 0h1m3 0h9m-19 1h2m1 0h3m6 0h1m3 0h5m-29 1h7m4 0h2m1 0h1m1 0h1m2 0h2m1 0h1m1 0h2m1 0h1m-28 1h1m5 0h1m2 0h3m1 0h2m3 0h1m1 0h1m3 0h2m-26 1h1m1 0h3m1 0h1m2 0h1m3 0h2m2 0h1m2 0h5m1 0h1m1 0h1m-29 1h1m1 0h3m1 0h1m1 0h2m2 0h4m1 0h1m5 0h3m2 0h1m-29 1h1m1 0h3m1 0h1m1 0h3m1 0h1m1 0h1m1 0h1m3 0h2m1 0h1m2 0h1m1 0h1m-29 1h1m5 0h1m1 0h5m2 0h2m3 0h2m3 0h1m1 0h1m-28 1h7m1 0h2m3 0h1m2 0h1m1 0h1m1 0h1m2 0h2m2 0h1"/></svg>';
 /** Where to see every picture, and (filled in by loadUpdated) when the site last changed. */
 const META_LINES = `<span>Want to see all our photos? They’re all at
           <a class="jy-link jy-site-link" href="${SITE_URL}">${SITE_TEXT}</a></span>
@@ -395,6 +397,8 @@ function template(id, siteRoot) {
       <div class="jy-card" data-ref="card" hidden></div>
       <div class="jy-sky-label" data-ref="skyLabel" aria-hidden="true"></div>
 
+      <!-- a phone: how far through the story, along the foot of the screen while it plays -->
+      <span class="jy-progress" aria-hidden="true"></span>
       <div class="jy-facts-slot" data-ref="factsSlot"></div>
       <button type="button" class="jy-facts-show" data-ref="factsShow" hidden>Show facts</button>
 
@@ -409,10 +413,9 @@ function template(id, siteRoot) {
       <p class="jy-meta" data-ref="meta">${META_LINES}</p>
       <!-- for a screen nobody can touch: placeQr shows it under the headline where there's room -->
       <div class="jy-qr" data-ref="qr" hidden>
-        <span class="jy-qr-code" role="img" aria-label="QR code for ${SITE_TEXT}">${QR_SVG}</span>
-        <span class="jy-qr-text"><span class="jy-qr-title">See every picture on your phone</span>
-          <span class="jy-qr-sub">Scan the code, or go to</span>
-          <span class="jy-qr-url">${SITE_TEXT}</span></span>
+        <span class="jy-qr-code" role="img" aria-label="QR code for ${LINKS_URL.replace(/^https:\/\//, '')}">${QR_SVG}</span>
+        <span class="jy-qr-text"><span class="jy-qr-title">FrontierSat on your phone</span>
+          <span class="jy-qr-sub">Scan for the pictures, the dashboard,<br>Instagram and LinkedIn</span></span>
       </div>
 
       <div class="jy-corner" data-ref="corner">
@@ -948,8 +951,11 @@ export function mountJourney(container, options = {}) {
     frame.narrow = narrow;
     root.classList.toggle('jy-narrow', narrow); // what's measured below depends on it
     root.classList.toggle('jy-wide-phone', narrow && W > H);
-    // a phone's panel is up: the headline fades (journey.css) and the satellite goes above the panel
+    // a phone's panel is up: the headline fades (journey.css) and the satellite goes above the panel;
+    // on its side, Controls and Facts stand in the same column at the right, and the headline goes too
     const sheetUp = narrow && state.panel;
+    const sideColumn = narrow && W > H && Boolean(state.panel || state.phoneExtra);
+    const textAway = sheetUp || sideColumn;
     frame.ui = clamp(1 + ((W - 1920) / 1920) * 0.3, 1, 1.2);
     // landscape: 35 degrees tall; portrait: hold 35 degrees across
     const vfov = W >= H ? 35 : (2 * Math.atan(Math.tan(17.5 * DEG) * (H / W))) / DEG;
@@ -1011,7 +1017,7 @@ export function mountJourney(container, options = {}) {
     // unless that would leave the satellite no room)
     const story = boxOf(ref.b2, s);
     const storyFits = !room || (story && story.bottom / H + LIMB_UNDER_TEXT + SAT_UNDER_LIMB <= room.satMax);
-    frame.endText = sheetUp ? null : union([endBox, storyFits ? story : null]);
+    frame.endText = textAway ? null : union([endBox, storyFits ? story : null]);
     let satY = narrow ? 0.64 : 0.6;
     let limbY = narrow ? 0.45 : 0.42;
     if (frame.endText) limbY = Math.max(limbY, frame.endText.bottom / H + LIMB_UNDER_TEXT);
@@ -1022,11 +1028,17 @@ export function mountJourney(container, options = {}) {
     satY = clamp(Math.max(satY, limbY + 0.12), 0, narrow ? 0.8 : 0.86);
     if (room) satY = Math.max(limbY + SAT_UNDER_LIMB, Math.min(satY, room.satMax));
     if (sheetUp && W <= H) {
-      // above the sheet (its share of the stage, below), with the limb under the nav
-      satY = Math.min(satY, 1 - SHEET_OPEN_SHARE - 0.14);
+      // above the sheet, wherever it rests (dragged, opened or peeking), with the limb under the nav
+      const p = ref.panel;
+      const cap = p.style.height ? parseFloat(p.style.height)
+        : Math.min(p.scrollHeight || H, p.style.maxHeight ? parseFloat(p.style.maxHeight)
+          : state.sheetOpen ? H * SHEET_OPEN_SHARE : 120);
+      const sheetTop = (H - (ref.tabbar.offsetHeight || 0) - cap) / H;
+      satY = clamp(Math.min(satY, sheetTop - 0.09), 0.22, 0.86);
       limbY = Math.min(limbY, satY - 0.16);
     }
     let satX = room ? room.satX : 0.62;
+    if (sideColumn) satX = Math.min(satX, Math.max(0.2, (W - Math.min(440, 0.55 * W) - 104 * frame.ui) / W));
     if (state.panel && (!narrow || W > H) && !slot) {
       // keep the satellite clear of the details on narrower desktops (with the
       // viewfinder they stay in its place, above the limb, and nothing moves)
@@ -1704,13 +1716,23 @@ export function mountJourney(container, options = {}) {
   function updateMarks(theta, satAlpha, satLengthPx) {
     const show = beatShown.ui === true;
     const body = show ? satelliteRect(satAlpha) : null;
+    // on a phone, no picture over the satellite's name either (where it was last frame)
+    let label = null;
+    if (show && frame.narrow && !ref.sat.hidden) {
+      const r = ref.sat.getBoundingClientRect();
+      const s0 = stageRect();
+      if (r.width) label = { left: r.left - s0.left - 8, right: r.right - s0.left + 8, top: r.top - s0.top - 8, bottom: r.bottom - s0.top + 8 };
+    }
     for (const pin of pins) {
       let vis = false;
       if (show) {
         geoScene(pin.lat, pin.lon, 1.0, theta, pinWorld);
         if (!hiddenByEarth(camera.position, pinWorld, 0.998)) {
           const s = toScreen(pinWorld);
-          if (s && s.x > -40 && s.x < W + 40 && s.y > -40 && s.y < H + 40 && !underText(s.x, s.y)) {
+          // on a phone, whole and 8px inside the edges, never cut off by them
+          const ex = frame.narrow ? frame.pinHalf.x + 8 : -40;
+          const ey = frame.narrow ? frame.pinHalf.y + 8 : -40;
+          if (s && s.x > ex && s.x < W - ex && s.y > ey && s.y < H - ey && !underText(s.x, s.y)) {
             // half under a control a pin is neither readable nor tappable. It stays hidden
             // until it's a little way clear, so it can't flicker at the edge as the Earth turns.
             pin.blocked = underControl(s.x, s.y, pin.blocked ? 6 : 0);
@@ -1725,8 +1747,8 @@ export function mountJourney(container, options = {}) {
       pin.vis = vis;
       pin.pile = null;
     }
-    // piles: pins closer than 28px stack under the newest
-    const near = 28 * frame.ui;
+    // piles: pins closer than 28px (40px on a phone, where a finger is wider than a pin) stack under the newest
+    const near = (frame.narrow ? 40 : 28) * frame.ui;
     for (let i = 0; i < pins.length; i++) {
       const a = pins[i];
       if (!a.vis || a.pile) continue;
@@ -1764,11 +1786,22 @@ export function mountJourney(container, options = {}) {
         pin.under = under;
         pin.el.classList.toggle('is-under', under);
       }
+      const onLabel = !!label && pin.vis && x > label.left && x < label.right && y > label.top && y < label.bottom;
+      if (pin.onLabel !== onLabel) {
+        pin.onLabel = onLabel;
+        pin.el.classList.toggle('is-on-label', onLabel);
+        pin.count.classList.toggle('is-on-label', onLabel);
+      }
       const head = pile && pile.index === 0;
       if (head) {
         pin.count.hidden = false;
-        pin.count.textContent = `${pile.members.length} pictures`;
-        pin.count.style.transform = `translate(${Math.round(pin.x + 24 * frame.ui)}px, ${Math.round(pin.y)}px) translateY(-50%)`;
+        // on a phone a badge on the pile's corner, not words beside it that run into the next pin
+        const lift = (pile.members.length - 1) * 3;
+        pin.count.classList.toggle('is-badge', frame.narrow);
+        pin.count.textContent = frame.narrow ? String(pile.members.length) : `${pile.members.length} pictures`;
+        pin.count.style.transform = frame.narrow
+          ? `translate(${Math.round(pin.x + frame.pinHalf.x + lift)}px, ${Math.round(pin.y - frame.pinHalf.y - lift)}px) translate(-50%, -50%)`
+          : `translate(${Math.round(pin.x + 24 * frame.ui)}px, ${Math.round(pin.y)}px) translateY(-50%)`;
       } else if (!pin.count.hidden) {
         pin.count.hidden = true;
       }
@@ -2010,6 +2043,7 @@ export function mountJourney(container, options = {}) {
     if (state.locked && state.shown) runTicker();
     if (name === 'facts') ticker?.reveal?.();
     measureSettled();
+    if (frame.narrow && W > H) reframe(); // on its side they take the right-hand column
   }
 
   function choosePhoneBar(name) {
@@ -2195,17 +2229,21 @@ export function mountJourney(container, options = {}) {
     state.panel = false;
     state.previewId = null;
     state.sheetOpen = false;
-    ref.panel.classList.remove('is-on', 'is-open');
+    // a phone's sheet keeps its height while it fades and slides away (is-open goes once it's gone)
+    ref.panel.classList.remove('is-on');
     root.classList.remove('jy-panel-open');
     setExpanded(false);
     paintTabs();
     reframe();
     syncViewfinder();
     const done = () => {
-      if (!state.panel) ref.panel.hidden = true;
+      if (state.panel) return;
+      ref.panel.hidden = true;
+      ref.panel.classList.remove('is-open');
+      ref.panel.style.maxHeight = '';
     };
     if (motionOverride === 'reduced') done();
-    else setTimeout(done, 160);
+    else setTimeout(done, 240);
     if (restoreFocus) (frame.narrow ? ref.barStats : ref.tabStats.hidden ? ref.cycle : ref.tabStats).focus({ preventScroll: true });
   }
 
@@ -2293,7 +2331,28 @@ export function mountJourney(container, options = {}) {
   function setSheet(open) {
     state.sheetOpen = open;
     ref.panel.classList.toggle('is-open', open);
+    ref.panel.style.maxHeight = '';
+    if (open && frame.narrow && W <= H) {
+      // open as far as the last line that shows whole, not through the middle of one
+      requestAnimationFrame(() => {
+        if (!state.sheetOpen || ref.panel.classList.contains('is-sized')) return;
+        ref.panel.style.maxHeight = `${wholeLines(H * SHEET_OPEN_SHARE)}px`;
+        reframe();
+      });
+    }
     measureText();
+  }
+
+  /** The sheet's height down to the foot of its last whole line within `limit` px. */
+  function wholeLines(limit) {
+    const top = ref.panel.getBoundingClientRect().top - ref.panel.scrollTop;
+    let best = 0;
+    for (const el of ref.panel.querySelectorAll('h2, h3, p, dt, dd, li, .jy-latest-frame')) {
+      if (el.offsetParent === null) continue;
+      const bottom = el.getBoundingClientRect().bottom - top;
+      if (bottom <= limit && bottom > best) best = bottom;
+    }
+    return Math.round(best > 0 ? Math.min(limit, best + 6) : limit);
   }
 
   /** A click on the satellite: the panel; a double click: fly in close. */
@@ -2367,18 +2426,20 @@ export function mountJourney(container, options = {}) {
     const nav = parseFloat(getComputedStyle(root).getPropertyValue('--jy-nav')) || 0;
     const full = Math.round(Math.min(whole, box.bottom - stageRect().top - nav));
     // on its side the panel stands full height at the right (journey.css)
-    const open = Math.round(Math.min(full, W > H ? full : H * SHEET_OPEN_SHARE));
+    const open = Math.round(Math.min(full, W > H ? full : wholeLines(H * SHEET_OPEN_SHARE)));
     return { peek: Math.min(peek, open), open, full };
   }
 
   function resetSheetSize() {
     ref.panel.style.height = '';
+    ref.panel.style.maxHeight = '';
     ref.panel.classList.remove('is-sized', 'is-dragging');
   }
 
   function restSheet(height) {
     ref.panel.style.height = `${height}px`;
     measureSettled();
+    reframe(); // the satellite moves to stay above it
   }
 
   function nearestRest(height, rests) {
@@ -2391,6 +2452,7 @@ export function mountJourney(container, options = {}) {
     sheetDrag = { y0: e.clientY, y: e.clientY, at: e.timeStamp, start, rests, speed: 0, moved: false };
     ref.grab.setPointerCapture?.(e.pointerId);
     // from its natural height to a set one, with nothing to animate yet
+    ref.panel.style.maxHeight = '';
     ref.panel.classList.add('is-sized', 'is-dragging');
     ref.panel.style.height = `${start}px`;
   });
@@ -3058,6 +3120,7 @@ export function mountJourney(container, options = {}) {
   let lastPerf = performance.now();
   let lastDraw = -Infinity;
   let needsFrame = true;
+  let lastProgressShown = -1; // the story's progress as last handed to the CSS (--jy-p)
   let trackAt = -Infinity;
   let trackSimAt = 0;
   const trackXYZ = new Float32Array(260 * 3);
@@ -3117,6 +3180,11 @@ export function mountJourney(container, options = {}) {
     readScroll();
     if (state.mode === 'story') {
       smoothProgress(dt);
+      const pShown = frame.narrow && !state.locked ? Math.round(state.pSmooth * 1000) / 1000 : null;
+      if (pShown !== null && pShown !== lastProgressShown) {
+        lastProgressShown = pShown;
+        stage.style.setProperty('--jy-p', String(pShown));
+      }
       // back above the swing's end the story has the camera again
       if (state.pSmooth < P.swingEnd && (state.custom || !state.follow)) {
         startBlend();
@@ -4028,6 +4096,26 @@ export function mountJourney(container, options = {}) {
   metaObserver.observe(ref.corner);
   textObserver.observe(ref.b2);
   textObserver.observe(ref.factsSlot); // the banner fills in after the facts load
+  // On a phone the banner stands on the bar, and each fact of another length moved its top edge.
+  // It keeps the height of the tallest one so far, at this width.
+  let factsTallest = 0;
+  let factsWidth = 0;
+  const factsObserver = new ResizeObserver(() => {
+    const el = ticker?.element;
+    if (!el) return;
+    if (!frame.narrow || el.offsetWidth !== factsWidth) {
+      factsWidth = el.offsetWidth;
+      factsTallest = 0;
+      el.style.minHeight = '';
+      if (!frame.narrow) return;
+    }
+    const h = el.offsetHeight;
+    if (h > factsTallest) {
+      factsTallest = h;
+      el.style.minHeight = `${h}px`;
+    }
+  });
+  factsObserver.observe(ref.factsSlot);
   textObserver.observe(ref.viewfinderSlot); // it appears once there are pictures, on big screens
   // the words re-wrap when the real fonts arrive, perhaps much later: fit the end view afresh
   const fontsArrived = () => {
@@ -4185,6 +4273,7 @@ export function mountJourney(container, options = {}) {
       resizeObserver.disconnect();
       textObserver.disconnect();
       metaObserver.disconnect();
+      factsObserver.disconnect();
       mapObserver.disconnect();
       map?.dispose();
       globe?.dispose();

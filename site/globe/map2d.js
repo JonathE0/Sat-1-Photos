@@ -37,6 +37,8 @@ const MASK_ROWS = 360;
 /** Closest zoom, CSS px per degree (the 4096 pictures hold about 11). */
 const MAX_PX_PER_DEG = 64;
 const FOOTPRINT_POINTS = 128;
+/** The free frame's edges, which ease when the page's panels change (resize). */
+const EDGES = ['top', 'right', 'bottom', 'left'];
 
 // ---- pure helpers ------------------------------------------------------------
 
@@ -479,6 +481,7 @@ export function createMap(container, opts = {}) {
   let hoverId = null;
   let trackColor = BLUE;
   let stationSide = 'right'; // where Calgary's label is: see drawOverlay
+  let marked = []; // the names and marks drawn last, as boxes: see marks()
 
   function setTime(ms) {
     wantSun = sunDirectionEcef(ms);
@@ -981,16 +984,19 @@ export function createMap(container, opts = {}) {
     octx.strokeStyle = 'rgba(5, 7, 10, 0.85)';
     octx.fillStyle = INK;
     for (const x of satXs) halo('FrontierSat', x + 12 * scale, view.y(sat.latDeg));
+    // the names and their marks, for the picture pins over the map to keep off (marks())
+    const h = 16 * scale;
+    const reach = 8 * scale;
+    const satY = sat ? view.y(sat.latDeg) : 0;
+    const satW = octx.measureText('FrontierSat').width;
+    const satBoxes = satXs.flatMap((x) => [
+      labelBox('right', { x, y: satY, w: satW, h, gap: 12 * scale }),
+      { left: x - reach, top: satY - reach, right: x + reach, bottom: satY + reach },
+    ]);
+    marked = [...satBoxes];
     if (station) {
       // the satellite's name wins: Calgary's moves aside, or waits, while they overlap
-      const h = 16 * scale;
-      const reach = 8 * scale;
-      const satY = sat ? view.y(sat.latDeg) : 0;
-      const satW = octx.measureText('FrontierSat').width;
-      const avoid = satXs.flatMap((x) => [
-        labelBox('right', { x, y: satY, w: satW, h, gap: 12 * scale }),
-        { left: x - reach, top: satY - reach, right: x + reach, bottom: satY + reach },
-      ]);
+      const avoid = [...satBoxes];
       // and it stays on the map: past the frame's right edge it would be cut off
       const edge = view.w - view.inset.right;
       avoid.push({ left: edge, top: -Infinity, right: Infinity, bottom: Infinity });
@@ -1000,9 +1006,11 @@ export function createMap(container, opts = {}) {
         const label = { x, y, w, h, gap: 11 * scale };
         const side = placeLabel(label, avoid, stationSide);
         if (i === 0) stationSide = side;
+        marked.push({ left: x - reach, top: y - reach, right: x + reach, bottom: y + reach });
         if (side) {
           const box = labelBox(side, label);
           halo('Calgary', box.left, (box.top + box.bottom) / 2);
+          marked.push(box);
         }
       });
     }
@@ -1040,10 +1048,22 @@ export function createMap(container, opts = {}) {
   /** `scale` sizes markers and type with the page (1 = their drawn size);
    * `inset` is how much of each edge the page's panels cover. */
   function resize(w, h, s = 1, inset = null) {
+    const sameSize = view.w === Math.max(1, w) && view.h === Math.max(1, h) && scale === s;
     view.w = Math.max(1, w);
     view.h = Math.max(1, h);
     scale = s;
-    if (inset) view.inset = { top: 0, right: 0, bottom: 0, left: 0, ...inset };
+    if (inset) {
+      const next = { top: 0, right: 0, bottom: 0, left: 0, ...inset };
+      // A sheet opening or closing over the same stage: the frame eases to its new edges (stepInset),
+      // as the globe's view centre does, rather than jumping in one frame.
+      if (sameSize && visible && placed && !controls.reducedMotion) {
+        insetGoal = EDGES.every((k) => Math.abs(next[k] - view.inset[k]) < 0.5) ? null : next;
+        view.inset = { ...view.inset, labelRight: next.labelRight };
+      } else {
+        insetGoal = null;
+        view.inset = next;
+      }
+    }
     ratio = Math.min(window.devicePixelRatio || 1, 2);
     for (const c of [base, over]) {
       const cw = Math.round(view.w * ratio);
@@ -1057,6 +1077,26 @@ export function createMap(container, opts = {}) {
     changed();
   }
 
+  /** A step of the frame's edges toward where resize() last put them, a quarter of the way a frame. */
+  let insetGoal = null;
+  function stepInset() {
+    if (!insetGoal) return;
+    const next = { ...view.inset };
+    let done = true;
+    for (const k of EDGES) {
+      const d = insetGoal[k] - next[k];
+      if (Math.abs(d) < 0.5) next[k] = insetGoal[k];
+      else {
+        next[k] += d * 0.25;
+        done = false;
+      }
+    }
+    view.inset = next;
+    if (done) insetGoal = null;
+    if (atWidest) view.k = view.minK; // the widest zoom follows the frame's height
+    changed();
+  }
+
   function setVisible(on) {
     visible = on;
     root.hidden = !on;
@@ -1066,6 +1106,12 @@ export function createMap(container, opts = {}) {
       overDirty = true;
     } else {
       flight = null;
+      if (insetGoal) {
+        view.inset = insetGoal;
+        insetGoal = null;
+        if (atWidest) view.k = view.minK;
+        changed();
+      }
     }
   }
 
@@ -1102,9 +1148,14 @@ export function createMap(container, opts = {}) {
     get visible() {
       return visible;
     },
-    /** Is the view moving to somewhere? */
+    /** Is the view moving to somewhere, or its frame easing to new edges? */
     get busy() {
-      return !!flight;
+      return !!flight || !!insetGoal;
+    },
+    /** What the picture pins should keep off, as last drawn: the boxes of the FrontierSat and
+     * Calgary labels and of their marks, canvas px { left, top, right, bottom }. */
+    marks() {
+      return marked;
     },
     /** Can it zoom further in, or out? For the zoom buttons: where a glide ends, else where it is. */
     get zoomRoom() {
@@ -1119,6 +1170,7 @@ export function createMap(container, opts = {}) {
         if (rippleSeconds >= RIPPLE_S) rippleStart = null;
         overDirty = true;
       }
+      stepInset();
       stepFlight(now);
       sizeWorld();
       const drawWorld = worldDirty;

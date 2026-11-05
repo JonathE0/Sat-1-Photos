@@ -305,3 +305,26 @@
 .cg-narrow .cg-cw {
   width: min(284px, calc(100% - 24px));
 }
+
+/* a phone on its side: the header's row has 6px above it (globe.css) */
+@media (max-height: 500px) and (min-width: 480px) and (orientation: landscape) {
+  .cg-narrow .cg-cw {
+    top: calc(var(--cg-top, 0px) + 6px + 44px + 8px);
+    max-height: calc(100% - var(--cg-top, 0px) - 6px - 44px - 8px - 8px);
+  }
+}
+
+/* The narrowest phones have no room for the swatch in the title's row as well as Copy link: it
+   stands under the switch, at the stage's top right, and the panel opens under it. */
+@media (max-width: 359px) {
+  .cg-narrow .cg-swatch {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+  }
+
+  .cg-narrow .cg-cw {
+    top: calc(var(--cg-top, 0px) + 12px + 44px + 8px + 44px + 8px);
+    max-height: calc(100% - var(--cg-top, 0px) - 12px - 44px - 8px - 44px - 8px - 8px);
+  }
+}

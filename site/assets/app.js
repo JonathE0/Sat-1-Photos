@@ -46,6 +46,8 @@ const views = {
 if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 
 const SITE = new URL('./', location.href);
+// ?motion=reduced keeps every page still (style.css); the system's setting alone doesn't
+if (new URLSearchParams(location.search).get('motion') === 'reduced') document.documentElement.dataset.motion = 'reduced';
 
 // The globe is the front page, but nothing else waits for it (three.js alone is
 // 690 KB): it loads the first time Explore is shown. If it can't start, the rest
@@ -299,6 +301,7 @@ function renderSkipped() {
   const list = (Array.isArray(state.data?.skipped) ? state.data.skipped : [])
     .filter((s) => s && typeof s.file === 'string' && s.file);
   box.hidden = list.length === 0;
+  box.querySelector('.fold-n').textContent = `(${list.length})`; // on a phone the list is folded under its heading
   box.querySelector('ul').replaceChildren(
     ...list.map((s) => h('li', null, mono(s.file), typeof s.reason === 'string' && s.reason ? `: ${s.reason}.` : '')),
   );

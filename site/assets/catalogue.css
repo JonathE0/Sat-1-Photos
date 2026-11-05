@@ -122,14 +122,17 @@
   cursor: default;
 }
 
-/* A larger target on touch, without spreading the lines of text around it. */
+/* A larger target on touch, without spreading the lines of text around it:
+   44px tall, reaching further down than up, so it never covers the controls
+   above the count. Text buttons are 44px wide at least. */
 @media (pointer: coarse) {
   .cat-inline-btn { position: relative; }
   .cat-inline-btn::after {
     content: "";
     position: absolute;
-    inset: -13px -6px;
+    inset: -10px -6px -15px;
   }
+  .cat-text-btn { justify-content: center; min-width: 44px; }
 }
 
 /* The way back to the globe: first on the page, kept in reach on phones. */
@@ -204,7 +207,8 @@
   object-fit: contain;
 }
 
-.cat[data-state="loading"] .cat-img { visibility: hidden; }
+.cat[data-state="loading"] .cat-img,
+.cat[data-state="loading"] .cat-actions { visibility: hidden; } /* in place, so nothing moves when they come */
 
 .cat-fail {
   position: absolute;
@@ -416,21 +420,27 @@
   gap: 20px;
 }
 
-/* The count and its switches: a full-width row of their own under the
-   controls, so each line stays one line on a desktop. */
+/* The count: a full-width row of its own under the controls, one line of a
+   fixed height, so nothing under it moves when the pictures arrive or the
+   numbers change. */
 .cat-dock-end {
   flex: 1 1 100%;
   min-width: 0;
+  margin-top: 4px;
 }
 
-/* The count, then one line per tucked-away kind (dark, mostly missing). */
 .cat-count {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  height: 24px;
+  margin: 0;
   color: var(--c-muted);
   font-size: 13px;
-  line-height: 1.45;
+  line-height: 19px;
   letter-spacing: 0.01em;
+  white-space: pre;
 }
-.cat-count-line { display: block; }
 .cat-count-text { color: var(--c-ink); }
 .cat-count .cat-inline-btn { color: var(--c-ink); white-space: nowrap; }
 .cat-filter-toggle { flex: none; margin-left: auto; }
@@ -501,6 +511,118 @@
 .cat .cat-filters .search input:hover { background: var(--c-raised); }
 .cat .cat-filters .search input.is-set { font-weight: 600; }
 .cat .cat-filters .search input::placeholder { color: var(--c-muted); }
+
+/* The sheet's own heading and Done: phones only (below) */
+.cat-sheet-head { display: none; }
+
+/* Also show: dark frames and mostly missing pictures, a row of their own under
+   the fields, each box with its reason under it. */
+.cat-also {
+  flex: 1 1 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 32px;
+  min-width: 0;
+  margin: 0;
+  border: 0;
+  padding: 0;
+}
+.cat-also > legend { float: left; width: 100%; margin: 0 0 4px; padding: 0; } /* float: a plain line above the boxes */
+.cat-check { display: flex; flex-direction: column; min-width: 0; max-width: 360px; }
+.cat-check-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--ctl-h);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.3;
+  cursor: pointer;
+}
+.cat-check-box {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: var(--c-ink);
+  cursor: pointer;
+}
+.cat-check-n { color: var(--c-muted); font-weight: 400; }
+.cat-check-why {
+  padding-left: 30px;
+  color: var(--c-muted);
+  font-size: 13px;
+  line-height: 1.45;
+  letter-spacing: 0.01em;
+}
+
+/* Filters on a phone: a sheet over the bottom of the screen, so opening it moves
+   nothing under it; the picture stays in view above it. Two even columns, each
+   menu as wide as its column, so a longer choice doesn't move the next one. */
+@media (max-width: 599px), (max-height: 500px) and (orientation: landscape) {
+  .cat .cat-filters {
+    position: fixed;
+    top: auto; /* not style.css's sticky top */
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 25;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: end;
+    gap: 12px;
+    max-height: calc(100svh - var(--nav-h, 52px) - 48px);
+    margin: 0;
+    padding: 0 var(--m-r) calc(16px + env(safe-area-inset-bottom, 0px)) var(--m-l);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    background: var(--c-panel);
+  }
+  .cat .cat-filters .filter select {
+    width: 100%;
+    max-width: none;
+    field-sizing: fixed;
+    background-color: var(--c-raised);
+  }
+  .cat .cat-filters .filter select:hover,
+  .cat .cat-filters .search input:hover { background-color: #262F39; }
+  .cat .cat-filters .search { grid-column: 1 / -1; max-width: none; }
+  .cat .cat-filters .search input { background: var(--c-raised); }
+  .cat-also {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+    gap: 0 12px;
+  }
+  .cat-also > legend { grid-column: 1 / -1; }
+  .cat-check { max-width: none; }
+
+  .cat-sheet-head {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    min-height: 48px;
+    background: var(--c-panel);
+  }
+  .cat-sheet-title { margin: 0; font-size: 20px; font-weight: 600; line-height: 28px; outline: none; }
+  .cat-sheet-done { padding: 0 0 0 16px; }
+}
+
+/* On its side, down the right instead, beside the picture. */
+@media (max-height: 500px) and (orientation: landscape) {
+  .cat .cat-filters {
+    top: calc(var(--nav-h, 52px) + 1px);
+    left: auto;
+    width: min(380px, 45%);
+    max-height: none;
+  }
+}
 
 /* Filmstrip: every picture at its own ratio, one row, newest first,
    scrolling sideways inside its own row only. */
@@ -685,8 +807,26 @@
   }
 }
 
+/* A phone, either way up: One, Two and Four, Newer and Older, and Filters on one
+   row, with "Show" only for screen readers. */
+@media (max-width: 599px), (max-height: 500px) and (orientation: landscape) {
+  .cat-dock { padding-top: 12px; }
+  .cat-dock-row { gap: 4px 12px; }
+  .cat-modes > .cat-small {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+  .cat-seg-btn { padding: 0 9px; }
+  .cat-steps { gap: 8px; }
+}
+
+/* and the picture's name and time on the first screen */
 @media (max-width: 599px) {
-  .cat-dock-row { gap: 4px 16px; }
+  .cat-info { margin-top: 24px; }
 
   /* 24px between rows, so the active bar doesn't read as a divider. */
   .cat-compare { --pad-s: 12px; --col-gap: 12px; row-gap: 24px; }
@@ -704,6 +844,18 @@
 
 @media (max-width: 599px) and (pointer: coarse) {
   .cat { --cap-h: 85px; } /* Remove is 44px tall */
+}
+
+/* The narrowest phones: Filters moves down beside the count, on a second row as
+   tall as Filters, so either can grow (two lines of count, "Filters (2)") and
+   nothing moves. */
+@media (max-width: 374px) {
+  .cat-dock-end { order: 1; flex: 1 1 150px; margin-top: 0; }
+  .cat-filter-toggle { order: 2; }
+  .cat-count { height: auto; min-height: 24px; white-space: pre-wrap; }
+  /* and a little less space around the strip, for the name and time */
+  .cat-strip { margin-top: 8px; }
+  .cat-info { margin-top: 16px; }
 }
 
 /* A phone on its side: nothing is taller than the screen. One picture has the
@@ -731,6 +883,36 @@
 
 @media (max-width: 899px) and (max-height: 500px) and (orientation: landscape) and (pointer: coarse) {
   .cat { --cap-h: 85px; }
+}
+
+/* On its side the page's heading is for screen readers only: the nav says where this is. */
+@media (max-height: 500px) and (orientation: landscape) {
+  .cat { --head-h: 0px; }
+  .cat-page-title {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+}
+
+/* One picture on its side: the facts beside it, as on a bigger screen, and the picture as
+   tall as leaves the row of controls under it on the screen. */
+@media (max-width: 899px) and (max-height: 500px) and (orientation: landscape) {
+  .cat[data-size="1"] .cat-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(260px, 38%);
+    grid-template-rows: auto 1fr;
+    grid-template-areas:
+      "viewer info"
+      "dock info";
+  }
+  .cat[data-size="1"] .cat-frame {
+    height: calc(100svh - var(--nav-h, 52px) - 1px - var(--back-h) - 12px - 12px - var(--ctl-h) - 8px);
+  }
+  .cat[data-size="1"] .cat-info { margin-top: 0; }
 }
 
 /* Two on a phone, either way up: the caption beside the picture, which keeps

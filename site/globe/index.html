@@ -33,7 +33,8 @@
       --nav-h: 68px;
     }
 
-    @media (max-width: 599px) {
+    /* the nav's phone height (assets/nav.css): narrow, and a phone on its side */
+    @media (max-width: 599px), (max-height: 500px) and (orientation: landscape) {
       :root {
         --nav-h: 52px;
       }

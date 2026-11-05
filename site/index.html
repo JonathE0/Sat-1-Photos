@@ -107,11 +107,11 @@
           <dd>The satellite stopped the capture early and stored only part of the frame, so the top of the picture is all there is. The copy here can still match the satellite’s fingerprint of that shortened file.</dd>
         </dl>
 
-        <div id="about-skipped" hidden>
-          <h2>Files that couldn’t be shown</h2>
+        <details class="fold" id="about-skipped" hidden>
+          <summary><h2>Files that couldn’t be shown <span class="fold-n"></span></h2></summary>
           <p>These picture files are known from the satellite’s records or packets, but none of the picture can be shown.</p>
           <ul class="about-skipped-list"></ul>
-        </div>
+        </details>
 
         <h2>Times and positions</h2>
         <p>Times are given in Calgary time first, then in UTC. The time a picture was taken comes from its file name, the camera’s own records, or the satellite’s reply to the command that took it. Some pictures only have a date. Most of these times are readings of the satellite’s own clock, which has run up to a couple of minutes fast; where the data shows how far off it was, the time is corrected for it.</p>
@@ -148,8 +148,8 @@
   </script>
 
   <footer class="site-foot">
-    <div class="foot-col">
-      <h2>Data</h2>
+    <details class="foot-col fold">
+      <summary><h2>Data</h2></summary>
       <ul class="foot-list">
         <li>Packets: the <a href="https://network.satnogs.org/">SatNOGS network</a></li>
         <li>Decoded by CalgaryToSpace: <a href="https://frontiersat.mooo.com/">frontiersat.mooo.com</a></li>
@@ -159,7 +159,7 @@
         <li>Aurora: the OVATION forecast from the <a href="https://www.swpc.noaa.gov/products/aurora-30-minute-forecast">NOAA Space Weather Prediction Center</a></li>
         <li>Logo and CubeSat icon: CalgaryToSpace</li>
       </ul>
-    </div>
+    </details>
     <div class="foot-col">
       <h2>Updated</h2>
       <p id="foot-updated">The picture list is rebuilt automatically from the team’s decoded packets.</p>
@@ -173,6 +173,19 @@
       </ul>
     </div>
   </footer>
+
+  <script>
+    // The footer's Data list and About's list of files: open on bigger screens, folded on
+    // phones (style.css, .fold), set before the first paint so neither jumps
+    (function () {
+      var phone = window.matchMedia('(max-width: 599px), (max-height: 500px)');
+      function fold() {
+        document.querySelectorAll('details.fold').forEach(function (d) { d.open = !phone.matches; });
+      }
+      fold();
+      if (phone.addEventListener) phone.addEventListener('change', fold);
+    })();
+  </script>
 
   <p class="vh" id="announce" aria-live="polite"></p>
   <noscript><p class="noscript">This gallery needs JavaScript to show the pictures.</p></noscript>

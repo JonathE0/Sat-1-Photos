@@ -156,6 +156,13 @@
   color: var(--cg-accent);
 }
 
+/* On a phone the names sit on a little of the Space ground, so they read even where the chosen
+   picture's pin (which always shows) runs under them; the others keep off them (picturepins.js). */
+.cg-narrow .cg-label {
+  padding: 0 3px;
+  background: color-mix(in srgb, var(--cg-bg) 72%, transparent);
+}
+
 .cg-tip {
   position: absolute;
   top: 0;
@@ -633,6 +640,18 @@
   white-space: nowrap;
 }
 
+/* on a phone a pile is one pin with its number on a badge at the corner (picturepins.js) */
+.cg-pile-count.is-badge {
+  z-index: 300;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  background: var(--cg-text);
+  color: var(--cg-bg);
+  font: 600 var(--cg-small)/18px var(--cg-sans);
+  text-align: center;
+}
+
 /* the preview over a pin; only a pile's list takes the pointer */
 .cg-peek {
   position: absolute;
@@ -1038,9 +1057,23 @@
   top: calc(var(--cg-head-h, 44px) + 8px);
 }
 
-/* Copy link: in the clock bar, and on a phone in the header (see the narrow layout) */
+/* Copy link: in the clock bar, and on a phone an icon at the end of the Globe / Map row
+   (see the narrow layout) */
 .cg-head-share {
   display: none;
+}
+
+.cg .cg-head-share {
+  background: var(--cg-panel);
+}
+
+.cg .cg-head-share:hover {
+  background: var(--cg-raised);
+}
+
+.cg .cg-head-share svg {
+  width: 20px;
+  height: 20px;
 }
 
 /* ---- clock bar --------------------------------------------------------------- */
@@ -1268,6 +1301,17 @@
     inset: -13px -8px;
   }
 
+  /* the two that sit on lines of their own, "Change place" and "Show them": 44px of their own */
+  .cg .cg-change-place,
+  .cg .cg-tucked .cg-textbtn {
+    min-height: 44px;
+  }
+
+  .cg .cg-change-place::after,
+  .cg .cg-tucked .cg-textbtn::after {
+    inset: 0 -8px;
+  }
+
   /* The time slider's handle: a finger has to grab it (iPhone won't jump to a tap on the
      track), so a 28 × 36px handle, drawn 12 × 22 by its clear border. */
   .cg-scrub input[type="range"] {
@@ -1351,23 +1395,49 @@
   padding: 0;
 }
 
+/* A phone's sheet stands on the tabs (--cg-tabs-h, from globe.js), over the clock, which makes
+   way while it's open (below) without the bar changing its height, so nothing shifts. It always
+   leaves a window of stage, at least 140px, above it, so the globe keeps a good share. */
 .cg-narrow .cg-panel[data-panel] {
   position: absolute;
   right: 0;
-  bottom: var(--cg-dock-h);
+  bottom: var(--cg-tabs-h, var(--cg-dock-h));
   left: 0;
-  z-index: 2;
+  z-index: 4;
   display: none;
-  /* a phone's sheet always leaves a window of stage, at least 140px, above it; the clock
-     makes way while it's open (below), so the globe keeps a good share of the screen */
-  max-height: max(120px, min(42%, calc(100% - var(--cg-dock-h, 0px) - var(--cg-head-h, 0px) - 140px)));
+  max-height: max(120px, min(42%, calc(100% - var(--cg-tabs-h, 0px) - var(--cg-head-h, 0px) - 140px)));
   overflow-y: auto;
 }
 
 .cg-narrow[data-tab="sat"] [data-panel="sat"],
-.cg-narrow[data-tab="passes"] [data-panel="passes"],
-.cg-narrow[data-tab="photos"] [data-panel="photos"] {
+.cg-narrow[data-tab="passes"] [data-panel="passes"] {
   display: block;
+}
+
+/* Pictures opens on its list, the first rows in view; the viewfinder follows the list */
+.cg-narrow[data-tab="photos"] [data-panel="photos"] {
+  display: flex;
+}
+
+.cg-narrow .cg-panel-photos > * {
+  flex: none;
+}
+
+.cg-narrow .cg-panel-photos .cg-vf {
+  order: 1;
+  margin: calc(12 * var(--cg-u)) calc(-1 * var(--cg-pad)) 0;
+}
+
+.cg-narrow .cg-photos {
+  margin-bottom: 0;
+}
+
+/* Typing a place on a phone (globe.js setTyping): the Passes sheet stands from under the header to
+   the top of the keyboard, over the stage, so the keyboard covers neither the box nor its suggestions */
+.cg-narrow.cg-typing .cg-panel[data-panel="passes"] {
+  top: var(--cg-head-h, 0px);
+  bottom: max(var(--cg-tabs-h, 0px), var(--cg-kb, 0px));
+  max-height: none;
 }
 
 /* an open sheet takes the place of the photo card */
@@ -1480,9 +1550,11 @@
   min-width: 0;
 }
 
-/* the UTC line may break after the date on a phone */
+/* the UTC line stays one line, so the bar keeps its height (narrow phones leave out the year, below) */
 .cg-narrow .cg-utc {
-  white-space: normal;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .cg-narrow .cg-speeds,
@@ -1542,38 +1614,66 @@
   }
 
   /* On a phone the clock makes way while a sheet is open, so the globe isn't squeezed into a
-     strip; Stats says what time it's showing when that isn't now. */
+     strip; Stats says what time it's showing when that isn't now. The sheet covers it, and the
+     bar keeps its height. */
   .cg-narrow:is([data-tab="sat"], [data-tab="passes"], [data-tab="photos"]) .cg-clock {
-    display: none;
+    visibility: hidden;
   }
 
-  /* Copy link sits in the header here, at the right of the line under the title (the clock
-     bar has no room for it): the title spans the row the Globe / Map switch shares */
+  /* Copy link is an icon at the end of the Globe / Map row here (the clock bar has no room for it) */
   .cg-narrow .cg-clock > .cg-share {
     display: none;
   }
 
-  .cg-narrow .cg-head {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    column-gap: 12px;
-    align-items: center;
+  .cg-narrow .cg-head-share {
+    display: inline-flex;
   }
 
-  .cg-narrow .cg-head > .cg-back,
-  .cg-narrow .cg-head > .cg-title {
-    grid-column: 1 / -1;
+  /* The header is one row: the title, with "Over …" under it, left of the Globe / Map row
+     (map2d.css; its width is --cg-views-w, from globe.js). Folding the title takes "Over …"
+     away and the row stays as it is, so nothing under it moves. */
+  .cg-narrow .cg-head {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: calc(var(--cg-top, 0px) + 12px + 44px + 8px);
+    padding-right: calc(var(--cg-views-w, 220px) + 12px + 8px);
   }
 
   .cg-narrow .cg-head > [data-ref="headBody"] {
-    grid-column: 1;
     min-width: 0;
   }
 
-  .cg-narrow .cg-head-share {
-    display: inline-flex;
-    grid-column: 2;
-    pointer-events: auto;
+  .cg.cg-narrow .cg-title {
+    min-height: 0;
+  }
+
+  /* the title's own line is 24px: its tap area reaches the row's 44 */
+  .cg.cg-narrow .cg-head .cg-fold {
+    position: relative;
+    min-height: 0;
+  }
+
+  .cg-narrow .cg-head .cg-fold::after {
+    content: "";
+    position: absolute;
+    inset: -10px -8px;
+  }
+
+  .cg.cg-narrow .cg-over {
+    margin-top: 0;
+    overflow: hidden;
+    font-size: var(--cg-small);
+    line-height: 1.45;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+}
+
+/* the narrowest phones: the clock leaves out the year, so the line fits beside the speed and Now */
+@media (max-width: 374px) {
+  .cg-narrow .cg-utc-year {
+    display: none;
   }
 }
 
@@ -1594,13 +1694,20 @@
 @media (min-width: 760px), (min-width: 480px) and (orientation: landscape) {
   .cg-narrow .cg-panel[data-panel] {
     top: var(--cg-top, 0px);
+    bottom: var(--cg-dock-h);
     left: auto;
     width: min(360px, 45%);
     max-height: none;
   }
 
+  /* the header keeps left of the Globe / Map row, which keeps left of the sheet (map2d.css) */
   .cg-narrow:is([data-tab="sat"], [data-tab="passes"], [data-tab="photos"]) .cg-head {
-    padding-right: calc(min(360px, 45%) + 12px);
+    padding-right: calc(min(360px, 45%) + var(--cg-views-w, 180px) + 24px);
+  }
+
+  .cg-narrow.cg-typing .cg-panel[data-panel="passes"] {
+    top: var(--cg-top, 0px);
+    bottom: max(var(--cg-dock-h, 0px), var(--cg-kb, 0px));
   }
 }
 
@@ -1617,7 +1724,7 @@
   }
 
   .cg-narrow:is([data-tab="sat"], [data-tab="passes"], [data-tab="photos"]) .cg-clock {
-    display: none;
+    visibility: hidden;
   }
 
   /* and the header keeps to its one row beside the switch: where it is shows in Stats, and
@@ -1625,6 +1732,46 @@
   .cg-narrow:is([data-tab="sat"], [data-tab="passes"], [data-tab="photos"]) .cg-over,
   .cg-narrow:is([data-tab="sat"], [data-tab="passes"], [data-tab="photos"]) .cg-head-share {
     display: none;
+  }
+
+  /* typing a place: the sheet ends at the keyboard's top */
+  .cg-narrow.cg-typing .cg-panel[data-panel="passes"] {
+    bottom: var(--cg-kb, 0px);
+  }
+
+  /* The header is its one row of 44px with 6px above and below it, under the site's 52px nav,
+     and Copy link is the icon in the Globe / Map row, as on a phone held upright. */
+  .cg-narrow .cg-head {
+    min-height: calc(var(--cg-top, 0px) + 6px + 44px + 6px);
+    padding-top: calc(var(--cg-top, 0px) + 6px);
+    padding-bottom: 6px;
+  }
+
+  .cg-narrow .cg-clock > .cg-share {
+    display: none;
+  }
+
+  .cg-narrow .cg-head-share {
+    display: inline-flex;
+  }
+
+  /* The bar is one band: the tabs at its left, beside the clock, rather than a row of their own
+     under it, so the globe has more than half the height. */
+  .cg-narrow .cg-dock {
+    flex-direction: row;
+    align-items: stretch;
+  }
+
+  .cg-narrow .cg-tabs {
+    order: 0;
+    flex: none;
+    grid-template-columns: repeat(3, 60px);
+    box-shadow: inset -1px 0 0 var(--cg-raised);
+  }
+
+  .cg-narrow .cg-clock {
+    flex: 1 1 auto;
+    min-width: 0;
   }
 }
 
@@ -1636,11 +1783,11 @@
     flex-wrap: wrap;
     align-items: center;
     column-gap: 16px;
-    padding-right: 192px; /* the Globe / Map switch sits here */
+    padding-right: calc(var(--cg-views-w, 180px) + 24px); /* the Globe / Map row sits here */
   }
 
   .cg-narrow:is([data-tab="sat"], [data-tab="passes"], [data-tab="photos"]) .cg-head {
-    padding-right: calc(min(360px, 45%) + 192px);
+    padding-right: calc(min(360px, 45%) + var(--cg-views-w, 180px) + 24px);
   }
 
   .cg-narrow .cg-over {
@@ -1666,6 +1813,15 @@
     order: 0;
     min-width: 0;
     padding-top: 0;
+  }
+}
+
+/* a phone on its side, where the clock is one row beside the tabs: closer gaps, so the slider
+   keeps some length */
+@media (max-height: 500px) and (min-width: 760px) and (orientation: landscape) {
+  .cg-narrow .cg-clock {
+    gap: 12px;
+    padding: 6px 12px;
   }
 }
 

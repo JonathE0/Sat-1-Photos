@@ -1107,6 +1107,19 @@ export function createScene(canvas, labelLayer, opts = {}) {
     return satellite.points.visible ? toScreen(satellite.position) : null;
   }
 
+  /** What the picture pins should keep off, as of the last frame drawn: the boxes of the
+   * FrontierSat and Calgary labels showing, and of the satellite's and the station's marks.
+   * Stage px, { left, top, right, bottom }. */
+  function marks() {
+    const out = [];
+    for (const l of labels) if (l.visible && l.box) out.push(l.box);
+    const reach = 8 * markerScale;
+    const dot = (s) => s && out.push({ left: s.x - reach, top: s.y - reach, right: s.x + reach, bottom: s.y + reach });
+    dot(satelliteScreen());
+    if (station.points.visible) dot(toScreen(station.points.localToWorld(new THREE.Vector3().copy(station.position))));
+    return out;
+  }
+
   function resize(w, h, scale = 1) {
     width = Math.max(1, w);
     height = Math.max(1, h);
@@ -1134,6 +1147,7 @@ export function createScene(canvas, labelLayer, opts = {}) {
         label.el.hidden = true;
         label.visible = false;
       }
+      label.box = null;
       return;
     }
     if (!label.visible) {
@@ -1142,6 +1156,7 @@ export function createScene(canvas, labelLayer, opts = {}) {
     }
     // CSS sets the label off to the right of its point; other sides undo that
     const box = labelBox(side, labelGeometry(label, s));
+    label.box = box; // where it is on the stage, for marks()
     const right = labelBox('right', labelGeometry(label, s));
     const x = Math.round(s.x + box.left - right.left);
     const y = Math.round(s.y + box.top - right.top);
@@ -1216,6 +1231,7 @@ export function createScene(canvas, labelLayer, opts = {}) {
     satelliteLabel: satLabel,
     setViewCentre,
     satelliteScreen,
+    marks,
     /** Show or hide the aurora. */
     setAurora(on) {
       aurora?.setOn(on);

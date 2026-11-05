@@ -193,9 +193,23 @@
   z-index: 2;
 }
 
+/* They rest on the bar as it is with its clock showing (--cg-dock-rest-h), and globe.js
+   (placeFloats) moves them by --cg-float-x and -y to stay just above a sheet along the bottom,
+   or left of one at the side: a transform, eased, so nothing else on the page shifts. */
+.cg-narrow .cg-seg-zoom,
+.cg-narrow .cg-views-side {
+  bottom: calc(var(--cg-dock-rest-h, var(--cg-dock-h, 0px)) + 12px);
+  transform: translate(var(--cg-float-x, 0px), var(--cg-float-y, 0px));
+  transition: transform 280ms cubic-bezier(.22, 1, .36, 1);
+}
+
+.cg-still .cg-seg-zoom,
+.cg-still .cg-views-side {
+  transition: none;
+}
+
 .cg-narrow .cg-seg-zoom {
   right: 12px;
-  bottom: calc(var(--cg-dock-h, 0px) + 12px);
   z-index: 1;
 }
 
@@ -203,7 +217,6 @@
 .cg-narrow .cg-views-side {
   position: absolute;
   right: 64px;
-  bottom: calc(var(--cg-dock-h, 0px) + 12px);
   z-index: 1;
   display: flex;
   align-items: flex-end;
@@ -229,20 +242,40 @@
   clip-path: inset(50%);
 }
 
-/* a sheet at the side: the switch, the zoom and the buttons beside it stay clear of it */
-@media (min-width: 760px), (min-width: 480px) and (orientation: landscape) {
-  .cg-narrow:is([data-tab="sat"], [data-tab="passes"], [data-tab="photos"]) .cg-views-main,
-  .cg-narrow:is([data-tab="sat"], [data-tab="passes"], [data-tab="photos"]) .cg-seg-zoom {
-    right: calc(min(360px, 45%) + 12px);
-  }
-  .cg-narrow:is([data-tab="sat"], [data-tab="passes"], [data-tab="photos"]) .cg-views-side {
-    right: calc(min(360px, 45%) + 64px);
+/* a sheet at the side: the switch moves left of it, as the zoom and the buttons beside it do
+   (--cg-float-x, from globe.js), by transform and eased */
+.cg-narrow .cg-views-main {
+  transform: translateX(var(--cg-float-x, 0px));
+  transition: transform 280ms cubic-bezier(.22, 1, .36, 1);
+}
+
+.cg-still .cg-views-main {
+  transition: none;
+}
+
+/* a phone on its side: the header's one row has 6px above it (globe.css) */
+@media (max-height: 500px) and (min-width: 480px) and (orientation: landscape) {
+  .cg-narrow .cg-views-main {
+    top: calc(var(--cg-top, 0px) + 6px);
   }
 }
 
 .cg-narrow .cg-seg button {
   height: 44px;
   min-width: 44px;
+}
+
+/* a phone: the switch a little tighter, so the title, the switch, the colour and Copy link share a row */
+@media (max-width: 759px) {
+  .cg-narrow .cg-seg button {
+    padding: 0 10px;
+  }
+}
+
+@media (max-width: 374px) {
+  .cg-narrow .cg-seg button {
+    padding: 0 8px;
+  }
 }
 
 @media (pointer: coarse) {

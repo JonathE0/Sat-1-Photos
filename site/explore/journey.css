@@ -70,6 +70,11 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
   height: calc(400vh - var(--jy-top));
   height: calc(300svh + 100dvh - var(--jy-top));
 }
+/* a phone: 200svh, so the swing round the Earth, which has no words, is about a screen long */
+.jy-root.jy-narrow .jy {
+  height: calc(300vh - var(--jy-top));
+  height: calc(200svh + 100dvh - var(--jy-top));
+}
 /* the end of the story (and no WebGL): one screen, nothing left to scroll */
 .jy-root.jy-locked .jy,
 .jy-root[data-mode="still"] .jy {
@@ -273,6 +278,25 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
   outline: none;
 }
 .jy-root.jy-scrolled .jy-cue { opacity: 0; }
+/* a phone, through the story: a thin line along the foot of the screen, filling as it plays, so
+   the stretch without words still shows it's going somewhere */
+.jy-progress { display: none; }
+.jy-root.jy-narrow:not(.jy-locked):not([data-mode="still"]) .jy-progress {
+  position: absolute;
+  z-index: 3;
+  left: 0;
+  right: 0;
+  bottom: env(safe-area-inset-bottom);
+  display: block;
+  height: 3px;
+  background: var(--jy-blue);
+  transform: scaleX(var(--jy-p, 0));
+  transform-origin: left;
+  opacity: 0;
+  transition: opacity 240ms var(--jy-ease-out);
+  pointer-events: none;
+}
+.jy-root.jy-narrow.jy-scrolled:not(.jy-ui-on):not(.jy-locked) .jy-progress { opacity: 0.9; }
 /* under the cue: the pictures, and a way past the story; they go with the cue */
 .jy-intro-links { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 24px; margin: 24px 0 0; transition: opacity 240ms var(--jy-ease-out); }
 .jy-text .jy-intro-links,
@@ -528,7 +552,6 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
 .jy-qr-svg { display: block; width: 100%; height: 100%; }
 .jy-qr-text { display: flex; flex-direction: column; gap: 2px; }
 .jy-qr-title { color: var(--jy-ink); font-size: var(--jy-body); font-weight: 500; }
-.jy-qr-url { color: var(--jy-ink); white-space: nowrap; }
 /* phones have the tab bar down there, and Credits says the same */
 .jy-root[data-mode="still"] .jy-meta,
 .jy-narrow .jy-meta,
@@ -1031,6 +1054,9 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
 .jy-pin.is-off { visibility: hidden; }
 .jy-pin.in-pile,
 .jy-pin.is-under { pointer-events: none; }
+/* a phone: a picture that would sit on the satellite's name gives way to it */
+.jy-pin.is-on-label,
+.jy-pile-count.is-on-label { opacity: 0; pointer-events: none; }
 /* A dark frame (black, noise, or the Sun as a dot) has nothing to show at this size: a
    small dim square rather than a black thumbnail in a frame. It still takes a pointer
    over a fair area, and its card shows the picture. */
@@ -1068,6 +1094,21 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
   white-space: nowrap;
   pointer-events: none;
 }
+/* a phone: the number on the pile's corner */
+.jy-pile-count.is-badge {
+  display: grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 9px;
+  background: var(--jy-ink);
+  color: var(--jy-space);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+}
+.jy-pile-count[hidden] { display: none; }
 
 /* the satellite and its label are one button; the label sits 12px right of the model */
 .jy-sat {
@@ -1461,6 +1502,11 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
 }
 .jy-narrow.jy-locked .jy-panel { bottom: calc(var(--jy-tabbar) + env(safe-area-inset-bottom)); }
 .jy-narrow .jy-panel.is-on { transform: none; }
+/* going, it keeps its height (is-open stays until it's gone) and slides down as it fades */
+.jy-root.jy-narrow:not(.jy-calm) .jy-panel:not(.is-on) {
+  transform: translateY(48px);
+  transition: opacity 200ms var(--jy-ease-exit), transform 220ms var(--jy-ease-exit) !important;
+}
 /* opens at its natural height up to this share (SHEET_OPEN_SHARE in journey.js), so the satellite
    stays in view above it; once the handle has moved it, the height is set there */
 .jy-narrow .jy-panel.is-open { max-height: 45%; overflow: auto; }
@@ -1471,8 +1517,21 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
   padding-right: max(16px, env(safe-area-inset-right));
 }
 .jy-narrow.jy-wide-phone .jy-panel.is-open { max-height: calc(100% - var(--jy-nav) - var(--jy-tabbar) - env(safe-area-inset-bottom)); }
-/* while a phone's panel is up, the headline makes way for the satellite (it comes back on closing) */
-.jy-root.jy-narrow.jy-panel-open .jy-text { opacity: 0; visibility: hidden; transition: opacity 150ms var(--jy-ease-exit), visibility 0s linear 150ms; }
+/* while a phone's panel is up, the headline makes way for the satellite. It comes back once the
+   camera has moved, not in the same moment. On its side, Controls and Facts take the right-hand
+   column too, and the headline makes way for them as well. */
+.jy-root.jy-narrow .jy-text { transition: opacity 260ms var(--jy-ease-out) 240ms, visibility 0s; }
+.jy-root.jy-narrow.jy-panel-open .jy-text,
+.jy-root.jy-narrow.jy-wide-phone:is(.jy-phone-controls, .jy-phone-facts) .jy-text {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 150ms var(--jy-ease-exit), visibility 0s linear 150ms;
+}
+.jy-root.jy-narrow.jy-wide-phone:not([data-mode="still"]) :is(.jy-time, .jy-corner, .jy-facts-slot) {
+  left: auto;
+  right: 0;
+  width: min(440px, 55%);
+}
 .jy-narrow .jy-panel.is-sized { max-height: none; }
 .jy-root.jy-narrow:not(.jy-calm) .jy-panel.is-on {
   transition: opacity 240ms var(--jy-ease-out), transform 240ms var(--jy-ease-out), height 280ms var(--jy-ease-out) !important;
@@ -1527,6 +1586,11 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
   .jy-sub { margin-top: 10px; }
   .jy-sub + .jy-lead { margin-top: 12px; }
   .jy-cue { margin-top: 24px; }
+}
+/* small phones (320 x 640 and the like): the end view keeps the name and the live sentence, and
+   the globe gets the room the two subheadings took */
+@media (max-height: 700px) and (max-width: 599px) {
+  .jy-root.jy-narrow.jy-composed .jy-sub { display: none; }
 }
 @media (max-height: 480px) {
   /* phones on their side: the name, the subheading and the live sentence */
