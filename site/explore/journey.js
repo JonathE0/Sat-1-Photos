@@ -350,7 +350,7 @@ function template(id, siteRoot) {
 
       <div class="jy-text">
         <div class="jy-beat jy-b1" data-ref="b1">
-          <h1 class="jy-h1"><span class="jy-words">FRONTIER SAT</span></h1>
+          <h1 class="jy-h1"><span class="jy-words">FrontierSat</span></h1>
           <p class="jy-sub"><span class="jy-words">NORAD ID 69015</span></p>
           <p class="jy-sub"><span class="jy-words">Interactive picture visualizer</span></p>
           <p class="jy-lead jy-intro-only"><span class="jy-words">Calgary\u2019s first student-built satellite. In orbit since ${launchDate}.</span></p>
@@ -620,6 +620,7 @@ export function mountJourney(container, options = {}) {
       stage.classList.add('jy-earth-ready');
       for (const pin of pins) loadPinPicture(pin.el.querySelector('img'));
       loadPlaceNames();
+      startSatellite();
       needsFrame = true;
     };
     // fade in once the full maps are uploaded (the upload itself can stall a
@@ -713,10 +714,20 @@ export function mountJourney(container, options = {}) {
     satOpacity = -1;
   }
 
+  // The model (about 1 MB) waits until the Earth's maps are in, since they hold back the
+  // opening fade and it would share the line with them (on a phone, the globe comes up sooner).
+  // A scroll heads for the satellite, so the first one starts it straight away.
+  let satStarted = false;
+  function startSatellite() {
+    if (satStarted || destroyed) return;
+    satStarted = true;
+    loadSatellite();
+  }
+
   if (webgl) {
     loadEarth();
     loadSky();
-    loadSatellite();
+    listen(window, 'scroll', startSatellite, { passive: true, once: true });
   } else {
     loadPlaceNames();
   }

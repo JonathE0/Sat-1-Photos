@@ -1,0 +1,24 @@
+{
+  "name": "FrontierSat",
+  "short_name": "FrontierSat",
+  "description": "Where FrontierSat, Calgary To Space’s first student-built satellite, is right now, and every picture it has sent down.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#05070A",
+  "theme_color": "#05070A",
+  "icons": [
+    {
+      "src": "assets/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

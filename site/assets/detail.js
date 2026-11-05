@@ -1,6 +1,6 @@
 // The detail view: the picture on slate, an info panel, the edit form and the history.
 
-import { h, mono, joined, announce, store, copyText } from './dom.js';
+import { h, mono, joined, announce, store, copyText, onSwipe } from './dom.js';
 import {
   CAMERAS, basisText, bytes, calgary, cameraLong, clock, monthDayYear, inputTime, isoDay, isoUTC,
   latLon, parseUtcInput, percent, plural, shortHash, statusWord, toDate, utcLong,
@@ -230,11 +230,17 @@ export function createDetail(root, ctx) {
 
   function stage(p, prev, next, globe) {
     const note = shotNote(p);
+    const shot = h('figure', { class: 'shot' },
+      shotImage(p),
+      note && h('figcaption', { class: 'shot-note' }, note));
+    // on a phone, a swipe on the picture goes to the next (left) or the previous (right)
+    onSwipe(shot, (dir) => {
+      const dest = dir > 0 ? next : prev;
+      if (dest) ctx.go(dest.id, 'swipe');
+    });
     return h('div', { class: 'stage-wrap' },
       h('div', { class: 'stage', style: `--pic-w: ${p.width}px` }, // the arrows stay beside the picture
-        h('figure', { class: 'shot' },
-          shotImage(p),
-          note && h('figcaption', { class: 'shot-note' }, note)),
+        shot,
         h('nav', { class: 'stepper', 'aria-label': 'Browse pictures' },
           stepLink(prev, 'prev'),
           globe && globeLink(globe, { class: 'step step-globe' }, 'Back to globe'),

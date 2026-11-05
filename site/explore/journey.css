@@ -189,6 +189,7 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
   line-height: 0.9;
   letter-spacing: -0.03em;
   white-space: nowrap;
+  text-transform: uppercase; /* written FrontierSat, so it reads as the name */
 }
 
 .jy-lead {

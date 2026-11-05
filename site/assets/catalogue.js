@@ -22,7 +22,7 @@
 // With no id in the URL it opens on the newest picture that isn't dark and
 // is at least half there; the strip still starts with the newest.
 
-import { h, append, announce, copyText } from './dom.js';
+import { h, append, announce, copyText, onSwipe } from './dom.js';
 import { CALGARY_TIME_ZONE, CALGARY_ZONE_NAME } from './calgary-clock.js';
 import { OPENING_PHOTO_ID } from './opening-photo.js';
 import { CAMERAS, clock, monthDayYear, grouped, latLon, percent, plural, toDate } from './format.js';
@@ -347,6 +347,8 @@ export function createCatalogue(root, {
   const retry = h('button', { type: 'button', class: 'cat-text-btn' }, 'Try again');
   const fail = h('div', { class: 'cat-fail', hidden: true }, failText, retry);
   const frame = h('div', { class: 'cat-frame' }, img, fail);
+  // on a phone, a swipe on the picture is Older (left) or Newer (right)
+  onSwipe(frame, (dir) => { if (size === 1) step(dir, 'swipe'); });
   img.addEventListener('error', () => {
     if (!img.getAttribute('src')) return;
     frame.classList.add('is-failed');

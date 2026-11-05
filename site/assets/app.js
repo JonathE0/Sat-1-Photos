@@ -166,7 +166,7 @@ function confirmLeave() {
 function goToPhoto(id, via) {
   if (!confirmLeave()) return;
   state.skipGuard = true; // already asked
-  state.pendingFocus = via || null; // "prev", "next" or "key": where focus goes on the new picture
+  state.pendingFocus = via || null; // "prev", "next", "key" or "swipe": where focus goes on the new picture (nowhere for a swipe)
   const qi = location.hash.indexOf('?');
   location.replace(`#/photo/${encodeURIComponent(id)}${qi >= 0 ? location.hash.slice(qi) : ''}`);
 }

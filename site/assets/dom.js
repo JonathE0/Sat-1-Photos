@@ -77,3 +77,28 @@ export async function copyText(text) {
   area.remove();
   return ok;
 }
+
+// A quick sideways swipe with one finger on el: fn(1) for a swipe to the left (on to the next,
+// as a page turns), fn(-1) for one to the right. Up and down still scroll; a page pinched in
+// pans instead; and a swipe from the screen's edge is left to the browser's own Back.
+export function onSwipe(el, fn) {
+  const EDGE = 24;
+  let start = null;
+  el.addEventListener('touchstart', (e) => {
+    const t = e.touches[0];
+    const zoomed = (window.visualViewport?.scale || 1) > 1.01;
+    const atEdge = t.clientX < EDGE || t.clientX > window.innerWidth - EDGE;
+    start = e.touches.length === 1 && !zoomed && !atEdge ? { x: t.clientX, y: t.clientY, at: e.timeStamp } : null;
+  }, { passive: true });
+  el.addEventListener('touchmove', (e) => { if (e.touches.length > 1) start = null; }, { passive: true });
+  el.addEventListener('touchcancel', () => { start = null; }, { passive: true });
+  el.addEventListener('touchend', (e) => {
+    if (!start) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - start.x;
+    const dy = t.clientY - start.y;
+    const quick = e.timeStamp - start.at < 700;
+    start = null;
+    if (quick && Math.abs(dx) >= 48 && Math.abs(dx) > Math.abs(dy) * 1.6) fn(dx < 0 ? 1 : -1);
+  }, { passive: true });
+}
