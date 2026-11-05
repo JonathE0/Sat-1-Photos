@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-05T05:28:46Z",
+ "generated_at": "2026-11-05T20:28:51Z",
  "satellite": {
   "name": "FrontierSat",
   "norad_id": 69015,
@@ -34,16 +34,16 @@
     "packets": 34
    },
    "position": {
-    "lat": -82.3248,
-    "lon": -129.0519,
+    "lat": -82.2959,
+    "lon": -129.7469,
     "alt_km": 519.6,
     "place": "Antarctica",
     "ground_sunlit": true,
-    "sun_elevation_deg": 19.6,
+    "sun_elevation_deg": 19.7,
     "satellite_sunlit": true,
     "satellite_light": "sunlit",
-    "sun_above_limb_deg": 41.8,
-    "tle_epoch": "2026-11-01T14:34:12Z",
+    "sun_above_limb_deg": 41.9,
+    "tle_epoch": "2026-11-03T12:17:06Z",
     "basis": "SGP4 from the most recent TLE before capture"
    },
    "unnamed": false
