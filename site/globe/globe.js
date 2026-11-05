@@ -19,7 +19,7 @@ import { createPlaceSearch } from './placesearch.js';
 import { fmtKm } from './regionpasses.js';
 import { createShotPanel } from './shotpanel.js';
 import { rovingList } from './rovinglist.js';
-import { grouped } from '../assets/format.js';
+import { grouped, plural } from '../assets/format.js';
 import { CALGARY_TIME_ZONE, CALGARY_ZONE_NAME } from '../assets/calgary-clock.js';
 import { auroraNote } from './aurora.js';
 import { createPicturePins } from './picturepins.js';
@@ -143,7 +143,14 @@ const ICONS = {
     '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.25L6 7.75l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>',
   calendar:
     '<svg class="cg-time-icon" viewBox="0 0 12 12" aria-hidden="true"><path d="M1.5 2.75h9v7.75h-9zM1.5 5.25h9M4 1v2.75M8 1v2.75" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>',
+  // the phone's tab bar, as on Explore (explore/journey.js); Passes: a pass over the horizon
+  stats: '<svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><path d="M4 16.5V10M10 16.5V4M16 16.5v-9" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>',
+  passes: '<svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><path d="M2 15.5h16M4 15.5a6 6 0 0 1 12 0" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="10" cy="9.5" r="1.9" fill="currentColor"/></svg>',
+  pictures: '<svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><path d="M3 4.5h14v11H3zM3 13l4-4 3 3 2.5-2.5L17 14" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>',
 };
+
+/** Steps for the zoom buttons and the + and − keys: the map's scale, the globe's height above the ground. */
+const ZOOM_STEP = { map: 2, globe: 1.6 };
 
 const TEMPLATE = `
   <div class="cg-stage">
@@ -153,6 +160,7 @@ const TEMPLATE = `
     <div class="cg-labels" aria-hidden="true"></div>
     <div class="cg-tip" hidden></div>
     <div class="cg-peek" data-ref="peek" hidden></div>
+    <p class="cg-toast" data-ref="toast" role="status"></p>
   </div>
 
   <div class="cg-views">
@@ -164,14 +172,14 @@ const TEMPLATE = `
     </div>
     <div class="cg-views-side">
       <button type="button" class="cg-btn cg-aurora-btn" data-ref="auroraBtn" aria-pressed="true"
-        title="Show or hide NOAA's aurora forecast (A)">Aurora</button>
-      <div class="cg-seg cg-seg-zoom" role="group" aria-label="Map zoom. Arrow keys move between them." data-ref="zoom">
-        <button type="button" data-ref="zoomOut" aria-label="Zoom out" title="Zoom out (−)">−</button>
-        <button type="button" data-ref="zoomIn" aria-label="Zoom in" title="Zoom in (+)">+</button>
-      </div>
+        title="Show or hide NOAA’s aurora forecast (A)">Aurora</button>
       <button type="button" class="cg-btn cg-previews-btn" data-ref="previewsBtn" hidden
         title="Show or hide the pictures on the globe and the map">${ICONS.eye}<span data-ref="previewsText">Hide photo previews</span></button>
     </div>
+  </div>
+  <div class="cg-seg cg-seg-zoom" role="group" aria-label="Zoom. Arrow keys move between them." data-ref="zoom">
+    <button type="button" data-ref="zoomOut" aria-label="Zoom out" title="Zoom out (−)">−</button>
+    <button type="button" data-ref="zoomIn" aria-label="Zoom in" title="Zoom in (+)">+</button>
   </div>
 
   <div class="cg-col cg-col-left">
@@ -189,14 +197,16 @@ const TEMPLATE = `
         <p class="cg-fine cg-credit" data-ref="auroraNote" hidden></p>
         <p class="cg-fine cg-note" data-ref="note" hidden></p>
       </div>
+      <button type="button" class="cg-btn cg-share cg-head-share" data-ref="share2">Copy link</button>
     </header>
-    <section class="cg-panel" data-panel="sat" data-ref="satPanel" aria-label="Right now">
+    <section class="cg-panel" data-panel="sat" data-ref="satPanel" aria-label="Stats">
       <div class="cg-panel-head">
-        <h2><button type="button" class="cg-fold" data-ref="fold" aria-expanded="true">Right now${ICONS.chevron}</button></h2>
+        <h2><button type="button" class="cg-fold" data-ref="fold" aria-expanded="true">Stats${ICONS.chevron}</button></h2>
         <button type="button" class="cg-btn" data-ref="follow" aria-pressed="false"
           title="Keep the camera on the satellite (F)">Follow</button>
       </div>
       <div class="cg-fold-body">
+      <p class="cg-fine cg-at" data-ref="at" hidden></p>
       <dl class="cg-readouts">
         <div><dt>Latitude</dt><dd data-ref="lat">—</dd></div>
         <div><dt>Longitude</dt><dd data-ref="lon">—</dd></div>
@@ -221,9 +231,11 @@ const TEMPLATE = `
         <div><dt><kbd>F</kbd></dt><dd>Follow the satellite</dd></div>
         <div><dt><kbd>T</kbd></dt><dd>Go to a date and time</dd></div>
         <div><dt><kbd>M</kbd></dt><dd>Switch between globe and map</dd></div>
-        <div><dt><kbd>A</kbd></dt><dd>Show or hide the aurora</dd></div>
-        <div><dt><kbd>+</kbd> <kbd>−</kbd></dt><dd>Zoom the map</dd></div>
+        <div><dt><kbd>A</kbd></dt><dd>Show or hide the aurora (on the globe)</dd></div>
+        <div><dt><kbd>+</kbd> <kbd>−</kbd></dt><dd>Zoom</dd></div>
         <div><dt><kbd>P</kbd></dt><dd>Show or hide the panels</dd></div>
+        <div><dt><kbd>Esc</kbd></dt><dd>Close the picture, this list or a dialog</dd></div>
+        <div><dt><kbd>?</kbd></dt><dd>Show or hide this list</dd></div>
       </dl>
     </details>
   </div>
@@ -232,11 +244,13 @@ const TEMPLATE = `
     <section class="cg-panel" data-panel="passes" data-ref="passesPanel" aria-label="Passes over Calgary">
       <div class="cg-panel-head">
         <h2 data-ref="passesTitle" tabindex="-1">Passes over Calgary</h2>
+        <button type="button" class="cg-textbtn cg-change-place" data-ref="changePlace"
+          aria-label="Change place: passes over another country or sea">Change place</button>
         <button type="button" class="cg-fold cg-fold-side" data-ref="passesFold" aria-expanded="true" aria-label="Show or hide the passes" disabled>${ICONS.chevron}</button>
       </div>
       <div data-ref="placeSlot"></div>
       <div class="cg-calgary-passes" data-ref="calgaryPasses">
-        <p class="cg-fine cg-passes-note cg-fold-body">Seen from the RAO ground station, horizon to horizon, for passes reaching ${PASS_PEAK_DEG}°. Times in Calgary.</p>
+        <p class="cg-fine cg-passes-note cg-fold-body">Seen from the RAO ground station, horizon to horizon, for passes reaching ${PASS_PEAK_DEG}°. Times are Calgary time.</p>
         <p class="cg-status" data-ref="gs"></p>
         <ol class="cg-list cg-passes cg-fold-body" data-ref="passes" role="list" aria-label="Next passes over Calgary. Arrow keys move between them."></ol>
       </div>
@@ -249,6 +263,8 @@ const TEMPLATE = `
       </div>
       <div class="cg-vf cg-fold-body" data-ref="vfSlot" hidden></div>
       <button type="button" class="cg-btn cg-highlight cg-fold-body" data-ref="highlight" hidden>Highlight photos taken by FrontierSat</button>
+      <p class="cg-fine cg-tucked cg-fold-body" data-ref="tucked" hidden><span data-ref="tuckedText"></span>
+        <button type="button" class="cg-textbtn" data-ref="tuckedBtn">Show them</button></p>
       <ul class="cg-list cg-photos cg-fold-body" data-ref="photos" role="list" aria-label="Pictures. Arrow keys move between them."></ul>
     </section>
   </div>
@@ -269,17 +285,17 @@ const TEMPLATE = `
 
   <div class="cg-dock" data-ref="dock">
   <nav class="cg-tabs" aria-label="Panels">
-    <button type="button" data-tab="sat" data-ref="satTab" aria-pressed="false">Right now</button>
-    <button type="button" data-tab="passes" aria-pressed="false">Passes</button>
-    <button type="button" data-tab="photos" aria-pressed="false">Pictures</button>
-    <button type="button" data-ref="share2" class="cg-share">Copy link</button>
+    <button type="button" class="cg-tab" data-tab="sat" aria-pressed="false">${ICONS.stats}<span>Stats</span></button>
+    <button type="button" class="cg-tab" data-tab="passes" aria-pressed="false">${ICONS.passes}<span>Passes</span></button>
+    <button type="button" class="cg-tab" data-tab="photos" aria-pressed="false">${ICONS.pictures}<span>Pictures</span></button>
   </nav>
 
   <div class="cg-clock" role="group" aria-label="Clock">
     <button type="button" class="cg-time" data-ref="timeBtn" aria-haspopup="dialog" aria-expanded="false"
       title="Go to a date and time (T)">
       <span class="cg-vh">Go to a time. Showing </span>
-      <span class="cg-utc"><span data-ref="utc" aria-live="off">—</span>${ICONS.calendar}</span>
+      <span class="cg-utc"><span data-ref="utc" aria-live="off">—</span> <span class="cg-utc-tail"><span
+        data-ref="utcTime" aria-live="off"></span>${ICONS.calendar}</span></span>
       <span class="cg-fine" data-ref="local"></span>
     </button>
     <div class="cg-transport">
@@ -292,14 +308,15 @@ const TEMPLATE = `
         ${SPEEDS.map((s) => `<button type="button" class="cg-btn" data-speed="${s}" aria-pressed="false">${s}×</button>`).join('')}
       </div>
       <button type="button" class="cg-btn cg-speed-cycle" data-ref="speedCycle" aria-label="Speed">1×</button>
-      <button type="button" class="cg-btn" data-ref="now" aria-pressed="false" title="Back to now, at 1× (N)">Now</button>
+      <button type="button" class="cg-btn cg-now" data-ref="now" aria-disabled="true" title="Showing now">Now</button>
     </div>
     <div class="cg-scrub">
       <div class="cg-ticks" data-ref="ticks" aria-hidden="true"></div>
       <input type="range" data-ref="scrub" min="-1440" max="1440" step="1" value="0"
         aria-label="Time, up to a day either side of the focus time">
       <div class="cg-scrub-labels cg-fine" aria-hidden="true">
-        <span>A day earlier</span><span data-ref="offset">Now</span><span>A day later</span>
+        <span><span class="cg-scrub-long">A day earlier</span><span class="cg-scrub-short">−1 day</span></span><span
+          data-ref="offset">Now</span><span><span class="cg-scrub-long">A day later</span><span class="cg-scrub-short">+1 day</span></span>
       </div>
     </div>
     <button type="button" class="cg-btn cg-panels-btn" data-ref="panels" aria-expanded="true"
@@ -338,6 +355,8 @@ function noScene() {
     pick: () => null,
     resize: nothing,
     frame: () => false,
+    zoomBy: nothing,
+    zoomRoom: { in: false, out: false },
     dispose: nothing,
   };
 }
@@ -556,7 +575,7 @@ export function mountGlobe(container, options = {}) {
   let uiScale = 1;
   /** Room the page keeps above the corners for its own nav (--cg-top, px). */
   const pageTop = () => parseFloat(getComputedStyle(root).getPropertyValue('--cg-top')) || 0;
-  // "Right now" folds to its heading where a selected picture's card needs
+  // Stats folds to its heading where a selected picture’s card needs
   // the room; its heading opens it again (until the card changes).
   let satFull = 0; // its height unfolded
   let satFoldedByUser = null;
@@ -687,8 +706,11 @@ export function mountGlobe(container, options = {}) {
       inset.top = free.top + 8;
       inset.bottom = r.height - free.bottom;
       inset.right = r.width - free.right;
-      // the zoom buttons stand at the frame's lower right, unless a sheet below covers them
-      inset.labelRight = sheet?.width && free.bottom === sheet.top - r.top ? 0 : 64;
+      // the zoom and the buttons beside it stand at the frame's lower right, unless a sheet below covers them
+      const lefts = [el.zoom, el.auroraBtn, el.previewsBtn]
+        .filter((b) => b.getClientRects().length)
+        .map((b) => b.getBoundingClientRect().left);
+      inset.labelRight = sheet?.width && free.bottom === sheet.top - r.top ? 0 : Math.max(64, free.right - (Math.min(...lefts, r.right) - r.left) + 8);
     } else {
       inset.top = pageTop(); // the map starts under the site nav, which sits on Space
       inset.bottom = r.bottom - clock.getBoundingClientRect().top + gap;
@@ -696,6 +718,8 @@ export function mountGlobe(container, options = {}) {
         inset.left = colLeft.getBoundingClientRect().right - r.left + gap;
         inset.right = r.right - colRight.getBoundingClientRect().left + gap;
       }
+      // the zoom stands at the frame's lower right: the longitudes along the foot stop short of it
+      if (opts.ui !== 'compact') inset.labelRight = el.zoom.offsetWidth + gap;
     }
     map.resize(root.clientWidth || 800, root.clientHeight || 600, uiScale, inset);
     // the globe centres in the same space
@@ -836,6 +860,7 @@ export function mountGlobe(container, options = {}) {
     }
     if (uiDirty || now - lastUi >= 100) {
       paintClock();
+      paintZoom(); // the wheel and a pinch move it too
       if (uiDirty || now - lastUi >= 250) {
         paintReadouts();
         paintAurora();
@@ -845,12 +870,18 @@ export function mountGlobe(container, options = {}) {
     }
   }
 
-  /** The button, and the line that says what's being shown. Only the globe has an aurora. */
+  /** The button, and the line that says what's being shown. Only the globe has an aurora: on the
+   * map the button stays, dimmed, and says so. */
   function paintAurora() {
     const status = scene.auroraStatus;
     const shown = Boolean(status) && !onMap();
-    el.auroraBtn.hidden = !shown;
+    el.auroraBtn.hidden = !status;
     el.auroraBtn.setAttribute('aria-pressed', String(auroraOn));
+    const off = String(onMap());
+    if (el.auroraBtn.getAttribute('aria-disabled') !== off) {
+      el.auroraBtn.setAttribute('aria-disabled', off);
+      el.auroraBtn.title = onMap() ? 'The aurora shows on the globe only' : 'Show or hide NOAA’s aurora forecast (A)';
+    }
     const note = shown && auroraOn ? auroraNote(status, state.ms) : null;
     el.auroraNote.hidden = !note;
     if (note && el.auroraNote.textContent !== note) el.auroraNote.textContent = note;
@@ -1029,16 +1060,40 @@ export function mountGlobe(container, options = {}) {
     }
     // placed photos newest first, then the ones without a time
     photos.sort(comparePhotos);
-    const pins = photos.filter((p) => p.placed).map((p) => ({ id: p.id, latDeg: p.lat, lonDeg: p.lon }));
-    for (const v of [scene, map]) {
-      v.setPins(pins);
-      v.setSelected(state.selectedId);
-    }
-    picturePins?.setPins(photos.filter((p) => p.placed).map((p) => ({ id: p.id, thumb: safeHref(p.thumb), dark: p.dark, square: p.square })));
-    picturePins?.setSelected(state.selectedId);
+    pinsKey = null;
+    pushPins();
     paintPhotoList();
     paintTicks();
   }
+
+  // Dark frames and mostly missing ones (under a fifth shown) stay out of the list, the pins and
+  // the ticks until asked for, as on Pictures; a picture that's chosen always shows.
+  let showTucked = false;
+  const tucked = (p) => p.dark || p.mostlyMissing;
+  const listed = () => photos.filter((p) => showTucked || !tucked(p) || p.id === state.selectedId);
+
+  /** The pins on both views, when the pictures they stand for change. */
+  let pinsKey = null;
+  function pushPins() {
+    const placed = listed().filter((p) => p.placed);
+    const key = placed.map((p) => p.id).join(',');
+    if (key !== pinsKey) {
+      pinsKey = key;
+      for (const v of [scene, map]) v.setPins(placed.map((p) => ({ id: p.id, latDeg: p.lat, lonDeg: p.lon })));
+      picturePins?.setPins(placed.map((p) => ({ id: p.id, thumb: safeHref(p.thumb), dark: p.dark, square: p.square })));
+    }
+    for (const v of [scene, map]) v.setSelected(state.selectedId);
+    picturePins?.setSelected(state.selectedId);
+  }
+
+  function setShowTucked(on) {
+    showTucked = on;
+    pushPins();
+    paintPhotoList();
+    paintTicks();
+    placePins(); // the button keeps the focus and its place, with new words
+  }
+  listen(el.tuckedBtn, 'click', () => setShowTucked(!showTucked));
 
   /** The thumbnails follow the view on screen, and the preview over one follows its pin. */
   function placePins() {
@@ -1177,10 +1232,22 @@ export function mountGlobe(container, options = {}) {
   function buildPhotoList() {
     const ul = el.photos;
     ul.replaceChildren();
-    const placed = photos.filter((p) => p.placed).length;
-    el.photoCount.textContent = photos.length ? `${photos.length}, ${placed} on the globe` : '';
+    const list = listed();
+    const placed = list.filter((p) => p.placed).length;
+    // "29 pictures, 20 shown on the globe", and how many dark or mostly missing ones that leaves out
+    el.photoCount.textContent = list.length ? `${plural(list.length, 'picture')}, ${grouped(placed)} shown on the globe` : '';
     el.highlight.hidden = !placed;
-    if (!photos.length) {
+    const nTucked = photos.filter(tucked).length;
+    el.tucked.hidden = !nTucked;
+    if (nTucked) {
+      const what = plural(nTucked, 'dark or mostly missing frame');
+      // the one chosen shows whatever the switch says, so it isn't counted as left out
+      const out = plural(photos.length - list.length, 'dark or mostly missing frame');
+      el.tuckedText.textContent = showTucked ? `Including ${what}.` : `${out} left out.`;
+      el.tuckedBtn.textContent = showTucked ? 'Hide them' : 'Show them';
+      el.tuckedBtn.setAttribute('aria-label', showTucked ? `Hide the ${what}` : `Show the ${out}`);
+    }
+    if (!list.length) {
       const li = document.createElement('li');
       li.className = 'cg-empty';
       li.textContent = !loaded ? 'Loading…' : photosFailed ? 'The pictures couldn’t load. Reload the page to try again.' : 'No pictures yet.';
@@ -1188,13 +1255,13 @@ export function mountGlobe(container, options = {}) {
       return;
     }
     const counts = { date: 0, none: 0 };
-    for (const p of photos) if (whenKnown(p) !== 'time') counts[whenKnown(p)]++;
+    for (const p of list) if (whenKnown(p) !== 'time') counts[whenKnown(p)]++;
     const groupTitle = {
-      date: `${counts.date} not on the globe: only the date is known`,
-      none: `${counts.none} not on the globe: no date known`,
+      date: `${counts.date} not on the globe: time unknown`,
+      none: `${counts.none} not on the globe: date unknown`,
     };
     let group = 'time';
-    for (const p of photos) {
+    for (const p of list) {
       const known = whenKnown(p);
       if (known !== group) {
         group = known;
@@ -1226,7 +1293,7 @@ export function mountGlobe(container, options = {}) {
       t.textContent = photoName(p);
       const m = document.createElement('span');
       m.className = 'cg-photo-meta cg-fine';
-      m.textContent = p.ms !== null ? utcWhen(p.ms) : known === 'date' ? 'Time not known' : 'Date not known';
+      m.textContent = p.ms !== null ? utcWhen(p.ms) : known === 'date' ? 'Time unknown' : 'Date unknown';
       b.append(thumb, t, m);
       b.addEventListener('click', () => {
         closeSheet();
@@ -1241,7 +1308,7 @@ export function mountGlobe(container, options = {}) {
     const box = el.ticks;
     box.replaceChildren();
     const start = state.focusMs - DAY_MS;
-    for (const p of photos) {
+    for (const p of listed()) {
       if (!p.placed || p.ms < start || p.ms > start + 2 * DAY_MS) continue;
       const tick = document.createElement('span');
       tick.className = p.id === state.selectedId ? 'cg-tick cg-tick-on' : 'cg-tick';
@@ -1262,9 +1329,7 @@ export function mountGlobe(container, options = {}) {
     const p = findPhoto(String(id));
     if (!p) return false;
     state.selectedId = p.id;
-    scene.setSelected(p.id);
-    map.setSelected(p.id);
-    picturePins?.setSelected(p.id);
+    pushPins(); // a dark frame shows while it's the one chosen
     rightOpen = 'photos'; // where the picture goes up
     showInViewfinder(p.id);
     if (p.ms !== null) {
@@ -1285,9 +1350,7 @@ export function mountGlobe(container, options = {}) {
 
   function clearSelection() {
     state.selectedId = null;
-    scene.setSelected(null);
-    map.setSelected(null);
-    picturePins?.setSelected(null);
+    pushPins();
     paintCard();
     paintPhotoList();
     paintTicks();
@@ -1300,7 +1363,7 @@ export function mountGlobe(container, options = {}) {
     el.card.hidden = !p;
     root.classList.toggle('cg-has-card', !!p);
     if (p) paintCardBody(p);
-    layout(); // fold "Right now" to fit at once, not when the resize observer next runs
+    layout(); // fold Stats to fit at once, not when the resize observer next runs
   }
 
   function paintCardBody(p) {
@@ -1322,7 +1385,7 @@ export function mountGlobe(container, options = {}) {
     }
     el.cardImg.alt = p.title;
     if (p.ms === null) {
-      el.cardTime.textContent = p.captureDate ? `${utcDay(Date.parse(p.captureDate))}, time not known` : 'Date not known';
+      el.cardTime.textContent = p.captureDate ? `${utcDay(Date.parse(p.captureDate))}, time unknown` : 'Date unknown';
       el.cardPos.textContent = 'Not on the globe';
       el.cardLight.textContent = '';
       return;
@@ -1371,10 +1434,12 @@ export function mountGlobe(container, options = {}) {
   }
 
   function paintClock() {
-    // no-break spaces: on a phone the line may only break after the date
-    put(el.utc, `${utcDay(state.ms).replace(/ /g, ' ')}, ${utcTime(state.ms)} UTC`);
+    // no-break spaces in the date: on a phone the line may only break after it, and the
+    // calendar keeps to the time
+    put(el.utc, `${utcDay(state.ms).replace(/ /g, ' ')},`);
+    put(el.utcTime, `${utcTime(state.ms)} UTC`);
     const local = localTime(state.ms, false);
-    put(el.local, `${local.time} ${local.zone} in Calgary`);
+    put(el.local, `${local.time} ${local.zone}`); // "23:19 Calgary time"
     const offset = Math.round((state.ms - state.focusMs) / MIN_MS);
     if (document.activeElement !== el.scrub && String(offset) !== el.scrub.value) el.scrub.value = String(offset);
     put(el.offset, state.live ? 'Now' : fmtOffset(state.ms - state.focusMs, !state.playing));
@@ -1383,15 +1448,15 @@ export function mountGlobe(container, options = {}) {
   function paintReadouts() {
     const s = satState;
     const dash = '—';
-    // "Right now" only when it is: otherwise say what time this is for
-    const at = state.live ? null : localTime(state.ms, false).time;
-    const when = at ? `At ${at} in Calgary` : 'Right now';
-    if (shown.get(el.fold) !== when) {
-      el.fold.firstChild.nodeValue = when;
-      el.satPanel.setAttribute('aria-label', when);
-      shown.set(el.fold, when);
+    // Stats, as on Explore; away from now, a line says what time they're for
+    const at = state.live ? null : `At ${localTime(state.ms, false).time} in Calgary`;
+    el.at.hidden = !at;
+    put(el.at, at || '');
+    const label = at ? `Stats. ${at}` : 'Stats';
+    if (shown.get(el.satPanel) !== label) {
+      el.satPanel.setAttribute('aria-label', label);
+      shown.set(el.satPanel, label);
     }
-    put(el.satTab, at ? `At ${at}` : 'Right now');
     keepSatelliteInView();
     // roughly what it is over: a country, else a sea or continent
     const over = s ? placeAt(s.latDeg, s.lonDeg) : null;
@@ -1429,7 +1494,7 @@ export function mountGlobe(container, options = {}) {
     const stale = Math.abs(age) > FAR_DAYS * DAY_MS;
     put(
       el.tle,
-      `Worked out from orbital elements of ${utcDay(s.tleEpochMs, false)}, ${utcTime(s.tleEpochMs, false)} UTC ` +
+      `Worked out from its orbit as published ${utcDay(s.tleEpochMs, false)}, ${utcTime(s.tleEpochMs, false)} UTC ` +
         `(${fmtAge(age)})${stale ? `, so the position may be off by ${offBy(age / DAY_MS)}` : ''}.`,
     );
     el.tle.classList.toggle('cg-warn', stale);
@@ -1461,9 +1526,42 @@ export function mountGlobe(container, options = {}) {
     el.stepForward.setAttribute('aria-label', `Forward ${stepSize}`);
     el.stepForward.title = `Forward ${stepSize} (.)`;
     speedsRow.sync();
-    el.now.setAttribute('aria-pressed', String(state.live));
+    // an action, as on Explore: quiet while it's already now, a button once the clock leaves it
+    el.now.setAttribute('aria-disabled', String(state.live));
+    el.now.title = state.live ? 'Showing now' : 'Back to now, at 1× (N)';
     root.classList.toggle('cg-live', state.live);
   }
+
+  /** The zoom buttons, dimmed at their limits, for whichever view shows. */
+  function paintZoom() {
+    const room = (onMap() ? map : scene).zoomRoom;
+    for (const [b, ok] of [[el.zoomIn, room.in], [el.zoomOut, room.out]]) {
+      const off = String(!ok);
+      if (b.getAttribute('aria-disabled') !== off) b.setAttribute('aria-disabled', off);
+    }
+  }
+
+  function zoomView(dir) {
+    const view = onMap() ? 'map' : 'globe';
+    const room = (view === 'map' ? map : scene).zoomRoom;
+    if (!(dir > 0 ? room.in : room.out)) return;
+    const f = dir > 0 ? ZOOM_STEP[view] : 1 / ZOOM_STEP[view];
+    if (view === 'map') map.zoomBy(f);
+    else scene.zoomBy(f);
+    hideTip();
+    paintZoom();
+  }
+
+  // a short line under the view's buttons, for a key that can't do its job here
+  let toastTimer = 0;
+  function toast(text) {
+    clearTimeout(toastTimer);
+    el.toast.textContent = text;
+    toastTimer = setTimeout(() => {
+      el.toast.textContent = '';
+    }, 4000);
+  }
+  const AURORA_GLOBE_ONLY = 'The aurora shows on the globe only. Switch to Globe (M) to see it.';
 
   function setFollow(on) {
     const changed = on !== state.follow;
@@ -1482,8 +1580,11 @@ export function mountGlobe(container, options = {}) {
     sheetViewMoved = false;
     layout(); // the bottom bar changes height with a sheet open
     resizeMap();
-    if (picker.isOpen && sheetAlongBottom()) picker.close({ restoreFocus: false });
+    if (picker.isOpen && (sheetAlongBottom() || clockAway())) picker.close({ restoreFocus: false });
   }
+
+  /** On a phone the clock bar makes way while a sheet is open (globe.css). */
+  const clockAway = () => !el.timeBtn.getClientRects().length;
 
   // where they don't both fit, opening one folds the other
   const swapRightColumn = () => {
@@ -1531,6 +1632,8 @@ export function mountGlobe(container, options = {}) {
     }
     viewsRow.sync();
     map.setVisible(next === 'map');
+    paintAurora(); // dimmed on the map
+    paintZoom(); // each view has its own limits
     hideTip();
     if (changed) {
       markDirty();
@@ -1600,13 +1703,18 @@ export function mountGlobe(container, options = {}) {
   listen(el.play, 'click', () => setPlaying(!state.playing));
   listen(el.stepBack, 'click', () => stepBySpeed(-1));
   listen(el.stepForward, 'click', () => stepBySpeed(1));
-  listen(el.now, 'click', () => goLive());
+  listen(el.now, 'click', () => {
+    if (!state.live) goLive();
+  });
   for (const b of el.speeds.querySelectorAll('[data-speed]')) {
     listen(b, 'click', () => setSpeed(Number(b.dataset.speed)));
   }
   listen(el.speedCycle, 'click', () => setSpeed(SPEEDS[(SPEEDS.indexOf(state.speed) + 1) % SPEEDS.length]));
   listen(el.follow, 'click', () => setFollow(!state.follow));
-  listen(el.auroraBtn, 'click', () => setAuroraOn(!auroraOn));
+  listen(el.auroraBtn, 'click', () => {
+    if (onMap()) toast(AURORA_GLOBE_ONLY);
+    else setAuroraOn(!auroraOn);
+  });
   listen(el.previewsBtn, 'click', () => {
     setPreviewsHidden(!previewsHidden);
     hidePeek();
@@ -1617,8 +1725,31 @@ export function mountGlobe(container, options = {}) {
     if (el.keys.open) el.keys.scrollIntoView({ block: 'nearest', behavior: reducedMotionQuery.matches ? 'auto' : 'smooth' });
   });
   for (const b of el.views.querySelectorAll('[data-view]')) listen(b, 'click', () => setView(b.dataset.view));
-  listen(el.zoomIn, 'click', () => map.zoomBy(2));
-  listen(el.zoomOut, 'click', () => map.zoomBy(0.5));
+  listen(el.zoomIn, 'click', () => zoomView(1));
+  listen(el.zoomOut, 'click', () => zoomView(-1));
+
+  /** "Change place" in the Passes heading: the search for another country or sea, opened and ready. */
+  listen(el.changePlace, 'click', () => {
+    if (root.classList.contains('cg-narrow')) {
+      if (state.tab !== 'passes') setTab('passes');
+    } else {
+      if (!state.panels) setPanels(true);
+      if (el.passesPanel.hasAttribute('data-folded')) {
+        rightOpen = 'passes';
+        layout();
+      }
+    }
+    placeSearch.focus();
+  });
+
+  /** The Keys list, from its own line or the ? key. */
+  function setKeysOpen(open) {
+    const had = el.keys.contains(document.activeElement);
+    el.keys.open = open;
+    if (open) el.keys.querySelector('summary').focus({ preventScroll: true });
+    // on a narrow screen the list only shows while open: the focus goes back to the view
+    else if (had && !el.keys.getClientRects().length) (onMap() ? map.canvas : canvas).focus({ preventScroll: true });
+  }
   listen(el.timeBtn, 'click', () => {
     if (!picker.isOpen && sheetAlongBottom()) closeSheet();
     picker.toggle(state.ms, el.timeBtn);
@@ -1750,7 +1881,7 @@ export function mountGlobe(container, options = {}) {
       case 't':
       case 'T':
         if (!picker.isOpen) {
-          if (sheetAlongBottom()) closeSheet();
+          if (sheetAlongBottom() || clockAway()) closeSheet();
           picker.open(state.ms, el.timeBtn);
         }
         break;
@@ -1761,18 +1892,26 @@ export function mountGlobe(container, options = {}) {
         break;
       case 'a':
       case 'A':
-        if (!scene.auroraStatus || onMap()) return;
-        setAuroraOn(!auroraOn);
+        // never a key that does nothing without a word
+        if (!scene.auroraStatus) {
+          if (!full) return;
+          toast('The aurora isn’t available in this browser.');
+        } else if (onMap()) toast(AURORA_GLOBE_ONLY);
+        else setAuroraOn(!auroraOn);
         break;
       case '+':
       case '=':
-        if (!onMap()) return;
-        map.zoomBy(2);
+        zoomView(1);
         break;
       case '-':
+      case '_':
       case '−':
-        if (!onMap()) return;
-        map.zoomBy(0.5);
+        zoomView(-1);
+        break;
+      case '?':
+        // only where the list can show: the full UI, with a keyboard
+        if (opts.ui === 'compact') return;
+        setKeysOpen(!el.keys.open);
         break;
       case 'p':
       case 'P':
@@ -1793,7 +1932,8 @@ export function mountGlobe(container, options = {}) {
         step((e.shiftKey ? 60 : 1) * MIN_MS);
         break;
       case 'Escape':
-        if (state.selectedId) clearSelection();
+        if (el.keys.open) setKeysOpen(false);
+        else if (state.selectedId) clearSelection();
         else return;
         break;
       default:

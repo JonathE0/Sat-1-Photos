@@ -141,7 +141,7 @@
     function paintClock() {
       const iso = new Date(state.ms).toISOString();
       $('utc').textContent = `${iso.slice(0, 10)}, ${iso.slice(11, 19)} UTC`;
-      $('local').textContent = `${fmt.format(state.ms)} ABT in Calgary`;
+      $('local').textContent = `${fmt.format(state.ms)} Calgary time`;
     }
     function paintTransport() {
       $('play').textContent = state.playing ? 'Pause' : 'Play';

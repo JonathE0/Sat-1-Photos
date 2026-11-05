@@ -79,6 +79,11 @@ import {
 import { loadCountries, placeAt, placeInSentence } from './journey-region.js';
 import { OPENING_PHOTO_ID } from '../assets/opening-photo.js';
 
+/** Pictures shows it without being asked: not dark, and at least a fifth there (as isDark and
+    isMostlyMissing in assets/catalogue.js). */
+const inPictures = (p) => !(p.dark === true || p.raw?.dark === true)
+  && !(typeof p.mostlyMissing === 'boolean' ? p.mostlyMissing : Number(p.raw?.completeness) < 0.2);
+
 const MODULE_BASE = new URL('./', import.meta.url);
 const SITE_ROOT = new URL('../', import.meta.url);
 
@@ -120,6 +125,7 @@ const SAT_CLEAR_PX = 30;
 /** How far the limb sits under the text, and the satellite at least under the limb (fractions of the height). */
 const LIMB_UNDER_TEXT = 0.03;
 const SAT_UNDER_LIMB = 0.06;
+const SHEET_OPEN_SHARE = 0.45; // of the stage, as a phone's new sheet's max-height in journey.css
 /** journey.css data-fit: what the end view gives up when short of room (see endRoom). */
 const FIT_NO_FACTS = 2;
 const FIT_MOST = 4;
@@ -215,11 +221,15 @@ const ICON_PICTURES = '<svg viewBox="0 0 20 20" width="20" height="20" aria-hidd
 const ICON_FACTS = '<svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><circle cx="10" cy="10" r="7" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10 9v5M10 6v1.5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>';
 const ICON_FULLSCREEN = '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path class="jy-fs-enter" d="M2.5 6V2.5H6M10 2.5h3.5V6M13.5 10v3.5H10M6 13.5H2.5V10" fill="none" stroke="currentColor" stroke-width="1.5"/><path class="jy-fs-leave" d="M6 2.5V6H2.5M10 2.5V6h3.5M13.5 10H10v3.5M2.5 10H6v3.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>';
 const ICON_GRIP = '<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M1 3l8 8M1 7l4 4" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>';
-/** The site's repository, from config.js where the page has it. */
-const REPO_URL = (typeof window !== 'undefined' && window.CTS1_CONFIG?.repoUrl) || 'https://github.com/JonathE0/Sat-1-Photos';
-/** Where the pictures' repository is, and (filled in by loadUpdated) when the site last changed. */
-const META_LINES = `<span>Want to see all our photos? Check out the GitHub at
-          <a class="jy-link" href="${REPO_URL}">${REPO_URL.replace(/^https?:\/\//, '')}</a></span>
+/** The public site. The QR code and the line below point here even from a local copy, since
+    they're for people looking at a screen they can't use, such as a TV in a hallway. */
+const SITE_URL = 'https://jonathe0.github.io/Sat-1-Photos/';
+const SITE_TEXT = 'jonathe0.github.io/Sat-1-Photos';
+/** SITE_URL as a QR code (version 3, error correction M, made with segno, checked with zxing-cpp). */
+const QR_SVG = '<svg xmlns="http://www.w3.org/2000/svg" class="jy-qr-svg" aria-hidden="true" shape-rendering="crispEdges" viewBox="0 0 35 35"><path fill="#fff" d="M0 0h35v35h-35z"/><path stroke="#05070a" d="M3 3.5h7m1 0h2m1 0h3m3 0h2m3 0h7m-29 1h1m5 0h1m1 0h3m2 0h1m2 0h4m2 0h1m5 0h1m-29 1h1m1 0h3m1 0h1m1 0h3m1 0h2m4 0h3m1 0h1m1 0h3m1 0h1m-29 1h1m1 0h3m1 0h1m2 0h1m1 0h1m1 0h1m1 0h4m3 0h1m1 0h3m1 0h1m-29 1h1m1 0h3m1 0h1m1 0h1m1 0h1m1 0h3m1 0h1m1 0h2m2 0h1m1 0h3m1 0h1m-29 1h1m5 0h1m2 0h3m1 0h2m1 0h1m5 0h1m5 0h1m-29 1h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7m-18 1h1m1 0h1m4 0h3m-21 1h1m2 0h6m1 0h1m1 0h1m1 0h1m1 0h2m3 0h1m2 0h1m1 0h3m-29 1h3m1 0h2m1 0h1m1 0h4m2 0h1m1 0h3m1 0h1m1 0h2m1 0h2m-27 1h2m3 0h4m3 0h3m1 0h2m1 0h1m3 0h1m1 0h1m-27 1h1m1 0h1m1 0h1m2 0h1m1 0h2m1 0h1m1 0h1m1 0h2m2 0h1m1 0h4m2 0h1m-29 1h1m1 0h2m2 0h3m5 0h2m3 0h1m2 0h2m4 0h1m-26 1h1m1 0h1m4 0h1m3 0h1m1 0h3m3 0h7m-28 1h1m1 0h2m1 0h1m2 0h3m2 0h2m1 0h1m1 0h3m4 0h1m1 0h1m-26 1h1m4 0h1m3 0h1m7 0h1m1 0h2m2 0h1m1 0h1m-28 1h2m1 0h3m1 0h1m5 0h1m3 0h3m2 0h1m1 0h1m-26 1h2m1 0h3m2 0h1m1 0h2m3 0h2m1 0h3m3 0h1m1 0h2m-28 1h4m2 0h1m1 0h1m3 0h4m3 0h1m2 0h1m2 0h1m2 0h1m-29 1h3m1 0h2m1 0h1m2 0h1m2 0h2m6 0h1m1 0h1m1 0h2m-27 1h2m2 0h1m1 0h2m1 0h3m1 0h1m1 0h1m3 0h9m-20 1h2m2 0h5m3 0h1m3 0h2m-26 1h7m1 0h1m2 0h1m1 0h1m1 0h2m1 0h3m1 0h1m1 0h2m-26 1h1m5 0h1m1 0h1m3 0h2m3 0h1m1 0h2m3 0h1m3 0h1m-29 1h1m1 0h3m1 0h1m1 0h1m3 0h2m2 0h1m2 0h7m1 0h1m-28 1h1m1 0h3m1 0h1m1 0h3m1 0h4m2 0h2m8 0h1m-29 1h1m1 0h3m1 0h1m3 0h1m2 0h4m1 0h1m1 0h1m2 0h2m1 0h3m-29 1h1m5 0h1m2 0h4m9 0h1m2 0h2m1 0h1m-29 1h7m1 0h3m3 0h3m3 0h2m1 0h1"/></svg>';
+/** Where to see every picture, and (filled in by loadUpdated) when the site last changed. */
+const META_LINES = `<span>Want to see all our photos? They’re all at
+          <a class="jy-link jy-site-link" href="${SITE_URL}">${SITE_TEXT}</a></span>
         <span class="jy-meta-updated" hidden></span>`;
 const ICON_CONTROLS = '<svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><path d="M3 6h7M14 6h3M3 14h3M10 14h7" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10 3.8h4v4.4h-4zM6 11.8h4v4.4H6z" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>';
 
@@ -241,6 +251,9 @@ function template(id, siteRoot) {
               <button type="button" class="jy-tab" data-ref="tabMap" aria-pressed="false" hidden>Orbit</button>
               <button type="button" class="jy-tab jy-cycle" data-ref="cycle" aria-pressed="false" hidden
                 aria-haspopup="menu" title="Take turns showing Stats, Pictures and Orbit. Right-click to choose how long each shows.">Cycle</button>
+              <!-- how long each turn lasts, in view while Cycle runs: it opens the same menu as a right-click -->
+              <button type="button" class="jy-tab jy-cycle-pace" data-ref="cyclePace" hidden aria-haspopup="menu"
+                aria-expanded="false"><span data-ref="cyclePaceText"></span> ${ICON_DOWN}</button>
             </div>
             <div class="jy-cycle-menu" data-ref="cycleMenu" role="menu" aria-label="How long each panel shows" hidden>
               <p class="jy-cycle-menu-title" aria-hidden="true">Each panel shows for</p>
@@ -249,12 +262,14 @@ function template(id, siteRoot) {
             <button type="button" class="jy-tab jy-dock-toggle" data-ref="dockToggle" aria-expanded="true"
               aria-label="Hide this panel"><span data-ref="dockToggleText">Hide</span> ${ICON_DOWN}</button>
           </div>
+          <!-- along the bar's foot while Cycle runs: how much of this turn is left -->
+          <span class="jy-cycle-bar" data-ref="cycleBar" aria-hidden="true"></span>
         </div>
         <div class="jy-vf-slot" data-ref="viewfinderSlot" hidden></div>
         <!-- where the viewfinder shows, the Orbit page's globe or flat map can take its place -->
         <div class="jy-map-slot" data-ref="mapSlot">
           <div class="jy-map-stage" data-ref="mapStage">
-            <canvas class="jy-globe-canvas" data-ref="globeCanvas" hidden
+            <canvas class="jy-globe-canvas" data-ref="globeCanvas" hidden role="img"
               aria-label="Globe showing FrontierSat, its orbit and Calgary. Drag to turn it."></canvas>
             <div class="cg-labels" data-ref="globeLabels" hidden></div>
           </div>
@@ -282,7 +297,7 @@ function template(id, siteRoot) {
         <p class="jy-small jy-muted" data-ref="aka">NORAD 69015.</p>
         <p class="jy-lead jy-over" data-ref="over"></p>
         <div class="jy-panel-body" data-ref="panelBody">
-          <p class="jy-panel-zoom"><button type="button" class="jy-textbtn" data-ref="zoomSat">Zoom in on the satellite</button></p>
+          <p class="jy-panel-zoom"><button type="button" class="jy-btn jy-btn-quiet" data-ref="zoomSat">Zoom in on the satellite</button></p>
           <dl class="jy-facts">
             <dt>Altitude</dt><dd data-ref="fAlt"></dd>
             <dt>Speed</dt><dd data-ref="fSpeed"></dd>
@@ -294,7 +309,7 @@ function template(id, siteRoot) {
           <p class="jy-small jy-muted jy-elements" data-ref="elements"></p>
           <p class="jy-small jy-muted jy-aurora-note" data-ref="auroraNote" hidden></p>
           <div class="jy-details-facts" data-ref="detailsFacts"></div>
-          <p class="jy-small jy-retry" data-ref="noOrbit" hidden>Couldn\u2019t work out where it is: no orbital elements loaded.
+          <p class="jy-small jy-retry" data-ref="noOrbit" hidden>Couldn\u2019t work out where it is: its published orbit didn\u2019t load.
             <button type="button" class="jy-textbtn" data-ref="retry">Try again</button></p>
           <section class="jy-latest" data-ref="latest" hidden>
             <h3 class="jy-latest-title" data-ref="latestTitle">Latest picture</h3>
@@ -304,7 +319,7 @@ function template(id, siteRoot) {
             <p class="jy-latest-place" data-ref="latestPlace"></p>
             <p class="jy-small jy-muted" data-ref="latestTime"></p>
             <p class="jy-small" data-ref="latestStatus"></p>
-            <a class="jy-link" data-ref="latestOpen">Open in the catalogue</a>
+            <a class="jy-link" data-ref="latestOpen">Open in Pictures</a>
             <a class="jy-link jy-latest-all" data-ref="latestAll"></a>
           </section>
         </div>
@@ -355,6 +370,12 @@ function template(id, siteRoot) {
           <p class="jy-sub"><span class="jy-words">Interactive picture visualizer</span></p>
           <p class="jy-lead jy-intro-only"><span class="jy-words">Calgary\u2019s first student-built satellite. In orbit since ${launchDate}.</span></p>
           <p class="jy-cue jy-intro-only" data-ref="cue" tabindex="-1"><span class="jy-words">Scroll to learn more</span> ${ICON_DOWN}</p>
+          <!-- the way past the story, for a keyboard (the controls below wait for its end) and for
+               anyone who came for the pictures -->
+          <p class="jy-intro-links jy-intro-only">
+            <a class="jy-btn jy-btn-quiet" data-ref="introPictures"><span class="jy-words">See its pictures of Earth</span></a>
+            <button type="button" class="jy-textbtn" data-ref="skipIntro"><span class="jy-words">Skip the intro</span></button>
+          </p>
           <p class="jy-lead jy-live-lead jy-end-only"><span class="jy-words" data-ref="liveLead"></span> <span class="jy-words jy-lead-more" data-ref="liveMore"></span></p>
           <p class="jy-tip jy-end-only" data-ref="tip"><span class="jy-words" data-ref="satTip"></span></p>
           <p class="jy-hint jy-end-only" data-ref="hint"><span class="jy-words" data-ref="hintText"></span></p>
@@ -362,7 +383,7 @@ function template(id, siteRoot) {
         <p class="jy-beat jy-statement jy-b2" data-ref="b2"><span class="jy-words" data-ref="b2t"></span></p>
       </div>
 
-      <canvas class="jy-canvas" tabindex="-1"
+      <canvas class="jy-canvas" tabindex="-1" role="application" aria-roledescription="3D globe"
         aria-label="The Earth and FrontierSat. Drag or use the arrow keys to look around; plus and minus zoom."></canvas>
       <canvas class="jy-still" hidden aria-hidden="true"></canvas>
       <div class="jy-marks"></div>
@@ -382,10 +403,17 @@ function template(id, siteRoot) {
         <div class="jy-speed" role="radiogroup" aria-label="Speed">
           ${SPEEDS.map((s) => `<label><input type="radio" name="jy-speed-${id}" value="${s}"${s === 1 ? ' checked' : ''}><span>${s}\u00d7</span></label>`).join('')}
         </div>
-        <button type="button" class="jy-btn jy-now" data-ref="now">Now</button>
+        <button type="button" class="jy-btn jy-btn-quiet jy-now" data-ref="now">Now</button>
       </div>
 
       <p class="jy-meta" data-ref="meta">${META_LINES}</p>
+      <!-- for a screen nobody can touch: placeQr shows it under the headline where there's room -->
+      <div class="jy-qr" data-ref="qr" hidden>
+        <span class="jy-qr-code" role="img" aria-label="QR code for ${SITE_TEXT}">${QR_SVG}</span>
+        <span class="jy-qr-text"><span class="jy-qr-title">See every picture on your phone</span>
+          <span class="jy-qr-sub">Scan the code, or go to</span>
+          <span class="jy-qr-url">${SITE_TEXT}</span></span>
+      </div>
 
       <div class="jy-corner" data-ref="corner">
         <button type="button" class="jy-textbtn jy-again" data-ref="again" title="Play the intro again">${ICON_REPLAY}<span>Play the intro again</span></button>
@@ -915,9 +943,13 @@ export function mountJourney(container, options = {}) {
   }
 
   function computeFrame() {
-    const narrow = W < 600 || W / H < 0.8 || (W < 700 && W / H < 1.2);
+    // a phone either way up: in landscape (under 500px tall) the desktop rows don't fit beside each other
+    const narrow = W < 600 || W / H < 0.8 || (W < 700 && W / H < 1.2) || H < 500;
     frame.narrow = narrow;
     root.classList.toggle('jy-narrow', narrow); // what's measured below depends on it
+    root.classList.toggle('jy-wide-phone', narrow && W > H);
+    // a phone's panel is up: the headline fades (journey.css) and the satellite goes above the panel
+    const sheetUp = narrow && state.panel;
     frame.ui = clamp(1 + ((W - 1920) / 1920) * 0.3, 1, 1.2);
     // landscape: 35 degrees tall; portrait: hold 35 degrees across
     const vfov = W >= H ? 35 : (2 * Math.atan(Math.tan(17.5 * DEG) * (H / W))) / DEG;
@@ -959,10 +991,12 @@ export function mountJourney(container, options = {}) {
     root.classList.toggle('jy-composed', composedNow);
     placeFacts();
     placeMeta();
+    placeQr(endBox, s);
 
     // beat 1: the whole Earth
     let diam;
-    if (!narrow) {
+    if (!narrow || W > H) {
+      // (a phone on its side frames the Earth as a desktop does, beside the words)
       diam = 0.62;
       frame.lens0 = { x: 0.7, y: 0.6 };
     } else {
@@ -977,7 +1011,7 @@ export function mountJourney(container, options = {}) {
     // unless that would leave the satellite no room)
     const story = boxOf(ref.b2, s);
     const storyFits = !room || (story && story.bottom / H + LIMB_UNDER_TEXT + SAT_UNDER_LIMB <= room.satMax);
-    frame.endText = union([endBox, storyFits ? story : null]);
+    frame.endText = sheetUp ? null : union([endBox, storyFits ? story : null]);
     let satY = narrow ? 0.64 : 0.6;
     let limbY = narrow ? 0.45 : 0.42;
     if (frame.endText) limbY = Math.max(limbY, frame.endText.bottom / H + LIMB_UNDER_TEXT);
@@ -987,8 +1021,13 @@ export function mountJourney(container, options = {}) {
     if (dock) limbY = Math.max(limbY, dock.bottom / H + LIMB_UNDER_TEXT);
     satY = clamp(Math.max(satY, limbY + 0.12), 0, narrow ? 0.8 : 0.86);
     if (room) satY = Math.max(limbY + SAT_UNDER_LIMB, Math.min(satY, room.satMax));
+    if (sheetUp && W <= H) {
+      // above the sheet (its share of the stage, below), with the limb under the nav
+      satY = Math.min(satY, 1 - SHEET_OPEN_SHARE - 0.14);
+      limbY = Math.min(limbY, satY - 0.16);
+    }
     let satX = room ? room.satX : 0.62;
-    if (state.panel && !narrow && !slot) {
+    if (state.panel && (!narrow || W > H) && !slot) {
       // keep the satellite clear of the details on narrower desktops (with the
       // viewfinder they stay in its place, above the limb, and nothing moves)
       const panel = boxOf(ref.panel, s);
@@ -1022,7 +1061,7 @@ export function mountJourney(container, options = {}) {
       for (const words of el.querySelectorAll('.jy-words')) {
         // skip lines that are laid out but not showing (the dismissed hint, the faded cue)
         if (words.closest('.jy-hint.is-off')) continue;
-        if (words.closest('.jy-cue') && root.classList.contains('jy-scrolled')) continue;
+        if (words.closest('.jy-cue, .jy-intro-links') && root.classList.contains('jy-scrolled')) continue;
         for (const r of words.getClientRects()) {
           if (!r.width || !r.height) continue;
           lines.push({ left: r.left - s.left, top: r.top - s.top, right: r.right - s.left, bottom: r.bottom - s.top });
@@ -1037,7 +1076,7 @@ export function mountJourney(container, options = {}) {
       const b = boxOf(el, s);
       if (b && getComputedStyle(el).visibility !== 'hidden') covers.push(b);
     };
-    for (const el of [...ref.time.children, ...ref.corner.children, ...ref.factsSlot.children, ...ref.tabbar.children, ref.factsShow, ref.summary]) cover(el);
+    for (const el of [...ref.time.children, ...ref.corner.children, ...ref.factsSlot.children, ...ref.tabbar.children, ref.factsShow, ref.summary, ref.qr]) cover(el);
     // the viewfinder's fade out would still count as showing, so go by what took its place
     if (state.panel) cover(ref.panel);
     else if (state.creditsOpen) cover(ref.credits);
@@ -1944,6 +1983,8 @@ export function mountJourney(container, options = {}) {
     ref.tabStats.hidden = cycling;
     ref.tabPictures.hidden = cycling;
     ref.tabMap.hidden = cycling || !webgl || !big;
+    ref.cyclePace.hidden = !cycling;
+    root.classList.toggle('jy-cycling', cycling);
     root.classList.toggle('jy-map-on', big && state.mapUp);
     ref.panel.dataset.tab = state.tab;
     paintPhoneBar();
@@ -2144,9 +2185,9 @@ export function mountJourney(container, options = {}) {
 
   /** The panel opened or closed: ease the satellite clear of it (or back). */
   function reframe() {
-    const before = frame.lens1.x;
+    const before = frame.lens1;
     computeFrame();
-    if (Math.abs(frame.lens1.x - before) > 1e-3) startBlend(400);
+    if (Math.abs(frame.lens1.x - before.x) > 1e-3 || Math.abs(frame.lens1.y - before.y) > 1e-3) startBlend(400);
   }
 
   function closePanel({ restoreFocus = false } = {}) {
@@ -2207,6 +2248,32 @@ export function mountJourney(container, options = {}) {
     ref.meta.classList.toggle('is-cramped', right - left < 230);
   }
 
+  /**
+   * The QR code goes under the headline block, in the room left above the facts (or the
+   * time row), and only where all of it fits: on a big screen such as a TV, not a phone.
+   */
+  function placeQr(endBox, s) {
+    const card = ref.qr;
+    let fits = false;
+    if (!frame.narrow && endBox && root.dataset.mode !== 'still') {
+      card.hidden = false; // laid out (still invisible until the end view) so it can be measured
+      const top = endBox.bottom + 28 * frame.ui;
+      const h = card.offsetHeight;
+      const w = card.offsetWidth;
+      const left = endBox.left;
+      let limit = H;
+      const under = [ref.time, ref.corner, ref.factsShow, ...ref.factsSlot.children];
+      for (const el of under) {
+        const b = boxOf(el, s);
+        if (b && b.left < left + w + 16 && b.right > left - 16) limit = Math.min(limit, b.top);
+      }
+      fits = top + h + 24 <= limit;
+      card.style.left = `${left}px`;
+      card.style.top = `${top}px`;
+    }
+    card.hidden = !fits;
+  }
+
   /** "Last updated Nov 3, 22:00 in Calgary", from the stamp each publish leaves; nothing without one. */
   async function loadUpdated() {
     try {
@@ -2245,10 +2312,17 @@ export function mountJourney(container, options = {}) {
   listen(ref.close, 'click', () => closePanel({ restoreFocus: true }));
   listen(ref.follow, 'click', () => setFollow(!state.follow));
   listen(ref.followBar, 'click', () => setFollow(!state.follow));
-  listen(ref.zoomSat, 'click', () => zoomToSatellite());
+  listen(ref.zoomSat, 'click', () => {
+    if (state.follow && !state.custom) zoomToSatellite();
+    else {
+      startBlend();
+      resetCamera();
+      uiDirty = true;
+    }
+  });
   listen(ref.previews, 'click', () => setPreviewsHidden(!previewsHidden));
   listen(ref.retry, 'click', () => loadOrbit());
-  // no broken icon: the message takes the frame's place, and "Open in the catalogue" stays under it
+  // no broken icon: the message takes the frame's place, and "Open in Pictures" stays under it
   listen(ref.latestImg, 'error', () => {
     ref.latestFrame.hidden = true;
     ref.latestFailed.hidden = false;
@@ -2280,7 +2354,6 @@ export function mountJourney(container, options = {}) {
   // The phone sheet's handle: the sheet follows the finger, and on letting go it settles at
   // the nearest of its resting heights, going by where a flick was heading. Below the
   // shortest it folds away; a tap goes between that and open.
-  const SHEET_OPEN_SHARE = 0.72; // of the stage, as a new sheet's max-height in journey.css
   const SHEET_FLICK_MS = 160; // a flick counts for where it would have got to in this long
   let sheetDrag = null;
 
@@ -2293,7 +2366,8 @@ export function mountJourney(container, options = {}) {
     const whole = ref.panel.scrollHeight;
     const nav = parseFloat(getComputedStyle(root).getPropertyValue('--jy-nav')) || 0;
     const full = Math.round(Math.min(whole, box.bottom - stageRect().top - nav));
-    const open = Math.round(Math.min(full, H * SHEET_OPEN_SHARE));
+    // on its side the panel stands full height at the right (journey.css)
+    const open = Math.round(Math.min(full, W > H ? full : H * SHEET_OPEN_SHARE));
     return { peek: Math.min(peek, open), open, full };
   }
 
@@ -2497,8 +2571,8 @@ export function mountJourney(container, options = {}) {
       put(
         ref.elements,
         old
-          ? `These orbital elements are ${Math.round(Math.abs(ageDays))} days ${ageDays >= 0 ? 'old' : 'newer than this time'}, so the position may be off by tens of kilometres.`
-          : `Worked out from orbital elements published ${utcShort(s.tleEpochMs)}.`,
+          ? `Its published orbit is ${Math.round(Math.abs(ageDays))} days ${ageDays >= 0 ? 'old' : 'newer than this time'}, so the position may be off by tens of kilometres.`
+          : `Worked out from its orbit as published ${utcShort(s.tleEpochMs)}.`,
       );
     }
     paintAurora();
@@ -2566,7 +2640,7 @@ export function mountJourney(container, options = {}) {
     const s = sat.state;
     if (!s) {
       return orbitStatus === 'failed'
-        ? 'Its position can\u2019t be worked out right now: the orbital elements didn\u2019t load.'
+        ? 'Its position can\u2019t be worked out right now: its published orbit didn\u2019t load.'
         : 'Working out where it is right now.';
     }
     if (!placeNamesReady) return 'Working out where it is right now.';
@@ -2622,6 +2696,8 @@ export function mountJourney(container, options = {}) {
     const d = state.follow ? (state.custom ? state.distTarget : lim.def) : state.cdistTarget;
     ref.zoomIn.disabled = state.follow ? d <= lim.min * 1.001 : d <= 1.3 * 1.001;
     ref.zoomOut.disabled = state.follow ? d >= lim.max * 0.999 : d >= 6 * 0.999;
+    // once the camera has moved off its usual place, the same button takes it back
+    put(ref.zoomSat, state.follow && !state.custom ? 'Zoom in on the satellite' : 'Back to the usual view');
   }
 
   let uiDirty = true;
@@ -2682,7 +2758,7 @@ export function mountJourney(container, options = {}) {
     uiDirty = true;
   });
 
-  for (const a of [ref.all, ref.latestAll]) {
+  for (const a of [ref.all, ref.latestAll, ref.introPictures]) {
     listen(a, 'click', (e) => {
       if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
       e.preventDefault();
@@ -2691,6 +2767,16 @@ export function mountJourney(container, options = {}) {
     a.href = opts.catalogueHref;
   }
   listen(ref.again, 'click', () => playAgain());
+  // straight to the end, as a visitor coming back finds it, and on to its first control
+  listen(ref.skipIntro, 'click', () => {
+    startBlend();
+    lock();
+    requestAnimationFrame(() => {
+      if (destroyed) return;
+      const first = frame.narrow ? ref.barStats : [ref.cycle, ref.tabStats].find((b) => !b.hidden);
+      (first || canvas).focus({ preventScroll: true });
+    });
+  });
 
   function dismissHint() {
     if (state.hintDismissed) return;
@@ -3418,6 +3504,7 @@ export function mountJourney(container, options = {}) {
           // as the facts: it moves even when the system prefers reduced motion
           // (the site's choice); ?motion=reduced still keeps it still
           reducedMotion: motionOverride === 'reduced',
+          onTimed: (ms) => picturesTurnTimed(ms),
           takeTurn: () => {
             if (cycleOn) {
               mapPanned = false;
@@ -3693,6 +3780,15 @@ export function mountJourney(container, options = {}) {
       if (!mapPanned) map.follow();
       map.frame(now);
     }
+    paintWhereZoom();
+  }
+
+  /** The panel's − and + go dim at the zoom's limits, on the globe or the map, whichever shows. */
+  function paintWhereZoom() {
+    const room = globe && !ref.globeCanvas.hidden ? globe.controls.zoomRoom : map?.visible ? map.zoomRoom : null;
+    if (!room) return;
+    if (ref.mapIn.disabled !== !room.in) ref.mapIn.disabled = !room.in;
+    if (ref.mapOut.disabled !== !room.out) ref.mapOut.disabled = !room.out;
   }
 
   /** In (above 1) or out, on whichever shows. */
@@ -3742,6 +3838,27 @@ export function mountJourney(container, options = {}) {
 
   function paintCycleMenu() {
     for (const b of speedItems()) b.setAttribute('aria-checked', String(Number(b.dataset.seconds) === cycleSeconds));
+    put(ref.cyclePaceText, `${cycleSeconds} s`);
+    ref.cyclePace.setAttribute('aria-label', `How long each panel shows: ${cycleSeconds} seconds`);
+  }
+  paintCycleMenu();
+
+  /** The line under the bar: this turn's time, filling from the left; none while nothing counts down. */
+  let picturesTurn = null; // the viewfinder's own count: { total, start }
+  function runCycleBar(total = 0, elapsed = 0) {
+    const bar = ref.cycleBar;
+    bar.classList.remove('is-running');
+    if (!total) return;
+    void bar.offsetWidth; // so the animation starts again from where it's told
+    bar.style.animationDuration = `${total}ms`;
+    bar.style.animationDelay = `${-Math.min(elapsed, total)}ms`;
+    bar.classList.add('is-running');
+  }
+  const picturesUp = () => cycleOn && !state.panel && !state.mapUp;
+  /** From the viewfinder: a picture's time has started (ms), or stopped (0). */
+  function picturesTurnTimed(ms) {
+    picturesTurn = ms ? { total: ms, start: performance.now() } : null;
+    if (picturesUp() && !(cycleHover || cycleFocus)) runCycleBar(ms);
   }
 
   function setCycleSeconds(sec) {
@@ -3759,6 +3876,7 @@ export function mountJourney(container, options = {}) {
     paintCycleMenu();
     ref.cycleMenu.hidden = false;
     ref.cycle.setAttribute('aria-expanded', 'true');
+    ref.cyclePace.setAttribute('aria-expanded', 'true');
     (ref.cycleMenu.querySelector('[aria-checked="true"]') || speedItems()[0]).focus({ preventScroll: true });
   }
 
@@ -3766,13 +3884,18 @@ export function mountJourney(container, options = {}) {
     if (ref.cycleMenu.hidden) return;
     ref.cycleMenu.hidden = true;
     ref.cycle.removeAttribute('aria-expanded');
-    if (restoreFocus) ref.cycle.focus({ preventScroll: true });
+    ref.cyclePace.setAttribute('aria-expanded', 'false');
+    if (restoreFocus) (ref.cyclePace.hidden ? ref.cycle : ref.cyclePace).focus({ preventScroll: true });
   }
 
   listen(ref.cycle, 'contextmenu', (e) => {
     e.preventDefault();
     if (ref.cycleMenu.hidden) openCycleMenu();
     else closeCycleMenu();
+  });
+  listen(ref.cyclePace, 'click', () => {
+    if (ref.cycleMenu.hidden) openCycleMenu();
+    else closeCycleMenu({ restoreFocus: true });
   });
   listen(ref.cycleMenu, 'click', (e) => {
     const item = e.target.closest('[data-seconds]');
@@ -3799,6 +3922,7 @@ export function mountJourney(container, options = {}) {
   listen(document, 'pointerdown', (e) => {
     if (ref.cycleMenu.hidden || ref.cycleMenu.contains(e.target)) return;
     if (e.button === 2 && ref.cycle.contains(e.target)) return;
+    if (ref.cyclePace.contains(e.target)) return; // its own click toggles it
     closeCycleMenu();
   });
 
@@ -3812,18 +3936,27 @@ export function mountJourney(container, options = {}) {
     ref.cycle.title = paused
       ? 'Paused while the pointer or the keyboard is on the panel. Right-click to choose how long each shows.'
       : 'Take turns showing Stats, Pictures and Orbit. Right-click to choose how long each shows.';
-    if (!cycleOn || !up || cycleHover || cycleFocus || document.hidden || !viewfinderHere()) return;
+    if (!cycleOn || !up || cycleHover || cycleFocus || document.hidden || !viewfinderHere()) {
+      runCycleBar(0);
+      return;
+    }
     if (state.panel && state.tab === 'stats') {
       cycleTimer = setTimeout(() => {
         state.mapUp = false;
         closePanel();
         viewfinder?.next();
       }, cycleSeconds * 1000);
+      runCycleBar(cycleSeconds * 1000);
     } else if (!state.panel && state.mapUp) {
       cycleTimer = setTimeout(() => {
         state.mapUp = false;
         openPanel({ focus: false, byCycle: true });
       }, cycleSeconds * 1000);
+      runCycleBar(cycleSeconds * 1000);
+    } else if (picturesTurn) {
+      runCycleBar(picturesTurn.total, performance.now() - picturesTurn.start); // the viewfinder keeps this one
+    } else {
+      runCycleBar(0);
     }
   }
 
@@ -3863,7 +3996,8 @@ export function mountJourney(container, options = {}) {
     latest = shown.find((p) => p.id === OPENING_PHOTO_ID)
       || (shown.length ? shown : photos).reduce((best, p) => (!best || (p.sortTime || 0) > (best.sortTime || 0) ? p : best), null);
     ref.latest.dataset.id = '';
-    const n = photos.length;
+    // as many as Pictures shows, which leaves out dark frames and mostly missing pictures
+    const n = photos.filter(inPictures).length;
     ref.allText.textContent = n ? `See all ${grouped(n)} pictures` : 'See the pictures';
     ref.latestAll.textContent = ref.allText.textContent;
     ref.viewfinderSlot.hidden = !photos.some(isNearlyWhole);

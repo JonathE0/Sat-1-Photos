@@ -25,11 +25,18 @@ const localClock = new Intl.DateTimeFormat('en-US', {
   timeZone: CALGARY_TIME_ZONE, hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
 });
 
-/** "Fri, Oct 31, 18:36 ABT" */
+/** "Fri, Oct 31, 18:36 Calgary time" */
 function calgary(ms) {
   const p = {};
   for (const part of localClock.formatToParts(ms)) p[part.type] = part.value;
   return `${localDay.format(ms)}, ${p.hour}:${p.minute} ${CALGARY_ZONE_NAME}`;
+}
+
+/** "18:36 Calgary time" */
+function calgaryClock(ms) {
+  const p = {};
+  for (const part of localClock.formatToParts(ms)) p[part.type] = part.value;
+  return `${p.hour}:${p.minute} ${CALGARY_ZONE_NAME}`;
 }
 
 /** "Nov 1, 00:36 UTC" */
@@ -85,7 +92,7 @@ export function createPlaceSearch({ getOrbit, getTime, onJump, onPlace = () => {
       <ol class="cg-list cg-passes cg-place-passes cg-place-best-list" role="list" hidden></ol>
       <p class="cg-place-reason"></p>
       <p class="cg-fine cg-place-accuracy" hidden></p>
-      <button type="button" class="cg-btn cg-place-again" hidden></button>
+      <button type="button" class="cg-btn cg-place-again" hidden>Look again from the time shown</button>
     </div>
   `;
   const $ = (s) => root.querySelector(s);
@@ -300,7 +307,7 @@ export function createPlaceSearch({ getOrbit, getTime, onJump, onPlace = () => {
     resultsList.refresh();
     if (bestLater) later.textContent = `Best of the next ${passes.length} passes`;
     $('.cg-place-note').textContent =
-      `Crossings after ${utc(fromMs)}, each at its nearest to the middle. Times in Calgary.`;
+      `Crossings after ${calgary(fromMs)} (${utc(fromMs)}), each at its nearest to the middle.`;
     $('.cg-place-reason').textContent = best ? `Best for a picture: ${best.reason}` : '';
     const orbit = getOrbit();
     const last = Math.max(...[...shown, bestLater].filter(Boolean).map((p) => p.closestMs), 0);
@@ -308,7 +315,7 @@ export function createPlaceSearch({ getOrbit, getTime, onJump, onPlace = () => {
     const accuracy = $('.cg-place-accuracy');
     accuracy.hidden = !far;
     accuracy.textContent = far
-      ? 'Passes more than a week past the newest orbital elements are forecasts: their times could be a minute or more out.'
+      ? 'Passes more than a week past its newest published orbit are forecasts: their times could be a minute or more out.'
       : '';
     if (!passes.length) {
       status.textContent =
@@ -338,10 +345,16 @@ export function createPlaceSearch({ getOrbit, getTime, onJump, onPlace = () => {
       const near = found.passes.some((p) => ms >= p.startMs - 600_000 && ms <= p.endMs + 600_000);
       const moved = Math.abs(ms - found.fromMs) > 30 * 60_000 && !near;
       if (moved === again.hidden) again.hidden = !moved;
-      const text = `Look again from ${utc(ms)}`;
-      if (moved && again.textContent !== text) again.textContent = text;
+      const label = `Look again from the time shown, ${calgaryClock(ms)}`;
+      if (moved && again.getAttribute('aria-label') !== label) again.setAttribute('aria-label', label);
     },
     reset,
+    /** "Change place": the box, ready to type over what's there. */
+    focus() {
+      input.focus({ preventScroll: true });
+      input.select();
+      input.scrollIntoView({ block: 'nearest' });
+    },
     destroy() {
       ac?.abort();
       root.remove();

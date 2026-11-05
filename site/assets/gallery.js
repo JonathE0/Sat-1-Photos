@@ -20,7 +20,8 @@ const TUCKED = [
 const THUMB_WIDTH = 480; // cts1_gallery/build.py THUMB_WIDTH
 
 function gridAlt(p) {
-  const camera = CAMERAS[p.camera]?.alt || 'Camera';
+  const alt = CAMERAS[p.camera]?.alt || 'camera'; // lower case ("main camera"): it starts the sentence here
+  const camera = alt[0].toUpperCase() + alt.slice(1);
   if (p.place || p.computedPlace) return `${camera} image over ${p.place || p.computedPlace}`;
   if (p.position) return `${camera} image over ${latLon(p.position.lat, p.position.lon)}`;
   return `${camera} image, position unknown`;

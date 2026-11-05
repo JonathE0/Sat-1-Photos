@@ -152,7 +152,10 @@ export function createColorWheel({ onChange = () => {}, storageKey = STORE_KEY }
   button.setAttribute('aria-label', 'Orbit colour');
   button.setAttribute('aria-haspopup', 'dialog');
   button.setAttribute('aria-expanded', 'false');
-  button.innerHTML = '<span class="cg-swatch-chip" aria-hidden="true"></span>';
+  // a word beside the chip, so it reads as a control and not a legend ("Colour" where room is short)
+  button.innerHTML = '<span class="cg-swatch-chip" aria-hidden="true"></span>' +
+    '<span class="cg-swatch-text cg-swatch-long" aria-hidden="true">Orbit colour</span>' +
+    '<span class="cg-swatch-text cg-swatch-short" aria-hidden="true">Colour</span>';
 
   const panel = document.createElement('div');
   panel.className = 'cg-cw';

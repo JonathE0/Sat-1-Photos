@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>FrontierSat right now</title>
-  <meta name="description" content="Where FrontierSat, Calgary To Space's first satellite, is right now, and where each of its pictures was taken.">
+  <title>Right now · FrontierSat</title>
+  <meta name="description" content="Where FrontierSat, CalgaryToSpace's first satellite, is right now, and where each of its pictures was taken.">
   <meta name="theme-color" content="#05070A">
   <link rel="icon" type="image/png" href="../assets/cubesat-icon.png">
   <link rel="apple-touch-icon" href="../assets/icons/apple-touch-icon.png">
@@ -13,14 +13,14 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <!-- how a shared link shows in Discord, iMessage and the like -->
   <meta property="og:type" content="website">
-  <meta property="og:site_name" content="FrontierSat · Calgary To Space">
+  <meta property="og:site_name" content="FrontierSat · CalgaryToSpace">
   <meta property="og:title" content="FrontierSat right now">
-  <meta property="og:description" content="Where FrontierSat, Calgary To Space's first satellite, is right now, and where each of its pictures was taken.">
+  <meta property="og:description" content="Where FrontierSat, CalgaryToSpace's first satellite, is right now, and where each of its pictures was taken.">
   <meta property="og:url" content="https://jonathe0.github.io/Sat-1-Photos/explore/">
   <meta property="og:image" content="https://jonathe0.github.io/Sat-1-Photos/assets/share-card.jpg">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="FrontierSat, with its picture of Hong Kong and the South China Sea, and the Calgary To Space and Schulich School of Engineering logos">
+  <meta property="og:image:alt" content="FrontierSat, with its picture of Hong Kong and the South China Sea, and the CalgaryToSpace and Schulich School of Engineering logos">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -70,14 +70,19 @@
     @media (min-width: 600px) { :root { --x-m: 24px; } }
     @media (min-width: 1100px) { :root { --x-m: 32px; } }
     @media (min-width: 2400px) { :root { --x-m: 48px; } }
-    @media (max-width: 599px) { .x-nav { height: 52px; } .x-nav ul { gap: 16px; } .x-nav img { height: 24px; } }
+    @media (max-width: 599px) { .x-nav { height: 52px; font-size: 15px; } .x-nav ul { gap: 12px; } .x-nav img { height: 24px; } }
+    /* touch: 44px wide as well as tall; the narrowest phones keep the links and drop the logo */
+    @media (pointer: coarse) { .x-nav ul a, .x-nav ul button { justify-content: center; min-width: 44px; } }
+    @media (max-width: 359px) { .x-nav { justify-content: flex-end; } .x-nav > a { display: none; } }
+    /* clear of a phone's notch in landscape */
+    .x-nav { padding: 0 max(var(--x-m, 32px), env(safe-area-inset-right)) 0 max(var(--x-m, 32px), env(safe-area-inset-left)); }
   </style>
 </head>
 <body>
   <nav class="x-nav" aria-label="Main">
     <a href="../index.html#/" aria-label="FrontierSat pictures, by CalgaryToSpace"><img src="../assets/calgarytospace-logo.png" width="640" height="204" alt=""></a>
     <ul>
-      <li><a href="../index.html#/">Pictures</a></li>
+      <li><a href="../index.html#/pictures">Pictures</a></li>
       <li><a href="../globe/index.html">Orbit</a></li>
       <li><a href="../index.html#/about">About</a></li>
       <li><button type="button" id="credits" aria-expanded="false" aria-haspopup="dialog">Credits</button></li>

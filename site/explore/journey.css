@@ -22,7 +22,8 @@
   --jy-body: clamp(16px, 0.42vw + 8px, 19px);
   --jy-small: clamp(13px, 0.34vw + 6.5px, 15px);
 
-  --jy-m: 16px;          /* outer margin */
+  /* outer margin, and on a phone on its side, clear of the notch (the page uses viewport-fit=cover) */
+  --jy-m: max(16px, env(safe-area-inset-left), env(safe-area-inset-right));
   --jy-ctl: 36px;        /* control height */
   --jy-row: 44px;        /* the bottom toolbars' height: the clock's two lines */
   --jy-tabbar: 56px;     /* a phone's bottom bar */
@@ -272,7 +273,12 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
   outline: none;
 }
 .jy-root.jy-scrolled .jy-cue { opacity: 0; }
-
+/* under the cue: the pictures, and a way past the story; they go with the cue */
+.jy-intro-links { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 24px; margin: 24px 0 0; transition: opacity 240ms var(--jy-ease-out); }
+.jy-text .jy-intro-links,
+.jy-text .jy-intro-links * { pointer-events: auto !important; }
+.jy-root.jy-scrolled .jy-intro-links { opacity: 0; visibility: hidden; transition: opacity 240ms var(--jy-ease-out), visibility 0s linear 240ms; }
+.jy-root.jy-scrolled .jy-text .jy-intro-links * { pointer-events: none !important; }
 .jy-statement {
   max-width: 26ch;
   font-size: var(--jy-statement);
@@ -306,6 +312,9 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
   transition: background-color 180ms var(--jy-ease-out);
 }
 .jy-btn:hover { background: #FFFFFF; }
+/* secondary: filled, raised grey (the Orbit page's .cg-btn) */
+.jy-btn-quiet { background: var(--jy-raised); color: var(--jy-ink); }
+.jy-btn-quiet:hover { background: color-mix(in srgb, var(--jy-raised), var(--jy-ink) 10%); }
 
 .jy-textbtn {
   display: inline-flex;
@@ -456,7 +465,8 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
   transition: background-color 180ms var(--jy-ease-out), color 180ms var(--jy-ease-out);
 }
 .jy-speed label:hover span { background: var(--jy-raised); color: var(--jy-ink); }
-.jy-speed input:checked + span { background: var(--jy-raised); box-shadow: inset 0 -2px 0 var(--jy-ink); color: var(--jy-ink); }
+/* chosen: Ink, as on the Orbit page */
+.jy-speed input:checked + span { background: var(--jy-ink); color: var(--jy-space); }
 .jy-speed input:focus-visible + span { outline: 2px solid var(--jy-blue); outline-offset: 2px; }
 
 /* Beside the time toolbar, as wide as the room before the corner row (placeMeta in
@@ -486,7 +496,39 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
   transition: opacity 240ms var(--jy-ease-out), visibility 0s;
 }
 .jy-meta .jy-link { color: var(--jy-ink); overflow-wrap: anywhere; }
+.jy-meta .jy-site-link { white-space: nowrap; } /* never "Sat-1-" / "Photos" */
 .jy-meta-updated[hidden] { display: none; }
+
+/* The site's QR code under the headline, for a screen nobody can touch (placeQr in journey.js
+   puts it there, and only where it fits). Always laid out, so it can be measured. */
+.jy-qr {
+  position: absolute;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: calc(16px * var(--jy-ui, 1));
+  padding: calc(12px * var(--jy-ui, 1));
+  padding-right: calc(20px * var(--jy-ui, 1));
+  background: var(--jy-panel);
+  color: var(--jy-muted);
+  font-size: var(--jy-small);
+  line-height: 1.35;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 150ms var(--jy-ease-exit), visibility 0s linear 150ms;
+}
+.jy-qr[hidden] { display: none; }
+.jy-ui-on.jy-composed .jy-qr {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 240ms var(--jy-ease-out), visibility 0s;
+}
+.jy-qr-code { flex: none; display: block; width: calc(112px * var(--jy-ui, 1)); aspect-ratio: 1; }
+.jy-qr-svg { display: block; width: 100%; height: 100%; }
+.jy-qr-text { display: flex; flex-direction: column; gap: 2px; }
+.jy-qr-title { color: var(--jy-ink); font-size: var(--jy-body); font-weight: 500; }
+.jy-qr-url { color: var(--jy-ink); white-space: nowrap; }
 /* phones have the tab bar down there, and Credits says the same */
 .jy-root[data-mode="still"] .jy-meta,
 .jy-narrow .jy-meta,
@@ -530,7 +572,8 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
 }
 .jy-toggle[hidden] { display: none; }
 .jy-toggle:hover { background: var(--jy-raised); }
-.jy-toggle[aria-pressed="true"] { background: var(--jy-raised); box-shadow: inset 0 -2px 0 var(--jy-ink); }
+.jy-toggle[aria-pressed="true"] { background: var(--jy-ink); color: var(--jy-space); }
+.jy-toggle[aria-pressed="true"]:hover { background: color-mix(in srgb, var(--jy-ink) 86%, var(--jy-space)); }
 .jy-root[data-mode="still"] .jy-toggle { display: none; }
 /* Its words say what it will do. On a phone only the eye shows, struck through while they're hidden. */
 .jy-previews svg { display: none; flex: none; }
@@ -694,6 +737,26 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
 .jy-tabs { display: flex; flex: 1; }
 .jy-tabs .jy-tab { flex: 1; }
 .jy-cycle { box-shadow: inset 1px 0 0 var(--jy-raised); }
+/* While it runs: its underline is faint, and the line along the bar's foot fills as the turn goes */
+.jy-cycle[aria-pressed="true"] { box-shadow: inset 1px 0 0 var(--jy-raised), inset 0 -2px 0 color-mix(in srgb, var(--jy-ink) 30%, transparent); }
+.jy-summary { position: relative; }
+.jy-cycle-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: var(--jy-ink);
+  transform: scaleX(0);
+  transform-origin: left;
+  opacity: 0;
+  pointer-events: none;
+}
+.jy-cycle-bar.is-running { opacity: 1; animation: jy-cycle-run linear forwards; }
+@keyframes jy-cycle-run { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.jy-dock-hidden .jy-cycle-bar { display: none; }
+.jy-cycle-pace { flex: none; gap: 4px; box-shadow: inset 1px 0 0 var(--jy-raised); }
+.jy-cycle-pace svg { flex: none; }
 .jy-tab[hidden] { display: none; }
 /* holding a turn while the pointer or the keyboard is on the panel */
 .jy-cycle.is-paused { color: var(--jy-muted); }
@@ -713,7 +776,7 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
 .jy-root:not(.jy-narrow).jy-dock-hidden .jy-dock-toggle { box-shadow: none; color: var(--jy-ink); }
 /* the tabs where they drop down: Stats and Pictures are the two halves of the details */
 .jy-root .jy-panel[data-tab="stats"] .jy-latest { display: none; }
-.jy-root .jy-panel[data-tab="pictures"] :is(.jy-panel-head, [data-ref="aka"], .jy-over, .jy-panel-zoom, .jy-facts, .jy-elements, .jy-details-facts, .jy-retry) { display: none; }
+.jy-root .jy-panel[data-tab="pictures"] :is(.jy-panel-head, [data-ref="aka"], .jy-over, .jy-panel-zoom, .jy-facts, .jy-elements, .jy-aurora-note, .jy-details-facts, .jy-retry) { display: none; }
 .jy-root .jy-panel[data-tab="pictures"] .jy-latest { margin-top: 12px; }
 
 /* The picture viewfinder (viewfinder.js): big screens only, at the end only. The
@@ -776,16 +839,17 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
       calc(100vh - var(--jy-nav) - var(--jy-ctl) - var(--vf-gap) - var(--vf-band-top) - var(--vf-band-bottom) - var(--vf-caption) - var(--jy-bottom) - var(--jy-row) - 96px),
       calc((62vw - 2 * var(--vf-inset)) * 3 / 4));
   }
-  /* the dock's bottom-left corner: drag out to make it bigger, in to make it smaller */
+  /* just outside the dock's bottom-left corner, clear of the caption: drag out to make it bigger,
+     in to make it smaller */
   .jy-dock-grip {
     position: absolute;
-    z-index: 4; /* over the details, which now fill the box */
-    left: 0;
+    z-index: 4;
+    left: -32px;
     bottom: 0;
     display: grid;
     place-items: center;
-    width: 24px;
-    height: 24px;
+    width: 28px;
+    height: 28px;
     margin: 0;
     padding: 0;
     border: 0;
@@ -811,6 +875,8 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
   }
   /* no picture yet (none loaded, or none nearly whole): nothing to size */
   .jy-root .jy-vf-slot[hidden] ~ .jy-dock-grip { display: none; }
+  .jy-dock-grip::before { content: ""; position: absolute; inset: -8px; } /* a bigger target than it looks */
+  .jy-dock:hover .jy-dock-grip,
   .jy-dock-grip:hover { color: var(--jy-ink); }
   .jy-dock-grip:focus-visible { outline: 2px solid var(--jy-blue); outline-offset: 2px; }
 
@@ -890,8 +956,7 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
   .jy-map-stage { position: relative; flex: 1; min-height: 0; overflow: hidden; }
   .jy-map-zoom { position: absolute; z-index: 1; top: 8px; right: 8px; display: flex; }
   .jy-map-zoom .jy-sq + .jy-sq { box-shadow: inset 1px 0 0 var(--jy-raised); }
-  /* clear of the resize grip in the corner below it */
-  .jy-map-caption { margin: 0; padding: 8px 12px 8px 36px; color: var(--jy-muted); font-size: var(--jy-small); line-height: 1.35; }
+  .jy-map-caption { margin: 0; padding: 8px 12px; color: var(--jy-muted); font-size: var(--jy-small); line-height: 1.35; }
   /* Globe | Map, as on the Orbit page */
   .jy-map-kind { position: absolute; z-index: 1; top: 8px; left: 8px; display: flex; background: var(--jy-panel); }
   /* the globe (globe/scene.js) and its labels, styled here rather than with the Orbit page's globe.css */
@@ -1275,7 +1340,7 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
   bottom: 0;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  padding-bottom: env(safe-area-inset-bottom);
+  padding: 0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
   background: var(--jy-panel);
   box-shadow: inset 0 1px 0 var(--jy-raised);
   opacity: 0;
@@ -1321,6 +1386,7 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
   right: 0;
   bottom: calc(var(--jy-tabbar) + env(safe-area-inset-bottom) + var(--jy-row));
   justify-content: space-between;
+  padding: 0 env(safe-area-inset-right) 0 env(safe-area-inset-left);
   box-shadow: inset 0 1px 0 var(--jy-raised);
 }
 .jy-root.jy-narrow:not([data-mode="still"]) .jy-corner {
@@ -1329,6 +1395,7 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
   bottom: calc(var(--jy-tabbar) + env(safe-area-inset-bottom));
   justify-content: space-between;
   gap: 0;
+  padding: 0 env(safe-area-inset-right) 0 env(safe-area-inset-left);
   background: var(--jy-panel);
   box-shadow: inset 0 1px 0 var(--jy-raised);
 }
@@ -1359,6 +1426,10 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
 /* no summary bar on a phone, and the details are a sheet above the bottom bar */
 .jy-narrow .jy-dock { position: static; display: block; width: auto; max-width: none; }
 .jy-narrow .jy-summary { display: none; }
+/* most phones: the seven controls fit across without squeezing the last one */
+@media (max-width: 399px) {
+  .jy-narrow .jy-toggle:not(.jy-previews) { padding: 0 8px; }
+}
 /* the narrowest phones: the row still fits, the clock whole */
 @media (max-width: 340px) {
   .jy-narrow .jy-clock { padding: 4px 6px 4px 12px; }
@@ -1366,6 +1437,8 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
   .jy-narrow .jy-speed span { min-width: 34px; padding: 0 2px; }
   .jy-narrow .jy-now { padding: 0 8px; }
   .jy-narrow .jy-toggle:not(.jy-previews) { padding: 0 6px; }
+  /* no room for full screen beside the rest (an iPhone has none anyway) */
+  .jy-root.jy-narrow:not([data-mode="still"]) .jy-fullscreen { display: none; }
 }
 
 .jy-narrow .jy-panel {
@@ -1384,9 +1457,18 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
 }
 .jy-narrow.jy-locked .jy-panel { bottom: calc(var(--jy-tabbar) + env(safe-area-inset-bottom)); }
 .jy-narrow .jy-panel.is-on { transform: none; }
-/* opens at its natural height up to this share (SHEET_OPEN_SHARE in journey.js); once the handle
-   has moved it, the height is set there */
-.jy-narrow .jy-panel.is-open { max-height: 72%; overflow: auto; }
+/* opens at its natural height up to this share (SHEET_OPEN_SHARE in journey.js), so the satellite
+   stays in view above it; once the handle has moved it, the height is set there */
+.jy-narrow .jy-panel.is-open { max-height: 45%; overflow: auto; }
+/* a phone on its side: the panel stands at the right, full height, and the Earth stays at the left */
+.jy-narrow.jy-wide-phone .jy-panel {
+  left: auto;
+  width: min(440px, 55%);
+  padding-right: max(16px, env(safe-area-inset-right));
+}
+.jy-narrow.jy-wide-phone .jy-panel.is-open { max-height: calc(100% - var(--jy-nav) - var(--jy-tabbar) - env(safe-area-inset-bottom)); }
+/* while a phone's panel is up, the headline makes way for the satellite (it comes back on closing) */
+.jy-root.jy-narrow.jy-panel-open .jy-text { opacity: 0; visibility: hidden; transition: opacity 150ms var(--jy-ease-exit), visibility 0s linear 150ms; }
 .jy-narrow .jy-panel.is-sized { max-height: none; }
 .jy-root.jy-narrow:not(.jy-calm) .jy-panel.is-on {
   transition: opacity 240ms var(--jy-ease-out), transform 240ms var(--jy-ease-out), height 280ms var(--jy-ease-out) !important;

@@ -1,7 +1,7 @@
 {
   "name": "FrontierSat",
   "short_name": "FrontierSat",
-  "description": "Where FrontierSat, Calgary To Space’s first student-built satellite, is right now, and every picture it has sent down.",
+  "description": "Where FrontierSat, CalgaryToSpace’s first student-built satellite, is right now, and every picture it has sent down.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

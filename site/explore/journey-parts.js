@@ -35,7 +35,7 @@ const calgaryClock = new Intl.DateTimeFormat('en-US', {
   hourCycle: 'h23',
 });
 
-/** { time: "18:54", zone: "ABT", date: "Oct 24", otherDay: true } in Calgary; otherDay is
+/** { time: "18:54", zone: "Calgary time", date: "Oct 24", otherDay: true } in Calgary; otherDay is
  * whether that date differs from the UTC date, which is what most lines already show. */
 export function calgaryTime(ms) {
   const parts = {};

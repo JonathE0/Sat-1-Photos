@@ -46,7 +46,7 @@
   const calgaryFmt = new Intl.DateTimeFormat('en-US', { timeZone: TZ, weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
   const weekdayFmt = new Intl.DateTimeFormat('en-GB', { timeZone: TZ, weekday: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
   const utcFmt = new Intl.DateTimeFormat('en-US', { timeZone: 'UTC', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
-  const calgary = (ms) => `${calgaryFmt.format(ms)} ABT`; // "Sat, Oct 31, 02:33 ABT"
+  const calgary = (ms) => `${calgaryFmt.format(ms)} Calgary time`; // "Sat, Oct 31, 02:33 Calgary time"
   const utc = (ms) => `${utcFmt.format(ms)} UTC`; // "Oct 31, 08:33 UTC"
   // a narrow space between the thousands, as in assets/format.js: a comma is a decimal point across much of Europe
   const num = (x, digits = 0) => x.toLocaleString('en-GB', { maximumFractionDigits: digits, minimumFractionDigits: digits }).replace(/,/g, ' ');
@@ -163,7 +163,7 @@
 
     $('lead').replaceChildren('Things happening on Earth that ', el('span', { class: 'name', text: 'FrontierSat' }),
       ` will pass over in the next ${span(windowEnd - Date.parse(data.window.from))}, in the right light for a picture.`);
-    $('status').replaceChildren('Made ', relative(generated, now), `, at ${utc(generated)}. Passes worked out from orbital elements of ${utc(tle)}.`);
+    $('status').replaceChildren('Made ', relative(generated, now), `, at ${utc(generated)}. Passes worked out from its orbit as published ${utc(tle)}.`);
 
     const notes = [];
     if (now - generated > STALE_HOURS * 3600e3) {
@@ -179,7 +179,7 @@
     }
     const tleAge = (now - tle) / 86400e3;
     if (tleAge > 7) {
-      notes.push(el('p', { class: 'ink', text: `The orbital elements are ${days(tleAge)} old, so pass times may be off by a minute or more.` }));
+      notes.push(el('p', { class: 'ink', text: `Its published orbit is ${days(tleAge)} old, so pass times may be off by a minute or more.` }));
     }
     $('notes').replaceChildren(...notes);
 
@@ -544,11 +544,11 @@
     const r = data.rules;
     const aurora = data.aurora;
     const paras = [
-      'A scheduled job, with no person or AI in the loop, collects open events from public feeds about once an hour and works out from the satellite\'s orbital elements when the ground below it next comes close to each one.',
+      'A scheduled job, with no person or AI in the loop, collects open events from public feeds about once an hour and works out from the satellite\'s published orbit when the ground below it next comes close to each one.',
       `A pass counts when the point directly below FrontierSat comes within ${num(data.max_km)} km of the event. The camera's footprint isn't documented, so that distance is a guess: a lens like the Raspberry Pi camera's would see about 300 km either side of straight down from 500 km up.`,
       `The light has to be right too: for most events the sun at least ${num(r.day_sun_min_deg)}° up where the event is, and for aurora the ground at least ${num(-r.dark_sun_max_deg)}° past sunset. Aurora is listed when NOAA forecasts Kp ${num(r.aurora_kp, 1)} or more, and a pass counts when the satellite crosses the oval in the dark while it lasts.`,
       `Wildfires smaller than ${num(r.min_fire_ha)} hectares and prescribed burns are left out, and so are earthquakes and droughts, which can't be seen from orbit. Storms move: they're placed along their forecast track where GDACS publishes one, or carried on along their recent track for up to a day, and no further.`,
-      'Times come from the newest orbital elements. The older those are by the time of a pass, the less exact its time: a day or two old is good to a few seconds, a week old can be off by a minute or more.',
+      'Times come from the newest published orbit. The older that is by the time of a pass, the less exact its time: a day or two old is good to a few seconds, a week old can be off by a minute or more.',
     ];
     if (aurora && aurora.max_kp != null && aurora.max_kp < aurora.threshold_kp) {
       paras.splice(3, 0, `No aurora on the list at the moment: NOAA's highest Kp forecast in this window is ${num(aurora.max_kp, 1)}, under the ${num(aurora.threshold_kp, 1)} the list waits for.`);

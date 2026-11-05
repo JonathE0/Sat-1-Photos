@@ -97,7 +97,7 @@ const LIVE = [
       const kmh = Math.round((v * 3600) / 100) * 100;
       return {
         text: `It's moving at ${v.toFixed(2)} km/s${now(r)}, about ${fmtInt(kmh)} km/h.`,
-        note: 'Worked out from its orbital elements',
+        note: 'Worked out from its published orbit',
       };
     },
   },
@@ -106,7 +106,7 @@ const LIVE = [
     make(r) {
       const a = num(r.altKm);
       if (a == null) return null;
-      return { text: `It's ${fmtInt(a)} km above the ground${now(r)}.`, note: 'Worked out from its orbital elements' };
+      return { text: `It's ${fmtInt(a)} km above the ground${now(r)}.`, note: 'Worked out from its published orbit' };
     },
   },
   {
@@ -116,12 +116,12 @@ const LIVE = [
       const lon = num(r.lonDeg);
       const when = r.isLive === false ? 'At this moment' : 'Right now';
       if (typeof r.placeName === 'string' && r.placeName.trim()) {
-        return { text: `${when} it's over ${r.placeName.trim()}.`, note: 'Worked out from its orbital elements' };
+        return { text: `${when} it's over ${r.placeName.trim()}.`, note: 'Worked out from its published orbit' };
       }
       if (lat == null || lon == null) return null;
       const ns = `${Math.abs(lat).toFixed(1)}° ${lat >= 0 ? 'N' : 'S'}`;
       const ew = `${Math.abs(lon).toFixed(1)}° ${lon >= 0 ? 'E' : 'W'}`;
-      return { text: `${when} it's above ${ns}, ${ew}.`, note: 'Worked out from its orbital elements' };
+      return { text: `${when} it's above ${ns}, ${ew}.`, note: 'Worked out from its published orbit' };
     },
   },
   {
@@ -135,7 +135,7 @@ const LIVE = [
         text: perDay
           ? `It has gone round the Earth about ${fmtInt(n)} times since launch, roughly ${perDay.toFixed(1)} times a day.`
           : `It has gone round the Earth about ${fmtInt(n)} times since launch.`,
-        note: 'Counted from its orbital elements',
+        note: 'Counted from its published orbit',
       };
     },
   },

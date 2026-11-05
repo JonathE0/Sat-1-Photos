@@ -56,7 +56,7 @@ html.credits-open.credits-gutter { scrollbar-gutter: stable; }
 .credits-logos { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; margin: 0 0 16px; }
 .credits-logo { display: block; width: auto; height: 36px; }
 .credits-partner { height: 64px; border-radius: 8px; }
-.credits p { margin: 0 0 12px; color: #C3CCD5; }
+.credits p { margin: 0 0 12px; color: var(--cr-ink); }
 .credits a {
   color: var(--cr-ink);
   text-decoration: underline;

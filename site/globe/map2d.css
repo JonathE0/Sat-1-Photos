@@ -122,19 +122,36 @@
   color: var(--cg-text, #E6EBF0);
 }
 
-.cg-seg-zoom button:disabled {
+/* at its limit: dimmed, and still focusable (aria-disabled), so the focus doesn't drop */
+.cg-seg-zoom button:disabled,
+.cg-seg-zoom button[aria-disabled="true"],
+.cg-seg-zoom button[aria-disabled="true"]:hover {
   color: var(--cg-muted, #8A96A3);
   background: transparent;
   cursor: default;
   opacity: 0.5;
 }
 
-.cg:not(.cg-mode-map) .cg-seg-zoom {
+/* The zoom, on the globe and the map alike: + over −, at the lower right of the view, clear of
+   the clock bar and the right-hand panels (narrow: above the bottom bar, below). */
+.cg .cg-seg-zoom {
+  position: absolute;
+  right: calc(var(--cg-right-w, 300px) + 2 * var(--cg-gap, 16px));
+  bottom: calc(var(--cg-clock-h, 64px) + 2 * var(--cg-gap, 16px));
+  z-index: 2;
+  flex-direction: column-reverse;
+}
+
+.cg-panels-off:not(.cg-narrow) .cg-seg-zoom {
+  right: var(--cg-gap, 16px);
+}
+
+.cg[data-ui="compact"] .cg-seg-zoom {
   display: none;
 }
 
 /* beside the switch, out of the group's width: only the switch is centred, so
-   it stays put when the zoom appears in map mode */
+   it stays put when Aurora steps aside */
 .cg:not(.cg-narrow) .cg-views-side {
   position: absolute;
   top: 0;
@@ -154,12 +171,10 @@
     align-items: flex-start;
   }
 }
-.cg-narrow .cg-views-side {
-  display: contents;
-}
 
-/* narrow: the switch top right, clear of the title on the left; zoom at the
-   right edge just above the bottom bar, under any open sheet */
+/* narrow: the switch top right, clear of the title on the left; the zoom at the
+   right edge just above the bottom bar, with the previews and Aurora beside it,
+   under any open sheet */
 .cg-narrow .cg-views {
   display: contents;
 }
@@ -171,18 +186,6 @@
   min-height: 44px;
 }
 
-/* a sheet at the side: the switch and zoom stay beside it */
-@media (min-width: 760px), (min-width: 480px) and (orientation: landscape) {
-  .cg-narrow:is([data-tab="sat"], [data-tab="passes"], [data-tab="photos"]) .cg-views-main,
-  .cg-narrow:is([data-tab="sat"], [data-tab="passes"], [data-tab="photos"]) .cg-seg-zoom,
-  .cg-narrow:is([data-tab="sat"], [data-tab="passes"], [data-tab="photos"]) .cg-aurora-btn {
-    right: calc(min(360px, 45%) + 12px);
-  }
-  .cg-narrow:is([data-tab="sat"], [data-tab="passes"], [data-tab="photos"]) .cg-previews-btn {
-    right: calc(min(360px, 45%) + 90px);
-  }
-}
-
 .cg-narrow .cg-views-main {
   position: absolute;
   top: calc(var(--cg-top, 0px) + 12px);
@@ -191,26 +194,28 @@
 }
 
 .cg-narrow .cg-seg-zoom {
-  position: absolute;
   right: 12px;
   bottom: calc(var(--cg-dock-h, 0px) + 12px);
   z-index: 1;
-  flex-direction: column-reverse;
 }
 
-/* the same spot as the map's zoom: only the globe has an aurora */
-.cg-narrow .cg-aurora-btn {
+/* [previews] [Aurora], left of the zoom, along its foot */
+.cg-narrow .cg-views-side {
   position: absolute;
-  right: 12px;
+  right: 64px;
   bottom: calc(var(--cg-dock-h, 0px) + 12px);
   z-index: 1;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.cg-narrow .cg-aurora-btn {
   height: 44px;
 }
+
 .cg-narrow .cg-previews-btn {
-  position: absolute;
-  right: 90px; /* left of Aurora */
-  bottom: calc(var(--cg-dock-h, 0px) + 12px);
-  z-index: 1;
+  order: -1;
   width: 44px;
   height: 44px;
   padding: 0;
@@ -223,10 +228,14 @@
   overflow: hidden;
   clip-path: inset(50%);
 }
-/* left of the map's zoom, which has Aurora's corner there */
-.cg-narrow.cg-mode-map .cg-previews-btn { right: 64px; }
+
+/* a sheet at the side: the switch, the zoom and the buttons beside it stay clear of it */
 @media (min-width: 760px), (min-width: 480px) and (orientation: landscape) {
-  .cg-narrow.cg-mode-map:is([data-tab="sat"], [data-tab="passes"], [data-tab="photos"]) .cg-previews-btn {
+  .cg-narrow:is([data-tab="sat"], [data-tab="passes"], [data-tab="photos"]) .cg-views-main,
+  .cg-narrow:is([data-tab="sat"], [data-tab="passes"], [data-tab="photos"]) .cg-seg-zoom {
+    right: calc(min(360px, 45%) + 12px);
+  }
+  .cg-narrow:is([data-tab="sat"], [data-tab="passes"], [data-tab="photos"]) .cg-views-side {
     right: calc(min(360px, 45%) + 64px);
   }
 }

@@ -1,12 +1,14 @@
 // The detail view: the picture on slate, an info panel, the edit form and the history.
+// The panel's picture block (time, actions, facts, Technical details, notes) is
+// photo-info.js, the same one Pictures shows.
 
-import { h, mono, joined, announce, store, copyText, onSwipe } from './dom.js';
-import {
-  CAMERAS, basisText, bytes, calgary, cameraLong, clock, monthDayYear, inputTime, isoDay, isoUTC,
-  latLon, parseUtcInput, percent, plural, shortHash, statusWord, toDate, utcLong,
-} from './format.js';
+import { h, announce, store, onSwipe } from './dom.js';
+import { inputTime, isoUTC, latLon, monthDayYear, parseUtcInput, plural, toDate, utcLong } from './format.js';
 import { memberValues, saveAnnotation } from './data.js';
-import { headline, whenShort } from './catalogue.js';
+import {
+  headline, nameAndWhen, photoAlt, bothTimes, calgaryStamp,
+  whenBlock, statusBlock, creditLine, createPhotoActions, photoFacts, technicalDetails, photoNotes,
+} from './photo-info.js';
 
 export const NAME_KEY = 'cts1-gallery:name';
 const KEY_KEY = 'cts1-gallery:edit-key';
@@ -17,14 +19,6 @@ const MAX_ITEMS = 50;  // people or tags per picture
 
 const isObject = (v) => v != null && typeof v === 'object' && !Array.isArray(v);
 const isEmpty = (v) => v == null || v === '' || (Array.isArray(v) && v.length === 0);
-
-function sub(content, extra = '') {
-  return h('span', { class: `sub${extra ? ` ${extra}` : ''}` }, content);
-}
-
-function capitalize(text) {
-  return text ? text[0].toUpperCase() + text.slice(1) : text;
-}
 
 function truncate(text, n) {
   const s = String(text);
@@ -56,61 +50,6 @@ function sameList(a, b) {
 function sameTime(a, b) {
   if (a == null || b == null) return a == null && b == null;
   return toDate(a)?.getTime() === toDate(b)?.getTime();
-}
-
-// Alt text for the large image.
-function detailAlt(p) {
-  const camera = CAMERAS[p.camera]?.alt || 'Camera';
-  const d = toDate(p.capturedAt);
-  let when = 'taken at an unknown time';
-  if (d) when = `taken ${utcLong(d, false)}`;
-  else if (p.captureDate) when = `taken on ${monthDayYear(toDate(p.captureDate))}`;
-  // A computed place belongs to the computed time, not a member's edited one.
-  const stale = !p.positionRecomputed && p.edited.captured_at && !p.edited.position && !sameTime(p.capturedAt, p.raw.captured_at);
-  let where = '';
-  if (p.place) where = ` over ${p.place}`;
-  else if (!stale && p.computedPlace) where = ` over ${p.computedPlace}`;
-  else if (!stale && p.position) where = ` over ${latLon(p.position.lat, p.position.lon)}`;
-  const parts = [];
-  if (p.title !== p.defaultTitle) parts.push(`${p.title}.`);
-  parts.push(`${camera} image from FrontierSat, ${when}${where}.`);
-  if (p.status === 'partial') parts.push('Parts of the image are missing.');
-  if (p.status === 'truncated') parts.push('Only the top of the frame exists.');
-  return parts.join(' ');
-}
-
-// How far the on-board clock a capture time was read from was off (see
-// satellite_clock in docs/DATA.md).
-function clockText(clockInfo) {
-  if (!isObject(clockInfo)) return null;
-  const c = clockInfo.correction_s;
-  if (!Number.isFinite(c)) {
-    return 'Read off an on-board clock that nothing in the data can check: it may be a minute or so off.';
-  }
-  if (c === 0) return 'The satellite’s clock was checked and was right.';
-  const s = Math.abs(c);
-  return `The satellite’s clock was ${s.toFixed(s < 10 ? 1 : 0)} s ${c < 0 ? 'fast' : 'slow'}; corrected for that.`;
-}
-
-// The one-line note under a partial picture.
-function shotNote(p) {
-  if (p.status === 'partial') {
-    const pct = percent(p.raw.completeness);
-    // A main-camera picture's completeness is how much of it can be shown,
-    // not how much arrived: its JPEG can't be decoded past a gap.
-    if (p.camera === 'picam') {
-      return pct
-        ? `Partial: only the part above the first missing line can be shown (${pct} of the file). The camera’s JPEGs can’t be decoded past a gap, so the grey below it is mostly data that did arrive.`
-        : 'Partial: only the part above the first missing line can be shown. The camera’s JPEGs can’t be decoded past a gap.';
-    }
-    return pct
-      ? `Partial: ${pct} of this picture came down. The gaps are data that never arrived.`
-      : 'Partial: some of this picture never came down. The gaps are data that never arrived.';
-  }
-  if (p.status === 'truncated') {
-    return 'Cut short on board: the satellite stored only the top part of this frame.';
-  }
-  return null;
 }
 
 const EDIT_FIELDS = ['title', 'place', 'notes', 'people', 'tags', 'captured_at', 'lat', 'lon'];
@@ -145,7 +84,7 @@ function describeChange(changes) {
   const verb = isEmpty(before) ? 'set' : 'changed';
   let shown = null;
   if (Array.isArray(after)) shown = truncate(after.join(', '), 70);
-  else if (field === 'capture time') shown = toDate(after) ? utcLong(toDate(after)) : null;
+  else if (field === 'capture time') shown = toDate(after) ? bothTimes(toDate(after)) : null;
   else if (typeof after === 'string' && field !== 'notes') shown = `“${truncate(after, 70)}”`;
   if (field === 'notes') return isEmpty(before) ? 'added notes' : 'changed the notes';
   return shown ? `${verb} the ${field} to ${shown}` : `${verb} the ${field}`;
@@ -189,9 +128,13 @@ function globeLink(href, attrs, ...children) {
 export function createDetail(root, ctx) {
   let currentId = null;
   let form = null; // { dirty(), setName(name), focusSave() } for the open edit form
+  // Show on the globe, Download, Copy link: the same buttons as on Pictures. Copy link
+  // gives the picture's own address, without the way back to someone's globe view.
+  const actions = createPhotoActions({ idPrefix: 'detail', copyUrl: (p) => pictureUrl(p) });
 
+  // Newer (←) and Older (→), as on Pictures: the list is newest first.
   function stepLink(target, dir) {
-    const word = dir === 'prev' ? 'Previous' : 'Next';
+    const word = dir === 'prev' ? 'Newer' : 'Older';
     const arrow = h('span', { 'aria-hidden': 'true' }, dir === 'prev' ? '←' : '→');
     const text = h('span', { class: 'step-text' }, word);
     const content = dir === 'prev' ? [arrow, text] : [text, arrow];
@@ -199,7 +142,7 @@ export function createDetail(root, ctx) {
     const link = h('a', {
       class: `step step-${dir}`,
       href: `#/photo/${encodeURIComponent(target.id)}`,
-      'aria-label': `${word} picture: ${target.title}`,
+      'aria-label': `${word} picture: ${nameAndWhen(target)}`,
       'data-step': dir,
     }, content);
     link.addEventListener('click', (e) => {
@@ -215,7 +158,7 @@ export function createDetail(root, ctx) {
       src: p.src,
       width: p.width,
       height: p.height,
-      alt: detailAlt(p),
+      alt: photoAlt(p),
       decoding: 'async',
       fetchpriority: 'high',
       style: `max-width: ${p.width}px`, // never past its own size: the frames are small and grainy enlarged
@@ -229,11 +172,8 @@ export function createDetail(root, ctx) {
   }
 
   function stage(p, prev, next, globe) {
-    const note = shotNote(p);
-    const shot = h('figure', { class: 'shot' },
-      shotImage(p),
-      note && h('figcaption', { class: 'shot-note' }, note));
-    // on a phone, a swipe on the picture goes to the next (left) or the previous (right)
+    const shot = h('figure', { class: 'shot' }, shotImage(p));
+    // on a phone, a swipe to the left goes on to the older picture, one to the right back to the newer
     onSwipe(shot, (dir) => {
       const dest = dir > 0 ? next : prev;
       if (dest) ctx.go(dest.id, 'swipe');
@@ -241,186 +181,19 @@ export function createDetail(root, ctx) {
     return h('div', { class: 'stage-wrap' },
       h('div', { class: 'stage', style: `--pic-w: ${p.width}px` }, // the arrows stay beside the picture
         shot,
-        h('nav', { class: 'stepper', 'aria-label': 'Browse pictures' },
+        h('nav', { class: 'stepper', 'aria-label': 'Newer and older pictures' },
           stepLink(prev, 'prev'),
-          globe && globeLink(globe, { class: 'step step-globe' }, 'Back to globe'),
+          globe && globeLink(globe, { class: 'step step-globe' }, 'Back to the globe'),
           stepLink(next, 'next'))));
   }
 
-  /* Info rows */
-
-  function capturedValue(p) {
-    const raw = p.raw;
-    const d = toDate(p.capturedAt);
-    if (d) {
-      const out = [utcLong(d, true)];
-      if (p.edited.captured_at) {
-        out.push(sub(`edited by ${p.edited.captured_at}`, 'edited'));
-        const original = toDate(raw.captured_at);
-        out.push(sub(original
-          ? ['Computed: ', utcLong(original, true), raw.capture_basis ? `, ${basisText(raw.capture_basis)}` : '']
-          : 'There was no computed time.', 'small'));
-      } else {
-        const basis = basisText(raw.capture_basis);
-        if (basis) out.push(sub(capitalize(basis)));
-        const clockNote = clockText(raw.satellite_clock);
-        if (clockNote) out.push(sub(clockNote, 'small'));
-      }
-      const local = calgary(d);
-      if (local) out.push(sub(`${local} in Calgary`, 'small'));
-      return out;
-    }
-    if (p.captureDate) {
-      return [monthDayYear(toDate(p.captureDate)), sub('Date only; the time of day is unknown.')];
-    }
-    return ['Unknown', sub('Neither the file name nor the logs give a capture time.')];
-  }
-
-  function positionValue(p) {
-    const pos = p.position;
-    if (!pos) {
-      if (p.edited.captured_at) {
-        return ['Not computed for the edited time', sub('The globe works it out from the edited time: use Show on globe.')];
-      }
-      return p.capturedAt
-        ? ['Not computed', sub('No orbit data covers this time.')]
-        : ['Unknown', sub('A position needs a capture time.')];
-    }
-    const out = [`≈ ${latLon(pos.lat, pos.lon)}`];
-    if (p.edited.position) out.push(sub(`edited by ${p.edited.position}`, 'edited'));
-    if (p.computedPlace) out.push(h('span', { class: 'line' }, p.computedPlace));
-    if (Number.isFinite(pos.alt_km)) out.push(sub(`Altitude ${Math.round(pos.alt_km)} km`));
-    if (typeof pos.ground_sunlit === 'boolean') {
-      const e = pos.sun_elevation_deg;
-      const sun = Number.isFinite(e) ? ` (sun ${Math.abs(e).toFixed(0)}° ${e >= 0 ? 'above' : 'below'} the horizon)` : '';
-      out.push(sub(`Ground below: ${pos.ground_sunlit ? 'daylight' : 'night'}${sun}`));
-    }
-    const light = {
-      sunlit: 'sunlit',
-      terminator: 'on the day–night line, with the sun at Earth’s edge',
-      shadow: 'in Earth’s shadow',
-    }[pos.satellite_light];
-    if (light) {
-      out.push(sub(`Satellite: ${light}`));
-    } else if (typeof pos.satellite_sunlit === 'boolean') {
-      out.push(sub(`Satellite: ${pos.satellite_sunlit ? 'sunlit' : 'in Earth’s shadow'}`));
-    }
-    if (p.positionRecomputed) {
-      out.push(sub('Altitude and light are worked out from the orbit at this time.', 'small'));
-      return out;
-    }
-    const computed = isObject(p.raw.position);
-    if (computed && p.edited.position) {
-      out.push(sub('Altitude and light are from the computed position.', 'small'));
-    } else if (computed && p.edited.captured_at) {
-      out.push(sub('Computed for the original capture time, not the edited one.', 'small'));
-    }
-    if (computed && p.raw.position.basis) {
-      const epoch = toDate(p.raw.position.tle_epoch);
-      out.push(sub(`${capitalize(p.raw.position.basis)}${epoch ? ` (epoch ${utcLong(epoch, false)})` : ''}.`, 'small'));
-    }
-    return out;
-  }
-
-  function downlinkValue(p) {
-    const dl = isObject(p.raw.downlink) ? p.raw.downlink : {};
-    const first = toDate(dl.first);
-    const last = toDate(dl.last);
-    const out = [];
-    if (first && last && isoDay(first) === isoDay(last)) {
-      out.push(`${monthDayYear(first)}, ${clock(first)}–${clock(last)} UTC`);
-    } else if (first && last) {
-      out.push(`${monthDayYear(first)}, ${clock(first)} –`, h('br'), `${monthDayYear(last)}, ${clock(last)} UTC`);
-    } else if (first || last) {
-      out.push(utcLong(first || last, false));
-    } else {
-      out.push('Unknown');
-    }
-    if (Number.isFinite(dl.packets)) out.push(sub(plural(dl.packets, 'packet')));
-    return out;
-  }
-
-  function fileValue(p) {
-    const raw = p.raw;
-    const out = [];
-    if (raw.file) out.push(mono(raw.file));
-    const size = bytes(raw.file_size);
-    if (size) out.push(sub(size));
-    if (typeof raw.sha256 === 'string' && raw.sha256) {
-      const parts = ['sha256 ', h('span', { class: 'mono', title: raw.sha256 }, shortHash(raw.sha256))];
-      const expected = typeof raw.sha256_expected === 'string' ? raw.sha256_expected : '';
-      if (expected && expected.toLowerCase() === raw.sha256.toLowerCase()) {
-        parts.push(p.status === 'verified' ? ', matches satellite' : ', matches the satellite’s hash');
-      } else if (expected) {
-        parts.push(', the satellite reported ', h('span', { class: 'mono', title: expected }, shortHash(expected)));
-      } else {
-        parts.push(', no hash from the satellite');
-      }
-      out.push(sub(parts));
-    }
-    return out.length ? out : ['Unknown'];
-  }
-
-  function statusValue(p) {
-    const word = statusWord(p.status);
-    const pct = percent(p.raw.completeness);
-    const verb = p.camera === 'picam' ? 'shown' : 'received';
-    const out = [p.status === 'partial' && pct ? `${word}, ${pct} ${verb}` : word];
-    if (typeof p.raw.status_note === 'string' && p.raw.status_note) out.push(sub(p.raw.status_note));
-    return out;
-  }
-
-  function facts(p) {
-    const rows = [
-      ['Taken', capturedValue(p)],
-      ['Where', positionValue(p)],
-      ['Camera', [cameraLong(p.camera), sub(`${p.width} × ${p.height} pixels`)]],
-      ['Came down', downlinkValue(p)],
-      ['File', fileValue(p)],
-      ['Status', statusValue(p)],
-    ];
-    return h('dl', { class: 'facts' }, rows.flatMap(([label, value]) => [h('dt', null, label), h('dd', null, value)]));
-  }
-
-  function plainLinks(items, key) {
-    return h('span', { class: 'plain-list' }, joined(items.map((item) => h('a', {
+  // People and tags lead to Pictures with only their pictures.
+  function listLink(item, key) {
+    return h('a', {
+      class: 'pi-list-link',
       href: `#/pictures?${new URLSearchParams({ [key]: item })}`,
-      title: `All pictures with ${item}`,
-    }, item)), ', '));
-  }
-
-  function membersSection(p) {
-    const by = (name) => name && sub(`by ${name}`, 'edited');
-    const rows = [];
-    if (p.notes) rows.push(['Notes', [h('span', { style: 'white-space: pre-line' }, p.notes), by(p.edited.notes)]]);
-    if (p.place) rows.push(['Place', [p.place, by(p.edited.place)]]);
-    if (p.people.length) rows.push(['People', [plainLinks(p.people, 'member'), by(p.edited.people)]]);
-    if (p.tags.length) rows.push(['Tags', [plainLinks(p.tags, 'tag'), by(p.edited.tags)]]);
-    return h('section', { class: 'panel-section', 'aria-labelledby': 'members-heading' },
-      h('h2', { id: 'members-heading' }, 'From members'),
-      rows.length
-        ? h('dl', { class: 'facts facts-flush' }, rows.flatMap(([label, value]) => [h('dt', null, label), h('dd', null, value)]))
-        : h('p', { class: 'section-note' }, 'No notes, places, people or tags yet.'));
-  }
-
-  function linksRow(p) {
-    const items = [];
-    if (p.capturedAt) {
-      items.push(h('a', { href: `globe/index.html?photo=${encodeURIComponent(p.id)}` }, 'Show on globe'));
-    }
-    const fileName = String(p.src || '').split('/').pop() || `${p.id}.jpg`;
-    items.push(h('a', { href: p.src, download: `frontiersat-${fileName}` }, 'Download image'));
-    const copy = h('button', { type: 'button', class: 'linkish' }, 'Copy link');
-    let timer = 0;
-    copy.addEventListener('click', async () => {
-      const ok = await copyText(pictureUrl(p));
-      copy.textContent = ok ? 'Link copied' : 'Copy failed';
-      announce(ok ? 'Link copied' : 'Could not copy the link');
-      window.clearTimeout(timer);
-      timer = window.setTimeout(() => { copy.textContent = 'Copy link'; }, 2000);
-    });
-    items.push(copy);
-    return h('p', { class: 'links' }, items);
+      'aria-label': key === 'tag' ? `${item}: all pictures tagged ${item}` : `${item}: all pictures with ${item}`,
+    }, item);
   }
 
   function readonlyLine(p) {
@@ -625,7 +398,7 @@ export function createDetail(root, ctx) {
       const fields = [...new Set(clashed.map((k) => FIELD_NAMES[k] || k))];
       const stored = clashed.filter((k) => k !== 'lat' && k !== 'lon').map((k) => {
         const v = now[k];
-        const t = Array.isArray(v) ? v.join(', ') : (k === 'captured_at' && v ? utcLong(toDate(v)) : v);
+        const t = Array.isArray(v) ? v.join(', ') : (k === 'captured_at' && v ? bothTimes(toDate(v)) : v);
         return `${FIELD_NAMES[k]}: ${t ? `“${truncate(t, 120)}”` : 'empty'}`;
       });
       setMessage(`Not saved: ${latest.updated_by || 'someone'} changed the ${listWords(fields.length ? fields : ['picture'])} `
@@ -738,7 +511,7 @@ export function createDetail(root, ctx) {
         h('span', { class: 'who' }, typeof entry.by === 'string' && entry.by.trim() ? entry.by.trim() : 'Someone'),
         ' ',
         describeChange(entry.changes),
-        when && h('time', { class: 'when mono', datetime: entry.at }, utcLong(when, false)));
+        when && h('time', { class: 'when', datetime: entry.at, title: utcLong(when, false) }, calgaryStamp(when)));
     };
     const list = h('ol', { class: 'history' }, ordered.slice(0, HISTORY_SHOWN).map(item));
     let more = null;
@@ -768,7 +541,7 @@ export function createDetail(root, ctx) {
     root.replaceChildren(h('div', { class: 'notice' },
       h('h1', { class: 'detail-title', id: 'detail-title', tabindex: '-1' }, 'Picture not found'),
       h('p', null, `There is no picture with the id “${id}”. It may have been renamed when the list was rebuilt.`),
-      h('p', null, h('a', { class: 'text-link', href: '#/pictures' }, 'See all pictures'))));
+      h('p', null, h('a', { class: 'text-link', href: '#/pictures' }, '← All pictures'))));
   }
 
   function render(id, { flash = '', keepScroll = false, focusSave = false, focus = null } = {}) {
@@ -786,6 +559,9 @@ export function createDetail(root, ctx) {
     const globe = globeHref();
 
     const scrollY = window.scrollY;
+    actions.set(p, { globeHref: (x) => `globe/index.html?photo=${encodeURIComponent(x.id)}` });
+    // Technical details stays open from picture to picture once opened
+    const techOpen = Boolean(root.querySelector('.pi-tech')?.open);
     const panel = h('article', { class: 'panel', 'aria-labelledby': 'detail-title' },
       h('div', { class: 'panel-top' },
         h('span', { class: 'panel-links' },
@@ -799,12 +575,12 @@ export function createDetail(root, ctx) {
             },
           }, globe ? 'All pictures' : '← All pictures')),
         index >= 0 && h('span', { class: 'panel-count' }, `${index + 1} of ${list.length}`)),
-      h('h1', { class: 'detail-title', id: 'detail-title', tabindex: '-1' }, headline(p)),
-      h('p', { class: 'title-when' }, whenShort(p)),
-      p.edited.title && h('p', { class: 'title-note' }, `Title edited by ${p.edited.title}`),
-      facts(p),
-      linksRow(p),
-      membersSection(p),
+      h('h1', { class: 'pi-title detail-title', id: 'detail-title', tabindex: '-1' }, headline(p)),
+      h('div', { class: 'pi-lead' }, creditLine(p), whenBlock(p), statusBlock(p)),
+      actions.el,
+      photoFacts(p, { listLink }),
+      technicalDetails(p, { open: techOpen }),
+      photoNotes(p, { level: 2, idPrefix: 'detail' }),
       ctx.editable() ? editSection(p, flash) : readonlyLine(p),
       historySection(p));
 

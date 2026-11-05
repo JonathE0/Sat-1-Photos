@@ -22,12 +22,18 @@
 // With no id in the URL it opens on the newest picture that isn't dark and
 // is at least half there; the strip still starts with the newest.
 
-import { h, append, announce, copyText, onSwipe } from './dom.js';
-import { CALGARY_TIME_ZONE, CALGARY_ZONE_NAME } from './calgary-clock.js';
+import { h, append, announce, onSwipe } from './dom.js';
 import { OPENING_PHOTO_ID } from './opening-photo.js';
-import { CAMERAS, clock, monthDayYear, grouped, latLon, percent, plural, toDate } from './format.js';
+import { CAMERAS, plural } from './format.js';
 import { applyFilters, FILTER_KEYS, readFilters } from './data.js';
 import { createFilterForm, describeFilters } from './filters.js';
+import {
+  isDark, isMostlyMissing, headline, whenShort, nameAndWhen, statusShort, placeName, photoAlt, capitalize,
+  whenBlock, statusBlock, creditLine, createPhotoActions, photoFacts, technicalDetails, photoNotes,
+} from './photo-info.js';
+
+// The words for one picture live in photo-info.js, shared with a picture's own page.
+export { isDark, isMostlyMissing, headline, whenShort, statusShort };
 
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
@@ -37,210 +43,9 @@ const SWITCHES = ['dark', 'missing'];
 const NARROWING = FILTER_KEYS.filter((key) => !SWITCHES.includes(key));
 const MAX_CELLS = 4;
 const EAGER_THUMBS = 16;
-const DAY_MS = 24 * 3600 * 1000;
-
-/* Words for one picture */
-
-export const isDark = (p) => Boolean(p && (p.dark === true || (p.raw && p.raw.dark === true)));
-
-// Less than a fifth of the picture can be shown. data.js sets p.mostlyMissing
-// (on main); until that lands here, the same rule from completeness.
-export const isMostlyMissing = (p) => Boolean(p && (typeof p.mostlyMissing === 'boolean'
-  ? p.mostlyMissing
-  : Number(p.raw?.completeness) < 0.2));
 
 const DARK_WHY = 'nothing but black, sensor noise or the Sun as a single dot';
 const MISSING_WHY = 'less than a fifth of the picture can be shown';
-
-// Keeps a date, a time or a range on one line: lines break only between them.
-function nobr(text) {
-  return h('span', { class: 'cat-nobr' }, text);
-}
-
-// "Oct 24, 2026, 17:37:32 UTC" with the date and the time each kept whole.
-function utcParts(d, seconds = false) {
-  return [nobr(monthDayYear(d)), ', ', nobr(`${clock(d, seconds)} UTC`)];
-}
-
-function sameTime(a, b) {
-  if (a == null || b == null) return a == null && b == null;
-  return toDate(a)?.getTime() === toDate(b)?.getTime();
-}
-
-function capitalize(text) {
-  return text ? text[0].toUpperCase() + text.slice(1) : text;
-}
-
-// A member who moved the capture time without giving a position leaves the
-// computed position in place, but it belongs to the old time (as in detail.js).
-function positionIsStale(p) {
-  return !p.positionRecomputed
-    && Boolean(p.edited.captured_at && !p.edited.position && !sameTime(p.capturedAt, p.raw.captured_at));
-}
-
-function placeName(p) {
-  if (p.place) return p.place;
-  if (positionIsStale(p)) return '';
-  return p.computedPlace || '';
-}
-
-function dayOf(p) {
-  const d = toDate(p.capturedAt);
-  if (d) return d;
-  return p.captureDate ? toDate(`${p.captureDate}T00:00:00Z`) : null;
-}
-
-function dateText(p) {
-  const d = dayOf(p);
-  return d ? monthDayYear(d) : 'Date unknown';
-}
-
-// The largest line: a member's title, else the place, else the date, else
-// the build's own title ("Attitude camera, frame 1c89").
-export function headline(p) {
-  if (p.title !== p.defaultTitle) return p.title;
-  return placeName(p) || (dayOf(p) ? dateText(p) : p.defaultTitle || p.id);
-}
-
-// "Oct 25, 2026, 00:54 UTC", "Oct 24, 2026, time unknown" or "Time unknown".
-export function whenShort(p) {
-  const d = toDate(p.capturedAt);
-  if (d) return `${monthDayYear(d)}, ${clock(d)} UTC`;
-  const day = dayOf(p);
-  return day ? `${monthDayYear(day)}, time unknown` : 'Time unknown';
-}
-
-// For labels that are read aloud: the headline and the time, without saying a
-// date twice when the date is all the headline has.
-function nameAndWhen(p) {
-  const name = headline(p);
-  const when = whenShort(p);
-  return when.startsWith(name) ? when : `${name}, ${when}`;
-}
-
-let calgaryFormat = null;
-
-// "18:54 ABT on Oct 24 in Calgary" (the date only when it differs from UTC's),
-// as nodes with the time and the date each kept on one line.
-function calgaryLine(d) {
-  try {
-    calgaryFormat ||= new Intl.DateTimeFormat('en-US', {
-      timeZone: CALGARY_TIME_ZONE,
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      hourCycle: 'h23',
-    });
-    const parts = {};
-    for (const part of calgaryFormat.formatToParts(d)) parts[part.type] = part.value;
-    const otherDay = `${parts.month} ${parts.day}, ${parts.year}` !== monthDayYear(d);
-    return [
-      nobr(`${parts.hour}:${parts.minute} ${CALGARY_ZONE_NAME}`),
-      otherDay ? [' on ', nobr(`${parts.month} ${parts.day}`)] : '',
-      ' in Calgary',
-    ];
-  } catch {
-    return null;
-  }
-}
-
-function agoText(ms) {
-  const min = Math.max(1, Math.round(ms / 60000));
-  if (min < 60) return `${min} min`;
-  return `${Math.round(min / 60)} h`;
-}
-
-function checksumMatches(p) {
-  const a = p.raw?.sha256;
-  const b = p.raw?.sha256_expected;
-  return typeof a === 'string' && typeof b === 'string' && a && a.toLowerCase() === b.toLowerCase();
-}
-
-// Numbers from the build's status note: "lines 0–499 of the 1210 … and 367 of those arrived".
-function noteNumbers(p) {
-  const note = String(p.raw?.status_note || '');
-  const lines = /lines\s+(\d+)\s*[–-]\s*(\d+)\s+of\s+(?:the\s+)?(\d+)/i.exec(note);
-  const arrived = /(\d[\d,]*)\s+of\s+those\s+arrived/i.exec(note);
-  return {
-    lines: lines ? { from: Number(lines[1]), to: Number(lines[2]), of: Number(lines[3]) } : null,
-    arrived: arrived ? Number(arrived[1].replace(/,/g, '')) : null,
-  };
-}
-
-// Part of the file is still missing: a partial picture, or one the satellite
-// cut short whose saved lines haven't all come down.
-function linesMissing(p) {
-  if (p.status === 'partial') return true;
-  if (p.status !== 'truncated' || checksumMatches(p)) return false;
-  const { lines, arrived } = noteNumbers(p);
-  if (lines && arrived != null) return arrived < lines.to - lines.from + 1;
-  return Boolean(p.raw?.sha256_expected);
-}
-
-// "last packet 1 h ago" while a picture with lines missing is still arriving.
-function stillComing(p) {
-  if (!linesMissing(p)) return null;
-  const last = toDate(p.raw?.downlink?.last);
-  const since = last ? Date.now() - last.getTime() : Infinity;
-  return since >= 0 && since < DAY_MS ? `Still coming down: last packet ${agoText(since)} ago.` : null;
-}
-
-// The status in a few words, for labels, cells and announcements.
-// A main-camera picture's completeness is how much of it can be shown, not
-// how much arrived: its JPEG can't be decoded past the first gap.
-export function statusShort(p) {
-  const pct = percent(p.raw?.completeness);
-  if (p.status === 'partial') {
-    if (p.camera === 'picam') return pct ? `partly missing: only the top ${pct} is shown` : 'partly missing';
-    return pct ? `partly missing: about ${pct} came down` : 'partly missing';
-  }
-  if (p.status === 'truncated') {
-    return linesMissing(p) && pct ? `cut short on board, and only the top ${pct} is shown` : 'cut short on board';
-  }
-  if (p.status === 'verified') return 'checked';
-  if (p.status === 'complete') return 'complete, unchecked';
-  return p.status ? String(p.status) : 'status unknown';
-}
-
-// The status sentence under the time, only for a picture that is not
-// checked and whole (design direction §4, "States and copy"), as nodes.
-function statusLine(p) {
-  const raw = p.raw || {};
-  const pct = percent(raw.completeness);
-  const coming = stillComing(p);
-  let text = null;
-  if (p.status === 'partial') {
-    const never = coming ? 'hasn’t come down yet' : 'never came down';
-    if (p.camera === 'picam') {
-      text = [`Part of this picture ${never}. Nothing below the first gap can be read`,
-        pct ? [', so only the top ', nobr(pct), ' is shown.'] : '.'];
-    } else {
-      text = [`Grey bands are rows that ${coming ? 'haven’t come down yet' : 'never came down'}.`,
-        pct ? [` About ${pct} of it ${coming ? 'has so far' : 'did'}.`] : ''];
-    }
-  } else if (p.status === 'truncated') {
-    const { lines, arrived } = noteNumbers(p);
-    const saved = lines
-      ? ['saved lines ', nobr(`${lines.from}–${lines.to}`), ` of ${lines.of}`]
-      : ['saved only the top part of the frame'];
-    if (!linesMissing(p)) {
-      text = ['The satellite stopped this capture early: it ', saved, checksumMatches(p) ? ', and all of that came down.' : '.'];
-    } else {
-      const sofar = lines && arrived != null
-        ? `${grouped(arrived)} of those have come down so far`
-        : 'Not all of those have come down yet';
-      const gap = Number(raw.completeness) < 0.25 ? 'a gap near the top' : 'a gap';
-      text = ['The satellite stopped this capture early and ', saved, `. ${sofar}, but ${gap} means `,
-        pct ? ['only the top ', nobr(pct), ' can be shown.'] : 'only part of it can be shown.'];
-    }
-  } else if (p.status === 'complete') {
-    text = ['Complete, but there’s no checksum to check it against.'];
-  }
-  if (coming) text = text ? [text, ' ', coming] : [coming];
-  return text;
-}
 
 // The first picture to show when the URL names none: the newest that isn't
 // dark and is at least half there. Grey slabs are for the strip, not the stage.
@@ -249,39 +54,15 @@ function isWorthOpening(p) {
   return !isDark(p) && (!Number.isFinite(c) || c >= 0.5);
 }
 
-function altText(p) {
-  const camera = CAMERAS[p.camera]?.alt || 'Camera';
-  const where = placeName(p) || (p.position && !positionIsStale(p) ? latLon(p.position.lat, p.position.lon, 1) : '');
-  const parts = [];
-  if (p.title !== p.defaultTitle) parts.push(`${p.title}.`);
-  parts.push(`${camera} image${where ? ` over ${where}` : ''}, ${whenShort(p)}.`);
-  if (p.status === 'partial') parts.push('Parts of the image never came down and are flat grey.');
-  if (p.status === 'truncated') parts.push('Only the top of the frame exists.');
-  return parts.join(' ');
-}
-
+// "Hong Kong, Oct 29, 2026, 20:45 Calgary time, main camera, checked"
 function thumbLabel(p) {
   const parts = [];
   if (p.title !== p.defaultTitle) parts.push(p.title);
   const where = placeName(p);
   if (where) parts.push(where);
-  parts.push(whenShort(p), p.camera === 'adcs' ? 'attitude camera' : 'main camera', statusShort(p));
+  parts.push(whenShort(p), CAMERAS[p.camera]?.alt || 'camera', statusShort(p));
   if (isDark(p)) parts.push('dark frame');
   return parts.join(', ');
-}
-
-const BASIS = {
-  filename: 'From the file name',
-  'capture log': 'From the camera’s capture log',
-  'capture record': 'From the capture command’s own record',
-  'ADCS file list': 'From the attitude camera’s file list',
-  'capture reply': 'From the satellite’s reply to the capture command',
-};
-
-function cameraName(camera) {
-  if (camera === 'picam') return 'Main camera';
-  if (camera === 'adcs') return 'Attitude camera';
-  return camera ? String(camera) : 'Unknown camera';
 }
 
 function monthKey(p) {
@@ -293,10 +74,6 @@ function monthText(key, newestYear) {
   if (!m) return 'No date';
   const name = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][Number(m[2]) - 1];
   return m[1] === newestYear ? name : `${name} ${m[1]}`;
-}
-
-function code(text) {
-  return h('code', { class: 'cat-code' }, text);
 }
 
 function isVisible(node) {
@@ -467,52 +244,33 @@ export function createCatalogue(root, {
   const stripNote = h('p', { class: 'cat-strip-note', hidden: true });
   const dock = h('div', { class: 'cat-dock' }, dockRow, filterUi.form, strip, stripNote);
 
-  /* Info column */
+  /* Info column: the picture's own block, built by photo-info.js as on its page */
 
-  const title = h('h1', { class: 'cat-title', id: 'cat-title', tabindex: '-1' });
-  const whenUtc = h('span', { class: 'cat-line' });
-  const whenLocal = h('span', { class: 'cat-line' });
-  const when = h('p', { class: 'cat-when' }, whenUtc, whenLocal);
-  const status = h('p', { class: 'cat-status', hidden: true });
-  const facts = h('dl', { class: 'cat-facts' });
-  const notesText = h('p', { class: 'cat-notes-text' });
-  const notesBy = h('p', { class: 'cat-small cat-muted', hidden: true });
-  const notes = h('section', { class: 'cat-notes', 'aria-labelledby': 'cat-notes-heading' },
-    h('h2', { class: 'cat-notes-heading', id: 'cat-notes-heading' }, 'Notes'), notesText, notesBy);
-
-  const globeLink = h('a', { class: 'cat-primary' }, 'Show on the globe');
-  const globeOff = h('button', {
-    type: 'button', class: 'cat-primary', 'aria-disabled': 'true', 'aria-describedby': 'cat-globe-why', hidden: true,
-  }, 'Show on the globe');
-  // The Where fact already says this on screen; here it describes the button.
-  const globeWhy = h('p', { class: 'vh', id: 'cat-globe-why' },
-    'Only the date of this picture is known, so it isn’t on the globe.');
+  const title = h('h2', { class: 'pi-title cat-title', id: 'cat-title', tabindex: '-1' });
+  const lead = h('div', { class: 'pi-lead' }); // who named it, when it was taken, what is missing
+  const photoActions = createPhotoActions({ idPrefix: 'cat', copyUrl: () => location.href });
   const compareBtn = h('button', { type: 'button', class: 'cat-text-btn' }, 'Compare');
   compareBtn.addEventListener('click', () => setSize(2, { user: true }));
-  const download = h('a', { class: 'cat-text-btn' }, 'Download');
-  const copyBtn = h('button', { type: 'button', class: 'cat-text-btn' }, 'Copy link');
-  let copyTimer = 0;
-  copyBtn.addEventListener('click', async () => {
-    const ok = await copyText(location.href);
-    copyBtn.textContent = ok ? 'Link copied' : 'Copy failed';
-    announce(ok ? 'Link copied' : 'Could not copy the link');
-    window.clearTimeout(copyTimer);
-    copyTimer = window.setTimeout(() => { copyBtn.textContent = 'Copy link'; }, 2000);
-  });
   const detailsName = h('span', { class: 'vh' });
   const detailsLink = h('a', { class: 'cat-text-btn' }, 'All details', detailsName);
-  // The one primary on its own line, then one row of text buttons.
+  // Show on the globe, Download and Copy link as on the picture's page, then Pictures' own two.
   const actions = h('div', { class: 'cat-actions' },
-    h('div', { class: 'cat-actions-primary' }, globeLink, globeOff),
-    h('div', { class: 'cat-actions-row' }, compareBtn, download, copyBtn, detailsLink));
+    photoActions.el,
+    h('div', { class: 'cat-actions-row' }, compareBtn, detailsLink));
+  const facts = h('div', { class: 'cat-facts-slot' });
+  let tech = null; // Technical details: kept from picture to picture, so it stays open or closed
+  const notes = h('div', { class: 'cat-notes-slot' });
   const emptyNote = h('p', { class: 'cat-empty-note', hidden: true });
   // The actions before the facts, so they're on screen on a laptop however long the facts are.
-  const info = h('div', { class: 'cat-info' }, title, when, status, emptyNote, actions, facts, notes, globeWhy);
+  const info = h('div', { class: 'cat-info' }, title, lead, emptyNote, actions, facts, notes);
+
+  // A light heading for the page; the picture's own name is the large line beside it.
+  const pageTitle = h('h1', { class: 'cat-page-title' }, 'Pictures from FrontierSat');
 
   const grid = h('div', { class: 'cat-grid' }, viewer, dock, info);
   const notice = h('div', { class: 'cat-notice', role: 'status', hidden: true });
   const loadingText = h('p', { class: 'vh', role: 'status' }, 'Loading pictures…');
-  const inner = h('div', { class: 'cat-in' }, backRow, missing, notice, grid, loadingText);
+  const inner = h('div', { class: 'cat-in' }, backRow, pageTitle, missing, notice, grid, loadingText);
   const el = h('div', { class: 'cat', 'data-size': '1', 'data-state': 'loading' }, inner);
   root.append(el);
   drawLoading();
@@ -537,12 +295,14 @@ export function createCatalogue(root, {
 
   function drawLoading() {
     title.replaceChildren(h('span', { class: 'cat-ghost', style: 'width: 70%' }));
-    whenUtc.replaceChildren(h('span', { class: 'cat-ghost', style: 'width: 55%' }));
-    whenLocal.replaceChildren(h('span', { class: 'cat-ghost', style: 'width: 40%' }));
-    const widths = [80, 70, 90, 55, 85, 60, 75];
-    facts.replaceChildren(...['Taken', 'Where', 'Light', 'Camera', 'Came down', 'Check', 'File'].flatMap((label, i) => [
-      h('dt', null, label), h('dd', null, h('span', { class: 'cat-ghost', style: `width: ${widths[i]}%` })),
-    ]));
+    lead.replaceChildren(h('p', { class: 'pi-when' },
+      h('span', { class: 'pi-when-line' }, h('span', { class: 'cat-ghost', style: 'width: 55%' })),
+      h('span', { class: 'pi-when-line' }, h('span', { class: 'cat-ghost', style: 'width: 40%' }))));
+    const widths = [80, 70, 90, 55, 85, 60];
+    facts.replaceChildren(h('dl', { class: 'pi-facts' },
+      ['Taken', 'Where', 'Light', 'Camera', 'Came down', 'Status'].flatMap((label, i) => [
+        h('dt', null, label), h('dd', null, h('span', { class: 'cat-ghost', style: `width: ${widths[i]}%` })),
+      ])));
     notes.hidden = true;
     actions.hidden = true;
     strip.replaceChildren(...Array.from({ length: 14 }, () => h('li', { class: 'cat-strip-item' },
@@ -685,21 +445,16 @@ export function createCatalogue(root, {
 
   // People and tags in the facts filter the strip to their pictures; the
   // picture shown has them, so it stays.
-  function filterButtons(items, key) {
-    const out = [];
-    items.forEach((item, k) => {
-      if (k) out.push(', ');
-      out.push(h('button', {
-        type: 'button',
-        class: 'cat-inline-btn',
-        'aria-label': key === 'tag' ? `${item}: show only pictures tagged ${item}` : `${item}: show only pictures with ${item}`,
-        onclick: () => {
-          setFilter(key, item);
-          filterUi.sync(filters);
-        },
-      }, item));
-    });
-    return out;
+  function filterButton(item, key) {
+    return h('button', {
+      type: 'button',
+      class: 'pi-inline-btn',
+      'aria-label': key === 'tag' ? `${item}: show only pictures tagged ${item}` : `${item}: show only pictures with ${item}`,
+      onclick: () => {
+        setFilter(key, item);
+        filterUi.sync(filters);
+      },
+    }, item);
   }
 
   // A picture that is no longer shown (filtered out, or a dark frame now
@@ -1040,7 +795,7 @@ export function createCatalogue(root, {
     }
     img.width = p.width;
     img.height = p.height;
-    img.alt = altText(p);
+    img.alt = photoAlt(p);
     frame.dataset.ratio = p.width === p.height ? 'square' : 'wide';
     fillInfo(p);
     const { newer, older } = updateSteps();
@@ -1077,7 +832,7 @@ export function createCatalogue(root, {
       if (cell.image.getAttribute('src') !== p.src) cell.image.src = p.src;
       cell.image.width = p.width;
       cell.image.height = p.height;
-      cell.image.alt = altText(p);
+      cell.image.alt = photoAlt(p);
       cell.pick.setAttribute('aria-label', `Cell ${i + 1}: ${nameAndWhen(p)}`);
       cell.place.textContent = headline(p);
       cell.place.title = headline(p);
@@ -1097,166 +852,32 @@ export function createCatalogue(root, {
 
   function fillInfo(p) {
     emptyNote.hidden = true;
-    for (const part of [when, facts, notes, actions]) part.hidden = false;
+    for (const part of [lead, facts, notes, actions]) part.hidden = false;
     title.textContent = headline(p);
-    const d = toDate(p.capturedAt);
-    whenUtc.replaceChildren();
-    whenLocal.replaceChildren();
-    if (d) {
-      append(whenUtc, utcParts(d));
-      const local = calgaryLine(d);
-      if (local) append(whenLocal, local);
-      whenLocal.hidden = !local;
-    } else {
-      whenUtc.textContent = p.captureDate ? 'Time of day unknown' : 'Date and time unknown';
-      whenLocal.hidden = true;
-    }
-    const line = statusLine(p);
-    status.replaceChildren();
-    if (line) append(status, line);
-    status.hidden = !line;
-    facts.replaceChildren(...factRows(p));
-    notesText.textContent = p.notes || 'No notes yet.';
-    notesText.classList.toggle('cat-muted', !p.notes);
-    notesBy.textContent = p.notes && p.edited.notes ? `Written by ${p.edited.notes}` : '';
-    notesBy.hidden = !notesBy.textContent;
-
-    const onGlobe = Boolean(p.capturedAt);
-    globeLink.hidden = !onGlobe;
-    globeOff.hidden = onGlobe;
-    globeWhy.hidden = onGlobe;
-    if (onGlobe) globeLink.href = globeHref(p);
+    lead.replaceChildren(...[creditLine(p), whenBlock(p), statusBlock(p)].filter(Boolean));
+    photoActions.set(p, { globeHref });
     compareBtn.hidden = size > 1;
-    download.href = p.src;
-    const fileName = String(p.src || '').split('/').pop() || `${p.id}.jpg`;
-    download.setAttribute('download', `frontiersat-${fileName}`);
     detailsLink.href = `#/photo/${encodeURIComponent(p.id)}`;
     detailsName.textContent = ` for ${nameAndWhen(p)}`;
+    // Technical details stays in the page from picture to picture (open or closed, and
+    // keeping focus on its summary); only its list changes.
+    const freshFacts = photoFacts(p, { listLink: filterButton });
+    const freshTech = technicalDetails(p);
+    if (tech && tech.parentNode === facts) {
+      facts.firstElementChild.replaceWith(freshFacts);
+      tech.querySelector('dl').replaceWith(freshTech.querySelector('dl'));
+    } else {
+      tech = freshTech;
+      facts.replaceChildren(freshFacts, tech);
+    }
+    notes.replaceChildren(photoNotes(p, { level: 3, idPrefix: 'cat' }));
   }
 
   function fillEmptyInfo() {
     title.textContent = `Cell ${active + 1} is empty`;
-    for (const part of [when, status, facts, notes, actions, globeWhy]) part.hidden = true;
+    for (const part of [lead, facts, notes, actions]) part.hidden = true;
     emptyNote.hidden = false;
     emptyNote.textContent = 'Pick a picture from the strip below to put it here. Its facts show in this column.';
-  }
-
-  function factRows(p) {
-    const rows = [
-      ['Taken', takenValue(p)],
-      ['Where', whereValue(p)],
-    ];
-    const light = lightValue(p);
-    if (light) rows.push(['Light', light]);
-    rows.push(['Camera', [`${cameraName(p.camera)}, ${p.width} × ${p.height}`]]);
-    const down = downValue(p);
-    if (down) rows.push(['Came down', down]);
-    rows.push(['Check', checkValue(p)]);
-    const file = fileValue(p);
-    if (file) rows.push(['File', file]);
-    const hash = hashValue(p);
-    if (hash) rows.push(['sha256', hash]);
-    if (p.people.length) rows.push(['People', [filterButtons(p.people, 'member')]]);
-    if (p.tags.length) rows.push(['Tags', [filterButtons(p.tags, 'tag')]]);
-    return rows.flatMap(([label, [value, second]]) => [
-      h('dt', null, label),
-      h('dd', null, h('span', { class: 'cat-value' }, value), second ? h('span', { class: 'cat-second' }, second) : null),
-    ]);
-  }
-
-  function takenValue(p) {
-    const d = toDate(p.capturedAt);
-    if (d) {
-      const second = p.edited.captured_at
-        ? `Corrected by ${p.edited.captured_at}`
-        : (BASIS[p.raw.capture_basis] || (p.raw.capture_basis ? `From the ${p.raw.capture_basis}` : null));
-      return [utcParts(d, true), second];
-    }
-    if (p.captureDate) return [nobr(dateText(p)), 'Only the date is known'];
-    return ['Not known', 'Neither the file name nor the logs give a time'];
-  }
-
-  function whereValue(p) {
-    const pos = p.position;
-    if (pos && !positionIsStale(p)) {
-      const [lat, lon] = latLon(pos.lat, pos.lon).split(', ');
-      const alt = Number.isFinite(pos.alt_km) ? [', ', nobr(`${Math.round(pos.alt_km)} km up`)] : '';
-      return [[nobr(lat), ', ', nobr(lon), alt], p.edited.position ? `Set by ${p.edited.position}` : 'Worked out from orbital elements'];
-    }
-    if (positionIsStale(p)) return ['Not worked out for the corrected time', 'The globe works it out from the corrected time'];
-    if (p.capturedAt) return ['Not known', 'No orbital elements cover this time'];
-    if (p.captureDate) return ['Not known', 'Only the date of this picture is known, so it isn’t on the globe.'];
-    return ['Not known', 'There is no time to work it out from'];
-  }
-
-  function lightValue(p) {
-    if (!p.positionRecomputed && (p.edited.position || positionIsStale(p))) return null;
-    const pos = p.positionRecomputed ? p.position : p.raw.position;
-    if (!pos || typeof pos !== 'object') return null;
-    const parts = [];
-    if (typeof pos.ground_sunlit === 'boolean') {
-      const e = pos.sun_elevation_deg;
-      const sun = Number.isFinite(e) ? `, sun ${Math.abs(e).toFixed(0)}° ${e >= 0 ? 'up' : 'down'}` : '';
-      parts.push(`${pos.ground_sunlit ? 'Daylight below' : 'Night below'}${sun}`);
-    }
-    const sat = {
-      sunlit: 'satellite in sunlight',
-      shadow: 'satellite in the Earth’s shadow',
-      terminator: 'satellite at the edge of the Earth’s shadow',
-    }[pos.satellite_light] || (typeof pos.satellite_sunlit === 'boolean'
-      ? (pos.satellite_sunlit ? 'satellite in sunlight' : 'satellite in the Earth’s shadow') : null);
-    if (sat) parts.push(sat);
-    return parts.length ? [parts.join('; ')] : null;
-  }
-
-  function downValue(p) {
-    const dl = p.raw.downlink && typeof p.raw.downlink === 'object' ? p.raw.downlink : null;
-    if (!dl) return null;
-    const first = toDate(dl.first);
-    const last = toDate(dl.last);
-    const short = (d) => monthDayYear(d).replace(/, \d{4}$/, '');
-    // Lines break only at " to " and after commas, never inside a date.
-    let range = null;
-    if (first && last && short(first) === short(last)) {
-      range = [nobr(short(first)), ', ', nobr(clock(first)), ' to ', nobr(`${clock(last)} UTC`)];
-    } else if (first && last) {
-      range = [nobr(`${short(first)} ${clock(first)}`), ' to ', nobr(`${short(last)} ${clock(last)} UTC`)];
-    } else if (first || last) {
-      range = [nobr(short(first || last)), ', ', nobr(`${clock(first || last)} UTC`)];
-    }
-    const packets = Number.isFinite(dl.packets) ? nobr(plural(dl.packets, 'packet')) : null;
-    if (!packets && !range) return null;
-    return [[packets, packets && range ? ', ' : '', range]];
-  }
-
-  function checkValue(p) {
-    if (checksumMatches(p)) {
-      return ['Matches the satellite’s checksum', p.status === 'truncated' ? 'For the shortened file it saved' : null];
-    }
-    // Lines still missing: the file can't be checked, which isn't the same as wrong.
-    if (linesMissing(p)) return ['Can’t check yet', 'Part of the file hasn’t come down.'];
-    if (p.raw.sha256_expected) return ['Doesn’t match the satellite’s checksum'];
-    return ['No checksum from the satellite'];
-  }
-
-  function fileValue(p) {
-    if (!p.raw.file) return null;
-    const size = Number.isFinite(p.raw.file_size)
-      ? [', ', nobr(`${Math.max(1, Math.round(p.raw.file_size / 1024))} KB`)] : '';
-    return [[code(p.raw.file), size]];
-  }
-
-  function hashValue(p) {
-    const hash = p.raw.sha256;
-    if (typeof hash !== 'string' || !hash) return null;
-    const copy = h('button', { type: 'button', class: 'cat-inline-btn', 'aria-label': 'Copy the full sha256' }, 'Copy');
-    copy.addEventListener('click', async () => {
-      const ok = await copyText(hash);
-      copy.textContent = ok ? 'Copied' : 'Copy failed';
-      announce(ok ? 'sha256 copied' : 'Could not copy the sha256');
-      window.setTimeout(() => { copy.textContent = 'Copy'; }, 2000);
-    });
-    return [[h('code', { class: 'cat-code', title: hash }, `${hash.slice(0, 12)}…`), ' ', copy]];
   }
 
   /* Filmstrip */

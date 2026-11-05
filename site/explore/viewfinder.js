@@ -9,8 +9,9 @@
  * `photos` is mergeAll() output; only pictures that are at least 95% there run
  * here, newest first in a loop. The catalogue keeps everything else. show() puts
  * up any picture, whole or not, and it stays until the visitor steps on with
- * Previous or Next, which also starts the rotation again.
+ * Newer or Older, which also starts the rotation again.
  *
+ * onTimed(ms) hears when a picture's time starts (ms) and stops (0), for a count-down.
  * takeTurn() is asked when a picture's time is up: true if something else is going
  * up in its place, and then next() brings on the next picture when that's done.
  * setDwell(ms) changes how long each picture stays (0 for the usual 12 s).
@@ -23,7 +24,7 @@
  *
  * The rotation pauses while the viewfinder is hovered or focused, and while the
  * tab is hidden. Screen readers hear a picture only when the visitor steps to it
- * with Previous or Next.
+ * with Newer or Older.
  *
  * Styles: viewfinder.css (its sizes come from .jy-vf-slot in journey.css, and from
  * .cg-vf in globe.css on Orbit). Class prefix `vf-`.
@@ -68,9 +69,10 @@ function cornerData(p) {
   let when;
   if (Number.isFinite(ms)) {
     const calgary = calgaryTime(ms);
-    when = [utcLong(ms), `${calgary.time} ${calgary.zone}${calgary.otherDay ? ` on ${calgary.date}` : ''} in Calgary`];
+    // Calgary's clock first (the zone goes without saying: "in Calgary"), then UTC
+    when = [`${calgary.time}${calgary.otherDay ? ` on ${calgary.date}` : ''} in Calgary`, utcLong(ms)];
   } else {
-    when = p.captureDate ? [photoTime(p), 'Time not known'] : ['Date not known'];
+    when = p.captureDate ? [photoTime(p), 'Time unknown'] : ['Date unknown'];
   }
   // a member's corrected time or point leaves the computed height and light behind, until
   // assets/corrected.js has worked them out again
@@ -134,6 +136,7 @@ export function createViewfinder(container, {
   reducedMotion = false,
   firstMs = FIRST_MS,
   takeTurn,
+  onTimed, // (ms): a picture's time on screen has started, or (0) stopped
 } = {}) {
   const reduced = Boolean(reducedMotion);
 
@@ -176,11 +179,13 @@ export function createViewfinder(container, {
   const noteEl = el('p', 'vf-note vf-words');
 
   const nav = el('div', 'vf-nav');
-  const prevBtn = el('button', 'vf-btn', 'Previous');
+  // newest first, so a step back is to a newer picture: the words Pictures uses
+  const prevBtn = el('button', 'vf-btn', 'Newer');
   prevBtn.type = 'button';
-  prevBtn.setAttribute('aria-label', 'Previous picture');
-  const nextBtn = el('button', 'vf-btn', 'Next picture');
+  prevBtn.setAttribute('aria-label', 'Newer picture');
+  const nextBtn = el('button', 'vf-btn', 'Older');
   nextBtn.type = 'button';
+  nextBtn.setAttribute('aria-label', 'Older picture');
   nav.append(prevBtn, nextBtn);
   caption.append(placeEl, nav, downEl, noteEl);
 
@@ -287,7 +292,8 @@ export function createViewfinder(container, {
     setLines(whereEl, data.where);
     heightEl.textContent = data.height;
     sunEl.textContent = data.sun;
-    placeEl.textContent = name;
+    // the picture the site opens on is chosen, not the newest: it says so
+    placeEl.replaceChildren(name, ...(photo.id === OPENING_PHOTO_ID ? [' ', el('span', 'vf-tag', 'Featured picture')] : []));
     downEl.textContent = downlinkLine(photo);
     noteEl.textContent = honestNote(photo);
   }
@@ -412,11 +418,14 @@ export function createViewfinder(container, {
   function schedule() {
     clearTimeout(timer);
     timer = 0;
+    onTimed?.(0);
     if (held || !running || disposed || !deck.length || document.hidden) return;
     if (shown && (hovered || focused)) return;
     timer = setTimeout(() => {
+      onTimed?.(0);
       if (!(shown || failed) || !takeTurn?.()) step(1, false);
     }, shown ? dwellMs : firstMs);
+    if (shown) onTimed?.(dwellMs);
   }
 
   // ---- events ----

@@ -659,7 +659,8 @@ export function createMap(container, opts = {}) {
   }
 
   function zoomBy(factor) {
-    const k = clamp(view.k * factor, view.minK, view.maxK);
+    // from where a glide was going, so quick presses add up
+    const k = clamp((flight ? flight.to.k : view.k) * factor, view.minK, view.maxK);
     if (controls.reducedMotion) {
       zoomAt(view.cx, view.cy, k / view.k);
       return;
@@ -1104,6 +1105,11 @@ export function createMap(container, opts = {}) {
     /** Is the view moving to somewhere? */
     get busy() {
       return !!flight;
+    },
+    /** Can it zoom further in, or out? For the zoom buttons: where a glide ends, else where it is. */
+    get zoomRoom() {
+      const k = flight ? flight.to.k : view.k;
+      return { in: k < view.maxK * 0.999, out: k > view.minK * 1.001 };
     },
     /** Draw whatever changed; returns true if anything was drawn. */
     frame(now) {

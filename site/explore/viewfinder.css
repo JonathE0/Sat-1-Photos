@@ -101,6 +101,13 @@ a.vf-pic[href] { cursor: pointer; }
   align-items: center;
   padding: 8px var(--vf-inset) 0;
 }
+.vf-tag {
+  margin-left: 6px;
+  color: var(--jy-muted, #8A96A3);
+  font-size: var(--jy-small, 13px);
+  font-weight: 400;
+  white-space: nowrap;
+}
 .vf-place {
   min-width: 0;
   overflow-wrap: break-word;

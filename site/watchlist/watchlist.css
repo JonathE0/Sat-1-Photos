@@ -121,7 +121,9 @@ h1 { font-size: clamp(24px, 1rem + 1.2vw, 32px); font-weight: 500; line-height: 
 .filters button:hover, .btn:hover { background: var(--raised); color: var(--ink); }
 .filters button[aria-pressed="true"] { background: var(--ink); color: var(--space); }
 .filters .n { margin-left: 6px; font-weight: 400; }
-.btn { color: var(--ink); }
+/* a secondary button, as across the site: raised grey, Ink text */
+.btn { background: var(--raised); color: var(--ink); }
+.btn:hover { background: color-mix(in srgb, var(--raised), var(--ink) 10%); }
 
 /* -- the list: one compact row per event ---------------------------------- */
 

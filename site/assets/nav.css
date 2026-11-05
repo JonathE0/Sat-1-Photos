@@ -4,8 +4,10 @@
    links are Ink and only they take the pointer, so the globe drags up to them.
 
    Six links, the logos and on the main site the name button share one line, so
-   the sizes step down with the width. Below 390 the text is 12px, under the
-   design's 13px, because 13px doesn't fit with the logo. */
+   the sizes step down with the width. On a phone, credits.js puts About and
+   Credits into a "More" menu (.has-more), which leaves room for 15px words and a
+   44px target per link. Until that script has run (or if it can't), the six fit
+   at 13px, and at 12px below 390. */
 
 :root {
   --nav-bar: 68px; /* the bar itself, without a rule */
@@ -187,4 +189,82 @@ body[data-view="explore"] .site-nav .nav-links > a[aria-current="page"] { text-d
 @media (max-width: 359px) {
   .site-nav { justify-content: flex-end; }
   .brand { display: none; }
+}
+
+/* Touch: every link at least 44px wide as well as tall, its words centred, and
+   15px words (phones get theirs with the More menu, below) */
+@media (pointer: coarse) {
+  .nav-links > a,
+  .nav-btn { justify-content: center; min-width: 44px; }
+}
+@media (pointer: coarse) and (min-width: 600px) {
+  .site-nav { font-size: 15px; }
+}
+
+/* The "More" menu (credits.js): phones only. About and Credits move into it. */
+
+.nav-more { position: relative; display: none; }
+
+/* hangs from the bar's bottom edge, out to the screen's edge */
+.nav-more-menu {
+  position: absolute;
+  top: calc(100% + (var(--nav-bar) - 44px) / 2);
+  right: calc(-1 * (var(--nav-pad) + env(safe-area-inset-right, 0px)));
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  min-width: 200px;
+  padding: 8px 0;
+  background: #1A2129;
+  pointer-events: auto;
+}
+.nav-more-menu[hidden] { display: none; } /* not every page has a [hidden] rule of its own */
+
+.nav-more-menu > a,
+.nav-more-menu > button {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  border: 0;
+  padding: 0 var(--nav-pad);
+  background: none;
+  color: #E6EBF0;
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.nav-more-menu > a:hover,
+.nav-more-menu > button:hover { background: #262F39; }
+.nav-more-menu > a[aria-current="page"] {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 6px;
+}
+
+/* On About, More is where the page is */
+.nav-more:has(a[aria-current="page"]) > .nav-more-btn {
+  color: #E6EBF0;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 6px;
+}
+
+@media (max-width: 599px) {
+  .nav-links.has-more { gap: 0; font-size: 15px; }
+  .nav-links.has-more > .nav-in-more { display: none; }
+  .nav-links.has-more > .nav-more { display: block; }
+  /* 44px or wider each, with the gap between the words inside the links */
+  .nav-links.has-more > a,
+  .nav-links.has-more .nav-more-btn { justify-content: center; min-width: 44px; padding: 0 5px; }
+  .nav-links.has-more .nav-more-btn { padding-right: 0; }
+}
+
+/* 360 to 389: a smaller logo and closer links keep all five on the line */
+@media (max-width: 389px) {
+  .brand-logo { height: 16px; }
+  .nav-links.has-more > a,
+  .nav-links.has-more .nav-more-btn { padding: 0 4px; }
+  .nav-links.has-more .nav-more-btn { padding-right: 0; }
 }

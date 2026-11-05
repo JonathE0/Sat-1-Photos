@@ -163,6 +163,8 @@ export function toPhotos(json, { base = 'http://localhost/' } = {}) {
       thumb: resolveUrl(pick(rec, ['thumb', 'thumbnail', 'thumb_url', 'src', 'image']), base),
       src: resolveUrl(pick(rec, ['src', 'image', 'thumb', 'thumbnail', 'thumb_url']), base),
       dark: rec.dark === true,
+      // under a fifth of it can be shown: Pictures leaves these out until asked (assets/data.js)
+      mostlyMissing: Number.isFinite(rec.completeness) && rec.completeness < 0.2,
       square: rec.camera === 'adcs' || (Number.isFinite(rec.width) && rec.width === rec.height),
       href: resolveUrl(explicitHref ?? `#/photo/${encodeURIComponent(id)}`, base),
       captureDate,

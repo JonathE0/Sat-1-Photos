@@ -14,7 +14,7 @@ const CAMERA_ORDER = ['picam', 'adcs'];
 const CAMERA_WORDS = { picam: 'Main camera', adcs: 'Attitude camera' };
 const STATUS_WORDS = {
   verified: 'Checked',
-  complete: 'Complete, unchecked',
+  complete: 'Complete, not checked',
   partial: 'Partly missing',
   truncated: 'Cut short on board',
 };

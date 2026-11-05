@@ -19,7 +19,11 @@
   --strip-h: calc(var(--thumb-h) + 39px); /* a month label, a thumbnail and its bar */
   --info-w: 400px;
   --back-h: 0px;
+  --head-h: 40px;     /* the page's heading, "Pictures from FrontierSat", and the gap under it */
   --dock-h: 190px;    /* the dock under the picture; catalogue.js measures it */
+  /* the sides, clear of a phone's notch in landscape (viewport-fit=cover) */
+  --m-l: max(var(--m), env(safe-area-inset-left, 0px));
+  --m-r: max(var(--m), env(safe-area-inset-right, 0px));
 
   /* Pictures are never shown larger than their own size (640 x 480, or
      512 x 512 for the attitude camera): grainy when enlarged. The stage is
@@ -30,7 +34,7 @@
      catalogue is capped at a width where two pictures side by side still fit
      at 1x, and on very wide screens where four do (at the end of this file). */
   --view-max: 720px;
-  --view-fit: clamp(240px, calc(100svh - var(--nav-h, 60px) - var(--back-h) - var(--dock-h) - 48px), var(--view-max));
+  --view-fit: clamp(240px, calc(100svh - var(--nav-h, 60px) - var(--back-h) - var(--head-h) - var(--dock-h) - 48px), var(--view-max));
   --view-h: var(--view-fit);
   --cap-h: 80px;      /* a compare caption: place; time and Remove; the status when not whole */
   --content-max: 1720px;
@@ -58,14 +62,22 @@
 @media (pointer: coarse) { .cat { --ctl-h: 44px; --cap-h: 106px; } }
 
 .cat-in {
-  max-width: calc(var(--content-max) + 2 * var(--m));
+  max-width: calc(var(--content-max) + var(--m-l) + var(--m-r));
   margin: 0 auto;
-  padding: 16px var(--m) 32px;
+  padding: 16px var(--m-r) 32px var(--m-l);
+}
+
+/* The page's own heading, light beside the picture's name */
+.cat-page-title {
+  margin: 0 0 12px;
+  color: var(--c-ink);
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 28px;
+  letter-spacing: 0;
 }
 
 .cat-small,
-.cat-second,
-.cat-facts dt,
 .cat-month {
   font-size: 13px;
   line-height: 1.45;
@@ -74,12 +86,6 @@
 
 .cat-muted,
 .cat-small { color: var(--c-muted); }
-
-.cat-code {
-  font-family: var(--mono);
-  font-size: 14px;
-  font-variant-numeric: normal;
-}
 
 /* Controls */
 
@@ -124,26 +130,6 @@
     position: absolute;
     inset: -13px -6px;
   }
-}
-
-.cat-primary {
-  display: inline-flex;
-  align-items: center;
-  height: var(--ctl-h);
-  padding: 0 16px;
-  border: 0;
-  border-radius: 0;
-  background: var(--c-ink);
-  color: var(--c-ground);
-  font: 500 16px/1 var(--sans);
-  text-decoration: none;
-  cursor: pointer;
-}
-.cat-primary:hover { background: color-mix(in srgb, var(--c-ink) 86%, var(--c-ground)); }
-.cat-primary[aria-disabled="true"] {
-  background: var(--c-panel);
-  color: var(--c-muted);
-  cursor: default;
 }
 
 /* The way back to the globe: first on the page, kept in reach on phones. */
@@ -636,59 +622,13 @@
 }
 .cat-title:focus-visible { outline: 2px solid var(--accent, #3C9DF5); outline-offset: 2px; }
 
-.cat-when {
-  margin: 8px 0 0;
-  color: var(--c-muted);
-}
-.cat-line { display: block; }
-
-.cat-status,
 .cat-empty-note {
   max-width: 62ch;
   margin: 12px 0 0;
   color: var(--c-ink);
 }
 
-.cat-facts {
-  display: grid;
-  grid-template-columns: 120px minmax(0, 1fr);
-  gap: 12px 16px;
-  margin: 24px 0 0;
-}
-.cat-facts dt {
-  margin: 0;
-  padding-top: 2px;
-  color: var(--c-muted);
-}
-.cat-facts dd {
-  min-width: 0;
-  margin: 0;
-  overflow-wrap: anywhere;
-}
-.cat-value { display: block; }
-.cat-second {
-  display: block;
-  margin-top: 2px;
-  color: var(--c-muted);
-}
-
-.cat-notes { margin-top: 32px; }
-.cat-notes-heading {
-  margin: 0 0 8px;
-  font-size: 20px;
-  font-weight: 600;
-  line-height: 1.4;
-}
-.cat-notes-text {
-  max-width: 62ch;
-  margin: 0;
-  white-space: pre-line;
-  overflow-wrap: anywhere; /* a long link can't widen the page */
-}
-.cat-notes .cat-small { margin: 4px 0 0; }
-
-/* The primary on its own line, then one row of text buttons. */
-.cat-actions { margin-top: 20px; }
+/* The picture's own buttons (photo-info.js), then Pictures' two text buttons. */
 .cat-actions-row {
   display: flex;
   flex-wrap: wrap;
@@ -739,18 +679,14 @@
     position: sticky;
     top: calc(var(--nav-h, 52px) + 1px); /* under the sticky site nav */
     z-index: 5;
-    margin: -12px calc(-1 * var(--m)) 12px;
-    padding: 8px var(--m);
+    margin: -12px calc(-1 * var(--m-r)) 12px calc(-1 * var(--m-l));
+    padding: 8px var(--m-r) 8px var(--m-l);
     background: var(--c-ground);
   }
 }
 
 @media (max-width: 599px) {
   .cat-dock-row { gap: 4px 16px; }
-
-  .cat-facts { grid-template-columns: minmax(0, 1fr); row-gap: 0; }
-  .cat-facts dt { padding-top: 12px; }
-  .cat-facts dt:first-child { padding-top: 0; }
 
   /* 24px between rows, so the active bar doesn't read as a divider. */
   .cat-compare { --pad-s: 12px; --col-gap: 12px; row-gap: 24px; }
@@ -762,7 +698,7 @@
   .cat-compare[data-size="2"] {
     --cols: 1;
     --cell-w: calc(var(--stage-w, 358px) - 2 * var(--pad-s) - var(--side-cap));
-    --cell-h: calc((100svh - var(--nav-h, 52px) - var(--back-h) - 12px - 2 * var(--pad-s) - 24px - 8px - var(--strip-h)) / 2);
+    --cell-h: calc((100svh - var(--nav-h, 52px) - var(--back-h) - var(--head-h) - 12px - 2 * var(--pad-s) - 24px - 8px - var(--strip-h)) / 2);
   }
 }
 
@@ -776,20 +712,20 @@
   .cat { --thumb-h: 56px; --cap-h: 64px; }
   .cat-frame {
     aspect-ratio: auto;
-    height: calc(100svh - var(--nav-h, 60px) - var(--back-h) - 24px);
+    height: calc(100svh - var(--nav-h, 60px) - var(--back-h) - var(--head-h) - 24px);
     max-height: none;
   }
   .cat-compare { --pad-s: 6px; --col-gap: 12px; }
   .cat-compare,
   .cat-compare[data-size="4"] {
-    --cell-h: calc(100svh - var(--nav-h, 60px) - var(--back-h) - 12px - 2 * var(--pad-s) - 8px - var(--strip-h) - var(--cap-h) - 1px);
+    --cell-h: calc(100svh - var(--nav-h, 60px) - var(--back-h) - var(--head-h) - 12px - 2 * var(--pad-s) - 8px - var(--strip-h) - var(--cap-h) - 1px);
   }
   .cat-compare[data-size="4"] { --cols: 4; }
   .cat-compare[data-size="4"] .cat-cell-time { display: none; }
   .cat-compare[data-size="2"] {
     --cols: 2;
     --cell-w: calc((var(--stage-w, 640px) - 2 * var(--pad-s) - var(--col-gap)) / 2 - var(--side-cap));
-    --cell-h: calc(100svh - var(--nav-h, 60px) - var(--back-h) - 12px - 2 * var(--pad-s) - 8px - var(--strip-h));
+    --cell-h: calc(100svh - var(--nav-h, 60px) - var(--back-h) - var(--head-h) - 12px - 2 * var(--pad-s) - 8px - var(--strip-h));
   }
 }
 

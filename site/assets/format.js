@@ -66,7 +66,7 @@ export function parseUtcInput(text) {
 
 let calgaryFormat = null;
 
-// "Sep 17, 2026, 01:11:48 ABT", the same moment on Calgary's clocks.
+// "Sep 17, 2026, 01:11:48 Calgary time", the same moment on Calgary's clocks.
 export function calgary(d) {
   try {
     calgaryFormat ||= new Intl.DateTimeFormat('en-US', {
@@ -126,8 +126,8 @@ export function monthLabel(key) {
 }
 
 export const CAMERAS = {
-  picam: { short: 'PiCAM', long: 'PiCAM, the main camera', alt: 'PiCAM' },
-  adcs: { short: 'ADCS', long: 'ADCS camera, for attitude sensing', alt: 'ADCS camera' },
+  picam: { short: 'Main camera', long: 'Main camera', alt: 'main camera', code: 'PiCAM' },
+  adcs: { short: 'Attitude camera', long: 'Attitude camera, which helps the satellite tell which way it faces', alt: 'attitude camera', code: 'ADCS' },
 };
 
 export function cameraShort(camera) {
@@ -140,9 +140,9 @@ export function cameraLong(camera) {
 
 // The four statuses, in the order the filter lists them.
 export const STATUSES = [
-  ['verified', 'verified'],
-  ['complete', 'complete'],
-  ['partial', 'partial'],
+  ['verified', 'checked'],
+  ['complete', 'complete, not checked'],
+  ['partial', 'partly missing'],
   ['truncated', 'cut short on board'],
 ];
 

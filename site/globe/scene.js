@@ -246,6 +246,7 @@ class GlobeControls {
     this.velocity = { theta: 0, phi: 0 };
     this.pointers = new Map();
     this.flight = null;
+    this.zoomGlide = null; // a zoom button's glide: { from, to, start, duration }
     this.changed = true;
     this.dragged = false;
 
@@ -347,7 +348,34 @@ class GlobeControls {
 
   setDistance(d) {
     this.distance = THREE.MathUtils.clamp(d, MIN_DISTANCE, MAX_DISTANCE);
+    this.zoomGlide = null;
     this.changed = true;
+  }
+
+  /** Where the zoom is going: the distance a glide or flight ends at, else the distance now. */
+  get distanceTarget() {
+    return this.zoomGlide?.to ?? this.flight?.to.distance ?? this.distance;
+  }
+
+  /** Can it go nearer (in) or further (out)? For the zoom buttons. */
+  get zoomRoom() {
+    const d = this.distanceTarget;
+    return { in: d > MIN_DISTANCE + 1e-3, out: d < MAX_DISTANCE - 1e-3 };
+  }
+
+  /** A zoom button: `factor` above 1 brings the camera nearer the ground, by that much of its
+   * height above it, in a short glide (at once with reduced motion). */
+  zoomBy(factor) {
+    const d = THREE.MathUtils.clamp(1 + (this.distanceTarget - 1) / factor, MIN_DISTANCE, MAX_DISTANCE);
+    if (this.flight) {
+      this.flight.to.distance = d;
+      return;
+    }
+    if (this.reducedMotion) {
+      this.setDistance(d);
+      return;
+    }
+    this.zoomGlide = { from: this.distance, to: d, start: performance.now(), duration: 260 };
   }
 
   /** Point the camera along a scene direction, animated unless reduced motion. */
@@ -362,6 +390,7 @@ class GlobeControls {
     dTheta = Math.atan2(Math.sin(dTheta), Math.cos(dTheta));
     this.velocity.theta = 0;
     this.velocity.phi = 0;
+    this.zoomGlide = null;
     if (immediate || this.reducedMotion) {
       this.theta += dTheta;
       this.phi = target.phi;
@@ -395,6 +424,7 @@ class GlobeControls {
   get busy() {
     return (
       this.flight !== null ||
+      !!this.zoomGlide ||
       this.pointers.size > 0 ||
       Math.abs(this.velocity.theta) + Math.abs(this.velocity.phi) > 1e-5
     );
@@ -420,6 +450,13 @@ class GlobeControls {
         this.velocity.theta = 0;
         this.velocity.phi = 0;
       }
+      this.changed = true;
+    }
+    if (this.zoomGlide) {
+      const g = this.zoomGlide;
+      const t = Math.min(1, (now - g.start) / g.duration);
+      this.distance = g.from + (g.to - g.from) * (1 - Math.pow(1 - t, 3));
+      if (t >= 1) this.zoomGlide = null;
       this.changed = true;
     }
     if (!this.changed) return false;
@@ -1217,6 +1254,14 @@ export function createScene(canvas, labelLayer, opts = {}) {
     },
     get busy() {
       return controls.busy;
+    },
+    /** A zoom button or key: above 1 is nearer. */
+    zoomBy(factor) {
+      controls.zoomBy(factor);
+    },
+    /** { in, out }: whether each zoom button still has room. */
+    get zoomRoom() {
+      return controls.zoomRoom;
     },
     dispose() {
       disposed = true;

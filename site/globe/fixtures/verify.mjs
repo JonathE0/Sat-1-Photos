@@ -422,7 +422,7 @@ check('compass points', astro.compassPoint(0) === 'N' && astro.compassPoint(355)
   const soon = elementsNote(last + 3 * day, orbit);
   const far = elementsNote(last + (FAR_DAYS + 1) * day, orbit);
   const veryFar = elementsNote(last + (VERY_FAR_DAYS + 30) * day, orbit);
-  check('time picker: on launch day it says the elements are later and the position approximate', launch.level === 'ok' && /first orbital elements/.test(launch.text) && /approximate/.test(launch.text), launch.text);
+  check('time picker: on launch day it says the elements are later and the position approximate', launch.level === 'ok' && /first published orbit/.test(launch.text) && /approximate/.test(launch.text), launch.text);
   check('time picker: inside the history it gives the elements and their age', inside.level === 'ok' && /\(1 hour old\)/.test(inside.text), inside.text);
   check('time picker: 3 days past the newest elements is a forecast, plainly worded', soon.level === 'ok' && /^Forecast/.test(soon.text) && /3 days old/.test(soon.text), soon.text);
   check(`time picker: more than ${FAR_DAYS} days past them it warns of tens of kilometres`, far.level === 'far' && /tens of kilometres/.test(far.text), far.text);
@@ -718,17 +718,17 @@ check('compass points', astro.compassPoint(0) === 'N' && astro.compassPoint(355)
 {
   const ms = Date.UTC(2026, 9, 22, 15, 7, 59);
   check('dates: the catalogue writes month, day, year', monthDayYear(new Date(ms)) === 'Oct 22, 2026' && utcLong(new Date(ms)) === 'Oct 22, 2026, 15:07:59 UTC');
-  check('dates: Calgary\'s clock too', calgary(new Date(ms)) === 'Oct 22, 2026, 09:07:59 ABT');
+  check('dates: Calgary\'s clock too', calgary(new Date(ms)) === 'Oct 22, 2026, 09:07:59 Calgary time');
   check('dates: Explore too', exploreLong(ms) === 'Oct 22, 2026, 15:07 UTC' && exploreShort(ms) === 'Oct 22, 15:07 UTC' && launchDate === 'May 3, 2026');
   const evening = Date.UTC(2026, 9, 23, 2, 0);
   check('dates: Explore\'s other day for Calgary', calgaryTime(evening).date === 'Oct 22' && calgaryTime(evening).otherDay);
-  check('dates: the time picker too', calgaryWhen(ms) === 'Thursday, October 22, 2026, 09:07:59 ABT', calgaryWhen(ms));
+  check('dates: the time picker too', calgaryWhen(ms) === 'Thursday, October 22, 2026, 09:07:59 Calgary time', calgaryWhen(ms));
   // Alberta didn't fall back on Nov 1, 2026, whatever the browser's own time-zone data says
-  check('dates: Calgary stays on UTC-6 past Nov 1, 2026', calgary(new Date(Date.UTC(2026, 10, 1, 7, 59))) === 'Nov 1, 2026, 01:59:00 ABT' && calgary(new Date(Date.UTC(2026, 10, 1, 8, 1))) === 'Nov 1, 2026, 02:01:00 ABT');
+  check('dates: Calgary stays on UTC-6 past Nov 1, 2026', calgary(new Date(Date.UTC(2026, 10, 1, 7, 59))) === 'Nov 1, 2026, 01:59:00 Calgary time' && calgary(new Date(Date.UTC(2026, 10, 1, 8, 1))) === 'Nov 1, 2026, 02:01:00 Calgary time');
   const winter = Date.UTC(2027, 0, 15, 12);
   const summer = Date.UTC(2027, 6, 15, 12);
-  check('dates: Calgary stays on UTC-6 in winter and summer', calgary(new Date(winter)) === 'Jan 15, 2027, 06:00:00 ABT' && calgary(new Date(summer)) === 'Jul 15, 2027, 06:00:00 ABT');
-  check('dates: Explore and the time picker on that clock', calgaryTime(winter).time === '06:00' && calgaryTime(winter).zone === 'ABT' && calgaryWhen(winter) === 'Friday, January 15, 2027, 06:00:00 ABT');
+  check('dates: Calgary stays on UTC-6 in winter and summer', calgary(new Date(winter)) === 'Jan 15, 2027, 06:00:00 Calgary time' && calgary(new Date(summer)) === 'Jul 15, 2027, 06:00:00 Calgary time');
+  check('dates: Explore and the time picker on that clock', calgaryTime(winter).time === '06:00' && calgaryTime(winter).zone === 'Calgary time' && calgaryWhen(winter) === 'Friday, January 15, 2027, 06:00:00 Calgary time');
   const facts = readFileSync(fileURLToPath(new URL('../../explore/facts.json', import.meta.url)), 'utf8');
   check('dates: none day first in the facts', !/\b\d{1,2} (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\b/.test(facts));
 }

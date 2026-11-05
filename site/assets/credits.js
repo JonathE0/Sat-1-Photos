@@ -4,6 +4,10 @@
 //   import { mountCredits } from '<site>/assets/credits.js';
 //   const credits = mountCredits(document.querySelector('#credits'));
 //   credits.open();  // also opened by clicking the button
+//   credits.open({ show: 'news', from: someButton });  // at the "In the news" list; focus goes back to someButton
+//
+// It also gives the nav a "More" menu for phones (mountMore below): About and Credits
+// move into it there, so the links left are big enough to tap.
 //
 // The text is fixed here; the "In the news" list comes from explore/facts.json
 // and is loaded the first time the dialog opens. "Last updated" comes from
@@ -89,11 +93,15 @@ export function mountCredits(button) {
   ensureStyles();
   const dialog = build();
   document.body.append(dialog);
-  let newsLoaded = false;
+  let newsLoading = null;
+  let returnTo = button; // where focus goes when it closes
 
-  async function loadNews() {
-    if (newsLoaded) return;
-    newsLoaded = true;
+  function loadNews() {
+    newsLoading ||= fetchNews();
+    return newsLoading;
+  }
+
+  async function fetchNews() {
     try {
       const [{ createNewsList }, res] = await Promise.all([
         import(new URL('explore/facts.js', SITE).href),
@@ -134,15 +142,30 @@ export function mountCredits(button) {
     }
   }
 
-  function open() {
+  // The "In the news" list, scrolled to the top of the dialog with focus on its heading.
+  function showNews() {
+    const section = dialog.querySelector('.credits-news > *');
+    if (!dialog.open || !section) return;
+    const head = dialog.querySelector('.credits-head');
+    const top = section.getBoundingClientRect().top - dialog.getBoundingClientRect().top + dialog.scrollTop;
+    dialog.scrollTop = Math.max(0, top - head.offsetHeight - 8);
+    const heading = section.querySelector('h2, h3') || section;
+    heading.tabIndex = -1;
+    heading.style.outline = 'none';
+    heading.focus({ preventScroll: true });
+  }
+
+  function open({ show = null, from = null } = {}) {
     if (dialog.open) return;
+    returnTo = from || button;
     const page = document.documentElement;
     page.classList.toggle('credits-gutter', window.innerWidth > page.clientWidth);
     page.classList.add('credits-open');
     dialog.showModal();
     button?.setAttribute('aria-expanded', 'true');
     dialog.querySelector('.credits-title').focus({ preventScroll: true });
-    loadNews();
+    const news = loadNews();
+    if (show === 'news') news.then(showNews);
     showUpdated(); // the last answer straight away, then a fresh one
     loadUpdated();
     clearInterval(ticking);
@@ -163,7 +186,7 @@ export function mountCredits(button) {
 
   dialog.querySelector('[data-close]').addEventListener('click', close);
   // keys pressed in the pop-up are its own: the page's shortcuts (the Orbit
-  // page's Space and arrows, a picture's Previous/Next) don't see them
+  // page's Space and arrows, a picture's Newer/Older) don't see them
   dialog.addEventListener('keydown', (e) => e.stopPropagation());
   // a click on the dimmed backdrop (the dialog element itself, outside its box) closes it
   dialog.addEventListener('click', (e) => {
@@ -177,7 +200,8 @@ export function mountCredits(button) {
     if (dialog.open) return; // delivered a frame late: it was opened again meanwhile
     freePage();
     button?.setAttribute('aria-expanded', 'false');
-    button?.focus({ preventScroll: true });
+    (returnTo && returnTo.isConnected && returnTo.getClientRects().length ? returnTo : button)?.focus({ preventScroll: true });
+    returnTo = button;
   });
   // the browser's Back, or any move to another page of the site, takes it away
   window.addEventListener('popstate', close);
@@ -192,5 +216,72 @@ export function mountCredits(button) {
       else open();
     });
   }
+  mountMore(button, open);
   return { open, close, dialog };
+}
+
+/* The nav's "More" menu, for phones (assets/nav.css): About and Credits go into it */
+
+let moreCount = 0;
+
+function mountMore(credits, openCredits) {
+  const links = credits?.closest('.nav-links');
+  if (!links || links.querySelector('.nav-more')) return;
+  const about = [...links.children].find((el) => el.tagName === 'A' && /#\/about$/.test(el.getAttribute('href') || ''));
+  const id = `nav-more-${++moreCount}`;
+
+  const toggle = document.createElement('button');
+  toggle.type = 'button';
+  toggle.className = 'nav-btn nav-more-btn';
+  toggle.textContent = 'More';
+  toggle.setAttribute('aria-expanded', 'false');
+  toggle.setAttribute('aria-controls', id);
+
+  const menu = document.createElement('div');
+  menu.className = 'nav-more-menu';
+  menu.id = id;
+  menu.hidden = true;
+  if (about) {
+    // the same link; on the main site its data-nav keeps it marked on About (app.js)
+    const copy = about.cloneNode(true);
+    copy.classList.remove('nav-in-more');
+    menu.append(copy);
+    about.classList.add('nav-in-more');
+  }
+  const creditsItem = document.createElement('button');
+  creditsItem.type = 'button';
+  creditsItem.textContent = 'Credits';
+  creditsItem.setAttribute('aria-haspopup', 'dialog');
+  menu.append(creditsItem);
+  credits.classList.add('nav-in-more');
+
+  const wrap = document.createElement('div');
+  wrap.className = 'nav-more';
+  wrap.append(toggle, menu);
+  credits.after(wrap);
+  links.classList.add('has-more');
+
+  const setOpen = (open, focusToggle = false) => {
+    menu.hidden = !open;
+    toggle.setAttribute('aria-expanded', String(open));
+    if (focusToggle) toggle.focus({ preventScroll: true });
+  };
+  toggle.addEventListener('click', () => setOpen(menu.hidden));
+  creditsItem.addEventListener('click', () => {
+    setOpen(false);
+    openCredits({ from: toggle });
+  });
+  menu.addEventListener('click', (e) => { if (e.target.closest('a')) setOpen(false); });
+  wrap.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !menu.hidden) {
+      e.preventDefault();
+      e.stopPropagation();
+      setOpen(false, true);
+    }
+  });
+  wrap.addEventListener('focusout', (e) => { if (!menu.hidden && !wrap.contains(e.relatedTarget)) setOpen(false); });
+  document.addEventListener('pointerdown', (e) => { if (!menu.hidden && !wrap.contains(e.target)) setOpen(false); });
+  window.addEventListener('hashchange', () => setOpen(false));
+  // wider than a phone the menu isn't shown, so it can't be left open there
+  window.addEventListener('resize', () => { if (!menu.hidden && !toggle.getClientRects().length) setOpen(false); });
 }

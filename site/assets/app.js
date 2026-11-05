@@ -11,6 +11,7 @@ import { createDetail, NAME_KEY } from './detail.js';
 import { mountCredits } from './credits.js';
 import { workOutCorrected } from './corrected.js';
 import { toDate, utcLong, plural } from './format.js';
+import { calgaryStamp } from './photo-info.js';
 
 const config = { repoUrl: '', ...(window.CTS1_CONFIG || {}) };
 
@@ -207,8 +208,10 @@ function setView(view) {
   state.view = view;
   document.body.dataset.view = view;
   for (const [name, el] of Object.entries(views)) el.hidden = name !== view;
+  // a picture's own page is part of Pictures, so Pictures stays marked in the nav
+  const navView = view === 'detail' ? 'pictures' : view;
   for (const link of document.querySelectorAll('[data-nav]')) {
-    if (link.dataset.nav === view) link.setAttribute('aria-current', 'page');
+    if (link.dataset.nav === navView) link.setAttribute('aria-current', 'page');
     else link.removeAttribute('aria-current');
   }
 }
@@ -229,7 +232,7 @@ function route() {
   setView(next.view);
 
   if (next.view === 'explore') {
-    document.title = 'FrontierSat · Interactive picture visualizer';
+    document.title = 'Explore · FrontierSat';
     if (next.credits) history.replaceState(history.state, '', '#/');
     if (previous !== 'explore') showJourney();
     if (state.navigated && previous !== 'explore') $('#main').focus({ preventScroll: true });
@@ -254,7 +257,7 @@ function route() {
     state.pendingFocus = null;
     state.lastPhotoId = next.id;
     if (!state.loaded) {
-      document.title = 'FrontierSat';
+      document.title = 'Picture · FrontierSat';
       views.detail.replaceChildren(h('p', { class: 'notice', role: 'status' }, 'Loading the picture…'));
       return;
     }
@@ -306,9 +309,9 @@ function updateCounts() {
   const updated = $('#foot-updated');
   updated.replaceChildren();
   append(updated, [
-    built ? ['Picture list last changed ', mono(utcLong(built, false)), '. '] : '',
+    built ? ['Picture list last changed ', mono(calgaryStamp(built)), ' (', mono(utcLong(built, false)), '). '] : '',
     // An empty schedule: a copy that is updated by hand makes no promise.
-    refreshText() ? `It is rebuilt ${refreshText()} from the pipeline, which reprocesses SatNOGS observations about every 15 minutes.` : '',
+    refreshText() ? `It is rebuilt ${refreshText()} from the team’s decoded packets, which take in new SatNOGS recordings about every 15 minutes.` : '',
   ]);
 }
 
@@ -410,6 +413,11 @@ function setupNameControl() {
 // Credits: a pop-up over whichever view is open (assets/credits.js); the
 // Orbit and Watchlist pages use the same one.
 const credits = mountCredits($('#credits'));
+
+// About's "In the news": the list lives in Credits, so it opens Credits at the list.
+for (const button of document.querySelectorAll('[data-open-news]')) {
+  button.addEventListener('click', () => credits.open({ show: 'news', from: button }));
+}
 
 document.querySelector('[data-skip]').addEventListener('click', (e) => {
   e.preventDefault();

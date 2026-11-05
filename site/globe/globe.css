@@ -246,7 +246,7 @@
   pointer-events: none;
 }
 
-.cg-has-card .cg-keys {
+.cg-has-card .cg-keys:not([open]) {
   display: none;
 }
 
@@ -370,9 +370,9 @@
   align-self: flex-start;
 }
 
-/* a touch screen has no keys to learn */
+/* a touch screen has no keys to learn (unless a keyboard's ? opened them) */
 @media (hover: none) and (pointer: coarse) {
-  .cg-keys {
+  .cg-keys:not([open]) {
     display: none;
   }
 }
@@ -915,15 +915,132 @@
   background: color-mix(in srgb, var(--cg-raised), var(--cg-text) 10%);
 }
 
+/* (0,2,0): over `.cg button`'s font: inherit, so these have the weight the site's buttons have */
+.cg .cg-btn {
+  font-weight: 500;
+}
+
 /* selected and pressed: Ink */
 .cg-btn[aria-pressed="true"] {
   background: var(--cg-text);
   color: var(--cg-bg);
 }
 
+/* can't act here (Aurora on the map, a zoom at its limit): dimmed, and it says why in its title */
+.cg-btn[aria-disabled="true"],
+.cg-btn[aria-disabled="true"]:hover {
+  background: var(--cg-panel);
+  color: var(--cg-muted);
+  cursor: default;
+}
+
+/* Now is an action, as on Explore: already now, it rests quiet; away from now, a button */
+.cg-btn.cg-now[aria-disabled="true"],
+.cg-btn.cg-now[aria-disabled="true"]:hover {
+  background: none;
+  box-shadow: inset 0 0 0 1px var(--cg-raised);
+}
+
 .cg-btn.cg-icon-btn {
   width: var(--cg-btn-h);
   padding: 0;
+}
+
+/* a minor action in a line of text or a heading: underlined words, no fill */
+.cg-textbtn {
+  display: inline-flex;
+  align-items: center;
+  min-height: calc(24 * var(--cg-u));
+  padding: 0;
+  background: none;
+  border: 0;
+  font: inherit;
+  font-weight: 500;
+  color: var(--cg-text);
+  text-decoration: underline;
+  text-decoration-color: var(--cg-link);
+  text-underline-offset: 3px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.cg .cg-textbtn {
+  font-weight: 500;
+}
+
+.cg-textbtn:hover {
+  text-decoration-color: var(--cg-text);
+}
+
+/* Passes: "Change place" under its heading (still there when the panel folds to it), which
+   opens the search for another country or sea */
+.cg-panel[data-panel="passes"] .cg-panel-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  row-gap: calc(2 * var(--cg-u));
+}
+
+.cg-panel[data-panel="passes"] .cg-panel-head h2 {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.cg-panel[data-panel="passes"] .cg-fold-side {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.cg .cg-change-place {
+  grid-column: 1;
+  grid-row: 2;
+  justify-self: start;
+  font-size: var(--cg-small);
+}
+
+/* Pictures: the dark and mostly missing frames left out, and the switch that brings them in */
+.cg .cg-tucked {
+  flex: none;
+  margin: calc(-4 * var(--cg-u)) 0 calc(8 * var(--cg-u));
+}
+
+.cg-tucked .cg-textbtn {
+  min-height: 0;
+  font-size: var(--cg-small);
+}
+
+/* Stats away from now: the time they're for */
+.cg .cg-at {
+  margin: calc(-4 * var(--cg-u)) 0 calc(10 * var(--cg-u));
+  color: var(--cg-text);
+}
+
+/* a word for a key that can't do its job here (A on the map), under the view's buttons */
+.cg-toast {
+  position: absolute;
+  top: calc(var(--cg-top, 0px) + var(--cg-gap) + var(--cg-btn-h) + 8 * var(--cg-u));
+  left: 50%;
+  z-index: 4;
+  max-width: min(420px, calc(100% - 24px));
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.cg-toast:not(:empty) {
+  padding: calc(8 * var(--cg-u)) calc(12 * var(--cg-u));
+  background: var(--cg-panel);
+  font-size: var(--cg-small);
+  line-height: 1.45;
+  text-align: center;
+}
+
+.cg-narrow .cg-toast {
+  top: calc(var(--cg-head-h, 44px) + 8px);
+}
+
+/* Copy link: in the clock bar, and on a phone in the header (see the narrow layout) */
+.cg-head-share {
+  display: none;
 }
 
 /* ---- clock bar --------------------------------------------------------------- */
@@ -957,6 +1074,11 @@
 }
 
 .cg-time .cg-fine {
+  white-space: nowrap;
+}
+
+/* the time and its calendar stay together when a phone breaks the line after the date */
+.cg-utc-tail {
   white-space: nowrap;
 }
 
@@ -1077,6 +1199,30 @@
   gap: calc(8 * var(--cg-u));
 }
 
+.cg-scrub-short {
+  display: none;
+}
+
+/* The bottom bar's slider is short: its ends say it short, "−1 day" and "+1 day" (on a phone
+   only once the middle says how far from now, which takes the room) */
+.cg-narrow .cg-scrub-long {
+  display: none;
+}
+
+.cg-narrow .cg-scrub-short {
+  display: inline;
+}
+
+@media (max-width: 759px) {
+  .cg-narrow.cg-live .cg-scrub-long {
+    display: inline;
+  }
+
+  .cg-narrow.cg-live .cg-scrub-short {
+    display: none;
+  }
+}
+
 .cg-share {
   flex: none;
 }
@@ -1107,17 +1253,56 @@
     min-height: 44px;
   }
 
-  /* the standalone text links: a 44px tap area without moving anything */
+  /* the standalone text links and buttons: a 44px tap area without moving anything */
   .cg-back,
-  .cg-card-link {
+  .cg-card-link,
+  .cg-textbtn {
     position: relative;
   }
 
   .cg-back::after,
-  .cg-card-link::after {
+  .cg-card-link::after,
+  .cg-textbtn::after {
     content: "";
     position: absolute;
     inset: -13px -8px;
+  }
+
+  /* The time slider's handle: a finger has to grab it (iPhone won't jump to a tap on the
+     track), so a 28 × 36px handle, drawn 12 × 22 by its clear border. */
+  .cg-scrub input[type="range"] {
+    height: 36px;
+  }
+
+  .cg-scrub input[type="range"]::-webkit-slider-thumb {
+    box-sizing: border-box;
+    width: 28px;
+    height: 36px;
+    margin-top: -17px;
+    border: solid transparent;
+    border-width: 7px 8px;
+    background-clip: padding-box;
+  }
+
+  .cg-scrub input[type="range"]::-moz-range-thumb {
+    box-sizing: border-box;
+    width: 28px;
+    height: 36px;
+    border: solid transparent;
+    border-width: 7px 8px;
+    background-clip: padding-box;
+  }
+
+  /* the ticks line up with the handle's middle, which now stops 14px from each end */
+  .cg-ticks {
+    top: 12px;
+    right: 14px;
+    left: 14px;
+  }
+
+  /* the ring would sit on the clear border: it goes round the drawn handle instead */
+  .cg-scrub input[type="range"]:focus-visible::-webkit-slider-thumb {
+    outline-offset: -5px;
   }
 }
 
@@ -1147,8 +1332,23 @@
   display: contents;
 }
 
-.cg-narrow .cg-keys {
+.cg-narrow .cg-keys:not([open]) {
   display: none;
+}
+
+/* opened by ? on a narrow screen with a keyboard: a small panel over the stage */
+.cg-narrow .cg-keys[open] {
+  position: absolute;
+  top: calc(var(--cg-head-h, 44px) + 8px);
+  left: 12px;
+  z-index: 4;
+  max-width: calc(100% - 24px);
+  padding: 8px 12px 12px;
+  background: var(--cg-panel);
+}
+
+.cg-narrow .cg-keys[open] dl {
+  padding: 0;
 }
 
 .cg-narrow .cg-panel[data-panel] {
@@ -1158,8 +1358,9 @@
   left: 0;
   z-index: 2;
   display: none;
-  /* a phone's sheet always leaves a window of stage, at least 140px, above it */
-  max-height: max(120px, min(46%, calc(100% - var(--cg-dock-h, 0px) - var(--cg-head-h, 0px) - 140px)));
+  /* a phone's sheet always leaves a window of stage, at least 140px, above it; the clock
+     makes way while it's open (below), so the globe keeps a good share of the screen */
+  max-height: max(120px, min(42%, calc(100% - var(--cg-dock-h, 0px) - var(--cg-head-h, 0px) - 140px)));
   overflow-y: auto;
 }
 
@@ -1223,26 +1424,45 @@
   background: var(--cg-panel);
 }
 
+/* [Stats] [Passes] [Pictures], icons over their names, as Explore's bar on a phone
+   (explore/journey.css .jy-tabbar): what's open has the Ink line, at the top because the
+   bar is at the bottom */
 .cg-narrow .cg-tabs {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   order: 2;
+  box-shadow: inset 0 1px 0 var(--cg-raised);
 }
 
-.cg-narrow .cg-tabs button {
-  flex: 1 1 0;
-  height: 44px;
-  padding: 0 4px;
+.cg-narrow .cg-tabs .cg-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-width: 0;
+  min-height: 56px;
+  padding: 0;
   background: none;
   border: 0;
-  border-top: 2px solid transparent;
-  font: 500 13px/1 var(--cg-sans);
+  font: 500 13px/1.1 var(--cg-sans);
+  letter-spacing: 0.01em;
   color: var(--cg-muted);
   cursor: pointer;
+  transition: background-color 180ms cubic-bezier(.22, 1, .36, 1), color 180ms cubic-bezier(.22, 1, .36, 1);
 }
 
-.cg-narrow .cg-tabs button[aria-pressed="true"] {
+.cg-narrow .cg-tabs .cg-tab svg {
+  display: block;
+  flex: none;
+  width: 20px;
+  height: 20px;
+}
+
+.cg-narrow .cg-tabs .cg-tab[aria-pressed="true"] {
+  background: var(--cg-raised);
+  box-shadow: inset 0 2px 0 var(--cg-text);
   color: var(--cg-text);
-  border-top-color: var(--cg-text);
 }
 
 .cg-narrow .cg-clock {
@@ -1266,8 +1486,7 @@
 }
 
 .cg-narrow .cg-speeds,
-.cg-narrow .cg-panels-btn,
-.cg-narrow .cg-clock > .cg-share {
+.cg-narrow .cg-panels-btn {
   display: none;
 }
 
@@ -1283,11 +1502,11 @@
 }
 
 .cg-narrow .cg-scrub input[type="range"] {
-  height: 32px;
+  height: 36px;
 }
 
 .cg-narrow .cg-ticks {
-  top: 10px;
+  top: 12px;
 }
 
 /* A phone: [clock] [speed] [Now] over [step, play, step] [scrubber]. The transport's parts
@@ -1306,15 +1525,55 @@
     flex: none;
   }
 
+  /* room for the whole UTC line, its calendar too, beside the speed and Now (both still 44px+) */
+  .cg-narrow .cg-now {
+    padding: 0 8px;
+  }
+
+  .cg-narrow .cg-speed-cycle {
+    min-width: 48px;
+    padding: 0 8px;
+  }
+
   .cg-narrow .cg-scrub {
     flex: 1 1 0;
     order: 3;
     min-width: 0;
   }
 
-  /* on a phone the scrubber makes way while a sheet is open */
-  .cg-narrow:is([data-tab="sat"], [data-tab="passes"], [data-tab="photos"]) .cg-scrub {
+  /* On a phone the clock makes way while a sheet is open, so the globe isn't squeezed into a
+     strip; Stats says what time it's showing when that isn't now. */
+  .cg-narrow:is([data-tab="sat"], [data-tab="passes"], [data-tab="photos"]) .cg-clock {
     display: none;
+  }
+
+  /* Copy link sits in the header here, at the right of the line under the title (the clock
+     bar has no room for it): the title spans the row the Globe / Map switch shares */
+  .cg-narrow .cg-clock > .cg-share {
+    display: none;
+  }
+
+  .cg-narrow .cg-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 12px;
+    align-items: center;
+  }
+
+  .cg-narrow .cg-head > .cg-back,
+  .cg-narrow .cg-head > .cg-title {
+    grid-column: 1 / -1;
+  }
+
+  .cg-narrow .cg-head > [data-ref="headBody"] {
+    grid-column: 1;
+    min-width: 0;
+  }
+
+  .cg-narrow .cg-head-share {
+    display: inline-flex;
+    grid-column: 2;
+    pointer-events: auto;
   }
 }
 
@@ -1324,8 +1583,8 @@
     justify-content: center;
   }
 
-  .cg-narrow .cg-scrub-labels span:first-child,
-  .cg-narrow .cg-scrub-labels span:last-child {
+  .cg-narrow .cg-scrub-labels > span:first-child,
+  .cg-narrow .cg-scrub-labels > span:last-child {
     display: none;
   }
 }
@@ -1342,6 +1601,30 @@
 
   .cg-narrow:is([data-tab="sat"], [data-tab="passes"], [data-tab="photos"]) .cg-head {
     padding-right: calc(min(360px, 45%) + 12px);
+  }
+}
+
+/* A phone on its side: the sheet takes the full height at the right, and the bar keeps to its
+   left with only the tabs, so the globe keeps the rest of the screen rather than a strip. */
+@media (max-height: 500px) and (min-width: 480px) and (orientation: landscape) {
+  .cg-narrow .cg-panel[data-panel] {
+    bottom: 0;
+    padding-bottom: calc(var(--cg-pad) + env(safe-area-inset-bottom, 0px));
+  }
+
+  .cg-narrow:is([data-tab="sat"], [data-tab="passes"], [data-tab="photos"]) .cg-dock {
+    right: min(360px, 45%);
+  }
+
+  .cg-narrow:is([data-tab="sat"], [data-tab="passes"], [data-tab="photos"]) .cg-clock {
+    display: none;
+  }
+
+  /* and the header keeps to its one row beside the switch: where it is shows in Stats, and
+     Copy link is back when the sheet is put away */
+  .cg-narrow:is([data-tab="sat"], [data-tab="passes"], [data-tab="photos"]) .cg-over,
+  .cg-narrow:is([data-tab="sat"], [data-tab="passes"], [data-tab="photos"]) .cg-head-share {
+    display: none;
   }
 }
 
@@ -1403,8 +1686,8 @@
     justify-content: center;
   }
 
-  .cg-narrow .cg-scrub-labels span:first-child,
-  .cg-narrow .cg-scrub-labels span:last-child {
+  .cg-narrow .cg-scrub-labels > span:first-child,
+  .cg-narrow .cg-scrub-labels > span:last-child {
     display: none;
   }
 }
@@ -1414,6 +1697,7 @@
 .cg[data-ui="compact"] .cg-panel[data-panel],
 .cg[data-ui="compact"] .cg-keys,
 .cg[data-ui="compact"] .cg-panels-btn,
+.cg[data-ui="compact"] .cg-head-share,
 .cg[data-ui="compact"] .cg-tabs {
   display: none !important;
 }

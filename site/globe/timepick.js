@@ -78,7 +78,7 @@ function span(ms) {
  * strongly. `orbit` is an astro.Orbit.
  */
 export function elementsNote(ms, orbit) {
-  if (!orbit) return { text: 'The orbital elements are still loading.', level: 'ok', days: null };
+  if (!orbit) return { text: 'Its published orbit is still loading.', level: 'ok', days: null };
   const item = orbit.items[orbit.indexAt(ms)];
   const age = ms - item.epochMs;
   const days = age / DAY_MS;
@@ -86,7 +86,7 @@ export function elementsNote(ms, orbit) {
   if (ms < orbit.firstEpochMs) {
     return {
       text:
-        `Worked out from the first orbital elements published (${of}, ${span(age)} later). ` +
+        `Worked out from its first published orbit (${of}, ${span(age)} later). ` +
         'None exist from before then, so the position is approximate.',
       level: Math.abs(days) > FAR_DAYS ? 'far' : 'ok',
       days,
@@ -95,7 +95,7 @@ export function elementsNote(ms, orbit) {
   if (ms > orbit.lastEpochMs && days > VERY_FAR_DAYS) {
     return {
       text:
-        `A forecast ${span(age)} past the newest orbital elements (${of}). ` +
+        `A forecast ${span(age)} past its newest published orbit (${of}). ` +
         `This far out the satellite could be ${offBy(days)} ahead of or behind where it is drawn, ` +
         'so the time it passes any place is a rough guess.',
       level: 'far',
@@ -105,7 +105,7 @@ export function elementsNote(ms, orbit) {
   if (ms > orbit.lastEpochMs && days > FAR_DAYS) {
     return {
       text:
-        `A forecast ${span(age)} past the newest orbital elements (${of}), ` +
+        `A forecast ${span(age)} past its newest published orbit (${of}), ` +
         `so the position may be off by ${offBy(days)}, mostly along the track.`,
       level: 'far',
       days,
@@ -114,8 +114,8 @@ export function elementsNote(ms, orbit) {
   return {
     text:
       ms > orbit.lastEpochMs
-        ? `Forecast from the newest orbital elements (${of}, ${span(age)} old).`
-        : `Worked out from orbital elements of ${of} (${span(age)} old).`,
+        ? `Forecast from its newest published orbit (${of}, ${span(age)} old).`
+        : `Worked out from its orbit as published ${of} (${span(age)} old).`,
     level: 'ok',
     days,
   };
@@ -138,7 +138,7 @@ const localClock = new Intl.DateTimeFormat('en-US', {
   hourCycle: 'h23',
 });
 
-/** "Thursday, October 22, 2026, 09:07:59 ABT" */
+/** "Thursday, October 22, 2026, 09:07:59 Calgary time" */
 export function calgaryWhen(ms) {
   const p = {};
   for (const part of [...localDay.formatToParts(ms), ...localClock.formatToParts(ms)]) p[part.type] = part.value;
@@ -206,11 +206,11 @@ export function createTimePicker({ launchMs, getOrbit, onPick, onClose = () => {
       note.dataset.level = 'ok';
     } else if (ms < launchMs) {
       ok = false;
-      local.textContent = `In Calgary: ${calgaryWhen(ms)}.`;
+      local.textContent = `${calgaryWhen(ms)}.`;
       note.textContent = `That is before launch. FrontierSat went up on ${when(launchMs, 0)}; pick a time after that.`;
       note.dataset.level = 'far';
     } else {
-      local.textContent = `In Calgary: ${calgaryWhen(ms)}.`;
+      local.textContent = `${calgaryWhen(ms)}.`;
       const n = elementsNote(ms, getOrbit());
       note.textContent = n.text;
       note.dataset.level = n.level;

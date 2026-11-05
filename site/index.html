@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>FrontierSat · Interactive picture visualizer</title>
-  <meta name="description" content="Where FrontierSat, Calgary To Space's first student-built satellite, is right now, and every picture it has sent down.">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Explore · FrontierSat</title>
+  <meta name="description" content="Where FrontierSat, CalgaryToSpace's first student-built satellite, is right now, and every picture it has sent down.">
   <meta name="theme-color" content="#05070A">
   <link rel="icon" type="image/png" href="assets/cubesat-icon.png">
   <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
@@ -13,14 +13,14 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <!-- how a shared link shows in Discord, iMessage and the like -->
   <meta property="og:type" content="website">
-  <meta property="og:site_name" content="FrontierSat · Calgary To Space">
+  <meta property="og:site_name" content="FrontierSat · CalgaryToSpace">
   <meta property="og:title" content="FrontierSat">
-  <meta property="og:description" content="Where FrontierSat, Calgary To Space's first student-built satellite, is right now, and every picture it has sent down.">
+  <meta property="og:description" content="Where FrontierSat, CalgaryToSpace's first student-built satellite, is right now, and every picture it has sent down.">
   <meta property="og:url" content="https://jonathe0.github.io/Sat-1-Photos/">
   <meta property="og:image" content="https://jonathe0.github.io/Sat-1-Photos/assets/share-card.jpg">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="FrontierSat, with its picture of Hong Kong and the South China Sea, and the Calgary To Space and Schulich School of Engineering logos">
+  <meta property="og:image:alt" content="FrontierSat, with its picture of Hong Kong and the South China Sea, and the CalgaryToSpace and Schulich School of Engineering logos">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -85,34 +85,40 @@
     <section class="view view-about" id="view-about" hidden>
       <div class="about">
         <h1 class="about-title" tabindex="-1">About</h1>
-        <p>FrontierSat is the first satellite built by the students of Calgary To Space. It launched on May 3, 2026. It carries two cameras: PiCAM, the main camera, which takes 640 × 480 frames, and the camera of the attitude determination and control system (ADCS), which takes 512 × 512 frames.</p>
+        <p>FrontierSat is Calgary’s first student-built satellite, made by the CalgaryToSpace team. More than 100 students have worked on it, mainly from UCalgary’s Schulich School of Engineering and Faculty of Science. It lifted off on a SpaceX Falcon 9 from Vandenberg, California, on May 3, 2026.</p>
+
+        <h2>What FrontierSat is for</h2>
+        <p>Its science target is STEVE, a narrow ribbon of purple light in the night sky that researchers have found is not an aurora. Its main instrument, the Mini Plasma Imager, measures winds of charged gas high above Earth. It also tests a new boom of 3D-printed carbon fibre, stowed for launch and designed to reach 1&#8239;143&nbsp;mm when it opens.</p>
+        <p>It carries two cameras. The main camera takes 640&nbsp;×&nbsp;480 pictures and is there mostly to watch the boom unfold; pictures of Earth and the aurora are its other jobs. The attitude camera, a second and smaller one, helps the satellite work out which way it is pointing, and takes 512&nbsp;×&nbsp;512 pictures.</p>
+        <p>Stories, videos and podcasts about the team and the satellite are listed in Credits: <button type="button" class="about-link" data-open-news>In the news</button>.</p>
 
         <h2>How a picture gets here</h2>
-        <p>The satellite stores each picture as a file and sends it down in small packets, often over several passes. Amateur ground stations in the SatNOGS network record the passes, the CalgaryToSpace ground-station pipeline decodes the packets, and this gallery puts each file back together.</p>
+        <p>The satellite stores each picture as a file and sends it down in small packets, often over several passes. Volunteer ground stations in the SatNOGS network record the passes, CalgaryToSpace decodes the packets, and this site puts each file back together.</p>
 
         <h2>What the status means</h2>
         <dl class="about-list">
-          <dt>verified</dt>
-          <dd>Every byte arrived, and the file's checksum (sha256) matches the one the satellite reported.</dd>
-          <dt>complete</dt>
-          <dd>The whole picture arrived, but the file can't be checked against the satellite: it reported no checksum, or a few bytes outside the picture are missing.</dd>
-          <dt>partial</dt>
-          <dd>Part of the file never came down. A main-camera picture is shown only down to its first missing line, because its JPEG can't be decoded past a gap. An attitude-camera picture shows grey bands where rows are missing.</dd>
-          <dt>cut short on board</dt>
-          <dd>The satellite stored only part of the frame because the capture stopped early, so the top of the picture is all there is. The copy here can still match the satellite's checksum for that shortened file.</dd>
+          <dt>Checked</dt>
+          <dd>Every byte arrived and matches the satellite’s own fingerprint of the file.</dd>
+          <dt>Complete, not checked</dt>
+          <dd>The whole picture arrived, but it can’t be checked against the satellite: the satellite sent no fingerprint of the file, or a few bytes outside the picture are missing.</dd>
+          <dt>Partly missing</dt>
+          <dd>Part of the file never came down. A main-camera picture is shown only down to its first gap, because the rest of it can’t be read past one. An attitude-camera picture shows grey bands where rows are missing.</dd>
+          <dt>Cut short on board</dt>
+          <dd>The satellite stopped the capture early and stored only part of the frame, so the top of the picture is all there is. The copy here can still match the satellite’s fingerprint of that shortened file.</dd>
         </dl>
 
         <div id="about-skipped" hidden>
-          <h2>Files that couldn't be shown</h2>
-          <p>These image files are known from the satellite's logs or packets, but none of the picture can be shown.</p>
+          <h2>Files that couldn’t be shown</h2>
+          <p>These picture files are known from the satellite’s records or packets, but none of the picture can be shown.</p>
           <ul class="about-skipped-list"></ul>
         </div>
 
         <h2>Times and positions</h2>
-        <p>The capture time comes from the file name, the camera's capture log, the capture command's own record, the attitude camera's file list, or the satellite's reply to the capture command. Some pictures only have a date. Most of these are readings of the satellite's own clock, which has run up to a couple of minutes fast; where the data shows how far off it was, the time is corrected for it. Positions are estimates: the point below the satellite at the capture time, computed with SGP4 from the most recent orbital elements (TLE) published before the capture. Place names come from OpenStreetMap (Nominatim).</p>
+        <p>Times are given in Calgary time first, then in UTC. The time a picture was taken comes from its file name, the camera’s own records, or the satellite’s reply to the command that took it. Some pictures only have a date. Most of these times are readings of the satellite’s own clock, which has run up to a couple of minutes fast; where the data shows how far off it was, the time is corrected for it.</p>
+        <p>Positions are estimates: the point below the satellite when the picture was taken, worked out from the satellite’s most recent published orbit before then. Place names come from OpenStreetMap.</p>
 
         <h2>Edits from the team</h2>
-        <p>Team members can give a picture a title, notes, a place, the people involved and tags, and can correct its time or position. Edits are made on the team's own copy of the gallery and appear here when that copy is next published. The computed values are never overwritten, and every edited value is marked with the name of the person who changed it.</p>
+        <p>Team members can give a picture a title, notes, a place, the people involved and tags, and can correct its time or position. Edits are made on the team’s own copy of the site and appear here when that copy is next published. The worked-out values are never overwritten, and every edited value is marked with the name of the person who changed it.</p>
       </div>
     </section>
   </main>
@@ -144,15 +150,23 @@
   <footer class="site-foot">
     <div class="foot-col">
       <h2>Data</h2>
-      <p>Packets from the <a href="https://network.satnogs.org/">SatNOGS network</a>, decoded by the CalgaryToSpace ground-station pipeline at <a href="https://frontiersat.mooo.com/">frontiersat.mooo.com</a>. Place names © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>, via Nominatim. Orbital elements: USSPACECOM, via <a href="https://www.space-track.org/">Space-Track.org</a>. Globe imagery: NASA Earth Observatory. Aurora: the OVATION forecast from the <a href="https://www.swpc.noaa.gov/products/aurora-30-minute-forecast">NOAA Space Weather Prediction Center</a>. Logo and CubeSat icon: CalgaryToSpace.</p>
+      <ul class="foot-list">
+        <li>Packets: the <a href="https://network.satnogs.org/">SatNOGS network</a></li>
+        <li>Decoded by CalgaryToSpace: <a href="https://frontiersat.mooo.com/">frontiersat.mooo.com</a></li>
+        <li>Place names: © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>, via Nominatim</li>
+        <li>Orbits: USSPACECOM, via <a href="https://www.space-track.org/">Space-Track.org</a></li>
+        <li>Globe imagery: NASA Earth Observatory</li>
+        <li>Aurora: the OVATION forecast from the <a href="https://www.swpc.noaa.gov/products/aurora-30-minute-forecast">NOAA Space Weather Prediction Center</a></li>
+        <li>Logo and CubeSat icon: CalgaryToSpace</li>
+      </ul>
     </div>
     <div class="foot-col">
       <h2>Updated</h2>
-      <p id="foot-updated">The picture list is rebuilt automatically from the pipeline.</p>
+      <p id="foot-updated">The picture list is rebuilt automatically from the team’s decoded packets.</p>
     </div>
     <div class="foot-col">
       <h2>Links</h2>
-      <ul class="foot-links">
+      <ul class="foot-list">
         <li><a href="https://www.calgarytospace.ca/">calgarytospace.ca</a></li>
         <li><a href="https://github.com/CalgaryToSpace">github.com/CalgaryToSpace</a></li>
         <li><a href="https://db.satnogs.org/">db.satnogs.org</a></li>

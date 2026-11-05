@@ -11,12 +11,40 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: var(--cg-btn-h, 32px);
+  gap: calc(8 * var(--cg-u, 1px));
+  min-width: var(--cg-btn-h, 32px);
   height: var(--cg-btn-h, 32px);
-  padding: 0;
+  padding: 0 calc(12 * var(--cg-u, 1px));
   background: var(--cg-panel, #10151B);
   border: 0;
   cursor: pointer;
+}
+
+.cg-swatch-text {
+  font: 500 var(--cg-small, 13px)/1 var(--cg-sans);
+  color: var(--cg-text, #E6EBF0);
+  white-space: nowrap;
+}
+
+.cg-swatch-short {
+  display: none;
+}
+
+/* a phone: the word under the chip, short, so the switch and title still share the row */
+@media (max-width: 759px) {
+  .cg-narrow .cg-swatch {
+    flex-direction: column;
+    gap: 4px;
+    padding: 0 6px;
+  }
+
+  .cg-narrow .cg-swatch-long {
+    display: none;
+  }
+
+  .cg-narrow .cg-swatch-short {
+    display: block;
+  }
 }
 
 .cg-swatch:hover,
@@ -248,7 +276,7 @@
 
 /* narrow: under the switch at the top right */
 .cg-narrow .cg-swatch {
-  width: 44px;
+  min-width: 44px;
   height: 44px;
 }
 
