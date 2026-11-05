@@ -1,11 +1,53 @@
 {
- "generated_at": "2026-11-03T16:28:50Z",
+ "generated_at": "2026-11-05T05:28:46Z",
  "satellite": {
   "name": "FrontierSat",
   "norad_id": 69015,
   "launched_at": "2026-05-03T06:59:00Z"
  },
  "images": [
+  {
+   "id": "2026-11-05-000926z",
+   "file": "camera/2026-11-05_000926Z.img",
+   "camera": "picam",
+   "title": "Nov 5, 2026, 00:09 UTC",
+   "src": "images/2026-11-05-000926z.jpg",
+   "thumb": "images/thumbs/2026-11-05-000926z.jpg",
+   "width": 640,
+   "height": 480,
+   "status": "partial",
+   "status_note": "77 of 376 lines arrived, but line 31 did not, and the camera's JPEGs can't be decoded past a gap: the picture is shown down to it.",
+   "completeness": 0.0824,
+   "dark": false,
+   "file_size": 25270,
+   "sha256": "6fc8e7d5601f98b887c453e70657974ee239993be8c784ed9ae6d470470013e1",
+   "sha256_expected": "0e9d8f3d778f1e470287b4bc623511a13a1f8ba5151c7c31d7349e8eb3d9be99",
+   "captured_at": "2026-11-05T00:09:26Z",
+   "capture_date": "2026-11-05",
+   "capture_basis": "filename",
+   "satellite_clock": {
+    "correction_s": 0.0
+   },
+   "downlink": {
+    "first": "2026-11-05T00:37:54Z",
+    "last": "2026-11-05T02:15:26Z",
+    "packets": 34
+   },
+   "position": {
+    "lat": -82.3248,
+    "lon": -129.0519,
+    "alt_km": 519.6,
+    "place": "Antarctica",
+    "ground_sunlit": true,
+    "sun_elevation_deg": 19.6,
+    "satellite_sunlit": true,
+    "satellite_light": "sunlit",
+    "sun_above_limb_deg": 41.8,
+    "tle_epoch": "2026-11-01T14:34:12Z",
+    "basis": "SGP4 from the most recent TLE before capture"
+   },
+   "unnamed": false
+  },
   {
    "id": "2026-10-31-155733z",
    "file": "camera/2026-10-31_155733Z.img",
@@ -838,7 +880,7 @@
    "capture_date": "2026-09-17",
    "capture_basis": "filename",
    "satellite_clock": {
-    "correction_s": -42.2
+    "correction_s": -42.3
    },
    "downlink": {
     "first": "2026-09-17T08:25:49Z",
