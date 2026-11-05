@@ -225,7 +225,7 @@ const ICON_GRIP = '<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="
     they're for people looking at a screen they can't use, such as a TV in a hallway. */
 const SITE_URL = 'https://jonathe0.github.io/Sat-1-Photos/';
 const SITE_TEXT = 'jonathe0.github.io/Sat-1-Photos';
-/** The links page (site/links/: the website, the dashboard, Instagram and LinkedIn), which the QR
+/** The links page (site/links/: calgarytospace.ca, the dashboard, Instagram, LinkedIn and this site), which the QR
     code opens: version 3, error correction L, made with segno and read back with zxing-cpp. */
 const LINKS_URL = 'https://jonathe0.github.io/Sat-1-Photos/links/';
 const QR_SVG = '<svg xmlns="http://www.w3.org/2000/svg" class="jy-qr-svg" aria-hidden="true" shape-rendering="crispEdges" viewBox="0 0 35 35"><path fill="#fff" d="M0 0h35v35h-35z"/><path stroke="#05070a" d="M3 3.5h7m1 0h2m4 0h1m1 0h1m1 0h3m1 0h7m-29 1h1m5 0h1m9 0h1m5 0h1m5 0h1m-29 1h1m1 0h3m1 0h1m1 0h1m2 0h3m1 0h1m3 0h2m1 0h1m1 0h3m1 0h1m-29 1h1m1 0h3m1 0h1m1 0h2m1 0h1m1 0h2m2 0h2m1 0h1m1 0h1m1 0h3m1 0h1m-29 1h1m1 0h3m1 0h1m1 0h4m1 0h4m2 0h1m2 0h1m1 0h3m1 0h1m-29 1h1m5 0h1m2 0h1m2 0h1m1 0h1m1 0h4m2 0h1m5 0h1m-29 1h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7m-20 1h1m1 0h1m5 0h1m2 0h1m-21 1h4m2 0h1m1 0h1m5 0h5m2 0h1m2 0h3m1 0h1m-28 1h3m1 0h1m1 0h3m4 0h1m1 0h5m1 0h3m3 0h1m-28 1h1m1 0h2m1 0h3m4 0h2m2 0h1m2 0h2m4 0h2m-28 1h1m7 0h1m2 0h4m1 0h1m1 0h3m1 0h1m5 0h1m-28 1h1m3 0h2m1 0h2m1 0h3m1 0h3m2 0h1m4 0h2m-27 1h2m5 0h1m2 0h2m1 0h2m1 0h1m2 0h1m2 0h1m3 0h3m-28 1h1m3 0h2m1 0h2m4 0h1m2 0h4m3 0h1m1 0h3m-27 1h3m5 0h1m1 0h1m1 0h3m4 0h1m1 0h1m3 0h1m-27 1h2m2 0h2m1 0h1m1 0h2m1 0h1m1 0h1m3 0h3m1 0h3m1 0h1m-24 1h1m3 0h1m1 0h1m4 0h3m2 0h1m2 0h1m1 0h3m-28 1h1m3 0h1m1 0h1m7 0h4m2 0h1m2 0h1m2 0h1m-25 1h2m1 0h1m2 0h1m3 0h1m1 0h1m2 0h3m1 0h1m2 0h1m1 0h1m-26 1h2m1 0h1m1 0h2m2 0h2m2 0h1m3 0h9m-19 1h2m1 0h3m6 0h1m3 0h5m-29 1h7m4 0h2m1 0h1m1 0h1m2 0h2m1 0h1m1 0h2m1 0h1m-28 1h1m5 0h1m2 0h3m1 0h2m3 0h1m1 0h1m3 0h2m-26 1h1m1 0h3m1 0h1m2 0h1m3 0h2m2 0h1m2 0h5m1 0h1m1 0h1m-29 1h1m1 0h3m1 0h1m1 0h2m2 0h4m1 0h1m5 0h3m2 0h1m-29 1h1m1 0h3m1 0h1m1 0h3m1 0h1m1 0h1m1 0h1m3 0h2m1 0h1m2 0h1m1 0h1m-29 1h1m5 0h1m1 0h5m2 0h2m3 0h2m3 0h1m1 0h1m-28 1h7m1 0h2m3 0h1m2 0h1m1 0h1m1 0h1m2 0h2m2 0h1"/></svg>';
@@ -415,7 +415,7 @@ function template(id, siteRoot) {
       <div class="jy-qr" data-ref="qr" hidden>
         <span class="jy-qr-code" role="img" aria-label="QR code for ${LINKS_URL.replace(/^https:\/\//, '')}">${QR_SVG}</span>
         <span class="jy-qr-text"><span class="jy-qr-title">FrontierSat on your phone</span>
-          <span class="jy-qr-sub">Scan for the pictures, the dashboard,<br>Instagram and LinkedIn</span></span>
+          <span class="jy-qr-sub">Scan for the CalgaryToSpace website,<br>the dashboard, Instagram and LinkedIn</span></span>
       </div>
 
       <div class="jy-corner" data-ref="corner">
