@@ -1,11 +1,53 @@
 {
- "generated_at": "2026-11-06T18:29:38Z",
+ "generated_at": "2026-11-06T23:15:19Z",
  "satellite": {
   "name": "FrontierSat",
   "norad_id": 69015,
   "launched_at": "2026-05-03T06:59:00Z"
  },
  "images": [
+  {
+   "id": "2026-11-05-163830z",
+   "file": "camera/2026-11-05_163830Z.img",
+   "camera": "picam",
+   "title": "Nov 5, 2026, 16:38 UTC",
+   "src": "images/2026-11-05-163830z.jpg",
+   "thumb": "images/thumbs/2026-11-05-163830z.jpg",
+   "width": 640,
+   "height": 480,
+   "status": "complete",
+   "status_note": "Every line of the picture arrived. The satellite never sent a hash for this file.",
+   "completeness": 1.0,
+   "dark": false,
+   "file_size": 20044,
+   "sha256": "efff1b713db7284871e5d42505daf2d1cd1f22a76110a237918d81ad038f9fd2",
+   "sha256_expected": null,
+   "captured_at": "2026-11-05T16:38:30Z",
+   "capture_date": "2026-11-05",
+   "capture_basis": "filename",
+   "satellite_clock": {
+    "correction_s": 0.0
+   },
+   "downlink": {
+    "first": "2026-11-06T22:41:28Z",
+    "last": "2026-11-06T22:46:22Z",
+    "packets": 103
+   },
+   "position": {
+    "lat": 75.214,
+    "lon": -118.5241,
+    "alt_km": 512.1,
+    "place": "Northwest Territories, Canada",
+    "ground_sunlit": false,
+    "sun_elevation_deg": -5.1,
+    "satellite_sunlit": true,
+    "satellite_light": "sunlit",
+    "sun_above_limb_deg": 16.9,
+    "tle_epoch": "2026-11-05T08:25:22Z",
+    "basis": "SGP4 from the most recent TLE before capture"
+   },
+   "unnamed": false
+  },
   {
    "id": "2026-11-05-000926z",
    "file": "camera/2026-11-05_000926Z.img",
