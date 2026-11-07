@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-07T09:29:41Z",
+ "generated_at": "2026-11-07T10:23:22Z",
  "satellite": {
   "name": "FrontierSat",
   "norad_id": 69015,
@@ -43,6 +43,48 @@
     "satellite_sunlit": true,
     "satellite_light": "sunlit",
     "sun_above_limb_deg": 16.9,
+    "tle_epoch": "2026-11-05T08:25:22Z",
+    "basis": "SGP4 from the most recent TLE before capture"
+   },
+   "unnamed": false
+  },
+  {
+   "id": "2026-11-05-163730z",
+   "file": "camera/2026-11-05_163730Z.img",
+   "camera": "picam",
+   "title": "Nov 5, 2026, 16:37 UTC",
+   "src": "images/2026-11-05-163730z.jpg",
+   "thumb": "images/thumbs/2026-11-05-163730z.jpg",
+   "width": 640,
+   "height": 480,
+   "status": "complete",
+   "status_note": "Every line of the picture arrived. The satellite never sent a hash for this file.",
+   "completeness": 1.0,
+   "dark": false,
+   "file_size": 15220,
+   "sha256": "dcb1e117e22408e3c176cc49ba8d1e031c796e828fe2b394a7cb50319fe2bac5",
+   "sha256_expected": null,
+   "captured_at": "2026-11-05T16:37:30Z",
+   "capture_date": "2026-11-05",
+   "capture_basis": "filename",
+   "satellite_clock": {
+    "correction_s": 0.0
+   },
+   "downlink": {
+    "first": "2026-11-07T08:14:17Z",
+    "last": "2026-11-07T09:30:16Z",
+    "packets": 156
+   },
+   "position": {
+    "lat": 71.8373,
+    "lon": -112.1795,
+    "alt_km": 511.6,
+    "place": "Northwest Territories, Canada",
+    "ground_sunlit": false,
+    "sun_elevation_deg": -1.4,
+    "satellite_sunlit": true,
+    "satellite_light": "sunlit",
+    "sun_above_limb_deg": 20.6,
     "tle_epoch": "2026-11-05T08:25:22Z",
     "basis": "SGP4 from the most recent TLE before capture"
    },
@@ -1562,10 +1604,6 @@
  "skipped": [
   {
    "file": "camera/2026-10-11_095500Z.img",
-   "reason": "the start of the file never arrived, and the picture can't be decoded without it"
-  },
-  {
-   "file": "camera/unnamed_2026-11-07_00e2.img",
    "reason": "the start of the file never arrived, and the picture can't be decoded without it"
   },
   {
