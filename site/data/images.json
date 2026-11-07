@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-07T07:29:41Z",
+ "generated_at": "2026-11-07T09:29:41Z",
  "satellite": {
   "name": "FrontierSat",
   "norad_id": 69015,
@@ -1562,6 +1562,10 @@
  "skipped": [
   {
    "file": "camera/2026-10-11_095500Z.img",
+   "reason": "the start of the file never arrived, and the picture can't be decoded without it"
+  },
+  {
+   "file": "camera/unnamed_2026-11-07_00e2.img",
    "reason": "the start of the file never arrived, and the picture can't be decoded without it"
   },
   {
