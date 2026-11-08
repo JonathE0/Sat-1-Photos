@@ -1,11 +1,53 @@
 {
- "generated_at": "2026-11-07T10:23:22Z",
+ "generated_at": "2026-11-08T10:29:40Z",
  "satellite": {
   "name": "FrontierSat",
   "norad_id": 69015,
   "launched_at": "2026-05-03T06:59:00Z"
  },
  "images": [
+  {
+   "id": "2026-11-05-164230z",
+   "file": "camera/2026-11-05_164230Z.img",
+   "camera": "picam",
+   "title": "Nov 5, 2026, 16:42 UTC",
+   "src": "images/2026-11-05-164230z.jpg",
+   "thumb": "images/thumbs/2026-11-05-164230z.jpg",
+   "width": 640,
+   "height": 480,
+   "status": "partial",
+   "status_note": "76 of 202 lines arrived, but line 37 did not, and the camera's JPEGs can't be decoded past a gap: the picture is shown down to it. The JPEG header was restored from the camera's standard header, which every complete capture shares.",
+   "completeness": 0.1832,
+   "dark": true,
+   "file_size": 13612,
+   "sha256": "b7b5bcd4df6958826a3f3cc21031b8404a7bf143d468c7c756f2cbf580324a2c",
+   "sha256_expected": null,
+   "captured_at": "2026-11-05T16:42:30Z",
+   "capture_date": "2026-11-05",
+   "capture_basis": "filename",
+   "satellite_clock": {
+    "correction_s": 0.0
+   },
+   "downlink": {
+    "first": "2026-11-08T03:12:44Z",
+    "last": "2026-11-08T03:17:00Z",
+    "packets": 30
+   },
+   "position": {
+    "lat": 82.3135,
+    "lon": 162.4176,
+    "alt_km": 512.9,
+    "place": "Arctic Ocean",
+    "ground_sunlit": false,
+    "sun_elevation_deg": -19.9,
+    "satellite_sunlit": true,
+    "satellite_light": "sunlit",
+    "sun_above_limb_deg": 2.1,
+    "tle_epoch": "2026-11-05T08:25:22Z",
+    "basis": "SGP4 from the most recent TLE before capture"
+   },
+   "unnamed": false
+  },
   {
    "id": "2026-11-05-163830z",
    "file": "camera/2026-11-05_163830Z.img",
@@ -30,8 +72,8 @@
    },
    "downlink": {
     "first": "2026-11-06T22:41:28Z",
-    "last": "2026-11-07T00:21:56Z",
-    "packets": 232
+    "last": "2026-11-07T22:28:54Z",
+    "packets": 336
    },
    "position": {
     "lat": 75.214,
@@ -72,8 +114,8 @@
    },
    "downlink": {
     "first": "2026-11-07T08:14:17Z",
-    "last": "2026-11-07T09:30:16Z",
-    "packets": 156
+    "last": "2026-11-07T20:57:25Z",
+    "packets": 441
    },
    "position": {
     "lat": 71.8373,
@@ -516,7 +558,7 @@
    "capture_date": "2026-10-30",
    "capture_basis": "filename",
    "satellite_clock": {
-    "correction_s": -15.9
+    "correction_s": -16.0
    },
    "downlink": {
     "first": "2026-10-30T22:04:06Z",
@@ -558,7 +600,7 @@
    "capture_date": "2026-10-30",
    "capture_basis": "filename",
    "satellite_clock": {
-    "correction_s": -15.9
+    "correction_s": -16.0
    },
    "downlink": {
     "first": "2026-10-30T04:48:00Z",
@@ -600,7 +642,7 @@
    "capture_date": "2026-10-30",
    "capture_basis": "filename",
    "satellite_clock": {
-    "correction_s": -15.9
+    "correction_s": -16.0
    },
    "downlink": {
     "first": "2026-10-30T03:13:08Z",
@@ -1603,7 +1645,15 @@
  ],
  "skipped": [
   {
+   "file": "camera/unnamed_2026-11-08_00c9.img",
+   "reason": "the start of the file never arrived, and the picture can't be decoded without it"
+  },
+  {
    "file": "camera/2026-10-11_095500Z.img",
+   "reason": "the start of the file never arrived, and the picture can't be decoded without it"
+  },
+  {
+   "file": "camera/unnamed_2026-11-08_00d0.img",
    "reason": "the start of the file never arrived, and the picture can't be decoded without it"
   },
   {
