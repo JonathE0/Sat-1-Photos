@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-10T05:30:06Z",
+ "generated_at": "2026-11-10T06:30:05Z",
  "satellite": {
   "name": "FrontierSat",
   "norad_id": 69015,
@@ -33,6 +33,48 @@
    },
    "position": null,
    "unnamed": true
+  },
+  {
+   "id": "2026-11-09-183000z",
+   "file": "camera/2026-11-09_183000Z.img",
+   "camera": "picam",
+   "title": "Nov 9, 2026, 18:30 UTC",
+   "src": "images/2026-11-09-183000z.jpg",
+   "thumb": "images/thumbs/2026-11-09-183000z.jpg",
+   "width": 640,
+   "height": 480,
+   "status": "complete",
+   "status_note": "Every line of the picture arrived. The satellite never sent a hash for this file.",
+   "completeness": 1.0,
+   "dark": false,
+   "file_size": 17632,
+   "sha256": "dce0323105dd7f370ff3fe1b5b5c85a40a7d5f6049dc6800c5eb220298fefbc6",
+   "sha256_expected": null,
+   "captured_at": "2026-11-09T18:30:00Z",
+   "capture_date": "2026-11-09",
+   "capture_basis": "filename",
+   "satellite_clock": {
+    "correction_s": 0.0
+   },
+   "downlink": {
+    "first": "2026-11-10T05:38:42Z",
+    "last": "2026-11-10T05:41:55Z",
+    "packets": 180
+   },
+   "position": {
+    "lat": 72.1303,
+    "lon": 86.3808,
+    "alt_km": 510.7,
+    "place": "Krasnoyarsk Krai, Russia",
+    "ground_sunlit": false,
+    "sun_elevation_deg": -34.7,
+    "satellite_sunlit": false,
+    "satellite_light": "shadow",
+    "sun_above_limb_deg": -12.8,
+    "tle_epoch": "2026-11-08T23:07:09Z",
+    "basis": "SGP4 from the most recent TLE before capture"
+   },
+   "unnamed": false
   },
   {
    "id": "2026-11-05-164230z",
