@@ -1,11 +1,361 @@
 {
- "generated_at": "2026-11-05T05:28:46Z",
+ "generated_at": "2026-11-11T15:21:40Z",
  "satellite": {
   "name": "FrontierSat",
   "norad_id": 69015,
   "launched_at": "2026-05-03T06:59:00Z"
  },
  "images": [
+  {
+   "id": "2026-11-11-080340z",
+   "file": "camera/2026-11-11_080340Z.img",
+   "camera": "picam",
+   "title": "Nov 11, 2026, 08:03 UTC",
+   "src": "images/2026-11-11-080340z.jpg",
+   "thumb": "images/thumbs/2026-11-11-080340z.jpg",
+   "width": 640,
+   "height": 480,
+   "status": "partial",
+   "status_note": "867 of 946 lines arrived, but line 867 did not, and the camera's JPEGs can't be decoded past a gap: the picture is shown down to it.",
+   "completeness": 0.9165,
+   "dark": false,
+   "file_size": 63460,
+   "sha256": "8438d32285f345e77d7f98a58cefa0b244868b56727f5e3709589fd877c62e33",
+   "sha256_expected": null,
+   "captured_at": "2026-11-11T08:03:40Z",
+   "capture_date": "2026-11-11",
+   "capture_basis": "filename",
+   "satellite_clock": {
+    "correction_s": 0.0
+   },
+   "downlink": {
+    "first": "2026-11-11T09:36:00Z",
+    "last": "2026-11-11T09:43:10Z",
+    "packets": 1142
+   },
+   "position": {
+    "lat": 44.8195,
+    "lon": 32.0431,
+    "alt_km": 505.7,
+    "place": "Black Sea",
+    "ground_sunlit": true,
+    "sun_elevation_deg": 24.3,
+    "satellite_sunlit": true,
+    "satellite_light": "sunlit",
+    "sun_above_limb_deg": 46.5,
+    "tle_epoch": "2026-11-09T22:45:46Z",
+    "basis": "SGP4 from the most recent TLE before capture"
+   },
+   "unnamed": false
+  },
+  {
+   "id": "unnamed-2026-11-11-00ff",
+   "file": "camera/unnamed_2026-11-11_00ff.img",
+   "camera": "picam",
+   "title": "Unnamed capture, received Nov 11, 2026",
+   "src": "images/unnamed-2026-11-11-00ff.jpg",
+   "thumb": "images/thumbs/unnamed-2026-11-11-00ff.jpg",
+   "width": 640,
+   "height": 480,
+   "status": "partial",
+   "status_note": "102 of 255 lines arrived, but line 37 did not, and the camera's JPEGs can't be decoded past a gap: the picture is shown down to it.",
+   "completeness": 0.1451,
+   "dark": false,
+   "file_size": 17163,
+   "sha256": "af316c087fb5037b9861dce96dedc7a7ad53272fea1b6687e5e77120502a2350",
+   "sha256_expected": null,
+   "captured_at": null,
+   "capture_date": "2026-11-11",
+   "capture_basis": "date only",
+   "satellite_clock": null,
+   "downlink": {
+    "first": "2026-11-11T14:19:28Z",
+    "last": "2026-11-11T14:21:46Z",
+    "packets": 38
+   },
+   "position": null,
+   "unnamed": true
+  },
+  {
+   "id": "2026-11-10-014243z",
+   "file": "camera/2026-11-10_014243Z.img",
+   "camera": "picam",
+   "title": "Nov 10, 2026, 01:42 UTC",
+   "src": "images/2026-11-10-014243z.jpg",
+   "thumb": "images/thumbs/2026-11-10-014243z.jpg",
+   "width": 640,
+   "height": 480,
+   "status": "truncated",
+   "status_note": "The capture was cut short on board: the file holds only lines 0–499 of the 776 the camera announced (then it skips to line 750), and 485 of those arrived.",
+   "completeness": 0.4149,
+   "dark": false,
+   "file_size": 33862,
+   "sha256": "fdbd12ba4d32c3a5b999c4d797cf29031df3d6f0f5903bdb2e8980e2b57491ea",
+   "sha256_expected": null,
+   "captured_at": "2026-11-10T01:42:43Z",
+   "capture_date": "2026-11-10",
+   "capture_basis": "filename",
+   "satellite_clock": {
+    "correction_s": 0.0
+   },
+   "downlink": {
+    "first": "2026-11-11T05:14:41Z",
+    "last": "2026-11-11T05:21:11Z",
+    "packets": 343
+   },
+   "position": {
+    "lat": -46.1156,
+    "lon": 142.3402,
+    "alt_km": 511.2,
+    "place": "Indian Ocean",
+    "ground_sunlit": true,
+    "sun_elevation_deg": 60.2,
+    "satellite_sunlit": true,
+    "satellite_light": "sunlit",
+    "sun_above_limb_deg": 82.6,
+    "tle_epoch": "2026-11-09T22:45:46Z",
+    "basis": "SGP4 from the most recent TLE before capture"
+   },
+   "unnamed": false
+  },
+  {
+   "id": "unnamed-2026-11-10-00fa",
+   "file": "camera/unnamed_2026-11-10_00fa.img",
+   "camera": "picam",
+   "title": "Unnamed capture, received Nov 10, 2026",
+   "src": "images/unnamed-2026-11-10-00fa.jpg",
+   "thumb": "images/thumbs/unnamed-2026-11-10-00fa.jpg",
+   "width": 640,
+   "height": 480,
+   "status": "partial",
+   "status_note": "235 of 250 lines arrived, but line None did not, and the camera's JPEGs can't be decoded past a gap: the picture is shown down to it. The JPEG header was restored from the camera's standard header, which every complete capture shares.",
+   "completeness": 1.0,
+   "dark": false,
+   "file_size": 16828,
+   "sha256": "4730b4020dfd53e14cf07ffda18f10b076fbb4150597f3dc7559f22cf083820c",
+   "sha256_expected": null,
+   "captured_at": null,
+   "capture_date": "2026-11-10",
+   "capture_basis": "date only",
+   "satellite_clock": null,
+   "downlink": {
+    "first": "2026-11-10T02:00:09Z",
+    "last": "2026-11-10T02:01:47Z",
+    "packets": 82
+   },
+   "position": null,
+   "unnamed": true
+  },
+  {
+   "id": "2026-11-09-183000z",
+   "file": "camera/2026-11-09_183000Z.img",
+   "camera": "picam",
+   "title": "Nov 9, 2026, 18:30 UTC",
+   "src": "images/2026-11-09-183000z.jpg",
+   "thumb": "images/thumbs/2026-11-09-183000z.jpg",
+   "width": 640,
+   "height": 480,
+   "status": "complete",
+   "status_note": "Every line of the picture arrived. The satellite never sent a hash for this file.",
+   "completeness": 1.0,
+   "dark": false,
+   "file_size": 17632,
+   "sha256": "dce0323105dd7f370ff3fe1b5b5c85a40a7d5f6049dc6800c5eb220298fefbc6",
+   "sha256_expected": null,
+   "captured_at": "2026-11-09T18:30:00Z",
+   "capture_date": "2026-11-09",
+   "capture_basis": "filename",
+   "satellite_clock": {
+    "correction_s": 0.0
+   },
+   "downlink": {
+    "first": "2026-11-10T05:38:42Z",
+    "last": "2026-11-10T05:41:55Z",
+    "packets": 180
+   },
+   "position": {
+    "lat": 72.1281,
+    "lon": 86.377,
+    "alt_km": 510.7,
+    "place": "Krasnoyarsk Krai, Russia",
+    "ground_sunlit": false,
+    "sun_elevation_deg": -34.7,
+    "satellite_sunlit": false,
+    "satellite_light": "shadow",
+    "sun_above_limb_deg": -12.8,
+    "tle_epoch": "2026-11-09T07:00:01Z",
+    "basis": "SGP4 from the most recent TLE before capture"
+   },
+   "unnamed": false
+  },
+  {
+   "id": "2026-11-05-164230z",
+   "file": "camera/2026-11-05_164230Z.img",
+   "camera": "picam",
+   "title": "Nov 5, 2026, 16:42 UTC",
+   "src": "images/2026-11-05-164230z.jpg",
+   "thumb": "images/thumbs/2026-11-05-164230z.jpg",
+   "width": 640,
+   "height": 480,
+   "status": "partial",
+   "status_note": "76 of 202 lines arrived, but line 37 did not, and the camera's JPEGs can't be decoded past a gap: the picture is shown down to it. The JPEG header was restored from the camera's standard header, which every complete capture shares.",
+   "completeness": 0.1832,
+   "dark": true,
+   "file_size": 13612,
+   "sha256": "b7b5bcd4df6958826a3f3cc21031b8404a7bf143d468c7c756f2cbf580324a2c",
+   "sha256_expected": null,
+   "captured_at": "2026-11-05T16:42:30Z",
+   "capture_date": "2026-11-05",
+   "capture_basis": "filename",
+   "satellite_clock": {
+    "correction_s": 0.0
+   },
+   "downlink": {
+    "first": "2026-11-08T03:12:44Z",
+    "last": "2026-11-08T03:17:00Z",
+    "packets": 30
+   },
+   "position": {
+    "lat": 82.3135,
+    "lon": 162.4176,
+    "alt_km": 512.9,
+    "place": "Arctic Ocean",
+    "ground_sunlit": false,
+    "sun_elevation_deg": -19.9,
+    "satellite_sunlit": true,
+    "satellite_light": "sunlit",
+    "sun_above_limb_deg": 2.1,
+    "tle_epoch": "2026-11-05T08:25:22Z",
+    "basis": "SGP4 from the most recent TLE before capture"
+   },
+   "unnamed": false
+  },
+  {
+   "id": "2026-11-05-164030z",
+   "file": "camera/2026-11-05_164030Z.img",
+   "camera": "picam",
+   "title": "Nov 5, 2026, 16:40 UTC",
+   "src": "images/2026-11-05-164030z.jpg",
+   "thumb": "images/thumbs/2026-11-05-164030z.jpg",
+   "width": 640,
+   "height": 480,
+   "status": "complete",
+   "status_note": "Every line of the picture arrived. The satellite never sent a hash for this file.",
+   "completeness": 1.0,
+   "dark": false,
+   "file_size": 14014,
+   "sha256": "f5bce74919cf8cc3d4c855513a2008a35da12d044bde2c858c356fa02cee5952",
+   "sha256_expected": null,
+   "captured_at": "2026-11-05T16:40:30Z",
+   "capture_date": "2026-11-05",
+   "capture_basis": "filename",
+   "satellite_clock": {
+    "correction_s": 0.0
+   },
+   "downlink": {
+    "first": "2026-11-08T01:09:07Z",
+    "last": "2026-11-10T04:10:48Z",
+    "packets": 210
+   },
+   "position": {
+    "lat": 80.9554,
+    "lon": -143.8545,
+    "alt_km": 512.8,
+    "place": "Arctic Ocean",
+    "ground_sunlit": false,
+    "sun_elevation_deg": -12.5,
+    "satellite_sunlit": true,
+    "satellite_light": "sunlit",
+    "sun_above_limb_deg": 9.5,
+    "tle_epoch": "2026-11-05T08:25:22Z",
+    "basis": "SGP4 from the most recent TLE before capture"
+   },
+   "unnamed": false
+  },
+  {
+   "id": "2026-11-05-163830z",
+   "file": "camera/2026-11-05_163830Z.img",
+   "camera": "picam",
+   "title": "Nov 5, 2026, 16:38 UTC",
+   "src": "images/2026-11-05-163830z.jpg",
+   "thumb": "images/thumbs/2026-11-05-163830z.jpg",
+   "width": 640,
+   "height": 480,
+   "status": "complete",
+   "status_note": "Every line of the picture arrived. The satellite never sent a hash for this file.",
+   "completeness": 1.0,
+   "dark": false,
+   "file_size": 20044,
+   "sha256": "efff1b713db7284871e5d42505daf2d1cd1f22a76110a237918d81ad038f9fd2",
+   "sha256_expected": null,
+   "captured_at": "2026-11-05T16:38:30Z",
+   "capture_date": "2026-11-05",
+   "capture_basis": "filename",
+   "satellite_clock": {
+    "correction_s": 0.0
+   },
+   "downlink": {
+    "first": "2026-11-06T22:41:28Z",
+    "last": "2026-11-07T22:28:54Z",
+    "packets": 336
+   },
+   "position": {
+    "lat": 75.214,
+    "lon": -118.5241,
+    "alt_km": 512.1,
+    "place": "Northwest Territories, Canada",
+    "ground_sunlit": false,
+    "sun_elevation_deg": -5.1,
+    "satellite_sunlit": true,
+    "satellite_light": "sunlit",
+    "sun_above_limb_deg": 16.9,
+    "tle_epoch": "2026-11-05T08:25:22Z",
+    "basis": "SGP4 from the most recent TLE before capture"
+   },
+   "unnamed": false
+  },
+  {
+   "id": "2026-11-05-163730z",
+   "file": "camera/2026-11-05_163730Z.img",
+   "camera": "picam",
+   "title": "Nov 5, 2026, 16:37 UTC",
+   "src": "images/2026-11-05-163730z.jpg",
+   "thumb": "images/thumbs/2026-11-05-163730z.jpg",
+   "width": 640,
+   "height": 480,
+   "status": "complete",
+   "status_note": "Every line of the picture arrived. The satellite never sent a hash for this file.",
+   "completeness": 1.0,
+   "dark": false,
+   "file_size": 15220,
+   "sha256": "dcb1e117e22408e3c176cc49ba8d1e031c796e828fe2b394a7cb50319fe2bac5",
+   "sha256_expected": null,
+   "captured_at": "2026-11-05T16:37:30Z",
+   "capture_date": "2026-11-05",
+   "capture_basis": "filename",
+   "satellite_clock": {
+    "correction_s": 0.0
+   },
+   "downlink": {
+    "first": "2026-11-07T08:14:17Z",
+    "last": "2026-11-07T20:57:25Z",
+    "packets": 441
+   },
+   "position": {
+    "lat": 71.8373,
+    "lon": -112.1795,
+    "alt_km": 511.6,
+    "place": "Northwest Territories, Canada",
+    "ground_sunlit": false,
+    "sun_elevation_deg": -1.4,
+    "satellite_sunlit": true,
+    "satellite_light": "sunlit",
+    "sun_above_limb_deg": 20.6,
+    "tle_epoch": "2026-11-05T08:25:22Z",
+    "basis": "SGP4 from the most recent TLE before capture"
+   },
+   "unnamed": false
+  },
   {
    "id": "2026-11-05-000926z",
    "file": "camera/2026-11-05_000926Z.img",
@@ -34,16 +384,16 @@
     "packets": 34
    },
    "position": {
-    "lat": -82.3248,
-    "lon": -129.0519,
+    "lat": -82.2889,
+    "lon": -129.9005,
     "alt_km": 519.6,
     "place": "Antarctica",
     "ground_sunlit": true,
-    "sun_elevation_deg": 19.6,
+    "sun_elevation_deg": 19.7,
     "satellite_sunlit": true,
     "satellite_light": "sunlit",
-    "sun_above_limb_deg": 41.8,
-    "tle_epoch": "2026-11-01T14:34:12Z",
+    "sun_above_limb_deg": 41.9,
+    "tle_epoch": "2026-11-04T15:04:58Z",
     "basis": "SGP4 from the most recent TLE before capture"
    },
    "unnamed": false
@@ -432,7 +782,7 @@
    "capture_date": "2026-10-30",
    "capture_basis": "filename",
    "satellite_clock": {
-    "correction_s": -15.9
+    "correction_s": -16.0
    },
    "downlink": {
     "first": "2026-10-30T22:04:06Z",
@@ -474,7 +824,7 @@
    "capture_date": "2026-10-30",
    "capture_basis": "filename",
    "satellite_clock": {
-    "correction_s": -15.9
+    "correction_s": -16.0
    },
    "downlink": {
     "first": "2026-10-30T04:48:00Z",
@@ -516,7 +866,7 @@
    "capture_date": "2026-10-30",
    "capture_basis": "filename",
    "satellite_clock": {
-    "correction_s": -15.9
+    "correction_s": -16.0
    },
    "downlink": {
     "first": "2026-10-30T03:13:08Z",
@@ -670,7 +1020,7 @@
    "capture_date": "2026-10-22",
    "capture_basis": "filename",
    "satellite_clock": {
-    "correction_s": -6.2
+    "correction_s": -6.3
    },
    "downlink": {
     "first": "2026-10-22T18:14:55Z",
@@ -712,7 +1062,7 @@
    "capture_date": "2026-10-22",
    "capture_basis": "filename",
    "satellite_clock": {
-    "correction_s": -6.5
+    "correction_s": -6.6
    },
    "downlink": {
     "first": "2026-10-22T16:37:51Z",
@@ -880,7 +1230,7 @@
    "capture_date": "2026-09-17",
    "capture_basis": "filename",
    "satellite_clock": {
-    "correction_s": -42.3
+    "correction_s": -42.4
    },
    "downlink": {
     "first": "2026-09-17T08:25:49Z",
@@ -1494,7 +1844,7 @@
    "capture_date": "2026-06-01",
    "capture_basis": "capture record",
    "satellite_clock": {
-    "correction_s": -79.6
+    "correction_s": -79.7
    },
    "downlink": {
     "first": "2026-06-27T17:14:22Z",
@@ -1519,6 +1869,10 @@
  ],
  "skipped": [
   {
+   "file": "camera/unnamed_2026-11-08_00c9.img",
+   "reason": "the start of the file never arrived, and the picture can't be decoded without it"
+  },
+  {
    "file": "camera/2026-10-11_095500Z.img",
    "reason": "the start of the file never arrived, and the picture can't be decoded without it"
   },
@@ -1531,7 +1885,15 @@
    "reason": "not enough of the file arrived to show any of the picture"
   },
   {
+   "file": "camera/unnamed_2026-11-11_034a.img",
+   "reason": "the start of the file never arrived, and the picture can't be decoded without it"
+  },
+  {
    "file": "camera/2026-10-16.img",
+   "reason": "the start of the file never arrived, and the picture can't be decoded without it"
+  },
+  {
+   "file": "camera/unnamed_2026-11-11_044c.img",
    "reason": "the start of the file never arrived, and the picture can't be decoded without it"
   },
   {
