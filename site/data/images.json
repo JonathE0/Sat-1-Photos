@@ -1,11 +1,53 @@
 {
- "generated_at": "2026-11-11T06:29:45Z",
+ "generated_at": "2026-11-11T10:29:47Z",
  "satellite": {
   "name": "FrontierSat",
   "norad_id": 69015,
   "launched_at": "2026-05-03T06:59:00Z"
  },
  "images": [
+  {
+   "id": "2026-11-11-080340z",
+   "file": "camera/2026-11-11_080340Z.img",
+   "camera": "picam",
+   "title": "Nov 11, 2026, 08:03 UTC",
+   "src": "images/2026-11-11-080340z.jpg",
+   "thumb": "images/thumbs/2026-11-11-080340z.jpg",
+   "width": 640,
+   "height": 480,
+   "status": "partial",
+   "status_note": "867 of 946 lines arrived, but line 867 did not, and the camera's JPEGs can't be decoded past a gap: the picture is shown down to it.",
+   "completeness": 0.9165,
+   "dark": false,
+   "file_size": 63460,
+   "sha256": "8438d32285f345e77d7f98a58cefa0b244868b56727f5e3709589fd877c62e33",
+   "sha256_expected": null,
+   "captured_at": "2026-11-11T08:03:40Z",
+   "capture_date": "2026-11-11",
+   "capture_basis": "filename",
+   "satellite_clock": {
+    "correction_s": 0.0
+   },
+   "downlink": {
+    "first": "2026-11-11T09:36:00Z",
+    "last": "2026-11-11T09:43:10Z",
+    "packets": 1142
+   },
+   "position": {
+    "lat": 44.8195,
+    "lon": 32.0431,
+    "alt_km": 505.7,
+    "place": "Black Sea",
+    "ground_sunlit": true,
+    "sun_elevation_deg": 24.3,
+    "satellite_sunlit": true,
+    "satellite_light": "sunlit",
+    "sun_above_limb_deg": 46.5,
+    "tle_epoch": "2026-11-09T22:45:46Z",
+    "basis": "SGP4 from the most recent TLE before capture"
+   },
+   "unnamed": false
+  },
   {
    "id": "2026-11-10-014243z",
    "file": "camera/2026-11-10_014243Z.img",
