@@ -1,11 +1,53 @@
 {
- "generated_at": "2026-11-11T02:09:54Z",
+ "generated_at": "2026-11-11T06:29:45Z",
  "satellite": {
   "name": "FrontierSat",
   "norad_id": 69015,
   "launched_at": "2026-05-03T06:59:00Z"
  },
  "images": [
+  {
+   "id": "2026-11-10-014243z",
+   "file": "camera/2026-11-10_014243Z.img",
+   "camera": "picam",
+   "title": "Nov 10, 2026, 01:42 UTC",
+   "src": "images/2026-11-10-014243z.jpg",
+   "thumb": "images/thumbs/2026-11-10-014243z.jpg",
+   "width": 640,
+   "height": 480,
+   "status": "truncated",
+   "status_note": "The capture was cut short on board: the file holds only lines 0–499 of the 776 the camera announced (then it skips to line 750), and 485 of those arrived.",
+   "completeness": 0.4149,
+   "dark": false,
+   "file_size": 33862,
+   "sha256": "fdbd12ba4d32c3a5b999c4d797cf29031df3d6f0f5903bdb2e8980e2b57491ea",
+   "sha256_expected": null,
+   "captured_at": "2026-11-10T01:42:43Z",
+   "capture_date": "2026-11-10",
+   "capture_basis": "filename",
+   "satellite_clock": {
+    "correction_s": 0.0
+   },
+   "downlink": {
+    "first": "2026-11-11T05:14:41Z",
+    "last": "2026-11-11T05:21:11Z",
+    "packets": 343
+   },
+   "position": {
+    "lat": -46.1156,
+    "lon": 142.3402,
+    "alt_km": 511.2,
+    "place": "Indian Ocean",
+    "ground_sunlit": true,
+    "sun_elevation_deg": 60.2,
+    "satellite_sunlit": true,
+    "satellite_light": "sunlit",
+    "sun_above_limb_deg": 82.6,
+    "tle_epoch": "2026-11-09T22:45:46Z",
+    "basis": "SGP4 from the most recent TLE before capture"
+   },
+   "unnamed": false
+  },
   {
    "id": "unnamed-2026-11-10-00fa",
    "file": "camera/unnamed_2026-11-10_00fa.img",
