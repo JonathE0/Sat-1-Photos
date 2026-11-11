@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-10T06:30:05Z",
+ "generated_at": "2026-11-11T02:09:54Z",
  "satellite": {
   "name": "FrontierSat",
   "norad_id": 69015,
@@ -62,8 +62,8 @@
     "packets": 180
    },
    "position": {
-    "lat": 72.1303,
-    "lon": 86.3808,
+    "lat": 72.1281,
+    "lon": 86.377,
     "alt_km": 510.7,
     "place": "Krasnoyarsk Krai, Russia",
     "ground_sunlit": false,
@@ -71,7 +71,7 @@
     "satellite_sunlit": false,
     "satellite_light": "shadow",
     "sun_above_limb_deg": -12.8,
-    "tle_epoch": "2026-11-08T23:07:09Z",
+    "tle_epoch": "2026-11-09T07:00:01Z",
     "basis": "SGP4 from the most recent TLE before capture"
    },
    "unnamed": false
