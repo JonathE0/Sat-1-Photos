@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-11T12:29:46Z",
+ "generated_at": "2026-11-11T14:29:46Z",
  "satellite": {
   "name": "FrontierSat",
   "norad_id": 69015,
@@ -47,6 +47,34 @@
     "basis": "SGP4 from the most recent TLE before capture"
    },
    "unnamed": false
+  },
+  {
+   "id": "unnamed-2026-11-11-00ff",
+   "file": "camera/unnamed_2026-11-11_00ff.img",
+   "camera": "picam",
+   "title": "Unnamed capture, received Nov 11, 2026",
+   "src": "images/unnamed-2026-11-11-00ff.jpg",
+   "thumb": "images/thumbs/unnamed-2026-11-11-00ff.jpg",
+   "width": 640,
+   "height": 480,
+   "status": "partial",
+   "status_note": "102 of 255 lines arrived, but line 37 did not, and the camera's JPEGs can't be decoded past a gap: the picture is shown down to it.",
+   "completeness": 0.1451,
+   "dark": false,
+   "file_size": 17163,
+   "sha256": "af316c087fb5037b9861dce96dedc7a7ad53272fea1b6687e5e77120502a2350",
+   "sha256_expected": null,
+   "captured_at": null,
+   "capture_date": "2026-11-11",
+   "capture_basis": "date only",
+   "satellite_clock": null,
+   "downlink": {
+    "first": "2026-11-11T14:19:28Z",
+    "last": "2026-11-11T14:21:46Z",
+    "packets": 38
+   },
+   "position": null,
+   "unnamed": true
   },
   {
    "id": "2026-11-10-014243z",
