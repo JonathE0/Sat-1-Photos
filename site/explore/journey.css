@@ -43,6 +43,8 @@
 @media (min-width: 1100px) { .jy-root { --jy-m: 32px; } }
 @media (min-width: 2400px) { .jy-root { --jy-m: 48px; --jy-ctl: 40px; --jy-row: 52px; } }
 @media (pointer: coarse) { .jy-root { --jy-ctl: 44px; } }
+/* the phone layout is for fingers whatever the browser says about its pointer */
+.jy-root.jy-narrow { --jy-ctl: 44px; }
 
 .jy-root *, .jy-root *::before, .jy-root *::after { box-sizing: border-box; }
 .jy-root [hidden] { display: none !important; }
@@ -1015,6 +1017,11 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
   .jy-root:not(.jy-narrow) .jy-facts-show { bottom: calc(var(--jy-bottom) + 2 * var(--jy-row) + 16px); }
   .jy-root:not(.jy-narrow) .jy-dock { bottom: calc(var(--jy-bottom) + 2 * var(--jy-row) + 24px); }
 }
+/* the same wherever they would still meet (placeMeta in journey.js measures it) */
+.jy-root.jy-corner-up:not(.jy-narrow) .jy-corner { bottom: calc(var(--jy-bottom) + var(--jy-row) + 8px); }
+.jy-root.jy-corner-up:not(.jy-narrow) .jy-facts-slot,
+.jy-root.jy-corner-up:not(.jy-narrow) .jy-facts-show { bottom: calc(var(--jy-bottom) + 2 * var(--jy-row) + 16px); }
+.jy-root.jy-corner-up:not(.jy-narrow) .jy-dock { bottom: calc(var(--jy-bottom) + 2 * var(--jy-row) + 24px); }
 
 /* ---- marks over the canvas: pins and the satellite -------------------------------- */
 
@@ -1079,6 +1086,8 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
   background: color-mix(in srgb, var(--jy-space) 60%, transparent);
 }
 .jy-previews-hidden .jy-marks .jy-pin::before { content: ""; position: absolute; inset: -10px; }
+/* a finger needs the full 44px around the dot */
+@media (pointer: coarse) { .jy-previews-hidden .jy-marks .jy-pin::before { inset: -17px; } }
 .jy-previews-hidden .jy-marks .jy-pin:hover,
 .jy-previews-hidden .jy-marks .jy-pin:focus-visible { border-color: var(--jy-ink); }
 .jy-previews-hidden .jy-pin img,
@@ -1131,6 +1140,8 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
   transition: opacity 240ms var(--jy-ease-out);
 }
 .jy-sat.is-shown { opacity: 1; }
+/* near the right edge (zoomed in on a phone): the label on the model's left instead (journey.js) */
+.jy-sat.is-left { padding: 0 calc(22px + var(--jy-sat-off, 32px)) 0 4px; }
 .jy-sat-label {
   font-size: var(--jy-small);
   font-weight: 500;
@@ -1428,8 +1439,8 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
 .jy-root.jy-narrow:not([data-mode="still"]) .jy-time {
   left: 0;
   right: 0;
-  /* above the two rows of the corner: Hide photo previews, then the rest */
-  bottom: calc(var(--jy-tabbar) + env(safe-area-inset-bottom) + 2 * var(--jy-row));
+  /* above the corner's rows (Hide photo previews, then the rest), as tall as placeMeta measures them */
+  bottom: calc(var(--jy-tabbar) + env(safe-area-inset-bottom) + var(--jy-corner-h, 2 * var(--jy-row)));
   justify-content: space-between;
   padding: 0 env(safe-area-inset-right) 0 env(safe-area-inset-left);
   box-shadow: inset 0 1px 0 var(--jy-raised);
@@ -1447,7 +1458,16 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
 .jy-root.jy-narrow:not([data-mode="still"]) .jy-all { display: none; }
 .jy-root.jy-narrow:not([data-mode="still"]) .jy-again { background: none; }
 .jy-narrow .jy-toggle { padding: 0 12px; }
-/* phones: the replay button keeps its icon, and its name for screen readers, so the row fits */
+/* phones (and a phone on its side, where the controls have the right-hand column): the replay
+   button keeps its icon, and its name for screen readers, so the row fits */
+.jy-root.jy-narrow.jy-wide-phone:not([data-mode="still"]) .jy-again span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
 @media (max-width: 519px) {
   .jy-root.jy-narrow:not([data-mode="still"]) .jy-again span {
     position: absolute;
@@ -1479,7 +1499,7 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
 @media (max-width: 340px) {
   .jy-narrow .jy-clock { padding: 4px 6px 4px 12px; }
   .jy-narrow .jy-clock-main { font-size: 15px; }
-  .jy-narrow .jy-speed span { min-width: 34px; padding: 0 2px; }
+  .jy-narrow .jy-speed span { min-width: 44px; padding: 0 2px; }
   .jy-narrow .jy-now { padding: 0 8px; }
   .jy-narrow .jy-toggle:not(.jy-previews) { padding: 0 6px; }
   /* no room for full screen beside the rest (an iPhone has none anyway) */
@@ -1536,7 +1556,9 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
 .jy-root.jy-narrow:not(.jy-calm) .jy-panel.is-on {
   transition: opacity 240ms var(--jy-ease-out), transform 240ms var(--jy-ease-out), height 280ms var(--jy-ease-out) !important;
 }
-.jy-root.jy-narrow .jy-panel.is-dragging { transition: none !important; }
+/* under the finger it follows at once: this has to outrank the rule above, or the height eases behind it */
+.jy-root.jy-narrow .jy-panel.is-dragging,
+.jy-root.jy-narrow:not(.jy-calm) .jy-panel.is-on.is-dragging { transition: none !important; }
 /* The handle: the whole strip across the top takes the finger, and stays there as the
    sheet's contents scroll under it. */
 .jy-narrow .jy-grab {
@@ -1548,8 +1570,8 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
   align-items: center;
   justify-content: center;
   width: calc(100% + 32px);
-  height: 36px;
-  margin: 0 -16px -4px;
+  height: 44px; /* a finger's worth */
+  margin: 0 -16px -8px;
   border: 0;
   padding: 0;
   background: var(--jy-panel);
@@ -1560,6 +1582,8 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
 .jy-narrow .jy-grab span { display: block; width: 36px; height: 4px; background: var(--jy-muted); transition: background-color 180ms var(--jy-ease-out); }
 .jy-narrow .jy-panel.is-dragging .jy-grab { cursor: grabbing; }
 .jy-narrow .jy-panel.is-dragging .jy-grab span { background: var(--jy-ink); }
+/* the sheet's two links stand on lines of their own: a finger's height each */
+.jy-narrow .jy-panel :is([data-ref="latestOpen"], .jy-latest-all) { display: flex; align-items: center; width: fit-content; min-height: 44px; }
 .jy-narrow .jy-panel-head { margin-top: 0; }
 .jy-narrow .jy-panel-tools { gap: 14px; }
 .jy-narrow .jy-over { order: 1; margin-top: 0 !important; }
@@ -1600,6 +1624,33 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
   .jy-root.jy-composed .jy-live-lead { margin-top: 12px; max-width: 60ch; }
   /* the bar stays clear of the headline */
   .jy-root:not(.jy-narrow) .jy-dock { width: min(380px, calc(100vw - 300px)); }
+}
+
+/* ---- a screen nobody touches (setUpTv in journey.js: explore/?tv, which tv/ opens) ----------
+   Read from across a room: about a third bigger at 1920 x 1080, and growing with the screen.
+   Once nobody has used the mouse or the keyboard for a few seconds (.jy-tv-idle), the
+   controls go and only what's worth reading stays; using either brings them back. They keep
+   their places, so nothing moves when they come and go. */
+.jy-root.jy-tv {
+  --jy-statement: clamp(32px, 2.4vw, 72px);
+  --jy-lead: clamp(24px, 1.45vw, 44px);
+  --jy-body: clamp(20px, 1.15vw, 34px);
+  --jy-small: clamp(16px, 0.95vw, 28px);
+  --jy-ctl: 48px;
+  --jy-row: 56px;
+}
+/* nobody can click: the how-to lines go */
+.jy-tv :is(.jy-tip, .jy-hint) { display: none; }
+.jy-tv .jy-qr-code { width: calc(150px * var(--jy-ui, 1)); }
+.jy-tv .cf { max-width: 30em; font-size: var(--jy-body); }
+.jy-tv .cf-meta { font-size: var(--jy-small); }
+@media (min-width: 1360px) and (min-height: 760px) and (min-aspect-ratio: 4/5) {
+  .jy-tv .jy-dock { --vf-band-top: 60px; --vf-band-bottom: 40px; --vf-caption: 132px; }
+}
+.jy-tv.jy-tv-idle,
+.jy-tv.jy-tv-idle * { cursor: none !important; }
+.jy-tv.jy-tv-idle :is(.jy-corner, .jy-speed, .jy-now, .jy-summary-tools, .jy-facts-show, .cf-btn, .vf-nav, .jy-dock-grip) {
+  visibility: hidden;
 }
 
 /* ---- reduced motion: opacity only, 200ms or less --------------------------------------- */

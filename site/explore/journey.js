@@ -329,7 +329,7 @@ function template(id, siteRoot) {
         <button type="button" class="jy-dock-grip" data-ref="dockGrip" aria-label="Resize the picture and stats panel"
           title="Drag to resize. Double-click for the usual size.">${ICON_GRIP}</button>
         <!-- under the picture where the viewfinder shows; the copy on the bottom row is for the rest -->
-        <p class="jy-meta jy-dock-meta">${META_LINES}</p>
+        <p class="jy-meta jy-dock-meta" data-ref="dockMeta">${META_LINES}</p>
       </div>
 
       <section class="jy-credits" id="jy-credits-${id}" data-ref="credits" hidden role="dialog" aria-modal="false"
@@ -460,6 +460,8 @@ function template(id, siteRoot) {
  * @param {string} [options.modelUrl]  passed to satellite.js
  * @param {object} [options.initialState]  from getState(), e.g. after a reload
  * @param {'full'|'reduced'} [options.motion]  overrides prefers-reduced-motion
+ * @param {boolean} [options.startAtEnd]  open on the live view, the intro skipped (it can still be played)
+ * @param {boolean} [options.tv]  a screen nobody touches: see setUpTv
  */
 export function mountJourney(container, options = {}) {
   const id = ++uid;
@@ -476,8 +478,11 @@ export function mountJourney(container, options = {}) {
     modelUrl: undefined,
     initialState: null,
     motion: null,
+    startAtEnd: false,
+    tv: false,
     ...options,
   };
+  if (opts.tv) opts.startAtEnd = true;
 
   ensureStylesheet();
   const root = document.createElement('div');
@@ -558,6 +563,7 @@ export function mountJourney(container, options = {}) {
   let orbitStatus = 'loading'; // 'loading' | 'ok' | 'failed'
   let destroyed = false;
   let webgl = true;
+  let satLabelPx = 0; // the satellite's label, measured once per size (updateMarks)
 
   // ---- renderer and scene ------------------------------------------------------
   // Two canvases. The Earth and the sky are drawn under the picture pins; the
@@ -956,7 +962,8 @@ export function mountJourney(container, options = {}) {
     const sheetUp = narrow && state.panel;
     const sideColumn = narrow && W > H && Boolean(state.panel || state.phoneExtra);
     const textAway = sheetUp || sideColumn;
-    frame.ui = clamp(1 + ((W - 1920) / 1920) * 0.3, 1, 1.2);
+    // a TV is read from across a room: pins, the satellite and the QR code a third bigger again
+    frame.ui = opts.tv ? clamp((1.35 * W) / 1920, 1, 2.4) : clamp(1 + ((W - 1920) / 1920) * 0.3, 1, 1.2);
     // landscape: 35 degrees tall; portrait: hold 35 degrees across
     const vfov = W >= H ? 35 : (2 * Math.atan(Math.tan(17.5 * DEG) * (H / W))) / DEG;
     frame.vfov = vfov;
@@ -1039,6 +1046,12 @@ export function mountJourney(container, options = {}) {
     }
     let satX = room ? room.satX : 0.62;
     if (sideColumn) satX = Math.min(satX, Math.max(0.2, (W - Math.min(440, 0.55 * W) - 104 * frame.ui) / W));
+    // a dock made big with its grip, with the site's line hanging under it, can reach down past
+    // where the satellite goes: then the satellite goes to its left
+    const dockFoot = Math.max(dock?.bottom || 0, boxOf(ref.dockMeta, s)?.bottom || 0);
+    if (dock && !narrow && satY * H < dockFoot + SAT_CLEAR_PX) {
+      satX = Math.min(satX, Math.max(0.3, (dock.left - 104 * frame.ui) / W));
+    }
     if (state.panel && (!narrow || W > H) && !slot) {
       // keep the satellite clear of the details on narrower desktops (with the
       // viewfinder they stay in its place, above the limb, and nothing moves)
@@ -1101,6 +1114,7 @@ export function mountJourney(container, options = {}) {
     const h = canvas.clientHeight || stage.clientHeight || window.innerHeight;
     W = Math.max(1, w);
     H = Math.max(1, h);
+    satLabelPx = 0;
     if (renderer) {
       // capped at 2, and at about a 4K frame's worth of pixels
       const dpr = Math.min(window.devicePixelRatio || 1, 2, Math.sqrt(8.3e6 / (W * H)));
@@ -1811,13 +1825,17 @@ export function mountJourney(container, options = {}) {
     const s = satOn ? toScreen(sat.S) : null;
     if (s) {
       ref.sat.hidden = false;
-      ref.sat.style.transform = `translate(${Math.round(s.x)}px, ${Math.round(s.y)}px)`;
       ref.sat.classList.toggle('is-shown', satAlpha >= 0.999);
       const off = Math.round(Math.max(20 * frame.ui, satLengthPx * 0.42) + 12);
       if (ref.sat.dataset.off !== String(off)) {
         ref.sat.dataset.off = String(off);
         ref.sat.style.setProperty('--jy-sat-off', `${off}px`);
       }
+      // close in, the model is wide and its label would run off the right edge: then it goes left
+      satLabelPx ||= ref.sat.firstElementChild.offsetWidth;
+      const left = s.x + off + satLabelPx + 8 > W && s.x - off - satLabelPx - 8 >= 0;
+      if (left !== ref.sat.classList.contains('is-left')) ref.sat.classList.toggle('is-left', left);
+      ref.sat.style.transform = `translate(${Math.round(s.x)}px, ${Math.round(s.y)}px)${left ? ' translateX(calc(44px - 100%))' : ''}`;
     } else if (!ref.sat.hidden) {
       if (document.activeElement === ref.sat) canvas.focus({ preventScroll: true });
       ref.sat.hidden = true;
@@ -2277,6 +2295,19 @@ export function mountJourney(container, options = {}) {
     const s = stageRect();
     const time = ref.time.getBoundingClientRect();
     const corner = ref.corner.getBoundingClientRect();
+    // a phone's Controls: the clock's row stands on the corner's, however many rows that wraps to
+    root.style.setProperty('--jy-corner-h', `${Math.round(corner.height)}px`);
+    // where the two rows would meet side by side (just above 1200px wide, or in bigger type), the
+    // corner row goes up as it does below 1200px; only across, so moving it up can't undo it
+    const up = !frame.narrow && corner.left < time.right + 16;
+    if (up !== root.classList.contains('jy-corner-up')) {
+      root.classList.toggle('jy-corner-up', up);
+      requestAnimationFrame(() => {
+        if (destroyed) return;
+        computeFrame();
+        needsFrame = true;
+      });
+    }
     const left = time.right - s.left + 16;
     // below 1200px the corner row sits above the time row (journey.css), so it's in the way only above that
     const sameRow = corner.bottom > time.top + 1;
@@ -2343,14 +2374,30 @@ export function mountJourney(container, options = {}) {
     measureText();
   }
 
-  /** The sheet's height down to the foot of its last whole line within `limit` px. */
+  /**
+   * The sheet's height down to the foot of its last whole line within `limit` px. The edge may
+   * cut through a picture, and through a paragraph between two of its lines, but never through
+   * a line: a picture taller than the room left used to bring the sheet up with only its title.
+   */
   function wholeLines(limit) {
     const top = ref.panel.getBoundingClientRect().top - ref.panel.scrollTop;
     let best = 0;
     for (const el of ref.panel.querySelectorAll('h2, h3, p, dt, dd, li, .jy-latest-frame')) {
       if (el.offsetParent === null) continue;
-      const bottom = el.getBoundingClientRect().bottom - top;
-      if (bottom <= limit && bottom > best) best = bottom;
+      const box = el.getBoundingClientRect();
+      const elTop = box.top - top;
+      const bottom = box.bottom - top;
+      if (bottom <= limit) {
+        best = Math.max(best, bottom);
+      } else if (elTop < limit) {
+        if (el.classList.contains('jy-latest-frame')) {
+          // at least a good strip of the picture: the edge goes through it
+          if (limit - elTop >= 64) return Math.round(limit);
+          continue;
+        }
+        const line = parseFloat(getComputedStyle(el).lineHeight);
+        if (line > 0) best = Math.max(best, elTop + Math.floor((limit - elTop) / line) * line);
+      }
     }
     return Math.round(best > 0 ? Math.min(limit, best + 6) : limit);
   }
@@ -2623,7 +2670,9 @@ export function mountJourney(container, options = {}) {
         put(ref.fPass, `Now, until ${end.time} ${end.zone}`);
       } else {
         const t = calgaryTime(pass.riseMs);
-        put(ref.fPass, `${t.time} ${t.zone}, in ${duration(pass.riseMs - ms)}`);
+        // "in 0 min" rounded down the last half minute
+        const soon = pass.riseMs - ms < 60_000 ? 'in under a minute' : `in ${duration(pass.riseMs - ms)}`;
+        put(ref.fPass, `${t.time} ${t.zone}, ${soon}`);
       }
       const rev = orbit.revolutionAt(ms);
       put(ref.fRev, rev === null ? '\u2014' : grouped(rev));
@@ -2786,6 +2835,8 @@ export function mountJourney(container, options = {}) {
     }
     if (state.panel && (uiDirty || now - lastPanel > 250)) {
       paintPanel();
+      // the bar over Stats names the same place and height: at 600x a second apart they disagreed
+      put(ref.summaryWhere, summaryWhere());
       lastPanel = now;
     }
     uiDirty = false;
@@ -3460,6 +3511,8 @@ export function mountJourney(container, options = {}) {
       orbitsSinceLaunch: s ? liveRev.value : null,
       daysInOrbit: ms >= LAUNCH_MS ? (ms - LAUNCH_MS) / DAY_MS : null,
       pictures: photos.length || null,
+      // at 60x, 600x or a picked time the facts don't say "right now"
+      isLive: state.live && state.speed === 1 && Math.abs(ms - Date.now()) < 5 * MIN_MS,
     };
   }
 
@@ -3880,7 +3933,7 @@ export function mountJourney(container, options = {}) {
   // ---- Stats and Pictures in turn, where they share a place -------------------------------
   // Pictures' turn ends when the viewfinder asks (takeTurn), so whatever holds its rotation up
   // holds this up too: the pointer on it, a picture chosen on the globe, a hidden tab.
-  let cycleOn = !cycleOffChoice.get() && motionOverride !== 'reduced';
+  let cycleOn = opts.tv || (!cycleOffChoice.get() && motionOverride !== 'reduced');
   let cycleTimer = 0;
   let cycleHover = false;
   let cycleFocus = false; // keyboard focus, as in the viewfinder: a mouse click doesn't hold it forever
@@ -4077,10 +4130,75 @@ export function mountJourney(container, options = {}) {
 
   // ---- wiring ----------------------------------------------------------------------------
   // as the visitor last left them
-  setDockHidden(dockHiddenChoice.get());
-  setFactsHidden(factsHiddenChoice.get());
+  // (a TV shows the panel and the facts whatever this browser was last told)
+  setDockHidden(!opts.tv && dockHiddenChoice.get());
+  setFactsHidden(!opts.tv && factsHiddenChoice.get());
   setCycle(cycleOn);
   setPreviewsHidden(previewsHidden);
+
+  // ---- a screen nobody touches (options.tv: explore/?tv, which tv/ opens) ------------------------
+  /**
+   * It opens on the live view (startAtEnd) with Cycle on, in bigger type with a bigger QR code
+   * (.jy-tv in journey.css). A few seconds after the mouse or the keyboard was last used, the
+   * controls and the pointer go (.jy-tv-idle); using either brings them back. Every 10 minutes it
+   * looks at the orbit and the picture list, and reloads when either has changed, and once a day
+   * anyway for the site's own updates. A look that fails (no network) changes nothing. Where the
+   * browser allows, it keeps the screen from going to sleep.
+   */
+  function setUpTv() {
+    const html = document.documentElement;
+    root.classList.add('jy-tv');
+    html.classList.add('jy-tv-page');
+    let idleTimer = 0;
+    const idle = (on) => {
+      root.classList.toggle('jy-tv-idle', on);
+      html.classList.toggle('jy-tv-idle', on);
+    };
+    const wake = () => {
+      idle(false);
+      clearTimeout(idleTimer);
+      idleTimer = setTimeout(() => idle(true), 4000);
+    };
+    for (const type of ['pointermove', 'pointerdown', 'keydown', 'wheel']) listen(window, type, wake, { passive: true });
+    idle(true);
+    cleanups.push(() => clearTimeout(idleTimer));
+
+    let awake = null;
+    const keepAwake = async () => {
+      if (document.hidden || awake || !navigator.wakeLock) return;
+      try {
+        awake = await navigator.wakeLock.request('screen');
+        awake.addEventListener('release', () => { awake = null; });
+      } catch { /* not allowed here: the screen's own settings decide */ }
+    };
+    keepAwake();
+    listen(document, 'visibilitychange', keepAwake);
+    cleanups.push(() => awake?.release?.());
+
+    const startedAt = Date.now();
+    let seen = null;
+    const text = async (url) => {
+      const res = await fetch(url, { cache: 'no-store' });
+      if (!res.ok) throw new Error(`${res.status} for ${url}`);
+      return res.text();
+    };
+    async function look() {
+      try {
+        const [tle, images] = await Promise.all([text(opts.tleUrl), text(new URL('data/images.json', siteRoot).href)]);
+        // the list itself, not the stamp of when it was written
+        const key = `${tle}\n${JSON.stringify(JSON.parse(images).images)}`;
+        if (seen === null) seen = key;
+        else if (key !== seen || Date.now() - startedAt > DAY_MS) location.reload();
+      } catch {
+        // offline, or a publish half done: what's on screen stays, and the next look tries again
+      }
+    }
+    look();
+    const poll = setInterval(look, 10 * MIN_MS);
+    cleanups.push(() => clearInterval(poll));
+  }
+  if (opts.tv) setUpTv();
+
   const resizeObserver = new ResizeObserver(() => resize());
   resizeObserver.observe(stage);
   // the text blocks set where the Earth may go
@@ -4167,8 +4285,9 @@ export function mountJourney(container, options = {}) {
   if (performance.getEntriesByType?.('navigation')[0]?.type === 'reload') storyFinished.set(false);
   if (opts.initialState && applyState(opts.initialState)) {
     restoreScroll();
-  } else if (state.mode === 'story' && storyFinished.get()) {
-    // finished earlier in this tab: back at the end, with no story to scroll through again
+  } else if (state.mode === 'story' && (opts.startAtEnd || storyFinished.get())) {
+    // finished earlier in this tab, or a page that opens on the live view (Explore, a TV):
+    // at the end, with no story to scroll through first
     lock({ landing: true });
   } else {
     // a fresh page always opens on beat 1, the Earth alone, whatever the motion setting

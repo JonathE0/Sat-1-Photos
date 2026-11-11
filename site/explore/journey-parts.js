@@ -83,11 +83,12 @@ export function statusLine(photo) {
       return 'Complete, but there\u2019s no checksum to check it against.';
     case 'partial':
       if (photo.camera === 'adcs') return 'Grey bands are rows that never came down.';
-      return Number.isFinite(c)
-        ? `Part of this picture never came down: about ${Math.round(c * 100)}% of it arrived.`
+      // the share is of the rows drawn (build.py _shown_share), as on the picture's own page
+      return c > 0 && c < 1
+        ? `Part of this picture never came down: only the top ${Math.round(c * 100)}% is shown.`
         : 'Part of this picture never came down.';
     case 'truncated':
-      return Number.isFinite(c) ? `Cut short on board: only the top ${fractionWords(c)} was saved.` : 'Cut short on board.';
+      return c > 0 && c < 1 ? `Cut short on board: only the top ${fractionWords(c)} was saved.` : 'Cut short on board.';
     default:
       return '';
   }

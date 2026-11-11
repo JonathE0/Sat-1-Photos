@@ -9,7 +9,7 @@
  *   panel.append(search.element);
  *   search.tick(ms);   // a few times a second, from the page's clock
  */
-import { findPlaces, getPlace, loadCountries } from '../explore/journey-region.js';
+import { findPlaces, getPlace, loadCountries, placeInSentence } from '../explore/journey-region.js';
 import { rovingList } from './rovinglist.js';
 import { FAR_DAYS } from './timepick.js';
 import { bestPass, findRegionPassesAsync, fmtKm, SEARCH_DAYS } from './regionpasses.js';
@@ -204,7 +204,7 @@ export function createPlaceSearch({ getOrbit, getTime, onJump, onPlace = () => {
     onPlace(null, moveFocus);
   }
 
-  function choose(s) {
+  function choose(s, moveFocus = true) {
     place = getPlace(s.id);
     input.value = s.label;
     showList(false);
@@ -212,8 +212,8 @@ export function createPlaceSearch({ getOrbit, getTime, onJump, onPlace = () => {
     clear.setAttribute('aria-label', 'Back to the passes over Calgary');
     root.classList.add('cg-place-on');
     // leaving the box puts a phone's keyboard away, so the results show
-    input.blur();
-    onPlace(place, true);
+    if (moveFocus) input.blur();
+    onPlace(place, moveFocus);
     search();
   }
 
@@ -232,7 +232,7 @@ export function createPlaceSearch({ getOrbit, getTime, onJump, onPlace = () => {
     const fromMs = getTime();
     const target = place;
     results.hidden = true;
-    status.textContent = `Looking for passes over ${target.name}…`;
+    status.textContent = `Looking for passes over ${placeInSentence(target.name)}…`;
     try {
       const passes = await findRegionPassesAsync(orbit, target, fromMs, {
         signal: mine.signal, count: 12, enough: SHOWN, enoughDays: 7,
@@ -266,13 +266,13 @@ export function createPlaceSearch({ getOrbit, getTime, onJump, onPlace = () => {
     }
     const sub1 = document.createElement('span');
     sub1.className = 'cg-fine';
-    sub1.textContent = `${utc(p.closestMs)}. ${span(p.durationS)} over ${found.place.label}${p.inProgress ? `, under way ${found.live ? 'now' : 'at this time'}` : ''}.`;
+    sub1.textContent = `${utc(p.closestMs)}. ${span(p.durationS)} over ${placeInSentence(found.place.name)}${p.inProgress ? `, under way ${found.live ? 'now' : 'at this time'}` : ''}.`;
     const sub2 = document.createElement('span');
     sub2.className = 'cg-fine';
     sub2.textContent = `${fmtKm(p.closestKm)} from the middle. ${light(p)}.`;
     b.append(row, sub1, sub2);
     b.setAttribute('aria-label', `${isBest ? 'Best for a picture. ' : ''}${calgary(p.closestMs)}, ${utc(p.closestMs)}. ` +
-      `${span(p.durationS)} over ${found.place.label}. ${sub2.textContent} Show this pass.`);
+      `${span(p.durationS)} over ${placeInSentence(found.place.name)}. ${sub2.textContent} Show this pass.`);
     b.addEventListener('click', () => {
       for (const other of root.querySelectorAll('.cg-place-pass')) other.removeAttribute('aria-current');
       b.setAttribute('aria-current', 'true');
@@ -302,7 +302,7 @@ export function createPlaceSearch({ getOrbit, getTime, onJump, onPlace = () => {
     const bestLater = best && best.index >= SHOWN ? passes[best.index] : null;
     olBest.replaceChildren(...(bestLater ? [passButton(bestLater, true)] : []));
     olBest.hidden = later.hidden = !bestLater;
-    olShown.setAttribute('aria-label', `Next passes over ${found.place.name}. Arrow keys move between them.`);
+    olShown.setAttribute('aria-label', `Next passes over ${placeInSentence(found.place.name)}. Arrow keys move between them.`);
     olBest.setAttribute('aria-label', 'The best pass. Arrow keys move between them.');
     resultsList.refresh();
     if (bestLater) later.textContent = `Best of the next ${passes.length} passes`;
@@ -319,11 +319,11 @@ export function createPlaceSearch({ getOrbit, getTime, onJump, onPlace = () => {
       : '';
     if (!passes.length) {
       status.textContent =
-        `No passes over ${found.place.name} in the next ${SEARCH_DAYS} days. Very small places can slip between the outlines, which are coarse.`;
+        `No passes over ${placeInSentence(found.place.name)} in the next ${SEARCH_DAYS} days. Very small places can slip between the outlines, which are coarse.`;
       results.hidden = true;
     } else {
       const days = Math.max(1, Math.ceil((shown[shown.length - 1].closestMs - fromMs) / DAY_MS));
-      status.textContent = `${shown.length === 1 ? 'One pass' : `${shown.length} passes`} over ${found.place.name} ` +
+      status.textContent = `${shown.length === 1 ? 'One pass' : `${shown.length} passes`} over ${placeInSentence(found.place.name)} ` +
         `in the next ${days === 1 ? 'day' : `${days} days`}.`;
       results.hidden = false;
     }
@@ -349,6 +349,13 @@ export function createPlaceSearch({ getOrbit, getTime, onJump, onPlace = () => {
       if (moved && again.getAttribute('aria-label') !== label) again.setAttribute('aria-label', label);
     },
     reset,
+    /** A place from a link, by its id (`place.id`), as if picked from the list; the focus stays. */
+    async choosePlace(id) {
+      await loadCountries();
+      const p = getPlace(id);
+      if (p && p.id !== place?.id) choose(p, false);
+      return Boolean(p);
+    },
     /** "Change place": the box, ready to type over what's there. */
     focus() {
       input.focus({ preventScroll: true });

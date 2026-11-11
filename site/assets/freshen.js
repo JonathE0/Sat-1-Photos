@@ -9,10 +9,26 @@
   var STARTING_MS = 20 * 1000;
   var startedAt = Date.now();
   var busy = false;
+  var gaveUp = false;
 
+  // The fresh files didn't help (or there's no storage to stop it reloading for ever):
+  // it doesn't reload again, and says so once, in a quiet line along the bottom of the screen.
   function giveUp() {
+    if (gaveUp) return;
+    gaveUp = true;
+    console.warn('FrontierSat: the page failed while starting, and fetching its files fresh didn’t fix it. '
+      + 'It won’t reload by itself again for 10 minutes.');
     var line = document.querySelector('.orbit-loading');
-    if (line) line.textContent = 'The globe couldn’t load. Try reloading the page in a few minutes.';
+    if (line) {
+      line.textContent = 'The globe couldn’t load. Try reloading the page in a few minutes.';
+      return;
+    }
+    line = document.createElement('p');
+    line.setAttribute('role', 'status');
+    line.textContent = 'Part of this page couldn’t load. Try reloading it in a few minutes.';
+    line.style.cssText = 'position:fixed;right:0;bottom:0;left:0;z-index:1000;margin:0;'
+      + 'padding:8px 16px calc(8px + env(safe-area-inset-bottom, 0px));background:#10151B;color:#E6EBF0;font-size:14px;line-height:1.5';
+    document.body.append(line);
   }
 
   addEventListener('error', function (event) {

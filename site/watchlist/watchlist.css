@@ -104,6 +104,17 @@ h1 { font-size: clamp(24px, 1rem + 1.2vw, 32px); font-weight: 500; line-height: 
   .filters { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; scroll-padding-inline: var(--margin); }
   .filters::-webkit-scrollbar { display: none; }
   .filters button { flex: none; }
+  /* With more chips off the right edge, the row fades out there. It sits after the last chip, so
+     scrolled to the end it covers none. */
+  .filters::after {
+    content: "";
+    position: sticky;
+    right: 0;
+    flex: none;
+    width: 48px;
+    background: linear-gradient(to right, transparent, var(--space));
+    pointer-events: none;
+  }
 }
 @media (max-height: 500px) { .filters { position: static; } }
 
@@ -145,6 +156,15 @@ h1 { font-size: clamp(24px, 1rem + 1.2vw, 32px); font-weight: 500; line-height: 
 .filters button:hover, .btn:hover { background: var(--raised); color: var(--ink); }
 .filters button[aria-pressed="true"] { background: var(--ink); color: var(--space); }
 .filters .n { margin-left: 6px; font-weight: 400; }
+/* A touch screen or a phone's size: at least 44 px to tap, though a chip or a footer link looks no
+   bigger. A footer link keeps to one line, and its own words stay over a neighbour's 44 px. */
+@media (pointer: coarse), (max-width: 599px), (max-height: 500px) {
+  .filters button, .foot a { position: relative; }
+  .filters button::after { content: ""; position: absolute; inset: min(0px, (var(--control) - 44px) / 2) 0; }
+  .foot a { white-space: nowrap; }
+  .foot a::after { content: ""; position: absolute; inset: calc(50% - 22px) 0; }
+  .foot a::before { content: ""; position: absolute; inset: 0; z-index: 1; }
+}
 /* a secondary button, as across the site: raised grey, Ink text */
 .btn { background: var(--raised); color: var(--ink); }
 .btn:hover { background: color-mix(in srgb, var(--raised), var(--ink) 10%); }

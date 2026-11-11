@@ -631,8 +631,13 @@ export function createMap(container, opts = {}) {
 
   /** Bring a ground point into view: the map only moves if it has to. While
    * nearly the whole world fits, it opens the usual way round, 0° in the
-   * middle. */
-  function flyToGround(latDeg, lonDeg, { immediate = false } = {}) {
+   * middle. With `zoom` (a link's view: times the widest), it centres there at that zoom. */
+  function flyToGround(latDeg, lonDeg, { immediate = false, zoom = null } = {}) {
+    if (zoom > 0) {
+      placed = true;
+      flyTo(lonDeg, latDeg, { k: zoom * view.minK, immediate });
+      return;
+    }
     if (!placed) {
       placed = true;
       const span = (view.w - view.inset.left - view.inset.right) / view.k;
@@ -1140,6 +1145,11 @@ export function createMap(container, opts = {}) {
     setHover,
     flyToGround,
     flyToSatellite,
+    /** Where it's looking, for a link: its centre, and its zoom as a multiple of the widest. */
+    viewPoint() {
+      const to = flight ? flight.to : { lon: view.cLon, lat: view.cLat, k: view.k };
+      return { latDeg: to.lat, lonDeg: wrapLon(to.lon), zoom: to.k / view.minK };
+    },
     follow,
     zoomBy,
     pick,

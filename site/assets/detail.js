@@ -552,7 +552,7 @@ export function createDetail(root, ctx) {
       renderMissing(id);
       return;
     }
-    const { list, index } = ctx.getList(id);
+    const { list, index, hidden } = ctx.getList(id);
     const prev = index > 0 ? list[index - 1] : null;
     const next = index >= 0 && index < list.length - 1 ? list[index + 1] : null;
     document.title = `${headline(p)} · FrontierSat`;
@@ -574,7 +574,8 @@ export function createDetail(root, ctx) {
               ctx.close();
             },
           }, globe ? 'All pictures' : '← All pictures')),
-        index >= 0 && h('span', { class: 'panel-count' }, `${index + 1} of ${list.length}`)),
+        // "4 of 35", or "2 of 14 hidden" for one of the pictures Pictures tucks away
+        index >= 0 && h('span', { class: 'panel-count' }, `${index + 1} of ${list.length}${hidden ? ' hidden' : ''}`)),
       h('h1', { class: 'pi-title detail-title', id: 'detail-title', tabindex: '-1' }, headline(p)),
       h('div', { class: 'pi-lead' }, creditLine(p), whenBlock(p), statusBlock(p)),
       actions.el,
@@ -611,9 +612,7 @@ export function createDetail(root, ctx) {
       if (target && target.closest('input, textarea, select, [contenteditable]')) return;
       if (e.key === 'Escape') {
         e.preventDefault();
-        const globe = globeHref();
-        if (globe) backToGlobe(globe);
-        else ctx.close();
+        ctx.close(); // as "All pictures" does, from the globe too
         return;
       }
       if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;

@@ -30,6 +30,7 @@
   <!-- satellite.js imports "three" by name; this must come before any module script -->
   <script type="importmap">{ "imports": { "three": "../globe/vendor/three.module.min.js" } }</script>
   <script src="../assets/freshen.js" defer></script>
+  <script src="../assets/sw-register.js" defer></script>
   <style>
     /* This page only: a nav laid over the stage. The page ends where the story ends. */
     html, body { background: #05070A; }
@@ -73,9 +74,13 @@
     @media (max-width: 599px) { .x-nav { height: 52px; font-size: 15px; } .x-nav ul { gap: 12px; } .x-nav img { height: 24px; } }
     /* touch: 44px wide as well as tall; the narrowest phones keep the links and drop the logo */
     @media (pointer: coarse) { .x-nav ul a, .x-nav ul button { justify-content: center; min-width: 44px; } }
-    @media (max-width: 359px) { .x-nav { justify-content: flex-end; } .x-nav > a { display: none; } }
+    @media (max-width: 419px) { .x-nav { justify-content: flex-end; } .x-nav > a { display: none; } }
+    @media (max-width: 359px) { .x-nav ul { gap: 4px; } .x-nav { font-size: 14px; } }
     /* clear of a phone's notch in landscape */
     .x-nav { padding: 0 max(var(--x-m, 32px), env(safe-area-inset-right)) 0 max(var(--x-m, 32px), env(safe-area-inset-left)); }
+    /* ?tv, left alone for a few seconds (setUpTv in journey.js): no links nobody can click */
+    html.jy-tv-idle .x-nav ul { visibility: hidden; }
+    html.jy-tv-page .x-nav img { height: 36px; }
   </style>
 </head>
 <body>
@@ -84,6 +89,7 @@
     <ul>
       <li><a href="../index.html#/pictures">Pictures</a></li>
       <li><a href="../globe/index.html">Orbit</a></li>
+      <li><a href="../watchlist/index.html">Watchlist</a></li>
       <li><a href="../index.html#/about">About</a></li>
       <li><button type="button" id="credits" aria-expanded="false" aria-haspopup="dialog">Credits</button></li>
     </ul>
@@ -105,21 +111,27 @@
     if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
     const saved = history.state && typeof history.state === 'object' ? history.state.journey : null;
 
+    const params = new URLSearchParams(location.search);
+    const picturesUrl = new URL('index.html#/pictures', SITE).href;
     const journey = mountJourney(document.getElementById('journey'), {
       tleUrl: new URL('data/tle.json', SITE).href,
       siteRoot: SITE.href,
       photoHref: photoUrl,
-      catalogueHref: new URL('index.html#/', SITE).href,
+      catalogueHref: picturesUrl,
       initialState: saved || null,
+      // this page is the live view; the home page tells the story first
+      startAtEnd: true,
+      // ?tv: for a screen nobody touches (tv/ sends here), see setUpTv in journey.js
+      tv: params.has('tv'),
       // ?motion=full or ?motion=reduced overrides prefers-reduced-motion (for testing)
-      motion: new URLSearchParams(location.search).get('motion'),
+      motion: params.get('motion'),
       onOpenPhoto(id) {
         remember();
         location.href = photoUrl(id);
       },
       onOpenCatalogue() {
         remember();
-        location.href = new URL('index.html#/', SITE).href;
+        location.href = picturesUrl;
       },
     });
     // for checking things from the console (journey.getState(), journey.live())

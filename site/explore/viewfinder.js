@@ -81,7 +81,10 @@ function cornerData(p) {
     ? p.position : null;
   const elevation = pos && (p.positionRecomputed || !p.edited?.position) ? pos.sun_elevation_deg : null;
   let sun = '';
-  if (Number.isFinite(elevation)) sun = elevation >= 0 ? `Sun ${Math.round(elevation)}° up` : 'Night below';
+  // the same three words as the Orbit page (astro.js lightAt): twilight to 6 degrees down
+  if (Number.isFinite(elevation)) {
+    sun = elevation >= 0 ? `Sun ${Math.round(elevation)}° up` : elevation > -6 ? 'Twilight below' : 'Night below';
+  }
   return {
     when,
     where: pos ? [fmtLat(pos.lat), fmtLon(pos.lon)] : [],
@@ -409,6 +412,7 @@ export function createViewfinder(container, {
           settled();
         }
         announce(photo);
+        schedule();
       });
     });
   }
@@ -419,13 +423,26 @@ export function createViewfinder(container, {
     clearTimeout(timer);
     timer = 0;
     onTimed?.(0);
-    if (held || !running || disposed || !deck.length || document.hidden) return;
+    if (!running || disposed || !deck.length || document.hidden) return;
     if (shown && (hovered || focused)) return;
+    // a picture chosen somewhere else (a pin) stays twice as long, then the run goes on from it,
+    // so a screen nobody touches never stops on one
+    const wait = held ? 2 * dwellMs : shown ? dwellMs : firstMs;
     timer = setTimeout(() => {
       onTimed?.(0);
+      if (held) release();
       if (!(shown || failed) || !takeTurn?.()) step(1, false);
-    }, shown ? dwellMs : firstMs);
-    if (shown) onTimed?.(dwellMs);
+    }, wait);
+    if (shown) onTimed?.(wait);
+  }
+
+  /** A chosen picture's time is up: the run goes on from where it sits in time (as step does). */
+  function release() {
+    if (!deck.includes(held)) {
+      const older = deck.findIndex((p) => (p.sortTime || 0) < (held.sortTime || 0));
+      index = ((older < 0 ? deck.length : older) - 1 + deck.length) % deck.length;
+    }
+    held = null;
   }
 
   // ---- events ----

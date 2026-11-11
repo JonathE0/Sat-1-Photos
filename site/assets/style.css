@@ -154,6 +154,10 @@ h1, h2, h3 { font-weight: 600; }
   text-decoration-color: var(--underline);
 }
 .text-link:hover { text-decoration-color: currentColor; }
+/* a link on its own in a notice ("← All pictures" on a picture that isn't there): a full-size target on touch */
+@media (pointer: coarse) {
+  .notice .text-link { display: inline-flex; align-items: center; min-width: 44px; min-height: 44px; }
+}
 
 /* Header and nav */
 

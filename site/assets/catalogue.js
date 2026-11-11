@@ -106,6 +106,7 @@ export function createCatalogue(root, {
   let active = 0; // the cell the filmstrip and the arrow keys change
   let from = ''; // "globe" when opened from the globe
   let missingId = null;
+  let pageNote = ''; // from show(): an address the site doesn't have, said in the same place
   let stripKey = '';
   let announceTimer = 0;
   const thumbs = new Map();
@@ -261,7 +262,7 @@ export function createCatalogue(root, {
 
   const title = h('h2', { class: 'pi-title cat-title', id: 'cat-title', tabindex: '-1' });
   const lead = h('div', { class: 'pi-lead' }); // who named it, when it was taken, what is missing
-  const photoActions = createPhotoActions({ idPrefix: 'cat', copyUrl: () => location.href });
+  const photoActions = createPhotoActions({ idPrefix: 'cat', copyUrl: () => shareUrl() });
   const compareBtn = h('button', { type: 'button', class: 'cat-text-btn' }, 'Compare');
   compareBtn.addEventListener('click', () => setSize(2, { user: true }));
   const detailsName = h('span', { class: 'vh' });
@@ -324,7 +325,15 @@ export function createCatalogue(root, {
 
   /* URL */
 
-  function queryString() {
+  // Copy link: this view's address without from=globe, which is only this visit's way back.
+  function shareUrl() {
+    const url = new URL(location.href);
+    const query = queryString({ from: false });
+    url.hash = query ? `${route}?${query}` : route;
+    return url.href;
+  }
+
+  function queryString({ from: withFrom = true } = {}) {
     const params = new URLSearchParams();
     const id = size > 1 ? slots[active] : currentId;
     if (id) params.set('id', id);
@@ -335,7 +344,7 @@ export function createCatalogue(root, {
     }
     if (show.dark) params.set('dark', '1');
     if (show.missing) params.set('missing', '1');
-    if (from) params.set('from', from);
+    if (from && withFrom) params.set('from', from);
     // Commas between ids read better than %2C, and URLSearchParams reads both.
     return params.toString().replace(/%2C/gi, ',');
   }
@@ -555,6 +564,7 @@ export function createCatalogue(root, {
     if (id === currentId) return;
     currentId = id;
     missingId = null;
+    pageNote = '';
     missing.hidden = true;
     writeUrl();
     keepFocus(() => {
@@ -718,9 +728,11 @@ export function createCatalogue(root, {
     filterUi.markActive(filters);
     backRow.hidden = !canGoBack();
     el.classList.toggle('has-back', canGoBack());
-    missing.hidden = !missingId;
+    missing.hidden = !missingId && !pageNote;
     if (missingId) {
       missing.textContent = `There is no picture with the id “${missingId}”; it may have been renamed when the list was rebuilt. Showing ${size > 1 ? 'the others' : 'another picture'} instead.`;
+    } else if (pageNote) {
+      missing.textContent = pageNote;
     }
     if (!photos.length) {
       showNotice(['No pictures yet. The list is empty until the first image has been reassembled.']);
@@ -1125,8 +1137,10 @@ export function createCatalogue(root, {
       return true;
     },
 
-    // Called when the route is shown, with the query from the URL.
-    show(params) {
+    // Called when the route is shown, with the query from the URL, and a note to
+    // show over the pictures, if any.
+    show(params, { note = '' } = {}) {
+      pageNote = note;
       if (!ready) {
         pending = params;
         // The way back works before the pictures arrive.

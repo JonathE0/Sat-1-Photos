@@ -629,22 +629,34 @@ export function mountGlobe(container, options = {}) {
 
   // The right column holds Passes and Pictures, with the viewfinder in Pictures. Where they
   // don't both fit, one folds to its heading (Passes keeps its next-pass line), Pictures first.
+  // Where Pictures is still too tall on its own (a laptop), the viewfinder's picture gives way,
+  // down to two fifths of its height, so the list keeps about three rows; past that the
+  // viewfinder goes, and the picture's card shows the picture instead.
   let rightOpen = 'photos'; // which stays open when they don't fit
   let passesFull = 0;
-  let vfFull = 0;
+  let vfFull = 0; // the viewfinder's height, and its picture's, with nothing given way
+  let picFull = 0;
   let viewfinder = null;
   let finderPhotos = [];
   function fitRightColumn(h, narrow) {
     const passesFolded = el.passesPanel.hasAttribute('data-folded');
     const photosFolded = el.photosPanel.hasAttribute('data-folded');
     if (!passesFolded) passesFull = el.passesPanel.scrollHeight;
-    if (!photosFolded && !el.vfSlot.hidden && !narrow) vfFull = el.vfSlot.offsetHeight;
-    // with the viewfinder above it the list can do with a little less
-    const vfRoom = el.vfSlot.hidden ? 0 : Math.max(0, vfFull - 12 * uiScale);
-    root.style.setProperty('--cg-vf-h', `${vfRoom}px`);
+    if (!photosFolded && !narrow && !el.vfSlot.hidden) {
+      // measured whole (only the end of this shows), as its caption may have changed since
+      el.vfSlot.classList.remove('cg-vf-away');
+      el.vfSlot.style.removeProperty('--vf-pic-h');
+      if (el.vfSlot.getClientRects().length) {
+        vfFull = el.vfSlot.offsetHeight;
+        picFull = el.vfSlot.querySelector('.vf-pic')?.offsetHeight || 0;
+      }
+    }
+    const gap = 12 * uiScale;
+    // the heading, Highlight, the line about the dark frames and three rows of the list
+    const listMin = 288 * uiScale + (el.tucked.hidden ? 0 : el.tucked.offsetHeight + 4 * uiScale);
+    const vfRoom = el.vfSlot.hidden ? 0 : vfFull + gap;
     const room = h - pageTop() - 112 * uiScale; // globe.css .cg-col-right's max-height
-    const min = 272 * uiScale + vfRoom; // as .cg-panel-photos' min-height
-    const both = narrow || passesFull + 12 * uiScale + min <= room;
+    const both = narrow || passesFull + gap + listMin + vfRoom <= room;
     for (const [panel, fold, open] of [
       [el.passesPanel, el.passesFold, both || rightOpen === 'passes'],
       [el.photosPanel, el.photosFold, both || rightOpen === 'photos'],
@@ -654,6 +666,16 @@ export function mountGlobe(container, options = {}) {
       fold.disabled = both;
     }
     root.classList.toggle('cg-right-accordion', !both);
+    // (not yet measured, it gives nothing: vfObserver brings it back here once it has a size)
+    const cut = !both && rightOpen === 'photos' && vfRoom && vfFull
+      ? Math.max(0, listMin + vfRoom - (room - el.passesPanel.offsetHeight - gap))
+      : 0;
+    const away = cut > 0.6 * picFull;
+    const picCut = away ? 0 : cut;
+    el.vfSlot.classList.toggle('cg-vf-away', away);
+    if (picCut) el.vfSlot.style.setProperty('--vf-pic-h', `${(picFull - picCut).toFixed(1)}px`);
+    else el.vfSlot.style.removeProperty('--vf-pic-h');
+    root.style.setProperty('--cg-photos-min', `${(listMin + (away ? 0 : vfRoom - picCut)).toFixed(1)}px`);
   }
 
   const layout = () => {
@@ -828,6 +850,9 @@ export function mountGlobe(container, options = {}) {
   // a sheet's height follows its content: the views only need to re-centre
   const sheetObserver = new ResizeObserver(() => resizeMap());
   for (const panel of root.querySelectorAll('[data-panel]')) sheetObserver.observe(panel);
+  // the viewfinder comes into view, or its caption takes one line or two: the list keeps its rows
+  const vfObserver = new ResizeObserver(() => layout());
+  vfObserver.observe(el.vfSlot);
   // the zoom has come to rest above a sheet, or back: the pictures keep out from under it
   listen(el.zoom, 'transitionend', () => placePins());
   layout();
@@ -842,7 +867,8 @@ export function mountGlobe(container, options = {}) {
   // ---- clock -----------------------------------------------------------------
   let lastFrame = performance.now();
   let lastScene = 0;
-  let lastUi = 0;
+  let lastUi = 0; // the clock and the zoom, ten times a second
+  let lastReadouts = 0; // the stats, "Over …" and the next pass, four times a second
   let sceneDirty = true;
   let uiDirty = true;
   let raf = 0;
@@ -930,9 +956,10 @@ export function mountGlobe(container, options = {}) {
     if (uiDirty || now - lastUi >= 100) {
       paintClock();
       paintZoom(); // the wheel and a pinch move it too
-      if (uiDirty || now - lastUi >= 250) {
+      if (uiDirty || now - lastReadouts >= 250) {
         paintReadouts();
         paintAurora();
+        lastReadouts = now;
       }
       lastUi = now;
       uiDirty = false;
@@ -1048,7 +1075,9 @@ export function mountGlobe(container, options = {}) {
       if (destroyed) return;
       passes.lastRun = performance.now();
       passes.fromMs = state.ms;
-      passes.list = astro.findPasses(orbit, observer, state.ms, { count: PASS_COUNT, minElevationDeg: 0, minPeakDeg: PASS_PEAK_DEG });
+      // none before lift-off, nor one already under way then
+      passes.list = astro.findPasses(orbit, observer, Math.max(state.ms, launchMs), { count: PASS_COUNT, minElevationDeg: 0, minPeakDeg: PASS_PEAK_DEG })
+        .filter((p) => p.riseMs >= launchMs);
       paintPasses();
       uiDirty = true;
     }, wait);
@@ -1237,6 +1266,7 @@ export function mountGlobe(container, options = {}) {
       item.type = 'button';
       item.addEventListener('click', () => {
         hidePeek();
+        closeSheet();
         focusPhoto(p.id);
       });
     }
@@ -1298,9 +1328,12 @@ export function mountGlobe(container, options = {}) {
     if (delay) peek.timer = setTimeout(go, delay);
     else go();
   }
-  // a pile's list takes the pointer, so it can be reached across the gap
+  // a pile's list takes the pointer, so it can be reached across the gap (a finger lifted off it,
+  // or scrolling it, leaves it there: see onPointerUp)
   listen(el.peek, 'pointerenter', () => clearTimeout(peek.timer));
-  listen(el.peek, 'pointerleave', () => hidePeek(160));
+  listen(el.peek, 'pointerleave', (e) => {
+    if (e.pointerType === 'mouse') hidePeek(160);
+  });
 
   /** A picture's name for the list and card: its place, else its title,
    * else (when the title is just the time) the day it was taken. */
@@ -1752,12 +1785,12 @@ export function mountGlobe(container, options = {}) {
   // Calgary's in the Passes panel.
   const placeSearch = createPlaceSearch({
     getOrbit: () => orbit,
-    getTime: () => state.ms,
+    getTime: () => Math.max(state.ms, launchMs), // passes from lift-off at the earliest
     isLive: () => state.live,
     onPreview(p, place) {
       shotPanel.open({
         ms: p.closestMs,
-        context: `This pass at its nearest to the middle of ${place.name}, ${fmtKm(p.closestKm)} from it.`,
+        context: `This pass at its nearest to the middle of ${placeInSentence(place.name)}, ${fmtKm(p.closestKm)} from it.`,
       });
     },
     onJump(p) {
@@ -1769,11 +1802,12 @@ export function mountGlobe(container, options = {}) {
       writeHash();
     },
     onPlace(place, moveFocus) {
-      const title = place ? `Passes over ${place.name}` : 'Passes over Calgary'; // "the North Sea"
+      const title = place ? `Passes over ${placeInSentence(place.name)}` : 'Passes over Calgary'; // "the North Sea"
       el.passesTitle.textContent = title;
       el.passesPanel.setAttribute('aria-label', title);
       el.calgaryPasses.hidden = !!place;
       if (moveFocus) el.passesTitle.focus();
+      writeHash(); // a link keeps the place
     },
   });
   placeSearch.element.classList.add('cg-fold-body');
@@ -1938,7 +1972,10 @@ export function mountGlobe(container, options = {}) {
   ];
   for (const [surface, view] of surfaces) {
     listen(surface, 'pointermove', (e) => onPointerMove(e, surface, view));
-    listen(surface, 'pointerleave', hideTip);
+    // (a finger leaves as it lifts: a pile's list it has just opened stays)
+    listen(surface, 'pointerleave', (e) => {
+      if (e.pointerType === 'mouse') hideTip();
+    });
     listen(surface, 'pointerup', (e) => onPointerUp(e, surface, view));
   }
   function onPointerMove(e, surface, view) {
@@ -1978,8 +2015,15 @@ export function mountGlobe(container, options = {}) {
     if (view.controls.dragged) return;
     const r = surface.getBoundingClientRect();
     const hit = view.pick(e.clientX - r.left, e.clientY - r.top, pinReach(e.pointerType === 'mouse' ? 12 : 22));
+    // A tap on a pile (a pin with its count) lists the pictures in it to pick from, as a pointer
+    // resting on it does; a click opens the newest, with the list already showing.
+    if (hit?.type === 'photo' && e.pointerType !== 'mouse' && full && !previewsHidden && picturePins.pileOf(hit.id).length > 1) {
+      closeSheet();
+      showPeek(hit);
+      return;
+    }
+    if (peek.id) hidePeek();
     if (hit?.type === 'photo') {
-      if (peek.id) hidePeek();
       closeSheet();
       focusPhoto(hit.id);
     } else if (hit?.type === 'satellite') {
@@ -2078,19 +2122,24 @@ export function mountGlobe(container, options = {}) {
   function hashParams() {
     if (!opts.hashState) return {};
     const p = new URLSearchParams(location.hash.replace(/^#/, ''));
-    return { t: p.get('t'), photo: p.get('photo'), view: parseView(p.get('view')), mode: p.get('mode'), follow: p.get('follow') === '1' };
+    return {
+      t: p.get('t'), photo: p.get('photo'), view: parseView(p.get('view')), map: parseView(p.get('map')),
+      mode: p.get('mode'), follow: p.get('follow') === '1', place: p.get('place'),
+    };
   }
 
-  /** #t=<iso>&photo=<id>&mode=map&follow=1, and with `view` the globe's camera:
-   * &view=<lat>,<lon>,<distance> (not while following: the satellite sets it). */
+  /** #t=<iso>&photo=<id>&mode=map&follow=1&place=<id> (another place's passes), and with `view`
+   * the camera on screen (not while following: the satellite sets it): the globe's as
+   * &view=<lat>,<lon>,<distance>, the map's as &map=<lat>,<lon>,<zoom, times the widest>. */
   function stateParams({ view = false } = {}) {
     const p = new URLSearchParams();
     if (!state.live) p.set('t', isoUtc(state.ms));
     if (state.selectedId) p.set('photo', state.selectedId);
     if (onMap()) p.set('mode', 'map');
     if (state.follow) p.set('follow', '1');
-    const v = view && !onMap() && !state.follow ? scene.viewPoint() : null;
-    if (v) p.set('view', `${v.latDeg.toFixed(2)},${v.lonDeg.toFixed(2)},${v.distance.toFixed(2)}`);
+    if (placeSearch.place) p.set('place', placeSearch.place.id);
+    const v = view && !state.follow ? (onMap() ? map : scene).viewPoint() : null;
+    if (v) p.set(onMap() ? 'map' : 'view', `${v.latDeg.toFixed(2)},${v.lonDeg.toFixed(2)},${(onMap() ? v.zoom : v.distance).toFixed(2)}`);
     return p.toString().replace(/%3A/gi, ':').replace(/%2C/gi, ',');
   }
 
@@ -2112,12 +2161,20 @@ export function mountGlobe(container, options = {}) {
     return params ? `${url.href}#${params}` : url.href;
   }
 
-  /** Put the camera back where a link's view had it (at the current time). */
-  function applyView(v) {
-    if (!v) return;
+  /** Put the camera back where a link's view had it (at the current time): the globe's
+   * (view=), the map's (map=, its third number the zoom). */
+  function applyView(v, m = null) {
+    if (!v && !(m?.distance > 0)) return;
     state.userMovedCamera = true;
     setFollow(false);
-    flyToGround(v.lat, v.lon, { distance: v.distance, immediate: true });
+    if (v) flyToGround(v.lat, v.lon, { distance: v.distance, immediate: true });
+    if (m?.distance > 0) map.flyToGround(m.lat, m.lon, { zoom: m.distance, immediate: true });
+  }
+
+  /** The passes over the place a link names, or Calgary's. */
+  function applyPlace(id) {
+    if (id) placeSearch.choosePlace(id);
+    else if (placeSearch.place) placeSearch.reset();
   }
 
   function applyHash() {
@@ -2131,8 +2188,9 @@ export function mountGlobe(container, options = {}) {
         jumpTo(ms);
       }
     }
-    applyView(h.view);
+    applyView(h.view, h.map);
     if (h.follow !== state.follow) setFollow(h.follow);
+    applyPlace(h.place);
   }
   if (opts.hashState) listen(window, 'hashchange', applyHash);
 
@@ -2171,7 +2229,8 @@ export function mountGlobe(container, options = {}) {
         json = await fetchJson(opts.dataUrl);
       } catch (err) {
         if (err.name === 'AbortError') throw err;
-        if (err.status !== 404) {
+        // made-up pictures only when asked for (?sample, working on the page without a build)
+        if (err.status !== 404 || !new URLSearchParams(location.search).has('sample')) {
           console.warn('Globe: photo data unavailable', err);
           note('Picture data unavailable.');
           photosFailed = true;
@@ -2228,7 +2287,8 @@ export function mountGlobe(container, options = {}) {
       jumpTo(ms);
     }
   }
-  applyView(hash.view);
+  applyView(hash.view, hash.map);
+  applyPlace(hash.place);
   raf = requestAnimationFrame(frame);
 
   Promise.all([loadOrbit(), loadPhotos()])
@@ -2242,7 +2302,7 @@ export function mountGlobe(container, options = {}) {
       picker.refresh();
       paintPasses();
       // a link with a camera view keeps it rather than flying to the photo
-      const wanted = pendingFocus || (startPhoto ? { id: startPhoto, fly: !hash.view && !hash.follow, immediate: true } : null);
+      const wanted = pendingFocus || (startPhoto ? { id: startPhoto, fly: !hash.view && !hash.map && !hash.follow, immediate: true } : null);
       pendingFocus = null;
       const focused = wanted ? focusPhoto(wanted.id, { fly: wanted.fly, immediate: wanted.immediate }) : false;
       if (wanted && !focused) {
@@ -2259,7 +2319,7 @@ export function mountGlobe(container, options = {}) {
       // nothing placed to look at: start on the satellite
       const onPhoto = focused && findPhoto(wanted.id)?.placed;
       if (!onPhoto && !state.userMovedCamera) flyToSatellite({ immediate: true });
-      applyView(hash.view); // again, now the Earth is turned to the final time
+      applyView(hash.view, hash.map); // again, now the Earth is turned to the final time
       if (hash.follow) {
         flyToSatellite({ immediate: true });
         setFollow(true);
@@ -2296,6 +2356,7 @@ export function mountGlobe(container, options = {}) {
       clearTimeout(passes.timer);
       resizeObserver.disconnect();
       sheetObserver.disconnect();
+      vfObserver.disconnect();
       for (const off of cleanups) off();
       scene.dispose();
       map.dispose();

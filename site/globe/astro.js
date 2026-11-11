@@ -254,6 +254,11 @@ export class Orbit {
     const rec = this.satrec(index);
     const pv = sgp4(rec, (ms - this.items[index].satrecEpochMs) / MS_PER_MIN);
     if (!pv || !pv.position || rec.error) return null;
+    // Run far past its elements SGP4 can fail without saying so: decades out it puts the
+    // satellite millions of kilometres away. FrontierSat is in a low orbit, so a position
+    // outside 80 to 2,000 km up counts as a failure too.
+    const up = Math.hypot(pv.position.x, pv.position.y, pv.position.z) - EARTH_RADIUS_KM;
+    if (!(up > 80 && up < 2000)) return null;
     return { r: pv.position, v: pv.velocity, index };
   }
 

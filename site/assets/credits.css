@@ -77,7 +77,7 @@ html.credits-open.credits-gutter { scrollbar-gutter: stable; }
 .credits-news { padding-top: 16px; border-top: 1px solid #1C242D; }
 
 @media (pointer: coarse) {
-  .credits-close { min-height: 44px; }
+  .credits-close { min-width: 44px; min-height: 44px; text-align: right; }
   .credits-links a { display: inline-block; padding: 11px 0; }
 }
 @media (max-width: 599px) {

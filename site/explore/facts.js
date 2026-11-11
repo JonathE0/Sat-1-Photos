@@ -114,7 +114,7 @@ const LIVE = [
     make(r) {
       const lat = num(r.latDeg);
       const lon = num(r.lonDeg);
-      const when = r.isLive === false ? 'At this moment' : 'Right now';
+      const when = r.isLive === false ? 'At the time shown' : 'Right now';
       if (typeof r.placeName === 'string' && r.placeName.trim()) {
         return { text: `${when} it's over ${r.placeName.trim()}.`, note: 'Worked out from its published orbit' };
       }

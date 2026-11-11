@@ -28,7 +28,7 @@ from .reassemble import Assembled, reassemble
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
-RENDER_VERSION = 3  # bump to re-render every image after changing how
+RENDER_VERSION = 4  # bump to re-render every image after changing how
 THUMB_WIDTH = 480
 SATELLITE = {
     "name": "FrontierSat",
@@ -197,10 +197,8 @@ def _render_picam(a: Assembled, template: bytes | None) -> Rendered | None:
     jpeg, repaired = picam.displayable(d, template)
     if jpeg is None:
         return None
-    # The share of the picture a viewer gets: everything when complete,
-    # otherwise the lines before the first gap (the decoder stops there).
+    # The first missing line past the header: a decoder stops there.
     gap = d.first_missing(from_byte=len(template) if template else 0)
-    share = 1.0 if gap is None else gap / d.line_total
     if d.truncated_on_board:
         # Checked before `verified`: a shortened file can match the sha256 the
         # satellite sent for it and still hold only part of the picture.
@@ -226,6 +224,15 @@ def _render_picam(a: Assembled, template: bytes | None) -> Rendered | None:
             if a.evidence.sha256
             else "Every line of the picture arrived. The satellite never sent a hash for this file."
         )
+    elif gap is None:
+        # Only lines of the JPEG header are missing, and displayable() put the
+        # camera's standard header in their place: all of the picture shows.
+        status = "complete"
+        missing = d.line_total - len(d.lines)
+        note = (
+            f"Every line of the picture arrived; {missing} line{'' if missing == 1 else 's'} of its JPEG header "
+            "did not, so the file can't be hash-checked."
+        )
     else:
         status = "partial"
         note = (
@@ -235,12 +242,31 @@ def _render_picam(a: Assembled, template: bytes | None) -> Rendered | None:
     if repaired:
         note += " The JPEG header was restored from the camera's standard header, which every complete capture shares."
     if status in ("verified", "complete"):
-        return Rendered(jpeg, "jpg", status, note, share, repaired)
+        return Rendered(jpeg, "jpg", status, note, 1.0, repaired)
     with Image.open(io.BytesIO(jpeg)) as im:
         im.load()
-        buf = io.BytesIO()
-        im.convert("RGB").save(buf, "JPEG", quality=92)
-    return Rendered(buf.getvalue(), "jpg", status, note, share, repaired)
+        rgb = im.convert("RGB")
+    buf = io.BytesIO()
+    rgb.save(buf, "JPEG", quality=92)
+    # Bytes before the gap aren't the share of the picture drawn (the header
+    # and how well each row compresses skew it): count the rows instead.
+    return Rendered(buf.getvalue(), "jpg", status, note, _shown_share(rgb), repaired)
+
+
+def _shown_share(im: Image.Image) -> float:
+    """The share of a picture's rows that hold data, down to the flat grey a
+    JPEG decoder fills the part past a gap with. The same rule as rowsWithData
+    in site/explore/journey-parts.js, so the words and the picture agree."""
+    cols = np.asarray(im.convert("RGB"), dtype=np.int16)[:, ::8]
+    height = cols.shape[0]
+    filled = (np.abs(cols - _GRAY).max(axis=2) >= 5).sum(axis=1)
+    rows = np.flatnonzero(filled >= 0.05 * cols.shape[1])
+    if not len(rows):
+        return 0.0
+    shown = int(rows[-1]) + 1
+    if shown < height:
+        shown = shown - shown % 16 or shown  # data ends on a 16-row JPEG block; past it is only ringing
+    return shown / height
 
 
 def _bmp_template(verified: list[Assembled]) -> bytes | None:

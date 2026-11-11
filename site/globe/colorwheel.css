@@ -300,6 +300,32 @@
   .cg-cw {
     width: max(calc(232 * var(--cg-u, 1px)), 284px);
   }
+
+  /* Lightness: a 44px slider reaching into the gaps above and below it, and a 28 × 44px handle
+     drawn 10 × 18 by its clear border, so a finger can take hold of it */
+  .cg-cw-light input[type="range"] {
+    height: 44px;
+    margin: -4px 0 -12px;
+  }
+
+  .cg-cw-light input[type="range"]::-webkit-slider-thumb {
+    box-sizing: border-box;
+    width: 28px;
+    height: 44px;
+    margin-top: -21px;
+    border: solid transparent;
+    border-width: 13px 9px;
+    background-clip: padding-box;
+  }
+
+  .cg-cw-light input[type="range"]::-moz-range-thumb {
+    box-sizing: border-box;
+    width: 28px;
+    height: 44px;
+    border: solid transparent;
+    border-width: 13px 9px;
+    background-clip: padding-box;
+  }
 }
 
 .cg-narrow .cg-cw {

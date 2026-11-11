@@ -69,15 +69,16 @@
   }
   const fromNow = (ms, now) => (ms >= now ? `in ${span(ms - now)}` : `${span(now - ms)} ago`);
   // "in 5 h 12 min" that keeps itself current (see tick); with a window,
-  // "happening now" while the window is open.
+  // "happening now" while the window is open and "passed 3 min ago" once it shuts.
   function relative(ms, now, from, to) {
     const s = el('span', { 'data-at': ms, 'data-from': from, 'data-to': to });
     s.textContent = relText(s, now);
     return s;
   }
   function relText(s, now) {
-    const from = Number(s.dataset.from), to = Number(s.dataset.to);
-    return from && now >= from && now <= to ? 'happening now' : fromNow(Number(s.dataset.at), now);
+    const from = Number(s.dataset.from), to = Number(s.dataset.to), at = Number(s.dataset.at);
+    if (from && now >= from && now <= to) return 'happening now';
+    return to && now > to ? `passed ${span(now - at)} ago` : fromNow(at, now);
   }
 
   function duration(s) {
@@ -118,6 +119,12 @@
   let filter = 'all';
   try { filter = sessionStorage.getItem('watchlist-filter') || 'all'; } catch { /* storage blocked */ }
 
+  // What render() reads from the top of the file; a list without it can't be shown.
+  const readable = (d) => d != null && typeof d === 'object' && d.window != null && Array.isArray(d.events) && Array.isArray(d.sources)
+    && [d.generated_at, d.tle_epoch, d.window.from, d.window.to].every((s) => !Number.isNaN(Date.parse(s)));
+
+  const leadAtFirst = [...$('lead').childNodes].map((n) => n.cloneNode(true));
+
   async function load() {
     $('status').textContent = 'Loading the watchlist.';
     $('notes').replaceChildren();
@@ -125,16 +132,20 @@
       const res = await fetch(DATA_URL, { cache: 'no-cache' });
       if (!res.ok) throw new Error(`${res.status}`);
       data = await res.json();
+      if (!readable(data)) throw new Error('unexpected shape');
+      render(); // a list in a shape it doesn't expect throws here, and gets the same line
     } catch (err) {
       data = null;
       showMissing(err);
       return;
     }
-    render();
     announce(`Watchlist loaded. ${shownCounts()}`);
   }
 
   function showMissing(err) {
+    $('lead').replaceChildren(...leadAtFirst.map((n) => n.cloneNode(true)));
+    $('notes').replaceChildren();
+    $('status').classList.remove('ink');
     $('status').textContent = '';
     $('filters').hidden = true;
     $('list').replaceChildren();
@@ -151,13 +162,22 @@
     announce(text);
   }
 
-  const shownCounts = () => `${$('list').children.length} with a pass coming, ${$('later-list').children.length} without.`;
+  function shownCounts() {
+    const passed = $('list').querySelectorAll('.item.passed').length;
+    return `${$('list').children.length - passed} with a pass coming, ${passed ? `${passed} just passed, ` : ''}${$('later-list').children.length} without.`;
+  }
 
   // Each event's passes still to come, the next first.
   function upcoming(event, now) {
     return event.opportunities
       .filter((o) => Date.parse(o.window.to) >= now)
       .sort((a, b) => Date.parse(a.closest_at) - Date.parse(b.closest_at));
+  }
+
+  // Once they're all over, the last one, so the row says it has passed rather than that there's no pass.
+  function lastPass(event, now) {
+    const over = event.opportunities.filter((o) => Date.parse(o.window.to) < now);
+    return over.length ? over.reduce((a, b) => (Date.parse(b.closest_at) > Date.parse(a.closest_at) ? b : a)) : null;
   }
 
   function render() {
@@ -203,7 +223,7 @@
 
     const list = withPasses.filter(shown);
     $('list').style.setProperty('--rows', String(Math.ceil(list.length / 2)));
-    $('list').replaceChildren(...list.map(({ e, ops }) => item(e, ops, now)));
+    $('list').replaceChildren(...list.map(({ e, ops, passed }) => item(e, ops, now, passed)));
     syncOpen();
     if (focusedId) {
       const back = [...$('list').children].find((li) => li.dataset.id === focusedId);
@@ -235,11 +255,15 @@
     renderHow();
   }
 
+  // An event whose passes are all over keeps its row, at its last pass, while the list's window is open.
   function split(now) {
     const withPasses = [], without = [];
+    const open = now <= Date.parse(data.window.to);
     for (const e of data.events) {
-      const ops = upcoming(e, now);
-      (ops.length ? withPasses : without).push({ e, ops });
+      let ops = upcoming(e, now), passed = false;
+      const last = !ops.length && open ? lastPass(e, now) : null;
+      if (last) { ops = [last]; passed = true; }
+      (ops.length ? withPasses : without).push({ e, ops, passed });
     }
     withPasses.sort((a, b) => Date.parse(a.ops[0].closest_at) - Date.parse(b.ops[0].closest_at));
     return { withPasses, without };
@@ -247,7 +271,7 @@
 
   // Which passes are listed: when one slips into the past, the list is redrawn.
   let shape = '';
-  const signature = (withPasses) => withPasses.map(({ e, ops }) => `${e.id}@${ops.length}`).join(' ');
+  const signature = (withPasses) => withPasses.map(({ e, ops, passed }) => `${e.id}@${ops.length}${passed ? ':passed' : ''}`).join(' ');
 
   function renderFilters(withPasses, without) {
     const counts = new Map();
@@ -291,7 +315,8 @@
   function syncOpen() {
     const items = [...$('list').children];
     if (sideBySide.matches) {
-      const current = items.find((li) => openIds.has(li.dataset.id)) || (closedByHand ? null : items[0]);
+      const first = items.find((li) => !li.classList.contains('passed')) || items[0]; // the next pass, not one that's over
+      const current = items.find((li) => openIds.has(li.dataset.id)) || (closedByHand ? null : first);
       openIds.clear();
       if (current) openIds.add(current.dataset.id);
     }
@@ -383,7 +408,8 @@
     return small(ops.length > 1 ? `Best of ${ops.length} passes` : 'Only pass', 'spare');
   }
 
-  function item(e, ops, now) {
+  // passed: ops is the one pass that's over (split)
+  function item(e, ops, now, passed = false) {
     const aurora = e.category === 'aurora';
     const next = ops[0];
     const best = ops.reduce((a, b) => (b.quality > a.quality ? b : a), next);
@@ -395,11 +421,11 @@
       el('span', { class: 'icon', 'aria-hidden': 'true' }),
       cell('what', e.title, aurora ? 'Aurora' : describe(e)),
       cell('when', calgary(t), el('span', { class: 'small' }, el('span', { class: 'utc', text: `${utc(t)}, ` }), relative(t, now, from, to))),
-      cell('close', aurora ? 'Over the oval' : `${num(next.distance_km)} km away`, bestNote(next, best, ops)),
+      cell('close', aurora ? 'Over the oval' : `${num(next.distance_km)} km away`, passed ? null : bestNote(next, best, ops)),
       cell('light', shortLight(next, e.light)));
 
     // One link, beside the row where there's room, else first in what opens.
-    const orbit = el('a', { class: 'orbit', href: `${ORBIT_URL}#t=${next.closest_at}`, 'aria-label': `Show ${e.title} on the Orbit page, at its next pass` },
+    const orbit = el('a', { class: 'orbit', href: `${ORBIT_URL}#t=${next.closest_at}`, 'aria-label': `Show ${e.title} on the Orbit page, at its ${passed ? 'last' : 'next'} pass` },
       el('span', {}, el('span', { class: 'long', text: 'Show on the ' }), 'Orbit', el('span', { class: 'long', text: ' page' })));
 
     const meta = el('div', { class: 'meta' }, small(describe(e), aurora ? '' : 'pane-only'));
@@ -408,13 +434,14 @@
     if (e.updated_at) meta.append(small(`${aurora ? 'NOAA data as of' : 'Last reported'} ${utc(Date.parse(e.updated_at))}`));
 
     const facts = el('dl', { class: 'facts' });
+    const nextLabel = passed ? 'Last pass' : 'Next pass';
     const fact = (label, value, ...notes) => facts.append(
-      el('div', { class: label === 'Next pass' ? 'fact fact-next' : 'fact' }, el('dt', { text: label }), el('dd', {}, value, ...notes)));
+      el('div', { class: label === nextLabel ? 'fact fact-next' : 'fact' }, el('dt', { text: label }), el('dd', {}, value, ...notes)));
 
     // Where the row above shows all of this, the stylesheet hides it.
     const whenLine = small(`${utc(t)}, `);
     whenLine.append(relative(t, now, from, to));
-    fact('Next pass', calgary(t), whenLine);
+    fact(nextLabel, calgary(t), whenLine);
     if (aurora) {
       fact('Where', `Over the oval at ${num(Math.abs(next.magnetic_latitude_deg))}° magnetic latitude`,
         small(`${place(next.target.lat, next.target.lon)}, for ${duration((to - from) / 1000)}`));
@@ -471,7 +498,7 @@
     const detail = el('div', { class: 'detail', id: panelId, hidden: true },
       el('h3', { class: 'detail-title pane-only', text: e.title }), map, body);
 
-    const li = el('li', { class: 'item', 'data-id': e.id },
+    const li = el('li', { class: passed ? 'item passed' : 'item', 'data-id': e.id },
       el('div', { class: 'row-line' },
         el('div', { class: 'row-grid' }, el('h2', { class: 'row-h' }, row), orbit)),
       detail);

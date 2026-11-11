@@ -205,7 +205,7 @@
       "text": "It weighs 2.897 kg, give or take 1%.",
       "category": "hardware",
       "sources": [
-        { "title": "Overall FrontierSat Properties", "outlet": "FrontierSat wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Overall-CTS-SAT-1-Properties" }
+        { "title": "Overall FrontierSat Properties", "outlet": "FrontierSat wiki", "date": null, "accessed": "2026-10-29", "url": "https://github.com/CalgaryToSpace/CTS-SAT-1-Wiki/wiki/Overall-CTS%E2%80%90SAT%E2%80%901-Properties" }
       ],
       "note": "Gunter's Space Page lists 5 kg; the team's own figure is used."
     },

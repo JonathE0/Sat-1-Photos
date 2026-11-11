@@ -34,6 +34,7 @@
   <!-- the 3D model loader imports "three" by name; this must come before any module script -->
   <script type="importmap">{ "imports": { "three": "./globe/vendor/three.module.min.js" } }</script>
   <script src="assets/freshen.js" defer></script>
+  <script src="assets/sw-register.js" defer></script>
   <script src="config.js" defer></script>
   <script type="module" src="assets/app.js"></script>
 </head>
@@ -135,6 +136,7 @@
       if (/^\/pictures\/?$/.test(path)) view = 'pictures';
       else if (/^\/photo\/[^/]+\/?$/.test(path)) view = 'detail';
       else if (path === '/about') view = 'about';
+      else if (/^\/./.test(path)) view = 'pictures'; // an address the site doesn't have: Pictures says so
       else if ((path === '' || path === '/') && query && !/(^|&)credits=1(&|$)/.test(query)) view = 'pictures';
       document.body.dataset.view = view;
       ['explore', 'pictures', 'detail', 'about'].forEach(function (name) {

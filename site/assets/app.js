@@ -26,6 +26,7 @@ const state = {
   view: null,
   galleryQuery: '',
   lastPhotoId: null,
+  returnTo: null, // set by closeDetail: the picture Pictures opens on
   fromGallery: false,
   picturesFromExplore: false, // the catalogue was opened from the globe: its Back returns there
   pendingFocus: null,
@@ -145,16 +146,21 @@ function backToExplore() {
   else location.hash = '#/';
 }
 
-// Prev/next follow the gallery as last filtered, or every picture when the
-// photo is not in that view (for example, a shared link).
+// Prev/next follow the list the picture is in on Pictures, as last filtered: the
+// pictures shown there, or the ones it hides (dark frames, mostly missing ones),
+// so the count says which and stays the same from one picture to the next. A
+// picture the filters leave out (a shared link, say) is looked for without them.
 function navList(id) {
-  let list = applyFilters(state.photos, readFilters(new URLSearchParams(state.galleryQuery)));
-  let index = list.findIndex((p) => p.id === id);
-  if (index < 0) {
-    list = state.photos;
-    index = list.findIndex((p) => p.id === id);
+  for (const query of [state.galleryQuery, '']) {
+    const filters = readFilters(new URLSearchParams(query));
+    const matched = applyFilters(state.photos, { ...filters, dark: '1', missing: '1' });
+    if (!matched.some((p) => p.id === id)) continue;
+    const shown = applyFilters(matched, filters);
+    const hidden = !shown.some((p) => p.id === id);
+    const list = hidden ? matched.filter((p) => !shown.includes(p)) : shown;
+    return { list, index: list.findIndex((p) => p.id === id), hidden };
   }
-  return { list, index };
+  return { list: state.photos, index: state.photos.findIndex((p) => p.id === id), hidden: false };
 }
 
 function confirmLeave() {
@@ -174,10 +180,13 @@ function goToPhoto(id, via) {
   location.replace(`#/photo/${encodeURIComponent(id)}${qi >= 0 ? location.hash.slice(qi) : ''}`);
 }
 
+// "All pictures" and Escape: back to Pictures, in history when the entry before
+// this picture's is Pictures (route() marks the entry), else as a new step.
 function closeDetail() {
   if (!confirmLeave()) return;
   state.skipGuard = true; // already asked
-  if (state.fromGallery && history.length > 1) history.back();
+  state.returnTo = state.lastPhotoId; // Pictures opens on this picture, whatever its address says
+  if (history.state?.fromPictures === true && history.length > 1) history.back();
   else location.hash = galleryHref();
 }
 
@@ -203,6 +212,9 @@ function parseRoute() {
     return { view: 'detail', id };
   }
   if (path === '/about') return { view: 'about' };
+  // An address the site doesn't have (#/nonsense) opens Pictures, saying so; a
+  // plain #fragment (the skip link's #main) leaves the page as it is.
+  if (path.startsWith('/')) return { view: 'pictures', query: '', unknown: `#${raw}` };
   return { view: 'explore' };
 }
 
@@ -222,11 +234,18 @@ function route() {
   state.hash = location.hash;
   const next = parseRoute();
   const previous = state.view;
+  const returning = state.returnTo;
+  state.returnTo = null;
   // The globe keeps its camera, time, scroll and lock while hidden; hide it
   // before anything else scrolls the page.
   if (previous === 'explore' && next.view !== 'explore') journey?.hide();
   if (next.view === 'detail') {
-    state.fromGallery = previous === 'pictures' || (previous === 'detail' && state.fromGallery);
+    // Kept on the history entry itself: after Back or Forward, the view shown
+    // last isn't the entry before this one.
+    const mark = history.state?.fromPictures;
+    state.fromGallery = typeof mark === 'boolean' ? mark
+      : previous === 'pictures' || (previous === 'detail' && state.fromGallery);
+    if (mark !== state.fromGallery) history.replaceState({ ...history.state, fromPictures: state.fromGallery }, '');
   }
   if (next.view === 'pictures' && previous !== 'pictures') {
     state.picturesFromExplore = previous === 'explore';
@@ -246,8 +265,13 @@ function route() {
     state.galleryQuery = next.query;
     document.title = 'Pictures · FrontierSat';
     if (previous !== 'pictures') window.scrollTo(0, 0);
-    gallery.show(new URLSearchParams(next.query));
-    const backOnTile = previous === 'detail' && state.lastPhotoId && gallery.focusTile(state.lastPhotoId);
+    gallery.show(new URLSearchParams(next.query), {
+      note: next.unknown ? `There is no page at “${next.unknown}”. Showing the pictures instead.` : '',
+    });
+    // Back from a picture's page, Pictures shows that picture, unless the address names another.
+    const named = new URLSearchParams(next.query).get('id');
+    const tileId = previous === 'detail' && (returning || (!named && state.lastPhotoId));
+    const backOnTile = tileId && gallery.focusTile(tileId);
     if (!backOnTile && state.navigated && previous !== 'pictures' && !gallery.focusTitle()) {
       $('#main').focus({ preventScroll: true });
     }

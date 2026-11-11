@@ -106,6 +106,13 @@ jobs:
           git push origin "HEAD:$GITHUB_REF_NAME"
           echo "changed=true" >> "$GITHUB_OUTPUT"
 
+      # Every file's fingerprint (site/files.json, not committed). Pages gives every file a
+      # new ETag on every publish, so browsers fetched the whole site again each hour;
+      # site/sw.js keeps each file until its fingerprint changes.
+      - name: List the site's files for the service worker
+        if: steps.commit.outputs.changed == 'true' || steps.watch.outputs.changed == 'true' || github.event_name != 'schedule'
+        run: python -m cts1_gallery files
+
       - if: steps.commit.outputs.changed == 'true' || steps.watch.outputs.changed == 'true' || github.event_name != 'schedule'
         uses: actions/configure-pages@v5
 

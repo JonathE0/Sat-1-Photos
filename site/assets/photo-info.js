@@ -228,11 +228,19 @@ function stillComing(p) {
   return since >= 0 && since < DAY_MS ? `Still coming down: last packet ${agoText(since)} ago.` : null;
 }
 
+// How much of a picture with parts missing is shown, as "18%": the share of its rows
+// the build found data in (build.py _shown_share). Null when it says nothing (all of
+// it, none, or unknown), and the words fall back to a plain sentence.
+function shownPercent(p) {
+  const share = Number(p.raw?.completeness);
+  return share > 0 && share < 1 ? percent(share) : null;
+}
+
 // The status in a few words (thumbnails, compare cells, announcements). A main-camera
 // picture's share is how much of it can be shown, not how much arrived: its JPEG
 // can't be read past the first gap.
 export function statusShort(p) {
-  const pct = percent(p.raw?.completeness);
+  const pct = shownPercent(p);
   if (p.status === 'partial') {
     if (p.camera === 'picam') return pct ? `partly missing: only the top ${pct} is shown` : 'partly missing';
     return pct ? `partly missing: about ${pct} came down` : 'partly missing';
@@ -248,14 +256,15 @@ export function statusShort(p) {
 // What is wrong with a picture, in a sentence, for any picture that isn't
 // checked and whole; null for the rest.
 function statusSentence(p) {
-  const pct = percent(p.raw?.completeness);
+  const pct = shownPercent(p);
   const coming = stillComing(p);
   let text = null;
   if (p.status === 'partial') {
     const never = coming ? 'hasn’t come down yet' : 'never came down';
     if (p.camera === 'picam') {
-      text = [`Part of this picture ${never}. Nothing below the first gap can be read`,
-        pct ? [', so only the top ', nobr(pct), ' is shown.'] : '.'];
+      text = pct
+        ? [`Part of this picture ${never}. Nothing below the first gap can be read, so only the top `, nobr(pct), ' is shown.']
+        : [`Part of this picture ${never}.`];
     } else {
       text = [`Grey bands are rows that ${never}.`,
         pct ? [` About ${pct} of it ${coming ? 'has so far' : 'did'}.`] : ''];
@@ -525,7 +534,9 @@ export function technicalDetails(p, { open = false } = {}) {
   if (raw.file) rows.push(['File', [code(raw.file), bytes(raw.file_size)]]);
   const hash = hashValue(p);
   if (hash) rows.push(['sha256', hash]);
-  rows.push(['Data status', [code(String(p.status || 'unknown')), typeof raw.status_note === 'string' ? raw.status_note : null]]);
+  // a note with Python's None in it ("line None did not arrive") is a build slip: left out
+  const note = typeof raw.status_note === 'string' && !/\bNone\b/.test(raw.status_note) ? raw.status_note : null;
+  rows.push(['Data status', [code(String(p.status || 'unknown')), note]]);
   const timeFrom = timeFromValue(p);
   if (timeFrom) rows.push(['Time from', timeFrom]);
   if (isObject(raw.position) && raw.position.basis) {

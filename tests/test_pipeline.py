@@ -336,7 +336,7 @@ class Truncated(unittest.TestCase):
         self.assertIn("lines 0–59", r.note)
         self.assertIn(f"skips to line {total - 5}", r.note)
         self.assertIn("bit-exact", r.note)
-        self.assertAlmostEqual(r.completeness, 60 / total)
+        self.assertAlmostEqual(r.completeness, 16 / 64)  # rows drawn, not bytes
 
 
 class Ids(unittest.TestCase):

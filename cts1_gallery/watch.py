@@ -222,6 +222,9 @@ _EONET_SOURCES = {
     "PDC": "Pacific Disaster Center", "ABFIRE": "Alberta Wildfire", "BCWILDFIRE": "BC Wildfire Service",
     "MBFIRE": "Manitoba Wildfire Service", "FloodList": "FloodList", "ReliefWeb": "ReliefWeb",
 }
+# scp.byu.edu's certificate expired 2026-11-08, so browsers refuse the link; the same icebergs
+# also cite NASA EONET and the US National Ice Center
+_DEAD_SOURCES = {"BYU_ICE"}
 _STORM_FIX_MAX_AGE = timedelta(hours=48)  # a storm with no fix for two days has died out or been lost
 
 
@@ -253,7 +256,7 @@ def eonet_events(data: dict, now: datetime, p: Params) -> list[Event]:
         if category == "storm" and now - fixes[-1][0] > _STORM_FIX_MAX_AGE:  # EONET's fixes are all reports
             continue
         sources = [{"name": "NASA EONET", "url": f"https://eonet.gsfc.nasa.gov/api/v3/events/{e['id']}"}]
-        sources += [{"name": _EONET_SOURCES.get(s["id"], s["id"]), "url": s["url"]} for s in e.get("sources") or [] if s.get("url")]
+        sources += [{"name": _EONET_SOURCES.get(s["id"], s["id"]), "url": s["url"]} for s in e.get("sources") or [] if s.get("url") and s.get("id") not in _DEAD_SOURCES]
         events.append(Event(
             id=f"eonet-{e['id']}".lower(), title=title, category=category, sources=sources, fixes=fixes,
             updated_at=fixes[-1][0], size=_size(category, value, unit), started_at=fixes[0][0],

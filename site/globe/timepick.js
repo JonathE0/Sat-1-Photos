@@ -21,6 +21,9 @@ const HOUR_MS = 3_600_000;
  * along the track. */
 export const FAR_DAYS = 7;
 export const VERY_FAR_DAYS = 14;
+/** The form goes this far past the newest elements and no further: beyond it the position is
+ * guesswork, and much further SGP4 gives none at all. */
+export const AHEAD_DAYS = 30;
 
 /** "tens of kilometres" or "hundreds of kilometres or more": how far off a
  * position worked out `days` from its elements may be (past FAR_DAYS). */
@@ -197,8 +200,16 @@ export function createTimePicker({ launchMs, getOrbit, onPick, onClose = () => {
     return parseUtcInput(date.value, time.value);
   }
 
+  /** The latest time it takes: AHEAD_DAYS past the newest elements (none while they load). */
+  function latest() {
+    const orbit = getOrbit();
+    return orbit ? orbit.lastEpochMs + AHEAD_DAYS * DAY_MS : Infinity;
+  }
+
   function paint() {
     const ms = chosen();
+    const last = latest();
+    date.max = Number.isFinite(last) ? utcInputs(last).date : '';
     let ok = Number.isFinite(ms);
     if (!ok) {
       local.textContent = 'Type a date such as 2026-10-22 and a time such as 15:07.';
@@ -208,6 +219,12 @@ export function createTimePicker({ launchMs, getOrbit, onPick, onClose = () => {
       ok = false;
       local.textContent = `${calgaryWhen(ms)}.`;
       note.textContent = `That is before launch. FrontierSat went up on ${when(launchMs, 0)}; pick a time after that.`;
+      note.dataset.level = 'far';
+    } else if (ms > last) {
+      ok = false;
+      local.textContent = `${calgaryWhen(ms)}.`;
+      note.textContent = `That is too far ahead to work out. Its newest published orbit is from ${when(getOrbit().lastEpochMs, 0)}; ` +
+        `pick a time up to ${when(last, 0)}.`;
       note.dataset.level = 'far';
     } else {
       local.textContent = `${calgaryWhen(ms)}.`;
@@ -237,7 +254,7 @@ export function createTimePicker({ launchMs, getOrbit, onPick, onClose = () => {
 
   function open(ms, anchor = null) {
     trigger = anchor;
-    fill(Math.max(ms, launchMs));
+    fill(Math.min(Math.max(ms, launchMs), latest()));
     form.hidden = false;
     trigger?.setAttribute('aria-expanded', 'true');
     date.focus();

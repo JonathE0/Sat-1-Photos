@@ -7,11 +7,15 @@ data, reassembles every image and rebuilds the site's data.
 
 `python -m cts1_gallery watch` refreshes the watchlist of events worth
 photographing and the satellite's coming passes over them (cts1_gallery/watch.py).
+
+`python -m cts1_gallery files` lists the site's files and their fingerprints in
+site/files.json, so site/sw.js can keep each one until it changes (cts1_gallery/files.py).
 """
 
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 import time
 import traceback
@@ -43,9 +47,16 @@ def main(argv: list[str] | None = None) -> int:
     watch.add_argument("--days", type=float, help="how far ahead to look (default 3)")
     watch.add_argument("--cache", type=Path, default=CACHE / "watch", help="where feed answers are kept")
     watch.add_argument("--out", type=Path, default=SITE / "data" / "watchlist.json")
+    sub.add_parser("files", help="list the site's files and their fingerprints in site/files.json, for sw.js")
     args = parser.parse_args(argv)
     if args.command == "watch":
         return _watch(args)
+    if args.command == "files":
+        from .files import write_manifest
+
+        out = write_manifest(SITE)
+        log(f"wrote {out.relative_to(ROOT).as_posix()} ({len(json.loads(out.read_text(encoding='utf-8'))['files'])} files)")
+        return 0
 
     from .build import build
     from .fetch import TABLES, fetch_all

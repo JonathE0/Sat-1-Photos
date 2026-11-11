@@ -477,12 +477,18 @@
 }
 
 /* The side column is shared. Pictures gives up its room first (the large
-   shrink), down to its heading, the Highlight button and about three rows;
-   only then does Passes shrink, scrolling inside what is left. Anything that
-   doesn't fit is a scroll away, so nothing hidden can take the focus. */
+   shrink), down to its heading, the Highlight button, the viewfinder and about
+   three rows (--cg-photos-min, from fitRightColumn in globe.js, which also
+   shrinks or puts away the viewfinder where that's too tall); only then does
+   Passes shrink, scrolling inside what is left. Anything that doesn't fit is a
+   scroll away, so nothing hidden can take the focus. */
 .cg:not(.cg-narrow) .cg-panel-photos {
   flex: 0 1000 auto;
-  min-height: calc(272 * var(--cg-u) + var(--cg-vf-h, 0px));
+  min-height: var(--cg-photos-min, calc(288 * var(--cg-u)));
+}
+
+.cg:not(.cg-narrow) .cg-vf.cg-vf-away {
+  display: none;
 }
 
 /* folded to its heading, by fitRightColumn in globe.js */
@@ -1312,28 +1318,35 @@
     inset: 0 -8px;
   }
 
+  /* the time button: the row's 44px, not just its two lines */
+  .cg-time {
+    min-height: 44px;
+  }
+
   /* The time slider's handle: a finger has to grab it (iPhone won't jump to a tap on the
-     track), so a 28 × 36px handle, drawn 12 × 22 by its clear border. */
+     track), so a 28 × 44px handle, drawn 12 × 22 by its clear border, on a 44px slider that
+     takes only 36px of the bar (its margins), so nothing moves. */
   .cg-scrub input[type="range"] {
-    height: 36px;
+    height: 44px;
+    margin: -4px 0;
   }
 
   .cg-scrub input[type="range"]::-webkit-slider-thumb {
     box-sizing: border-box;
     width: 28px;
-    height: 36px;
-    margin-top: -17px;
+    height: 44px;
+    margin-top: -21px;
     border: solid transparent;
-    border-width: 7px 8px;
+    border-width: 11px 8px;
     background-clip: padding-box;
   }
 
   .cg-scrub input[type="range"]::-moz-range-thumb {
     box-sizing: border-box;
     width: 28px;
-    height: 36px;
+    height: 44px;
     border: solid transparent;
-    border-width: 7px 8px;
+    border-width: 11px 8px;
     background-clip: padding-box;
   }
 
@@ -1573,8 +1586,10 @@
   padding-top: 6px;
 }
 
-.cg-narrow .cg-scrub input[type="range"] {
-  height: 36px;
+@media not (pointer: coarse) {
+  .cg-narrow .cg-scrub input[type="range"] {
+    height: 36px;
+  }
 }
 
 .cg-narrow .cg-ticks {
@@ -1631,12 +1646,16 @@
 
   /* The header is one row: the title, with "Over …" under it, left of the Globe / Map row
      (map2d.css; its width is --cg-views-w, from globe.js). Folding the title takes "Over …"
-     away and the row stays as it is, so nothing under it moves. */
+     away and the row stays as it is, so nothing under it moves. A long place takes a second
+     line, in the band's own height (4px under the nav to 2px above its foot), so the band
+     keeps its height as the places change. */
   .cg-narrow .cg-head {
     display: flex;
     flex-direction: column;
     justify-content: center;
     min-height: calc(var(--cg-top, 0px) + 12px + 44px + 8px);
+    padding-top: calc(var(--cg-top, 0px) + 4px);
+    padding-bottom: 2px;
     padding-right: calc(var(--cg-views-w, 220px) + 12px + 8px);
   }
 
@@ -1661,12 +1680,15 @@
   }
 
   .cg.cg-narrow .cg-over {
+    display: -webkit-box;
     margin-top: 0;
     overflow: hidden;
     font-size: var(--cg-small);
-    line-height: 1.45;
-    white-space: nowrap;
-    text-overflow: ellipsis;
+    line-height: 1.3;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow-wrap: break-word;
   }
 }
 

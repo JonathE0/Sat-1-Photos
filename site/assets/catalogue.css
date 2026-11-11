@@ -30,11 +30,14 @@
      one Panel area, as tall as fits above the dock (up to 720px), the same
      in One, Two and Four so the dock doesn't move, with the pictures centred
      on it at 1x or smaller. On a short window Two and Four outgrow that, for
-     pictures worth comparing, and the page scrolls to the dock. The whole
+     pictures worth comparing, but never so far that the strip starts below the
+     window (--view-room), with Filters open too. The whole
      catalogue is capped at a width where two pictures side by side still fit
      at 1x, and on very wide screens where four do (at the end of this file). */
   --view-max: 720px;
   --view-fit: clamp(240px, calc(100svh - var(--nav-h, 60px) - var(--back-h) - var(--head-h) - var(--dock-h) - 48px), var(--view-max));
+  /* as tall as leaves the strip's month labels and the top of its pictures on the screen */
+  --view-room: calc(100svh - var(--nav-h, 60px) - var(--back-h) - var(--head-h) - var(--dock-h) + var(--strip-h) - 64px);
   --view-h: var(--view-fit);
   --cap-h: 80px;      /* a compare caption: place; time and Remove; the status when not whole */
   --content-max: 1720px;
@@ -52,8 +55,8 @@
 .cat.has-back { --back-h: 56px; }
 
 /* the stage for a 240px tall picture in Two, and 165px tall pictures in Four */
-.cat[data-size="2"] { --view-h: max(var(--view-fit), calc(240px + var(--cap-h) + 49px)); }
-.cat[data-size="4"] { --view-h: max(var(--view-fit), calc(2 * (165px + var(--cap-h) + 1px) + 64px)); }
+.cat[data-size="2"] { --view-h: max(var(--view-fit), min(calc(240px + var(--cap-h) + 49px), var(--view-room))); }
+.cat[data-size="4"] { --view-h: max(var(--view-fit), min(calc(2 * (165px + var(--cap-h) + 1px) + 64px), var(--view-room))); }
 
 .cat-nobr { white-space: nowrap; }
 
@@ -260,6 +263,16 @@
 }
 .cat-compare[data-size="4"] {
   --cell-h: calc((var(--view-h) - 2 * var(--pad-s) - 16px) / 2 - var(--cap-h) - 1px);
+}
+
+/* A short, wide window (a 1280 x 720 laptop): two rows of Four would push the strip
+   off the screen, so the four sit in one row, on a stage like Two's. */
+@media (min-width: 1200px) and (max-height: 860px) {
+  .cat[data-size="4"] { --view-h: max(var(--view-fit), min(calc(240px + var(--cap-h) + 49px), var(--view-room))); }
+  .cat-compare[data-size="4"] {
+    --cols: 4;
+    --cell-h: calc(var(--view-h) - 2 * var(--pad-s) - var(--cap-h) - 1px);
+  }
 }
 
 .cat-cell {
