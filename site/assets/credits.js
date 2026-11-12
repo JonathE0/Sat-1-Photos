@@ -119,7 +119,8 @@ function build() {
         (<a href="https://svs.gsfc.nasa.gov/4720">CGI Moon Kit</a>).</p>
       <p>Satellite model: CalgaryToSpace's own CAD of FrontierSat (the V11 frame), outside only and
         simplified for the web, with the sun sensors, magnetometer and UHF antenna as their makers' CAD
-        draws them (CubeSpace, ISISPACE); drawn far larger than life.</p>
+        draws them (CubeSpace, ISISPACE), the antenna's four tapes and the magnetometer's arm shown
+        deployed and the boom rolled up in its mount; drawn far larger than life.</p>
     </section>
     <div class="credits-news"></div>`;
   return dialog;
