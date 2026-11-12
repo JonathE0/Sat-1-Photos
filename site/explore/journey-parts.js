@@ -83,11 +83,20 @@ export function statusLine(photo) {
       return 'Complete, but there\u2019s no checksum to check it against.';
     case 'partial':
       if (photo.camera === 'adcs') return 'Grey bands are rows that never came down.';
+      // read on past its gaps (build.py, resync.py): grey in bands, and the share is of its blocks
+      if (raw.pieces_past_gaps > 0) {
+        return c > 0 && c < 1
+          ? `Part of this picture never came down and is grey: ${Math.round(c * 100)}% of it is shown.`
+          : 'Part of this picture never came down and is grey.';
+      }
       // the share is of the rows drawn (build.py _shown_share), as on the picture's own page
       return c > 0 && c < 1
         ? `Part of this picture never came down: only the top ${Math.round(c * 100)}% is shown.`
         : 'Part of this picture never came down.';
     case 'truncated':
+      if (raw.pieces_past_gaps > 0 && c > 0 && c < 1) {
+        return `Cut short on board, and parts of what was saved never came down: ${Math.round(c * 100)}% of the frame is shown.`;
+      }
       return c > 0 && c < 1 ? `Cut short on board: only the top ${fractionWords(c)} was saved.` : 'Cut short on board.';
     default:
       return '';

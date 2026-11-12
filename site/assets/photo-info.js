@@ -228,9 +228,15 @@ function stillComing(p) {
   return since >= 0 && since < DAY_MS ? `Still coming down: last packet ${agoText(since)} ago.` : null;
 }
 
+// A main-camera picture read on past its gaps: what came down after a gap was picked up
+// again and put back in place (build.py, resync.py), so it is grey in bands, not from
+// the first gap down.
+export const pickedUpPastGaps = (p) => Number(p.raw?.pieces_past_gaps) > 0;
+
 // How much of a picture with parts missing is shown, as "18%": the share of its rows
-// the build found data in (build.py _shown_share). Null when it says nothing (all of
-// it, none, or unknown), and the words fall back to a plain sentence.
+// the build found data in (build.py _shown_share), or for one read on past its gaps,
+// of its blocks. Null when it says nothing (all of it, none, or unknown), and the
+// words fall back to a plain sentence.
 function shownPercent(p) {
   const share = Number(p.raw?.completeness);
   return share > 0 && share < 1 ? percent(share) : null;
@@ -238,14 +244,17 @@ function shownPercent(p) {
 
 // The status in a few words (thumbnails, compare cells, announcements). A main-camera
 // picture's share is how much of it can be shown, not how much arrived: its JPEG
-// can't be read past the first gap.
+// can't be read past a gap unless what follows could be put back in place.
 export function statusShort(p) {
   const pct = shownPercent(p);
+  const pickedUp = pickedUpPastGaps(p);
   if (p.status === 'partial') {
+    if (p.camera === 'picam' && pickedUp) return pct ? `partly missing: ${pct} of it is shown` : 'partly missing';
     if (p.camera === 'picam') return pct ? `partly missing: only the top ${pct} is shown` : 'partly missing';
     return pct ? `partly missing: about ${pct} came down` : 'partly missing';
   }
   if (p.status === 'truncated') {
+    if (linesMissing(p) && pct && pickedUp) return `cut short on board, and ${pct} of the frame is shown`;
     return linesMissing(p) && pct ? `cut short on board, and only the top ${pct} is shown` : 'cut short on board';
   }
   if (p.status === 'verified') return 'checked';
@@ -261,7 +270,10 @@ function statusSentence(p) {
   let text = null;
   if (p.status === 'partial') {
     const never = coming ? 'hasn’t come down yet' : 'never came down';
-    if (p.camera === 'picam') {
+    if (p.camera === 'picam' && pickedUpPastGaps(p)) {
+      text = [`Part of this picture ${never}, and is grey. What came down past each gap was picked up again and put back in its place`,
+        pct ? [', so ', nobr(pct), ' of the picture is shown.'] : '.'];
+    } else if (p.camera === 'picam') {
       text = pct
         ? [`Part of this picture ${never}. Nothing below the first gap can be read, so only the top `, nobr(pct), ' is shown.']
         : [`Part of this picture ${never}.`];
@@ -273,6 +285,9 @@ function statusSentence(p) {
     const early = 'The satellite stopped this capture early and saved only the top part of the frame.';
     if (!linesMissing(p)) {
       text = [early, checksumMatches(p) ? ' All of that came down.' : ''];
+    } else if (pickedUpPastGaps(p)) {
+      text = [early, ' Not all of that has come down yet: the grey bands are the gaps, and what came down past them was put back in its place',
+        pct ? [', so ', nobr(pct), ' of the frame is shown.'] : '.'];
     } else {
       const gap = Number(p.raw?.completeness) < 0.25 ? 'a gap near the top' : 'a gap';
       text = [early, ` Not all of that has come down yet, and ${gap} means `,

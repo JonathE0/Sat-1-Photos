@@ -9,7 +9,8 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { applyAnnotations, comparePhotos, launchTime, toIsoUtc, toPhotos, whenKnown } from '../adapter.js';
 import { bytes, calgary, grouped, monthDayYear, plural, utcLong } from '../../assets/format.js';
-import { calgaryTime, launchDate, utcLong as exploreLong, utcShort as exploreShort } from '../../explore/journey-parts.js';
+import { statusShort } from '../../assets/photo-info.js';
+import { calgaryTime, launchDate, statusLine, utcLong as exploreLong, utcShort as exploreShort } from '../../explore/journey-parts.js';
 import * as astro from '../astro.js';
 import { auroraNote, parseForecast, turnSince } from '../aurora.js';
 import * as wheel from '../colorwheel.js';
@@ -762,6 +763,28 @@ check('compass points', astro.compassPoint(0) === 'N' && astro.compassPoint(355)
   check('aurora: the note says the forecast\'s time and that the shimmer is for show', /18:23 UTC/.test(auroraNote(ok, t)) && /shimmer/.test(auroraNote(ok, t)));
   check('aurora: far from the forecast the note says why there is none', /isn.t shown/.test(auroraNote(ok, t + 7 * 3_600_000)));
   check('aurora: a failed load says so, and loading says nothing', /couldn.t be loaded/.test(auroraNote({ state: 'failed' }, t)) && auroraNote({ state: 'loading' }, t) === null);
+}
+
+// ---- a picture read on past its gaps: how much of it is shown, not "the top" --------
+{
+  const partial = (extra) => ({ status: 'partial', camera: 'picam', raw: { completeness: 0.715, ...extra } });
+  const cut = {
+    status: 'truncated',
+    camera: 'picam',
+    raw: {
+      completeness: 0.715,
+      pieces_past_gaps: 2,
+      status_note: 'The capture was cut short on board: the file holds only lines 0–499 of the 776 the camera announced, and 485 of those arrived.',
+    },
+  };
+  check('gaps: a picture cut at its first gap says only the top is shown',
+    statusLine(partial({})) === 'Part of this picture never came down: only the top 72% is shown.'
+    && statusShort(partial({})) === 'partly missing: only the top 72% is shown');
+  check('gaps: one read on past its gaps says how much of it is shown',
+    statusLine(partial({ pieces_past_gaps: 2 })) === 'Part of this picture never came down and is grey: 72% of it is shown.'
+    && statusShort(partial({ pieces_past_gaps: 2 })) === 'partly missing: 72% of it is shown');
+  check('gaps: so does one the satellite cut short',
+    /72% of the frame is shown/.test(statusLine(cut)) && statusShort(cut) === 'cut short on board, and 72% of the frame is shown');
 }
 
 console.log(`\n${passed} passed, ${failures} failed`);
