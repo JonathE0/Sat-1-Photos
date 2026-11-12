@@ -325,9 +325,14 @@ export function createCatalogue(root, {
   // Measured after every render too, so it never waits for a paint.
   function measure() {
     if (!isVisible(el)) return;
-    const dockH = `${Math.ceil(dock.getBoundingClientRect().height)}px`;
+    const dockBox = dock.getBoundingClientRect();
+    const dockH = `${Math.ceil(dockBox.height)}px`;
+    // the dock down to the strip (controls, count, Filters when open): a tall, wide screen
+    // keeps only these and the contact sheet's first row under the stage (catalogue.css)
+    const dockTopH = `${Math.ceil((strip.hidden ? dockBox.bottom : strip.getBoundingClientRect().top) - dockBox.top)}px`;
     const stageW = `${Math.floor(viewer.getBoundingClientRect().width)}px`;
     if (el.style.getPropertyValue('--dock-h') !== dockH) el.style.setProperty('--dock-h', dockH);
+    if (el.style.getPropertyValue('--dock-top-h') !== dockTopH) el.style.setProperty('--dock-top-h', dockTopH);
     if (el.style.getPropertyValue('--stage-w') !== stageW) el.style.setProperty('--stage-w', stageW);
   }
   const sizer = new ResizeObserver(() => measure());
@@ -866,6 +871,9 @@ export function createCatalogue(root, {
     }
     img.width = p.width;
     img.height = p.height;
+    // its own size, for how far a big stage may enlarge it (catalogue.css)
+    img.style.setProperty('--nat-w', `${p.width}px`);
+    img.style.setProperty('--nat-h', `${p.height}px`);
     img.alt = photoAlt(p);
     frame.dataset.ratio = p.width === p.height ? 'square' : 'wide';
     fillInfo(p);

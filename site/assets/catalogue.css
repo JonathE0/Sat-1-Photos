@@ -25,11 +25,12 @@
   --m-l: max(var(--m), env(safe-area-inset-left, 0px));
   --m-r: max(var(--m), env(safe-area-inset-right, 0px));
 
-  /* Pictures are never shown larger than their own size (640 x 480, or
-     512 x 512 for the attitude camera): grainy when enlarged. The stage is
+  /* A picture in One fills its stage, up to twice its own size (640 x 480, or
+     512 x 512 for the attitude camera); in Two and Four pictures are never
+     shown larger than their own size. The stage is
      one Panel area, as tall as fits above the dock (up to 720px), the same
      in One, Two and Four so the dock doesn't move, with the pictures centred
-     on it at 1x or smaller. On a short window Two and Four outgrow that, for
+     on it. On a short window Two and Four outgrow that, for
      pictures worth comparing, but never so far that the strip starts below the
      window (--view-room), with Filters open too. The whole
      catalogue is capped at a width where two pictures side by side still fit
@@ -190,8 +191,10 @@
 }
 
 /* One picture, whole, centred on the stage. The img carries the picture's
-   own width and height, so it is never drawn larger than that; it shrinks
-   (and keeps its shape, object-fit) only when the stage is smaller. */
+   own width and height; it shrinks (and keeps its shape, object-fit) when
+   the stage is smaller, and beside the facts column (900px and wider) it
+   also grows to fill a larger stage, up to twice its own size (--nat-w and
+   --nat-h, set by catalogue.js), so a big screen isn't mostly empty Panel. */
 
 .cat-frame {
   position: relative;
@@ -208,6 +211,12 @@
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
+}
+@media (min-width: 900px) {
+  .cat-img {
+    width: min(100%, var(--nat-w, 640px) * 2);
+    height: min(100%, var(--nat-h, 480px) * 2);
+  }
 }
 
 .cat[data-state="loading"] .cat-img,
@@ -956,17 +965,18 @@
   .cat-compare[data-size="2"] .cat-cell-status { order: 0; }
 }
 
-/* Tall, wide screens: the dock spans both columns and the strip becomes a
-   contact sheet, so the pictures themselves fill the screen under the stage;
-   the stage (all three modes alike) may grow to 1100px, which lets Two and
-   Four come close to 1x. */
+/* Tall, wide screens: the strip becomes a contact sheet under the stage, so
+   the pictures themselves fill the screen there. The dock stays in the
+   picture's column, straight under the stage, however long the facts beside it
+   run. The stage (all three modes alike) may grow to 1100px, which lets Two and
+   Four come close to 1x; it leaves room for the dock's controls and the sheet's
+   first row (--dock-top-h, measured by catalogue.js), not the whole sheet. */
 @media (min-width: 1800px) and (min-height: 1100px) {
-  .cat { --thumb-h: 96px; --view-max: 1100px; }
-  .cat-grid {
-    grid-template-rows: auto auto;
-    grid-template-areas:
-      "viewer info"
-      "dock dock";
+  .cat {
+    --thumb-h: 96px;
+    --view-max: 1100px;
+    --view-fit: clamp(240px, calc(100svh - var(--nav-h, 60px) - var(--back-h) - var(--head-h) - var(--dock-top-h, 80px) - var(--strip-h) - 48px), var(--view-max));
+    --view-room: calc(100svh - var(--nav-h, 60px) - var(--back-h) - var(--head-h) - var(--dock-top-h, 80px) - 64px);
   }
   .cat-strip {
     flex-wrap: wrap;

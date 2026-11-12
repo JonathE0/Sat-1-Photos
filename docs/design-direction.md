@@ -437,10 +437,12 @@ was it taken?** So the picture is the largest thing, and its place is the larges
 - Nav 64px, as on the landing ("Pictures" is the current page; the team's "Your name" control
   lives here only).
 - Grid: viewer (1fr) | info (400px), gutter 24, margins 32.
-- **Viewer.** (Updated at checkpoint 1.) A picture is never drawn larger than its own size (640 × 480,
-  attitude camera 512 × 512): enlarged, it goes grainy. The viewer is a Panel stage, as tall as fits
-  above the browse dock (up to 720px), with the picture centred on it at 1× or smaller, never
-  cropped. The stage keeps the edges of night and black-edged frames visible. Two and Four use the
+- **Viewer.** (Updated at checkpoint 1, and on 2026-11-12.) In One, beside the facts column, a picture
+  fills its stage up to twice its own size (640 × 480, attitude camera 512 × 512), so a big screen
+  isn't mostly empty Panel; in Two and Four, and on phones, it is never drawn larger than its own
+  size. The viewer is a Panel stage, as tall as fits above the browse dock (up to 720px), with the
+  picture centred on it, never cropped. On a tall, wide screen the dock stays under the stage in the
+  picture's column, however long the facts run. The stage keeps the edges of night and black-edged frames visible. Two and Four use the
   same stage at the same height, with their pictures centred on it as a group and each caption
   directly under its picture.
 - **Dark frames** (`dark: true`: black, noise, or the Sun as a single dot) are left out of the strip
