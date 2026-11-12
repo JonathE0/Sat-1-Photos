@@ -74,10 +74,63 @@ html.credits-open.credits-gutter { scrollbar-gutter: stable; }
 .credits-section { margin-bottom: 8px; padding-top: 16px; border-top: 1px solid #1C242D; }
 .credits-section h3 { margin: 0 0 8px; font-size: 16px; font-weight: 600; line-height: 1.3; }
 .credits-news:empty { display: none; }
+
+/* The sponsors' logos pass by in a row, each on a white tile (they're drawn for white).
+   The row holds them twice and moves by one set, so it loops without a seam. */
+.credits-sponsors {
+  --sp-gap: 12px;
+  overflow: hidden;
+  margin: 4px calc(-1 * var(--cr-pad)) 0;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 28px, #000 calc(100% - 28px), transparent);
+  mask-image: linear-gradient(to right, transparent, #000 28px, #000 calc(100% - 28px), transparent);
+}
+.credits-sponsors-row {
+  display: flex;
+  gap: var(--sp-gap);
+  width: max-content;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  animation: credits-sponsors 45s linear infinite;
+}
+.credits-sponsors:hover .credits-sponsors-row,
+.credits-sponsors.is-paused .credits-sponsors-row { animation-play-state: paused; }
+.credits-sponsor {
+  flex: none;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  height: 72px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  background: #fff;
+}
+.credits-sponsor img { display: block; }
+@keyframes credits-sponsors {
+  to { transform: translateX(calc(-50% - var(--sp-gap) / 2)); }
+}
+.credits p.credits-sponsors-foot { margin: 4px 0 8px; text-align: right; }
+.credits-sponsors-pause {
+  min-height: 32px;
+  border: 0;
+  padding: 0;
+  background: none;
+  color: var(--cr-muted);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+.credits-sponsors-pause:hover { color: var(--cr-ink); }
+/* kept still (?motion=reduced, app.js): every logo at once, in rows, nothing to pause */
+html[data-motion="reduced"] .credits-sponsors { margin: 4px 0 12px; -webkit-mask-image: none; mask-image: none; }
+html[data-motion="reduced"] .credits-sponsors-row { flex-wrap: wrap; width: auto; animation: none; }
+html[data-motion="reduced"] .credits-sponsor[aria-hidden="true"],
+html[data-motion="reduced"] .credits-sponsors-foot { display: none; }
 .credits-news { padding-top: 16px; border-top: 1px solid #1C242D; }
 
 @media (pointer: coarse) {
   .credits-close { min-width: 44px; min-height: 44px; text-align: right; }
+  .credits-sponsors-pause { min-width: 44px; min-height: 44px; text-align: right; }
   .credits-links a { display: inline-block; padding: 11px 0; }
 }
 @media (max-width: 599px) {

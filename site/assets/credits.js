@@ -17,6 +17,28 @@ import { calgary, plural, toDate } from './format.js';
 
 const SITE = new URL('../', import.meta.url);
 
+// The team's sponsors, as calgarytospace.ca/sponsorships shows them: [file in assets/sponsors/, name,
+// the logo's width and height as shown]. They pass by in a row under "Thank you".
+const SPONSORS = [
+  ['schulich', 'Schulich School of Engineering', 101, 52],
+  ['ucalgary', 'University of Calgary', 170, 52],
+  ['helium', 'Helium', 148, 52],
+  ['hexagon-novatel', 'Hexagon | NovAtel', 190, 37],
+  ['mda', 'MDA', 168, 52],
+  ['solidworks', 'SolidWorks', 190, 46],
+  ['altium', 'Altium', 190, 48],
+  ['roots-2-stem', 'Roots 2 STEM', 132, 52],
+  ['minds-in-motion', 'Minds in Motion', 118, 52],
+  ['skyfox-labs', 'SkyFox Labs', 84, 52],
+];
+
+// The row twice over, so it loops without a seam; the second time is for the eye only.
+function sponsorItems() {
+  const item = ([file, name, w, h], again) => `<li class="credits-sponsor"${again ? ' aria-hidden="true"' : ''}>`
+    + `<img src="${new URL(`assets/sponsors/${file}.png`, SITE).href}" width="${w}" height="${h}" alt="${again ? '' : name}" loading="lazy" decoding="async"></li>`;
+  return SPONSORS.map((s) => item(s, false)).join('') + SPONSORS.map((s) => item(s, true)).join('');
+}
+
 // "just now", "12 minutes ago", "3 hours ago", "2 days ago"
 function ago(ms) {
   const minutes = Math.floor(ms / 60000);
@@ -70,6 +92,11 @@ function build() {
         pictures down to Earth. None of this would be possible without them.</p>
       <p>That thanks extends to the whole CalgaryToSpace team, whose work designing, building and testing the
         satellite put it in orbit in the first place.</p>
+      <p>Thank you to all of our sponsors who made this possible.</p>
+      <div class="credits-sponsors">
+        <ul class="credits-sponsors-row" aria-label="Our sponsors">${sponsorItems()}</ul>
+      </div>
+      <p class="credits-sponsors-foot"><button type="button" class="credits-sponsors-pause" aria-pressed="false">Pause</button></p>
     </section>
     <section class="credits-section">
       <h3>Sources</h3>
@@ -163,6 +190,8 @@ export function mountCredits(button) {
     page.classList.add('credits-open');
     dialog.showModal();
     button?.setAttribute('aria-expanded', 'true');
+    // the sponsors' logos wait until Credits is first opened, then all load, so none passes by empty
+    for (const img of dialog.querySelectorAll('.credits-sponsor img[loading="lazy"]')) img.loading = 'eager';
     dialog.querySelector('.credits-title').focus({ preventScroll: true });
     const news = loadNews();
     if (show === 'news') news.then(showNews);
@@ -185,6 +214,14 @@ export function mountCredits(button) {
   }
 
   dialog.querySelector('[data-close]').addEventListener('click', close);
+  // the sponsors' row stops and starts with its button
+  const sponsors = dialog.querySelector('.credits-sponsors');
+  const pause = dialog.querySelector('.credits-sponsors-pause');
+  pause.addEventListener('click', () => {
+    const paused = sponsors.classList.toggle('is-paused');
+    pause.setAttribute('aria-pressed', String(paused));
+    pause.textContent = paused ? 'Play' : 'Pause';
+  });
   // keys pressed in the pop-up are its own: the page's shortcuts (the Orbit
   // page's Space and arrows, a picture's Newer/Older) don't see them
   dialog.addEventListener('keydown', (e) => e.stopPropagation());
