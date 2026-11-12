@@ -3,7 +3,8 @@
 // what arrived and what's missing: the main camera's missing lines (its packets of the
 // picture) and, for any file, the missing byte ranges, offsets in the file on board. A
 // dropdown beside Filters; on a phone, a sheet. Copy list gives the same as plain text, for
-// a downlink request.
+// a downlink request. A preview opens that picture by itself in a small pop-up over the page,
+// so the list stays where it was.
 import { h, announce, copyText, mono } from './dom.js';
 import { grouped, plural, toDate } from './format.js';
 import { calgaryStamp } from './photo-info.js';
@@ -11,7 +12,7 @@ import { calgaryStamp } from './photo-info.js';
 /** Ranges written out on the page; Copy list has every one the data holds. */
 const SHOWN_RANGES = 4;
 
-/** Every file with something left on board, as {id, title, file, camera, s, last, reason}. */
+/** Every file with something left on board, as {id, title, file, camera, thumb, src, s, last, reason}. */
 export function opsEntries(data) {
   const out = [];
   const add = (rec, extra) => {
@@ -21,7 +22,12 @@ export function opsEntries(data) {
     out.push({ file: rec.file, s, last, ...extra });
   };
   for (const rec of Array.isArray(data?.images) ? data.images : []) {
-    add(rec, { id: rec.id, title: rec.title, camera: rec.camera, thumb: typeof rec.thumb === 'string' ? rec.thumb : null });
+    add(rec, {
+      id: rec.id, title: rec.title, camera: rec.camera,
+      thumb: typeof rec.thumb === 'string' ? rec.thumb : null,
+      src: typeof rec.src === 'string' ? rec.src : null,
+      size: rec.width > 0 && rec.height > 0 ? [rec.width, rec.height] : null,
+    });
   }
   for (const rec of Array.isArray(data?.skipped) ? data.skipped : []) {
     if (typeof rec?.file !== 'string') continue;
@@ -44,7 +50,7 @@ function rangesText(ranges, count, fmt) {
 
 const fileName = (path) => path.split('/').pop();
 
-function entryEl(e, photoHref) {
+function entryEl(e, photoHref, showPicture) {
   const { s } = e;
   const [got, size] = s.bytes;
   const lines = Array.isArray(s.lines) ? s.lines : null;
@@ -63,11 +69,16 @@ function entryEl(e, photoHref) {
     ? (e.last ? `Asked for ${calgaryStamp(e.last)}; nothing came down` : 'Asked for; nothing came down')
     : (e.last ? `Last packet ${calgaryStamp(e.last)}` : '');
   // a tiny preview: the picture as it stands, grey where it's missing; an empty frame where
-  // nothing can be shown yet. Its address waits in data-src until the list opens.
-  const preview = e.thumb
-    ? h('a', { class: 'cat-ops-thumb', href: photoHref(e.id), tabindex: '-1', 'aria-hidden': 'true' },
-      h('img', { alt: '', 'data-src': e.thumb, width: 56, height: 42, decoding: 'async' }))
-    : h('span', { class: 'cat-ops-thumb is-none', 'aria-hidden': 'true' });
+  // nothing can be shown yet. Its address waits in data-src until the list opens. A click
+  // shows the picture larger in a pop-up (createLightbox).
+  let preview;
+  if (e.thumb) {
+    preview = h('button', { type: 'button', class: 'cat-ops-thumb', 'aria-label': `Show ${e.title || e.id} larger` },
+      h('img', { alt: '', 'data-src': e.thumb, width: 56, height: 42, decoding: 'async' }));
+    preview.addEventListener('click', () => showPicture(e, preview));
+  } else {
+    preview = h('span', { class: 'cat-ops-thumb is-none', 'aria-hidden': 'true' });
+  }
   return h('li', { class: 'cat-ops-item' }, preview, h('div', { class: 'cat-ops-text' },
     h('p', { class: 'cat-ops-head-line' }, name, e.camera === 'adcs' ? h('span', { class: 'cat-ops-tag' }, 'Attitude camera') : null),
     h('p', { class: 'cat-ops-file' }, mono(e.file)),
@@ -94,6 +105,62 @@ function asText(entries) {
 }
 
 /**
+ * The pop-up a preview opens: that one picture, small, over the page dimmed behind it.
+ * A click on the dimmed page, the × or Esc puts it away and hands focus back to the preview.
+ */
+function createLightbox(photoHref) {
+  let img = h('img', { class: 'cat-ops-lb-img', alt: '' });
+  const name = h('p', { class: 'cat-ops-lb-name', id: 'cat-ops-lb-name' });
+  const file = h('p', { class: 'cat-ops-lb-file' });
+  const link = h('a', { class: 'cat-ops-lb-link' }, 'Open its page');
+  const closeBtn = h('button', { type: 'button', class: 'cat-ops-lb-close', 'aria-label': 'Close' }, '×');
+  const dialog = h('dialog', { class: 'cat-ops-lb', 'aria-labelledby': 'cat-ops-lb-name' },
+    closeBtn,
+    h('figure', { class: 'cat-ops-lb-figure' }, img,
+      h('figcaption', { class: 'cat-ops-lb-caption' }, name, file, link)));
+  let returnTo = null;
+
+  const close = () => { if (dialog.open) dialog.close(); };
+  closeBtn.addEventListener('click', close);
+  link.addEventListener('click', () => { returnTo = null; close(); }); // the picture's page opens instead
+  // keys pressed in the pop-up are its own: the page's shortcuts don't see them (Esc still
+  // closes it, natively)
+  dialog.addEventListener('keydown', (e) => e.stopPropagation());
+  // a click on the dimmed page is a click on the dialog element itself, outside its box
+  dialog.addEventListener('click', (e) => {
+    if (e.target !== dialog) return;
+    const r = dialog.getBoundingClientRect();
+    if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) close();
+  });
+  dialog.addEventListener('close', () => {
+    if (returnTo?.isConnected) returnTo.focus({ preventScroll: true });
+    returnTo = null;
+  });
+
+  return {
+    dialog,
+    show(e, from) {
+      if (!dialog.isConnected) document.body.append(dialog);
+      returnTo = from;
+      // a new image each time, so the last picture never shows while this one loads; the
+      // thumbnail (loaded already) stands in behind it meanwhile
+      const next = h('img', {
+        class: 'cat-ops-lb-img', alt: '', decoding: 'async', src: e.src || e.thumb, width: e.size?.[0], height: e.size?.[1],
+      });
+      if (e.src && e.thumb) next.style.backgroundImage = `url("${encodeURI(e.thumb)}")`;
+      img.replaceWith(next);
+      img = next;
+      name.textContent = e.title || e.id;
+      file.replaceChildren(mono(e.file));
+      link.href = photoHref(e.id);
+      if (!dialog.open) dialog.showModal();
+      closeBtn.focus({ preventScroll: true });
+    },
+    close,
+  };
+}
+
+/**
  * The dropdown: { toggle, panel, setData(data), close() }. The toggle hides itself while
  * there's nothing on the list. `sheet` is the media query under which it's a sheet.
  */
@@ -113,6 +180,8 @@ export function createOpsPanel({ photoHref, sheet }) {
     type: 'button', class: 'cat-text-btn cat-ops-toggle', 'aria-expanded': 'false', 'aria-controls': 'cat-ops', hidden: true,
   }, 'Mission ops', count);
   let entries = [];
+  const lightbox = createLightbox(photoHref);
+  const showPicture = (e, from) => lightbox.show(e, from);
 
   function place() {
     // a dropdown opens up from the controls, over the picture, as tall as the room above them
@@ -155,7 +224,7 @@ export function createOpsPanel({ photoHref, sheet }) {
   // a click anywhere else puts it away
   document.addEventListener('click', (e) => {
     if (panel.hidden || !(e.target instanceof Node)) return;
-    if (panel.contains(e.target) || toggle.contains(e.target)) return;
+    if (panel.contains(e.target) || toggle.contains(e.target) || lightbox.dialog.contains(e.target)) return;
     setOpen(false, { focus: false });
   });
   window.addEventListener('resize', () => { if (!panel.hidden) place(); });
@@ -171,9 +240,12 @@ export function createOpsPanel({ photoHref, sheet }) {
       intro.textContent = `${plural(entries.length, 'file')} the satellite holds that haven’t all come down`
         + (lines ? `, ${plural(lines, 'line')} of pictures among them` : '')
         + '. Latest first. Lines are the main camera’s packets of a picture; byte ranges are offsets in the file on board.';
-      list.replaceChildren(...entries.map((e) => entryEl(e, photoHref)));
+      list.replaceChildren(...entries.map((e) => entryEl(e, photoHref, showPicture)));
       if (!entries.length) setOpen(false, { focus: false });
     },
-    close() { setOpen(false, { focus: false }); },
+    close() {
+      lightbox.close();
+      setOpen(false, { focus: false });
+    },
   };
 }
