@@ -278,6 +278,9 @@ function statusSentence(p) {
       text = [early, ` Not all of that has come down yet, and ${gap} means `,
         pct ? ['only the top ', nobr(pct), ' can be shown.'] : 'only part of it can be shown.'];
     }
+  } else if (p.status === 'complete' && p.raw?.full_copy && typeof p.raw.status_note === 'string') {
+    // not rebuilt from the packets here: a whole copy the team has (data/full-copies)
+    text = [p.raw.status_note];
   } else if (p.status === 'complete') {
     text = ['The whole picture arrived, but it can’t be checked against the satellite’s own fingerprint of the file.'];
   }
@@ -292,6 +295,7 @@ function checkSentence(p) {
       ? 'Every byte it saved arrived and matches the satellite’s own fingerprint of that shortened file.'
       : 'Every byte arrived and matches the satellite’s own fingerprint of the file.';
   }
+  if (p.raw?.full_copy) return 'A copy from the team, so it can’t be checked against the satellite’s own fingerprint of the file.';
   if (linesMissing(p)) return 'It can’t be checked against the satellite’s fingerprint of the file while part of it is missing.';
   if (p.raw?.sha256_expected) return 'It doesn’t match the satellite’s own fingerprint of the file, so a few bytes outside the picture may be missing.';
   return 'The satellite sent no fingerprint of the file to check it against.';

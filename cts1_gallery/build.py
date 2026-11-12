@@ -48,6 +48,36 @@ class Rendered:
     repaired_header: bool
 
 
+#: Whole pictures the team has from somewhere these packets don't reach (a later downlink, a
+#: ground station's own copy), as <id>.png or <id>.jpg in this folder at the repository's root.
+#: The build shows one in place of what the packets here make, and the file then needs nothing
+#: more from the satellite (no Mission ops entry).
+FULL_COPIES = Path("data") / "full-copies"
+
+
+def _full_copy(site: Path, image_id: str) -> Path | None:
+    folder = site.parent / FULL_COPIES
+    for ext in ("png", "jpg", "jpeg"):
+        path = folder / f"{image_id}.{ext}"
+        if path.is_file():
+            return path
+    return None
+
+
+def _render_full_copy(a: Assembled, path: Path) -> Rendered:
+    with Image.open(path) as im:
+        im.load()
+        rgb = im.convert("RGB")
+    buf = io.BytesIO()
+    rgb.save(buf, "JPEG", quality=92)
+    short = ""
+    if a.kind == "picam" and a.line_total:
+        missing = a.line_total - len(_decode(a).lines)
+        if missing:
+            short = f" The packets here are short of {missing} of its {a.line_total} lines."
+    return Rendered(buf.getvalue(), "jpg", "complete", f"The whole picture, from a full copy the team has.{short}", 1.0, False)
+
+
 def build(paths: dict[str, Path], site: Path, cache_dir: Path, *, log=print, force: bool = False, online: bool = True) -> dict:
     t0 = time.perf_counter()
     result = reassemble(paths["everything_decoded"], paths["reassembled_tcmd_responses"])
@@ -79,12 +109,15 @@ def build(paths: dict[str, Path], site: Path, cache_dir: Path, *, log=print, for
     records, skipped, rendered_count = [], [], 0
     for a in result.files:
         image_id = ids[a.path]
+        full = _full_copy(site, image_id)
         key = _render_key(a, jpeg_template, bmp_template)
+        if full is not None:
+            key += "|full:" + hashlib.sha256(full.read_bytes()).hexdigest()
         cached = manifest.get(image_id)
         if cached and cached.get("key") == key and (site / cached["src"]).exists() and (site / cached["thumb"]).exists():
             info = cached
         else:
-            r = _render(a, jpeg_template, bmp_template)
+            r = _render_full_copy(a, full) if full is not None else _render(a, jpeg_template, bmp_template)
             if r is None:
                 entry = {"file": a.path, "reason": _unreadable_reason(a)}
                 if a.kind != "picam" or a.line_total is not None:  # a failed capture holds no picture to fetch
@@ -144,7 +177,8 @@ def build(paths: dict[str, Path], site: Path, cache_dir: Path, *, log=print, for
                 "capture_basis": basis,
                 "satellite_clock": {"correction_s": cap.correction_s} if cap.on_board_clock and captured_at else None,
                 "downlink": {"first": _iso(a.first_rx), "last": _iso(a.last_rx), "packets": a.packets},
-                "still_on_board": _still_on_board(a),
+                "still_on_board": None if full is not None else _still_on_board(a),
+                "full_copy": full is not None,
                 "position": position,
                 "unnamed": a.unnamed,
             }

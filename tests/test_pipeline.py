@@ -369,6 +369,34 @@ class StillOnBoard(unittest.TestCase):
         self.assertEqual(s["last_try"], "2026-11-01T00:00:00Z")
 
 
+class FullCopies(unittest.TestCase):
+    """A whole copy the team has (data/full-copies/<id>.png) stands in for the packets."""
+
+    def test_a_full_copy_is_found_by_id_and_shown_whole(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            site = Path(tmp) / "site"
+            folder = Path(tmp) / build.FULL_COPIES
+            folder.mkdir(parents=True)
+            self.assertIsNone(build._full_copy(site, "2026-08-04"))
+            Image.new("RGB", (64, 48), (10, 20, 30)).save(folder / "2026-08-04.png")
+            path = build._full_copy(site, "2026-08-04")
+            self.assertEqual(path.name, "2026-08-04.png")
+            self.assertIsNone(build._full_copy(site, "2026-08-05"))
+
+            f = picam_file(fake_jpeg(28 * 20, 2))
+            have = np.ones(len(f), dtype=bool)
+            start = len(picam.HEADER) + 5 * picam.LINE_LEN  # lines 5 and 6 never came down
+            have[start : start + 2 * picam.LINE_LEN] = False
+            t = datetime(2026, 8, 4, tzinfo=UTC)
+            e = Evidence("camera/2026-08-04.img", size=len(f))
+            a = R.Assembled(e.path, "picam", len(f), f, have, 1, 0, t, t, e, line_total=20)
+            r = build._render_full_copy(a, path)
+            self.assertEqual((r.status, r.completeness, r.ext), ("complete", 1.0, "jpg"))
+            self.assertIn("short of 2 of its 20 lines", r.note)
+            with Image.open(io.BytesIO(r.image)) as im:
+                self.assertEqual(im.size, (64, 48))
+
+
 class Ids(unittest.TestCase):
     def test_clashing_slugs_get_distinct_ids_and_the_first_keeps_its_own(self):
         t = datetime(2026, 10, 24, tzinfo=UTC)
