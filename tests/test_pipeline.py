@@ -16,7 +16,7 @@ import numpy as np
 import polars as pl
 from PIL import Image
 
-from cts1_gallery import build, capture, picam
+from cts1_gallery import build, capture, picam, resync
 from cts1_gallery import reassemble as R
 from cts1_gallery.reassemble import Chunks, Evidence, _assemble, _assemble_picam, _picam_groups
 
@@ -337,6 +337,125 @@ class Truncated(unittest.TestCase):
         self.assertIn(f"skips to line {total - 5}", r.note)
         self.assertIn("bit-exact", r.note)
         self.assertAlmostEqual(r.completeness, 16 / 64)  # rows drawn, not bytes
+
+
+def scene(seed: int = 3) -> Image.Image:
+    """Something like a picture of Earth, the camera's size: soft shapes, some finer ones, a little grain."""
+    rng = np.random.default_rng(seed)
+    layers = []
+    for scale in (8, 20, 60):
+        small = (rng.random((480 // scale + 2, 640 // scale + 2, 3)) * 255).astype(np.uint8)
+        layers.append(np.asarray(Image.fromarray(small).resize((640, 480), Image.BICUBIC), dtype=np.float32))
+    a = 0.2 * layers[0] + 0.3 * layers[1] + 0.5 * layers[2] + rng.normal(0, 3, (480, 640, 3))
+    return Image.fromarray(np.clip(a, 0, 255).astype(np.uint8))
+
+
+def camera_jpeg(im: Image.Image) -> bytes:
+    """A JPEG as the main camera makes them: baseline, 4:2:0, no restart markers."""
+    buf = io.BytesIO()
+    im.save(buf, "JPEG", quality=75, subsampling=2)
+    return buf.getvalue()
+
+
+class PastGaps(unittest.TestCase):
+    """resync.py: a main-camera picture read on past its gaps, and never on a guess."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.jpeg = camera_jpeg(scene())
+        cls.lines = -(-len(cls.jpeg) // 28)
+        cls.whole = np.asarray(Image.open(io.BytesIO(cls.jpeg)).convert("RGB")).astype(int)
+
+    def gapped(self, jpeg: bytes, missing) -> tuple[bytes, np.ndarray]:
+        received = np.ones(len(jpeg), dtype=bool)
+        for n in missing:
+            received[n * 28 : (n + 1) * 28] = False
+        cut = np.frombuffer(jpeg, dtype=np.uint8).copy()
+        cut[~received] = 0
+        return cut.tobytes(), received
+
+    def drawn_and_worst(self, image: Image.Image) -> tuple[float, float]:
+        """The share of 16x16 blocks drawn, and how far the worst of them is from the whole picture."""
+        mine = np.asarray(image).astype(int)
+        grey = (np.abs(mine - 128).max(axis=2) == 0).reshape(30, 16, 40, 16).all(axis=(1, 3))
+        off = np.abs(mine - self.whole).mean(axis=2).reshape(30, 16, 40, 16).mean(axis=(1, 3))
+        return float((~grey).mean()), float(off[~grey].max())
+
+    def test_a_whole_picture_decodes_as_pillow_does(self):
+        head = picam.header_length(self.jpeg)
+        dec = resync._Decoder(self.jpeg[:head])
+        self.assertEqual((dec.cols, dec.rows), (40, 30))
+        data, ends_it = resync._unstuff(self.jpeg[head:])
+        self.assertTrue(ends_it)
+        bits = resync._Bits(data)
+        path = resync._chain_from_start(dec, bits)
+        self.assertEqual(len(path), 1200)
+        canvas = resync._Canvas(dec)
+        canvas.put(0, 0, resync._decode_piece(dec, bits, path), [0.0] * 3, np.diff(path + [bits.n]))
+        self.assertLess(np.abs(np.asarray(canvas.image()).astype(int) - self.whole).mean(), 0.5)
+
+    def test_a_piece_that_ends_the_picture_is_counted_back_into_place(self):
+        cut, received = self.gapped(self.jpeg, range(200, 204))
+        trace = []
+        p = resync.piece_together(cut, received, None, trace)
+        self.assertEqual((p.pieces, p.left_out), (1, 0))
+        self.assertEqual(trace[0]["why"], "counted back from the end")
+        drawn, worst = self.drawn_and_worst(p.image)
+        self.assertGreater(drawn, 0.95)  # a plain decoder stops at line 200: a sixth of the picture
+        self.assertAlmostEqual(p.shown, drawn)
+        self.assertLess(worst, 6)  # every block where it belongs, at its own brightness
+
+    def test_long_pieces_are_placed_by_their_row_breaks_and_the_bytes_of_their_gaps(self):
+        missing = [*range(150, 154), *range(400, 404), *range(700, self.lines)]  # two gaps, and the end never came
+        cut, received = self.gapped(self.jpeg, missing)
+        trace = []
+        p = resync.piece_together(cut, received, None, trace)
+        self.assertEqual([t["why"] for t in trace], ["its row breaks and the bytes of its gap"] * 2)
+        drawn, worst = self.drawn_and_worst(p.image)
+        self.assertGreater(drawn, 0.5)
+        self.assertLess(worst, 6)
+
+    def test_a_short_piece_is_placed_by_its_seam(self):
+        missing = [*range(150, 153), *range(160, 163), *range(175, 178), *range(700, self.lines)]
+        cut, received = self.gapped(self.jpeg, missing)
+        trace = []
+        p = resync.piece_together(cut, received, None, trace)
+        self.assertIn("its seam", [t["why"] for t in trace])
+        self.assertLess(self.drawn_and_worst(p.image)[1], 6)
+
+    def test_past_a_gap_longer_than_a_row_nothing_can_take_its_brightness(self):
+        cut, received = self.gapped(self.jpeg, [*range(150, 200), *range(700, self.lines)])
+        trace = []
+        self.assertIsNone(resync.piece_together(cut, received, None, trace))
+        self.assertIsNone(trace[0]["first"])
+
+    def test_nothing_is_placed_without_the_start_of_the_picture(self):
+        first = picam.header_length(self.jpeg) // 28
+        cut, received = self.gapped(self.jpeg, range(first, first + 3))
+        self.assertIsNone(resync.piece_together(cut, received, None))
+
+    def test_nothing_is_placed_in_a_flat_picture(self):
+        flat = camera_jpeg(Image.new("RGB", (640, 480), (90, 110, 140)))
+        cut, received = self.gapped(flat, [30, 31, *range(60, -(-len(flat) // 28))])
+        trace = []
+        self.assertIsNone(resync.piece_together(cut, received, None, trace))
+        self.assertEqual([t["first"] for t in trace], [None])  # every place fits, so none is taken
+
+    def test_the_build_shows_a_picture_past_its_gap_and_says_so(self):
+        f = picam_file(self.jpeg)
+        have = np.ones(len(f), dtype=bool)
+        start = len(picam.HEADER) + 200 * picam.LINE_LEN  # lines 200-203 never came down
+        have[start : start + 4 * picam.LINE_LEN] = False
+        t = datetime(2026, 11, 10, tzinfo=UTC)
+        e = Evidence("camera/x.img", size=len(f))
+        a = R.Assembled(e.path, "picam", len(f), f, have, 1, 0, t, t, e, line_total=self.lines)
+        r = build._render_picam(a, None)
+        self.assertEqual((r.status, r.pieces), ("partial", 1))
+        self.assertIn("line 200 did not", r.note)
+        self.assertIn("the piece that came down past it was decoded on its own", r.note)
+        self.assertGreater(r.completeness, 0.95)
+        with Image.open(io.BytesIO(r.image)) as im:
+            self.assertEqual(im.size, (640, 480))
 
 
 class StillOnBoard(unittest.TestCase):

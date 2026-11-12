@@ -5,23 +5,32 @@ can't find its place again: picam.displayable() shows a picture down to its firs
 line. `piece_together` reads on past each gap, for build.py.
 
 Every line of a capture names itself, so where each received byte sits in the JPEG is
-known. What a gap loses is the decoder's place in the bit stream. After a gap:
+known. What a gap loses is the decoder's place in the bit stream, the place in the
+picture the blocks after it belong, and their level. For each piece after a gap:
 
-1. The step. The picture is a stream of variable-length codes, block after block, with
-   nothing marking where a block starts. Decoding is tried from every bit of the first
-   SEARCH_BYTES bytes after the gap. A wrong start soon meets a code that can't occur, or
-   falls into step with the real stream (such codes resynchronise), so nearly every try
-   ends on the same chain of blocks: that chain is the picture. Its first SKIP_MCUS blocks
-   are left out, in case they're still out of step.
-2. The place. A piece that runs to the end of the picture is placed by counting its blocks
-   back from the end. Any other goes where its top and left edges best continue what is
-   drawn already, and only if that place fits clearly better than every other.
+1. The step. The picture is a stream of variable-length codes, MCU after MCU (16x16
+   pixels: four Y blocks, Cb, Cr), with nothing marking where one starts. Decoding is
+   tried from every bit of the piece's first SEARCH_BYTES bytes. A wrong start soon meets
+   a code that can't occur, or falls into step with the real stream (such codes
+   resynchronise), so the tries end on one chain of MCUs; `_find_step` says from which
+   MCU that chain is surely the picture's, and `_grow_back` adds the MCUs before it that
+   join up with it.
+2. The place. A piece that runs to the end of the picture is placed by counting its MCUs
+   back from the end. A long piece shows its own row breaks, where neighbouring MCUs
+   don't join up: they give the column it starts in, and the bytes of its gap give the
+   row, since a gap weighs about what the MCUs above and below it do. A short piece is
+   placed by its seam, how well its top and left edges continue what is drawn already,
+   and only where the gap is short enough that every place it could be can be tried.
 3. The level. Each block's average (its DC) is coded as a change from the block before, so
    after a gap the level is lost: one unknown each for Y, Cb and Cr, the same over the
    whole piece. It's set so the piece meets the picture above it smoothly.
 
-A piece that touches nothing drawn already can't be placed or levelled, so it isn't shown;
-nor is anything past a gap unless the picture's own start arrived.
+Nothing is drawn on a guess. A piece that touches nothing drawn already can't be levelled
+and isn't shown, nor one whose clues don't single out a place (on a flat or dark frame
+every place fits), nor anything past a gap unless the picture's own start arrived. The
+thresholds below were set on the camera's whole captures with lines knocked out, so that
+no MCU was drawn out of place in some 200,000 placed; they leave pieces out rather than
+risk one.
 """
 
 from __future__ import annotations
@@ -34,15 +43,25 @@ from PIL import Image
 
 from . import picam
 
+# The step
 SEARCH_BYTES = 160  # where after a gap the step is looked for
-SKIP_MCUS = 2  # blocks left out where a piece starts, in case they're still out of step
-MIN_HITS = 4  # tries that must share a block before it counts as in step
-MIN_TRIES = 32  # tries that must end on the chosen chain,
-CLEAR_STEP = 2  # and how many times the tries of the next chain
-MIN_PIECE = 4  # blocks a piece needs to be worth placing
-MIN_PAIRS = 3  # blocks of a piece that must touch the picture drawn already
-CLEAR_FIT = 0.7  # the best place's misfit at most this times the next best's
-MIN_MCU_BYTES = 3  # no block (six 8x8 blocks) codes in fewer: bounds how many a gap can hold
+STEP_WINDOW = 384  # bits at a piece's start sure to hold a real MCU boundary (99% of MCUs are under 300)
+MIN_TRIES = 32  # tries that must end on a chain for it to be considered
+GROW_BACK = 48  # MCUs before the sure ones looked at for more that join up
+JOIN_FLOOR, JOIN_MAX = 4.0, 12.0  # levels: an MCU joins its neighbour within twice the neighbour's own detail, between these
+MIN_PIECE = 4  # MCUs a piece needs to be worth placing
+# The place
+MIN_MCU_BYTES = 3  # no MCU codes in fewer: bounds how many a gap can hold
+GAP_LOW, GAP_HIGH = 0.45, 2.2  # a gap weighs within these times what the MCUs around it say it should,
+SMALL_GAP, SMALL_GAP_HIGH = 12, 4.5  # or up to this many times for a gap of only a few MCUs
+ROW_BREAK = 4.0  # levels a piece's joins must jump by where its rows break,
+NEXT_BREAK = 0.5  # with no other column's joins within this share of that
+ROW_NEAR, ROW_CLEAR = 1.4, 1.9  # its row: the gap within this factor of what's expected there, and beyond that for every other row
+MIN_PAIRS = 4  # MCUs of a piece that must touch the picture drawn already
+CLEAR_FIT = 0.7  # by the seam: the chosen place's misfit at most this times any other's,
+TEXTURE = 1.5  # which must misfit by this many levels (on a flat seam every place fits)
+# The level
+SEAM_FIT = 5.0  # levels: the most a piece may misfit its seam and still take its brightness from it
 
 _ZIGZAG = np.array([
     0, 1, 8, 16, 9, 2, 3, 10, 17, 24, 32, 25, 18, 11, 4, 5, 12, 19, 26, 33, 40, 48, 41, 34,
@@ -238,14 +257,28 @@ def _chain_from_start(dec: _Decoder, bits: _Bits) -> list[int]:
         p = q
 
 
-def _find_step(dec: _Decoder, bits: _Bits) -> list[int] | None:
-    """MCU start bits of the chain most tries from the first SEARCH_BYTES end on, or None."""
+def _find_step(dec: _Decoder, bits: _Bits) -> list[tuple[list[int], int, bool]]:
+    """The ways a piece past a gap may be read: (MCU start bits, the MCU it is in step from,
+    whether that is sure). One sure reading, or the unsure ones, or none.
+
+    Decoding is tried from every bit of the piece's first SEARCH_BYTES bytes. Tries that
+    survive to the end of the piece mostly end on one chain of MCUs; that chain is the
+    picture's from some MCU on, but its first MCUs may be a wrong start still falling into
+    step (the many tries begun inside the MCU the gap cut through can agree with each
+    other before they agree with the picture). A try begun on a real MCU boundary never
+    leaves the real stream, and one lies within any stretch of bits longer than an MCU. So
+    a chain is the real stream from the MCU by which every surviving try begun in the
+    piece's first STEP_WINDOW bits has joined it: that reading is sure.
+
+    A short piece can end before its tries agree. Then each chain enough tries end on is
+    an unsure reading, in step (if it is the real one) from where its own first tries have
+    joined; `piece_together` keeps one only if the picture itself confirms it.
+    """
     starts = range(min(bits.n, SEARCH_BYTES * 8))
     nxt: dict[int, int] = {}
     fate: dict[int, str] = {}
-    hits: dict[int, int] = {}
     for b in starts:
-        p, walked = b, []
+        p = b
         while p not in nxt and p not in fate:
             try:
                 q, _ = dec.mcu(bits, p)
@@ -256,41 +289,70 @@ def _find_step(dec: _Decoder, bits: _Bits) -> list[int] | None:
                 fate[p] = "end"
                 break
             nxt[p] = q
-            walked.append(p)
             p = q
-        for x in walked:
-            hits[x] = hits.get(x, 0) + 1
-        for _ in range(64):  # on down the chain it joined, as far as the step is looked for
-            if p not in nxt:
-                break
-            hits[p] = hits.get(p, 0) + 1
-            p = nxt[p]
+
+    end_of: dict[int, int] = {}
 
     def last(p):
-        while p in nxt:
+        walked = []
+        while p in nxt and p not in end_of:
+            walked.append(p)
             p = nxt[p]
-        return p
+        e = end_of.get(p, p)
+        for x in walked:
+            end_of[x] = e
+        return e
 
     ends: dict[int, list[int]] = {}
+    survivors = []
     for b in starts:
         e = last(b)
         if fate.get(e) == "end":
             ends.setdefault(e, []).append(b)
-    if not ends:
-        return None
-    ranked = sorted(ends.values(), key=len, reverse=True)
-    tries = ranked[0]
-    # tries near a short piece's end join nothing, so the test is against the next chain, not all tries
-    if len(tries) < MIN_TRIES or (len(ranked) > 1 and len(tries) < CLEAR_STEP * len(ranked[1])):
-        return None
-    p = tries[0]
-    while p in nxt and hits.get(p, 0) < MIN_HITS:
-        p = nxt[p]
-    path = []
-    while p in nxt:
-        path.append(p)
-        p = nxt[p]
-    return path[SKIP_MCUS:]
+            survivors.append(b)
+    groups = sorted((g for g in ends.values() if len(g) >= MIN_TRIES), key=len, reverse=True)
+    if not groups:
+        return []
+
+    def chain_from(p):
+        chain = []
+        while p in nxt:
+            chain.append(p)
+            p = nxt[p]
+        return chain
+
+    def joined_by(chain, tries, window):
+        """The MCU of the chain by which each of `tries` begun in the first `window` bits has joined it."""
+        at = {p: i for i, p in enumerate(chain)}
+        latest = 0
+        for b in tries:
+            if b >= window:
+                break
+            p = b
+            while p not in at and p in nxt:
+                p = nxt[p]
+            latest = max(latest, at.get(p, len(chain)))  # never joins: no MCU of the chain is sure
+        return latest
+
+    def in_step_from(chain, tries):
+        i = joined_by(chain, tries, STEP_WINDOW)
+        # the window must be longer than the MCUs hereabouts, or it might hold no real boundary
+        sizes = np.diff(chain[i : i + 34])
+        if len(sizes) and 3 * int(sizes.max()) > 2 * STEP_WINDOW:
+            i = joined_by(chain, tries, 3 * int(sizes.max()) // 2)
+        return i
+
+    chain = chain_from(groups[0][0])
+    i = in_step_from(chain, survivors)
+    if i < len(chain):
+        return [(chain, i, True)]
+    readings = []
+    for g in groups:
+        chain = chain_from(g[0])
+        i = in_step_from(chain, g)
+        if i < len(chain):
+            readings.append((chain, i, False))
+    return readings
 
 
 # -- pixels --------------------------------------------------------------------
@@ -323,9 +385,11 @@ class _Canvas:
     def __init__(self, dec: _Decoder):
         self.dec = dec
         self.owner = np.full(dec.count, -1)
+        self.bits = np.zeros(dec.count)  # how many bits each drawn MCU took
         self.planes = [np.full((dec.rows * 8 * c["v"], dec.cols * 8 * c["h"]), 128.0) for c in dec.comps]
 
-    def put(self, piece: int, first: int, mcus, offsets):
+    def put(self, piece: int, first: int, mcus, offsets, sizes):
+        self.bits[first : first + len(mcus)] = sizes
         for k, planes in enumerate(mcus):
             row, col = divmod(first + k, self.dec.cols)
             for ci, plane in enumerate(planes):
@@ -335,10 +399,13 @@ class _Canvas:
 
     def seams(self, first: int, mcus, ci: int):
         """Pixels either side of where a piece placed at `first` meets the picture drawn
-        already: (drawn, piece) rows above its first row and the column left of its first
-        MCU, for component ci; the piece's pixels without its offset."""
+        already, for component ci: (expected, piece, MCUs touching). `piece` is its top row
+        under each drawn MCU above its first row, and its first MCU's left column beside a
+        drawn MCU, without its offset. `expected` is what the drawn picture leads one to
+        expect there: its own edge pixel, carried on by the mean of the step it was making
+        and the step the piece makes next (a slope across the seam is no misfit)."""
         dec, plane = self.dec, self.planes[ci]
-        drawn, piece = [], []
+        expected, piece = [], []
         for k in range(min(len(mcus), dec.cols)):
             idx = first + k
             above = idx - dec.cols
@@ -347,17 +414,37 @@ class _Canvas:
             m = mcus[k][ci]
             hh, ww = m.shape
             row, col = divmod(idx, dec.cols)
-            drawn.append(plane[row * hh - 1, col * ww : col * ww + ww])
+            at = slice(col * ww, col * ww + ww)
+            edge, before = plane[row * hh - 1, at], plane[row * hh - 2, at]
+            expected.append(edge + ((edge - before) + (m[1] - m[0])) / 2)
             piece.append(m[0] + 128)
         if first % dec.cols and self.owner[first - 1] >= 0:
             m = mcus[0][ci]
             hh, ww = m.shape
             row, col = divmod(first, dec.cols)
-            drawn.append(plane[row * hh : row * hh + hh, col * ww - 1])
+            at = slice(row * hh, row * hh + hh)
+            edge, before = plane[at, col * ww - 1], plane[at, col * ww - 2]
+            expected.append(edge + ((edge - before) + (m[:, 1] - m[:, 0])) / 2)
             piece.append(m[:, 0] + 128)
-        if not drawn:
+        if not expected:
             return None, None, 0
-        return np.concatenate(drawn), np.concatenate(piece), len(drawn)
+        return np.concatenate(expected), np.concatenate(piece), len(expected)
+
+    def gap_bytes(self, start: int, first: int, sizes: np.ndarray, usual: float) -> float:
+        """The bytes MCUs `start` up to `first` would take if a piece of MCU `sizes` (bits)
+        begins at `first`: each as the MCUs right above and below it do (a picture is about
+        as busy from one row to the next), or `usual` bits where neither is known."""
+        cols = self.dec.cols
+        g = np.arange(start, first)
+        up = g - cols
+        up_known = (up >= 0) & (self.owner[np.maximum(up, 0)] >= 0)
+        down = g + cols - first
+        down_known = (down >= 0) & (down < len(sizes))
+        above = self.bits[np.maximum(up, 0)]
+        below = sizes[np.clip(down, 0, len(sizes) - 1)]
+        both = up_known & down_known
+        bits = np.where(both, (above + below) / 2, np.where(up_known, above, np.where(down_known, below, usual)))
+        return float(bits.sum()) / 8
 
     def image(self) -> Image.Image:
         dec = self.dec
@@ -384,16 +471,151 @@ def _misfit(drawn: np.ndarray, piece: np.ndarray) -> tuple[float, float]:
     return float(np.mean(np.abs(d - level))), level
 
 
+def _start_column(dec: _Decoder, mcus) -> int | None:
+    """The column a piece's first MCU sits in, from where its rows break, or None when that
+    doesn't show: a short piece, or one whose row ends join up as well as its insides."""
+    n, cols = len(mcus), dec.cols
+    if n < 2 * cols + 1:  # two row breaks at least, whichever column it starts in
+        return None
+    # How badly each MCU joins the next (Y): its right column against the next one's left,
+    # beyond the step between neighbouring columns just inside the two. A coastline or a
+    # cloud's edge steps as much inside a block as across a join; a row break doesn't.
+    jump = np.empty(n - 1)
+    for k in range(n - 1):
+        left, right = mcus[k][0], mcus[k + 1][0]
+        across = np.mean(np.abs(left[:, -1] - right[:, 0]))
+        inside = max(np.mean(np.abs(left[:, -1] - left[:, -2])), np.mean(np.abs(right[:, 0] - right[:, 1])))
+        jump[k] = across - inside
+    at = np.arange(n - 1)
+    breaks = np.array([np.median(jump[(at + c) % cols == cols - 1]) for c in range(cols)])
+    column = int(np.argmax(breaks))
+    if breaks[column] < ROW_BREAK or float(np.delete(breaks, column).max()) > NEXT_BREAK * breaks[column]:
+        return None
+    return column
+
+
+def _joins(edge: np.ndarray, sure_edge: np.ndarray, sure_inside: np.ndarray) -> bool:
+    """Whether a block's edge continues a sure block's: within twice the step the sure block
+    itself makes one pixel in (a wrongly read block is noise at some other level)."""
+    across = float(np.mean(np.abs(edge - sure_edge)))
+    inside = float(np.mean(np.abs(sure_edge - sure_inside)))
+    return across <= min(JOIN_MAX, max(JOIN_FLOOR, 2 * inside))
+
+
+def _whole(dec: _Decoder, mcu) -> bool:
+    """Whether an MCU's own 8x8 blocks join each other (Y): a wrong start often reads only
+    the first of them wrongly, and the rest in step."""
+    y = mcu[0]
+    for k in range(8, y.shape[1], 8):  # each join between blocks side by side
+        if not (_joins(y[:, k - 1], y[:, k], y[:, k + 1]) and _joins(y[:, k], y[:, k - 1], y[:, k - 2])):
+            return False
+    for k in range(8, y.shape[0], 8):  # and one above the other
+        if not (_joins(y[k - 1], y[k], y[k + 1]) and _joins(y[k], y[k - 1], y[k - 2])):
+            return False
+    return True
+
+
+def _grow_back(dec: _Decoder, mcus: list, sure: int) -> int:
+    """The first MCU of `mcus` to keep. Those from `sure` on are in step; the ones before
+    are either the picture's too (the step had been found, just not yet proven) or a wrong
+    start, which is noise at least in part. Going back one at a time, an MCU is kept while
+    its blocks join each other, and it joins the MCU to its right (unless a row break lies
+    between them) and the one a row below, in brightness and colour, as far as those are
+    there to check."""
+    cols = dec.cols
+    column = _start_column(dec, mcus[sure:])
+    first = sure
+    while first > 0:
+        k = first - 1
+        if not _whole(dec, mcus[k]):
+            break
+        checked = False
+        ends_row = column is not None and (column - (sure - k)) % cols == cols - 1
+        if not ends_row:
+            if not all(_joins(mcus[k][ci][:, -1], mcus[k + 1][ci][:, 0], mcus[k + 1][ci][:, 1]) for ci in range(3)):
+                break
+            checked = True
+        if k + cols < len(mcus):
+            if not all(_joins(mcus[k][ci][-1], mcus[k + cols][ci][0], mcus[k + cols][ci][1]) for ci in range(3)):
+                break
+            checked = True
+        if not checked:
+            break
+        first = k
+    # The last MCU of a wrong start ends where a real one does, and can hold real blocks after
+    # a wrong first one that happens to be smooth: nothing shows it. So the earliest MCU grown
+    # to is left out.
+    return min(first + 1, sure)
+
+
+def _place(dec: _Decoder, canvas: _Canvas, mcus, places, exact: bool, weigh: dict | None = None,
+           seen: dict | None = None) -> tuple[int | None, str]:
+    """The MCU a piece starts at, or None, and how that was decided. `places` are the starts
+    its gap's bytes allow; `exact` when there's one, counted back from the picture's end.
+    `weigh` gives, for every start the gap could have at all, its bytes over the bytes
+    expected of it there."""
+    misfit, loose, touching = {}, {}, {}  # by place: where enough of the piece touches the picture, and where any does
+    for f in places:
+        drawn, piece, pairs = canvas.seams(f, mcus, 0)
+        touching[f] = pairs
+        if pairs:
+            loose[f] = _misfit(drawn, piece)[0]
+        if pairs >= MIN_PAIRS:
+            misfit[f] = loose[f]
+    column = _start_column(dec, mcus)
+    if seen is not None:
+        seen.update(misfit=dict(misfit), column=column, places=list(places), touching=touching)
+    # a rough seam says little about the piece's brightness (and a wrong reading fits nowhere)
+    misfit = {f: m for f, m in misfit.items() if m <= SEAM_FIT}
+    if exact:
+        f = places[0]
+        if f not in misfit:
+            return None, "the end of the picture, but it touches nothing drawn to take its brightness from"
+        if column is not None and f % dec.cols != column:
+            return None, "the end of the picture, but its row breaks disagree"
+        return f, "counted back from the end"
+    if not misfit:
+        return None, "nowhere does it meet the picture drawn closely enough to take its brightness from"
+
+    if column is not None:
+        # Its row breaks give the column; the row is the one that makes its gap weigh what the
+        # MCUs around the gap say it should. A seam can't choose between rows: only the first
+        # of them touches anything drawn, and a piece fits one row too high nearly as well as
+        # where it belongs.
+        off = {f: abs(math.log(w)) for f, w in (weigh or {}).items() if f % dec.cols == column and w > 0}
+        if not off:
+            return None, "its row breaks give a column its gap has no room for"
+        best = min(off, key=off.get)
+        if off[best] > math.log(ROW_NEAR) or any(v < math.log(ROW_CLEAR) for f, v in off.items() if f != best):
+            return None, "its row breaks give a column, but the gap's bytes don't single out a row"
+        if best not in misfit:
+            return None, "its row breaks and its gap give a place, but there it touches nothing drawn to take its brightness from"
+        return best, "its row breaks and the bytes of its gap"
+    # By the seam alone. The place it belongs must be among those tried: one the gap allows
+    # where it would touch nothing could be it, with another fitting well by chance.
+    if any(f not in loose for f in places):
+        return None, "the gap could reach past where it would touch anything drawn"
+    best = min(misfit, key=misfit.get)
+    others = [m for f, m in loose.items() if f != best]
+    if not others:
+        return best, "the one place its gap allows"
+    if min(others) >= TEXTURE and misfit[best] <= CLEAR_FIT * min(others):
+        return best, "its seam"
+    return None, "no place fits clearly better than the rest"
+
+
 # -- the whole -----------------------------------------------------------------
 
 
-def piece_together(jpeg: bytes, received: np.ndarray, template: bytes | None) -> Pieced | None:
+def piece_together(jpeg: bytes, received: np.ndarray, template: bytes | None, trace: list | None = None) -> Pieced | None:
     """The picture with what came down past its gaps placed in it, or None when nothing past
     the first gap can be (or the JPEG isn't the camera's kind).
 
     `jpeg` is the capture's JPEG with zeros where lines are missing (picam.DecodedPicam.jpeg)
     and `received` a bool per byte of it. `template` is the camera's standard header,
-    used where the capture's own didn't all arrive.
+    used where the capture's own didn't all arrive. `trace`, if given, gets one entry per
+    run of bytes past the first gap: where it starts, the bits its MCUs start at, the MCU
+    it was placed at (None if left out), why, and whether its step was sure.
     """
     received = np.asarray(received, dtype=bool).copy()
     head_len = len(template) if template else picam.header_length(jpeg)
@@ -418,48 +640,87 @@ def piece_together(jpeg: bytes, received: np.ndarray, template: bytes | None) ->
     canvas = _Canvas(dec)
     first_data, _ = _unstuff(bytes(jpeg[runs[0][0] : runs[0][1]]))
     first_bits = _Bits(first_data)
-    start = _decode_piece(dec, first_bits, _chain_from_start(dec, first_bits))
+    start_path = _chain_from_start(dec, first_bits)
+    start = _decode_piece(dec, first_bits, start_path)
     if not start:
         return None
-    canvas.put(0, 0, start, [0.0] * 3)
-    end_mcu, end_byte = len(start), runs[0][1]
+    start_end = dec.mcu(first_bits, start_path[-1])[0]
+    canvas.put(0, 0, start, [0.0] * 3, np.diff(start_path + [start_end]))
+    # where the drawn picture ends: its next MCU, and the byte that MCU began at
+    end_mcu, end_byte = len(start), runs[0][1] - (first_bits.n - start_end) / 8
     pieces = left_out = 0
+
+    def note(a, path, first, why, sure=True, seen=None):
+        if trace is not None:
+            trace.append({"byte": a, "bits": list(path), "mcus": len(path), "first": first, "why": why, "sure": sure,
+                          **(seen or {})})
 
     for a, b in runs[1:]:
         data, eoi = _unstuff(bytes(jpeg[a:b]))
         bits = _Bits(data)
-        path = _find_step(dec, bits) if len(data) >= 8 else None
-        if not path or len(path) < MIN_PIECE:
-            left_out += 1
-            continue
-        mcus = _decode_piece(dec, bits, path)
-        if eoi:
-            places = [dec.count - len(mcus)]
-            if places[0] < end_mcu:
-                left_out += 1
+        placed, tried = [], []
+        why = "too short to find its step"
+        for chain, i, sure in _find_step(dec, bits) if len(data) >= 8 else []:
+            if sure:
+                back = max(0, i - GROW_BACK)
+                mcus = _decode_piece(dec, bits, chain[back:])
+                keep = _grow_back(dec, mcus, i - back)
+                mcus, path = mcus[keep:], chain[back + keep :]
+            else:
+                path = chain[i:]
+                mcus = _decode_piece(dec, bits, path)
+            if len(path) < MIN_PIECE:
+                why = "too few blocks"
                 continue
-        else:
-            # no gap holds more MCUs than its bytes could code, nor fewer than none
-            gap = (a + path[0] // 8) - end_byte
-            most = end_mcu + gap // MIN_MCU_BYTES + SKIP_MCUS + 1
-            places = range(end_mcu, min(most, dec.count - len(mcus)) + 1)
-        fits = []
-        for f in places:
-            drawn, piece, pairs = canvas.seams(f, mcus, 0)
-            if pairs >= MIN_PAIRS:
-                fits.append((_misfit(drawn, piece)[0], f))
-        fits.sort()
-        if not fits or (not eoi and len(fits) > 1 and fits[0][0] > CLEAR_FIT * fits[1][0]):
+            # a piece that ends the picture ends on its last bits; then its place is counted back from there
+            path_end = dec.mcu(bits, path[-1])[0]
+            sizes = np.diff(path + [path_end])
+            last = eoi and bits.n - path_end < 8
+            if eoi and not last:
+                why = "it reaches the end of the picture out of step"
+                continue
+            gap_seen, weigh = {}, None
+            if last:
+                places = [dec.count - len(mcus)]
+            else:
+                # The gap's bytes say how many MCUs it holds: none codes in under MIN_MCU_BYTES, and
+                # together they weigh about what the MCUs above and below them do.
+                gap = (a + path[0] / 8) - end_byte
+                most = min(end_mcu + int(gap // MIN_MCU_BYTES) + 1, dec.count - len(mcus))
+                usual = float(sizes[: dec.cols].mean())
+                expected = {f: canvas.gap_bytes(end_mcu, f, sizes, usual) for f in range(end_mcu + 1, most + 1)}
+                weigh = {f: gap / e for f, e in expected.items() if e > 0}
+                places = [f for f, w in weigh.items()
+                          if GAP_LOW <= w <= (GAP_HIGH if f - end_mcu >= SMALL_GAP else SMALL_GAP_HIGH)]
+                gap_seen = {"gap": gap, "expected": expected}
+            seen = {"end_mcu": end_mcu, **gap_seen} if trace is not None else None
+            if last and places[0] < end_mcu:
+                first, why = None, "more blocks than the rest of the picture has room for"
+            else:
+                first, why = _place(dec, canvas, mcus, places, last, weigh, seen)
+            if first is not None:
+                placed.append((first, mcus, path, why, sure, seen, sizes, (bits.n - path_end) / 8))
+            elif trace is not None:
+                tried.append((min(seen.get("misfit", {}).values(), default=1e9), path, why, sure, seen))
+        if len(placed) != 1:
             left_out += 1
+            if placed:
+                note(a, [], None, "more than one reading of it fits")
+            elif tried:  # the reading that came closest
+                _, path, why, sure, seen = min(tried, key=lambda t: t[0])
+                note(a, path, None, why, sure, seen)
+            else:
+                note(a, [], None, why)
             continue
-        first = fits[0][1]
+        first, mcus, path, why, sure, seen, sizes, tail = placed[0]
+        note(a, path, first, why, sure, seen)
         offsets = []
         for ci in range(len(dec.comps)):
             drawn, piece, _ = canvas.seams(first, mcus, ci)
             offsets.append(_misfit(drawn, piece)[1])
         pieces += 1
-        canvas.put(pieces, first, mcus, offsets)
-        end_mcu, end_byte = first + len(mcus), b
+        canvas.put(pieces, first, mcus, offsets, sizes)
+        end_mcu, end_byte = first + len(mcus), b - tail
 
     if not pieces:
         return None

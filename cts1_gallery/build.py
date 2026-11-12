@@ -288,9 +288,11 @@ def _render_picam(a: Assembled, template: bytes | None) -> Rendered | None:
         )
     else:
         status = "partial"
-        note = (
-            f"{len(d.lines)} of {d.line_total} lines arrived, but line {gap} did not, and the camera's "
-            "JPEGs can't be decoded past a gap: the picture is shown down to it."
+        note = f"{len(d.lines)} of {d.line_total} lines arrived, but line {gap} did not"
+        note += (
+            "."
+            if pieced is not None
+            else ", and the camera's JPEGs can't be decoded past a gap: the picture is shown down to it."
         )
     if pieced is not None:
         note += _pieced_note(pieced)
@@ -316,13 +318,16 @@ def _pieced_note(p: resync.Pieced) -> str:
     n = p.pieces
     note = (
         f" A JPEG decoder stops at a gap, so {'the piece' if n == 1 else f'the {n} pieces'} that came down past "
-        f"{'it was' if n == 1 else 'the gaps were'} decoded on {'its' if n == 1 else 'their'} own, placed where "
-        f"{'it continues' if n == 1 else 'each continues'} the picture above and matched to its brightness. "
+        f"{'it was' if n == 1 else 'the gaps were'} decoded on {'its' if n == 1 else 'their'} own, put back where "
+        f"{'it belongs' if n == 1 else 'they belong'} and matched to the brightness of the picture above. "
         "Grey is what never arrived."
     )
     if p.left_out:
         k = p.left_out
-        note += f" {k} smaller piece{'' if k == 1 else 's'} couldn't be placed and {'is' if k == 1 else 'are'} left grey."
+        note += (
+            f" {k} more piece{'' if k == 1 else 's'} came down but couldn't be placed for certain, "
+            f"and {'is' if k == 1 else 'are'} left grey too."
+        )
     return note
 
 
