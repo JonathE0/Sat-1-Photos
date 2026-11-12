@@ -21,7 +21,7 @@ export function opsEntries(data) {
     out.push({ file: rec.file, s, last, ...extra });
   };
   for (const rec of Array.isArray(data?.images) ? data.images : []) {
-    add(rec, { id: rec.id, title: rec.title, camera: rec.camera });
+    add(rec, { id: rec.id, title: rec.title, camera: rec.camera, thumb: typeof rec.thumb === 'string' ? rec.thumb : null });
   }
   for (const rec of Array.isArray(data?.skipped) ? data.skipped : []) {
     if (typeof rec?.file !== 'string') continue;
@@ -62,13 +62,19 @@ function entryEl(e, photoHref) {
   const when = got === 0
     ? (e.last ? `Asked for ${calgaryStamp(e.last)}; nothing came down` : 'Asked for; nothing came down')
     : (e.last ? `Last packet ${calgaryStamp(e.last)}` : '');
-  return h('li', { class: 'cat-ops-item' },
+  // a tiny preview: the picture as it stands, grey where it's missing; an empty frame where
+  // nothing can be shown yet. Its address waits in data-src until the list opens.
+  const preview = e.thumb
+    ? h('a', { class: 'cat-ops-thumb', href: photoHref(e.id), tabindex: '-1', 'aria-hidden': 'true' },
+      h('img', { alt: '', 'data-src': e.thumb, width: 56, height: 42, decoding: 'async' }))
+    : h('span', { class: 'cat-ops-thumb is-none', 'aria-hidden': 'true' });
+  return h('li', { class: 'cat-ops-item' }, preview, h('div', { class: 'cat-ops-text' },
     h('p', { class: 'cat-ops-head-line' }, name, e.camera === 'adcs' ? h('span', { class: 'cat-ops-tag' }, 'Attitude camera') : null),
     h('p', { class: 'cat-ops-file' }, mono(e.file)),
     h('p', null, ...arrived),
     h('p', { class: 'cat-ops-missing' }, missing),
     e.reason ? h('p', { class: 'cat-ops-note' }, `Not shown on the site yet: ${e.reason}.`) : null,
-    when ? h('p', { class: 'cat-ops-note' }, when) : null);
+    when ? h('p', { class: 'cat-ops-note' }, when) : null));
 }
 
 /** The same list as text: one file a line, every range the data holds. */
@@ -122,6 +128,10 @@ export function createOpsPanel({ photoHref, sheet }) {
     panel.hidden = !open;
     toggle.setAttribute('aria-expanded', String(open));
     if (open) {
+      for (const img of list.querySelectorAll('img[data-src]')) {
+        img.src = img.dataset.src;
+        img.removeAttribute('data-src');
+      }
       place();
       if (focus) title.focus({ preventScroll: true });
     } else if (focus && panel.contains(document.activeElement)) {

@@ -1058,3 +1058,13 @@ a.cat-ops-name:hover { text-decoration-color: currentColor; }
 @media (min-width: 600px) and (min-height: 501px) {
   .cat-ops-close { display: none; } /* a click outside, Esc or Mission ops again puts it away */
 }
+/* each entry's tiny preview, left of its words */
+.cat-ops-item { display: grid; grid-template-columns: 56px minmax(0, 1fr); align-items: start; gap: 0 12px; }
+.cat-ops-thumb { display: block; width: 56px; height: 42px; margin-top: 3px; overflow: hidden; background: var(--c-raised); }
+.cat-ops-thumb img { display: block; width: 100%; height: 100%; object-fit: cover; }
+/* nothing to show yet: an empty frame struck through */
+.cat-ops-thumb.is-none {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c-muted) 60%, transparent);
+  background: linear-gradient(to top right, transparent calc(50% - 0.75px),
+    color-mix(in srgb, var(--c-muted) 60%, transparent) 50%, transparent calc(50% + 0.75px));
+}
