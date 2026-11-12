@@ -60,8 +60,11 @@ ROW_NEAR, ROW_CLEAR = 1.4, 1.9  # its row: the gap within this factor of what's 
 MIN_PAIRS = 4  # MCUs of a piece that must touch the picture drawn already
 CLEAR_FIT = 0.7  # by the seam: the chosen place's misfit at most this times any other's,
 TEXTURE = 1.5  # which must misfit by this many levels (on a flat seam every place fits)
-# The level
-SEAM_FIT = 5.0  # levels: the most a piece may misfit its seam and still take its brightness from it
+# The level: a piece takes its brightness from its seam if the seam misfits by no more than
+# this many levels times the square root of the MCUs touching. A long seam averages a busy
+# picture out; one a few MCUs long can sit on a single cloud's edge and be far off.
+LONG_SEAM = 6  # MCUs touching from which a seam counts as long
+SEAM_ROUGH, SHORT_SEAM_ROUGH = 2.5, 1.5
 
 _ZIGZAG = np.array([
     0, 1, 8, 16, 9, 2, 3, 10, 17, 24, 32, 25, 18, 11, 4, 5, 12, 19, 26, 33, 40, 48, 41, 34,
@@ -565,8 +568,10 @@ def _place(dec: _Decoder, canvas: _Canvas, mcus, places, exact: bool, weigh: dic
     column = _start_column(dec, mcus)
     if seen is not None:
         seen.update(misfit=dict(misfit), column=column, places=list(places), touching=touching)
-    # a rough seam says little about the piece's brightness (and a wrong reading fits nowhere)
-    misfit = {f: m for f, m in misfit.items() if m <= SEAM_FIT}
+    # too rough a seam for its length says little about the piece's brightness (and a wrong
+    # reading fits nowhere)
+    misfit = {f: m for f, m in misfit.items()
+              if m <= (SEAM_ROUGH if touching[f] >= LONG_SEAM else SHORT_SEAM_ROUGH) * math.sqrt(touching[f])}
     if exact:
         f = places[0]
         if f not in misfit:
