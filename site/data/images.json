@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-12T09:54:31Z",
+ "generated_at": "2026-11-12T09:59:18Z",
  "satellite": {
   "name": "FrontierSat",
   "norad_id": 69015,
@@ -33,6 +33,90 @@
     "last": "2026-11-12T09:16:34Z",
     "packets": 442
    },
+   "still_on_board": {
+    "bytes": [
+     72218,
+     73778
+    ],
+    "byte_ranges": [
+     [
+      10530,
+      10725
+     ],
+     [
+      18330,
+      18525
+     ],
+     [
+      25935,
+      26130
+     ],
+     [
+      41145,
+      41340
+     ],
+     [
+      48750,
+      48945
+     ],
+     [
+      56160,
+      56355
+     ],
+     [
+      63960,
+      64155
+     ],
+     [
+      71175,
+      71370
+     ]
+    ],
+    "byte_range_count": 8,
+    "last_try": "2026-11-12T09:14:57Z",
+    "last_packet": "2026-11-12T09:16:34Z",
+    "lines": [
+     1071,
+     1100,
+     1100
+    ],
+    "line_ranges": [
+     [
+      157,
+      159
+     ],
+     [
+      273,
+      276
+     ],
+     [
+      386,
+      389
+     ],
+     [
+      613,
+      616
+     ],
+     [
+      727,
+      730
+     ],
+     [
+      838,
+      840
+     ],
+     [
+      954,
+      957
+     ],
+     [
+      1062,
+      1064
+     ]
+    ],
+    "line_range_count": 8
+   },
+   "full_copy": false,
    "position": {
     "lat": 67.2938,
     "lon": -3.7035,
@@ -75,6 +159,34 @@
     "last": "2026-11-11T09:43:10Z",
     "packets": 1142
    },
+   "still_on_board": {
+    "bytes": [
+     58110,
+     63460
+    ],
+    "byte_ranges": [
+     [
+      58110,
+      63460
+     ]
+    ],
+    "byte_range_count": 1,
+    "last_try": "2026-11-11T09:41:11Z",
+    "last_packet": "2026-11-11T09:43:10Z",
+    "lines": [
+     867,
+     946,
+     946
+    ],
+    "line_ranges": [
+     [
+      867,
+      945
+     ]
+    ],
+    "line_range_count": 1
+   },
+   "full_copy": false,
    "position": {
     "lat": 44.8259,
     "lon": 32.0416,
@@ -115,6 +227,74 @@
     "last": "2026-11-11T14:21:46Z",
     "packets": 38
    },
+   "still_on_board": {
+    "bytes": [
+     7218,
+     17163
+    ],
+    "byte_ranges": [
+     [
+      2535,
+      2730
+     ],
+     [
+      3315,
+      3510
+     ],
+     [
+      4095,
+      4290
+     ],
+     [
+      5655,
+      5850
+     ],
+     [
+      7800,
+      16185
+     ],
+     [
+      16380,
+      17160
+     ]
+    ],
+    "byte_range_count": 6,
+    "last_try": null,
+    "last_packet": "2026-11-11T14:21:46Z",
+    "lines": [
+     102,
+     255,
+     255
+    ],
+    "line_ranges": [
+     [
+      37,
+      40
+     ],
+     [
+      49,
+      52
+     ],
+     [
+      60,
+      63
+     ],
+     [
+      84,
+      87
+     ],
+     [
+      116,
+      241
+     ],
+     [
+      244,
+      254
+     ]
+    ],
+    "line_range_count": 6
+   },
+   "full_copy": false,
    "position": null,
    "unnamed": true
   },
@@ -145,6 +325,54 @@
     "last": "2026-11-11T05:21:11Z",
     "packets": 343
    },
+   "still_on_board": {
+    "bytes": [
+     33082,
+     33862
+    ],
+    "byte_ranges": [
+     [
+      21645,
+      21840
+     ],
+     [
+      22230,
+      22425
+     ],
+     [
+      22620,
+      23010
+     ]
+    ],
+    "byte_range_count": 3,
+    "last_try": "2026-11-11T05:19:38Z",
+    "last_packet": "2026-11-11T05:21:11Z",
+    "lines": [
+     485,
+     505,
+     776
+    ],
+    "line_ranges": [
+     [
+      322,
+      325
+     ],
+     [
+      331,
+      334
+     ],
+     [
+      337,
+      343
+     ],
+     [
+      500,
+      504
+     ]
+    ],
+    "line_range_count": 4
+   },
+   "full_copy": false,
    "position": {
     "lat": -46.1156,
     "lon": 142.3402,
@@ -187,6 +415,8 @@
     "last": "2026-11-10T05:41:55Z",
     "packets": 180
    },
+   "still_on_board": null,
+   "full_copy": false,
    "position": {
     "lat": 72.1281,
     "lon": 86.377,
@@ -229,6 +459,82 @@
     "last": "2026-11-08T03:17:00Z",
     "packets": 30
    },
+   "still_on_board": {
+    "bytes": [
+     5617,
+     13612
+    ],
+    "byte_ranges": [
+     [
+      195,
+      390
+     ],
+     [
+      2535,
+      2925
+     ],
+     [
+      4095,
+      6045
+     ],
+     [
+      6630,
+      7215
+     ],
+     [
+      7410,
+      7800
+     ],
+     [
+      8385,
+      10530
+     ],
+     [
+      11115,
+      13455
+     ]
+    ],
+    "byte_range_count": 7,
+    "last_try": "2026-11-08T03:14:41Z",
+    "last_packet": "2026-11-08T03:17:00Z",
+    "lines": [
+     76,
+     202,
+     202
+    ],
+    "line_ranges": [
+     [
+      2,
+      5
+     ],
+     [
+      37,
+      43
+     ],
+     [
+      60,
+      89
+     ],
+     [
+      98,
+      107
+     ],
+     [
+      110,
+      116
+     ],
+     [
+      125,
+      156
+     ],
+     [
+      165,
+      200
+     ]
+    ],
+    "line_range_count": 7
+   },
+   "full_copy": false,
    "position": {
     "lat": 82.3135,
     "lon": 162.4176,
@@ -271,6 +577,8 @@
     "last": "2026-11-10T04:10:48Z",
     "packets": 210
    },
+   "still_on_board": null,
+   "full_copy": false,
    "position": {
     "lat": 80.9554,
     "lon": -143.8545,
@@ -313,6 +621,8 @@
     "last": "2026-11-11T15:58:37Z",
     "packets": 284
    },
+   "still_on_board": null,
+   "full_copy": false,
    "position": {
     "lat": 78.3405,
     "lon": -128.1961,
@@ -355,6 +665,8 @@
     "last": "2026-11-07T22:28:54Z",
     "packets": 336
    },
+   "still_on_board": null,
+   "full_copy": false,
    "position": {
     "lat": 75.214,
     "lon": -118.5241,
@@ -397,6 +709,8 @@
     "last": "2026-11-07T20:57:25Z",
     "packets": 441
    },
+   "still_on_board": null,
+   "full_copy": false,
    "position": {
     "lat": 71.8373,
     "lon": -112.1795,
@@ -439,6 +753,130 @@
     "last": "2026-11-05T02:15:26Z",
     "packets": 34
    },
+   "still_on_board": {
+    "bytes": [
+     5850,
+     25270
+    ],
+    "byte_ranges": [
+     [
+      2145,
+      2925
+     ],
+     [
+      3120,
+      5850
+     ],
+     [
+      6435,
+      6825
+     ],
+     [
+      7215,
+      9555
+     ],
+     [
+      9750,
+      10140
+     ],
+     [
+      10530,
+      10920
+     ],
+     [
+      11700,
+      12480
+     ],
+     [
+      12675,
+      12870
+     ],
+     [
+      13065,
+      13260
+     ],
+     [
+      13455,
+      13845
+     ],
+     [
+      14040,
+      18330
+     ],
+     [
+      18525,
+      23400
+     ],
+     [
+      23595,
+      25270
+     ]
+    ],
+    "byte_range_count": 13,
+    "last_try": "2026-11-05T02:15:16Z",
+    "last_packet": "2026-11-05T02:15:26Z",
+    "lines": [
+     77,
+     376,
+     376
+    ],
+    "line_ranges": [
+     [
+      31,
+      43
+     ],
+     [
+      46,
+      87
+     ],
+     [
+      95,
+      101
+     ],
+     [
+      107,
+      142
+     ],
+     [
+      145,
+      151
+     ],
+     [
+      157,
+      162
+     ],
+     [
+      174,
+      185
+     ],
+     [
+      189,
+      191
+     ],
+     [
+      194,
+      197
+     ],
+     [
+      200,
+      206
+     ],
+     [
+      209,
+      273
+     ],
+     [
+      276,
+      348
+     ],
+     [
+      352,
+      375
+     ]
+    ],
+    "line_range_count": 13
+   },
+   "full_copy": false,
    "position": {
     "lat": -82.2889,
     "lon": -129.9005,
@@ -481,6 +919,8 @@
     "last": "2026-11-01T23:06:18Z",
     "packets": 341
    },
+   "still_on_board": null,
+   "full_copy": false,
    "position": {
     "lat": -55.8657,
     "lon": 89.9887,
@@ -523,6 +963,8 @@
     "last": "2026-11-01T21:30:22Z",
     "packets": 441
    },
+   "still_on_board": null,
+   "full_copy": false,
    "position": {
     "lat": 71.9968,
     "lon": 132.8376,
@@ -565,6 +1007,8 @@
     "last": "2026-11-02T03:51:12Z",
     "packets": 770
    },
+   "still_on_board": null,
+   "full_copy": false,
    "position": {
     "lat": -53.5864,
     "lon": 114.6854,
@@ -607,6 +1051,94 @@
     "last": "2026-11-01T02:05:18Z",
     "packets": 78
    },
+   "still_on_board": {
+    "bytes": [
+     15006,
+     17151
+    ],
+    "byte_ranges": [
+     [
+      6045,
+      6435
+     ],
+     [
+      7215,
+      7410
+     ],
+     [
+      7605,
+      7800
+     ],
+     [
+      7995,
+      8190
+     ],
+     [
+      10335,
+      10530
+     ],
+     [
+      12090,
+      12480
+     ],
+     [
+      13065,
+      13455
+     ],
+     [
+      13650,
+      13845
+     ]
+    ],
+    "byte_range_count": 8,
+    "last_try": "2026-11-01T02:04:46Z",
+    "last_packet": "2026-11-01T02:05:18Z",
+    "lines": [
+     213,
+     255,
+     659
+    ],
+    "line_ranges": [
+     [
+      90,
+      95
+     ],
+     [
+      107,
+      110
+     ],
+     [
+      113,
+      116
+     ],
+     [
+      119,
+      121
+     ],
+     [
+      154,
+      156
+     ],
+     [
+      180,
+      185
+     ],
+     [
+      194,
+      200
+     ],
+     [
+      203,
+      206
+     ],
+     [
+      250,
+      254
+     ]
+    ],
+    "line_range_count": 9
+   },
+   "full_copy": false,
    "position": {
     "lat": -54.5759,
     "lon": 137.8881,
@@ -649,6 +1181,8 @@
     "last": "2026-10-31T23:28:09Z",
     "packets": 383
    },
+   "still_on_board": null,
+   "full_copy": false,
    "position": {
     "lat": 70.6605,
     "lon": 178.2133,
@@ -691,6 +1225,8 @@
     "last": "2026-10-31T21:51:21Z",
     "packets": 312
    },
+   "still_on_board": null,
+   "full_copy": false,
    "position": {
     "lat": -57.8994,
     "lon": 159.8926,
@@ -733,6 +1269,8 @@
     "last": "2026-10-31T10:24:22Z",
     "packets": 246
    },
+   "still_on_board": null,
+   "full_copy": false,
    "position": {
     "lat": -62.9629,
     "lon": -179.5789,
@@ -775,6 +1313,8 @@
     "last": "2026-10-31T08:50:19Z",
     "packets": 118
    },
+   "still_on_board": null,
+   "full_copy": false,
    "position": {
     "lat": -68.3595,
     "lon": -160.6359,
@@ -815,6 +1355,58 @@
     "last": "2026-10-31T10:20:37Z",
     "packets": 114
    },
+   "still_on_board": {
+    "bytes": [
+     21651,
+     23796
+    ],
+    "byte_ranges": [
+     [
+      5850,
+      6045
+     ],
+     [
+      6240,
+      6435
+     ],
+     [
+      16380,
+      16575
+     ],
+     [
+      22230,
+      23790
+     ]
+    ],
+    "byte_range_count": 4,
+    "last_try": null,
+    "last_packet": "2026-10-31T10:20:37Z",
+    "lines": [
+     321,
+     354,
+     354
+    ],
+    "line_ranges": [
+     [
+      87,
+      89
+     ],
+     [
+      93,
+      95
+     ],
+     [
+      244,
+      247
+     ],
+     [
+      331,
+      353
+     ]
+    ],
+    "line_range_count": 4
+   },
+   "full_copy": false,
    "position": null,
    "unnamed": true
   },
@@ -845,6 +1437,8 @@
     "last": "2026-10-30T22:11:41Z",
     "packets": 88
    },
+   "still_on_board": null,
+   "full_copy": false,
    "position": {
     "lat": 29.2736,
     "lon": 114.2607,
@@ -887,6 +1481,8 @@
     "last": "2026-10-30T23:43:33Z",
     "packets": 834
    },
+   "still_on_board": null,
+   "full_copy": false,
    "position": {
     "lat": 21.7008,
     "lon": 115.9636,
@@ -929,6 +1525,8 @@
     "last": "2026-10-30T20:37:08Z",
     "packets": 662
    },
+   "still_on_board": null,
+   "full_copy": false,
    "position": {
     "lat": 14.1121,
     "lon": 117.5467,
@@ -971,6 +1569,8 @@
     "last": "2026-10-26T01:09:17Z",
     "packets": 289
    },
+   "still_on_board": null,
+   "full_copy": false,
    "position": {
     "lat": -81.2548,
     "lon": -156.3836,
@@ -1013,6 +1613,8 @@
     "last": "2026-10-25T00:14:00Z",
     "packets": 1124
    },
+   "still_on_board": null,
+   "full_copy": false,
    "position": {
     "lat": 51.1391,
     "lon": -113.2412,
@@ -1053,6 +1655,8 @@
     "last": "2026-10-24T09:48:39Z",
     "packets": 997
    },
+   "still_on_board": null,
+   "full_copy": false,
    "position": null,
    "unnamed": false
   },
@@ -1083,6 +1687,8 @@
     "last": "2026-10-22T23:26:25Z",
     "packets": 453
    },
+   "still_on_board": null,
+   "full_copy": false,
    "position": {
     "lat": 1.7163,
     "lon": 104.5664,
@@ -1125,6 +1731,8 @@
     "last": "2026-10-22T23:21:20Z",
     "packets": 351
    },
+   "still_on_board": null,
+   "full_copy": false,
    "position": {
     "lat": 40.3653,
     "lon": -72.9065,
@@ -1167,6 +1775,8 @@
     "last": "2026-10-12T01:18:00Z",
     "packets": 296
    },
+   "still_on_board": null,
+   "full_copy": false,
    "position": {
     "lat": 53.7554,
     "lon": -134.6293,
@@ -1207,6 +1817,266 @@
     "last": "2026-10-07T15:43:23Z",
     "packets": 1364
    },
+   "still_on_board": {
+    "bytes": [
+     183857,
+     263222
+    ],
+    "byte_ranges": [
+     [
+      0,
+      975
+     ],
+     [
+      1365,
+      1950
+     ],
+     [
+      2145,
+      7410
+     ],
+     [
+      7800,
+      8970
+     ],
+     [
+      9165,
+      13260
+     ],
+     [
+      13455,
+      14040
+     ],
+     [
+      14235,
+      15405
+     ],
+     [
+      15795,
+      21060
+     ],
+     [
+      21255,
+      21450
+     ],
+     [
+      22035,
+      22230
+     ],
+     [
+      22425,
+      24960
+     ],
+     [
+      27105,
+      27495
+     ],
+     [
+      29445,
+      30225
+     ],
+     [
+      30420,
+      30615
+     ],
+     [
+      30810,
+      32760
+     ],
+     [
+      32955,
+      41730
+     ],
+     [
+      42315,
+      42510
+     ],
+     [
+      43290,
+      43485
+     ],
+     [
+      43680,
+      44460
+     ],
+     [
+      45825,
+      46995
+     ],
+     [
+      60645,
+      60840
+     ],
+     [
+      62790,
+      73125
+     ],
+     [
+      74685,
+      74880
+     ],
+     [
+      77025,
+      77220
+     ],
+     [
+      77610,
+      77805
+     ],
+     [
+      83070,
+      83265
+     ],
+     [
+      90675,
+      90870
+     ],
+     [
+      91260,
+      91455
+     ],
+     [
+      94965,
+      107445
+     ],
+     [
+      108420,
+      108615
+     ],
+     [
+      108810,
+      109200
+     ],
+     [
+      109395,
+      109785
+     ],
+     [
+      110760,
+      110955
+     ],
+     [
+      111345,
+      111735
+     ],
+     [
+      111930,
+      112125
+     ],
+     [
+      131040,
+      138840
+     ],
+     [
+      139815,
+      140205
+     ],
+     [
+      141570,
+      141765
+     ],
+     [
+      141960,
+      142155
+     ],
+     [
+      142350,
+      142545
+     ],
+     [
+      143520,
+      143715
+     ],
+     [
+      145275,
+      145470
+     ],
+     [
+      150735,
+      150930
+     ],
+     [
+      151320,
+      151515
+     ],
+     [
+      152490,
+      152880
+     ],
+     [
+      154635,
+      154830
+     ],
+     [
+      205725,
+      205920
+     ],
+     [
+      213135,
+      213330
+     ],
+     [
+      227565,
+      227760
+     ],
+     [
+      229125,
+      229515
+     ],
+     [
+      234585,
+      235365
+     ],
+     [
+      235950,
+      236925
+     ],
+     [
+      237510,
+      238680
+     ],
+     [
+      239070,
+      239460
+     ],
+     [
+      240045,
+      240435
+     ],
+     [
+      243360,
+      243555
+     ],
+     [
+      251160,
+      251355
+     ],
+     [
+      251940,
+      252135
+     ],
+     [
+      252330,
+      252720
+     ],
+     [
+      258960,
+      259155
+     ],
+     [
+      260520,
+      261300
+     ],
+     [
+      262860,
+      263055
+     ]
+    ],
+    "byte_range_count": 62,
+    "last_try": null,
+    "last_packet": "2026-10-07T15:43:23Z"
+   },
+   "full_copy": false,
    "position": null,
    "unnamed": false
   },
@@ -1235,6 +2105,8 @@
     "last": "2026-10-06T22:46:07Z",
     "packets": 463
    },
+   "still_on_board": null,
+   "full_copy": false,
    "position": null,
    "unnamed": false
   },
@@ -1263,6 +2135,8 @@
     "last": "2026-09-24T00:10:39Z",
     "packets": 780
    },
+   "still_on_board": null,
+   "full_copy": false,
    "position": null,
    "unnamed": false
   },
@@ -1293,6 +2167,8 @@
     "last": "2026-09-20T02:37:24Z",
     "packets": 985
    },
+   "still_on_board": null,
+   "full_copy": false,
    "position": {
     "lat": 68.1575,
     "lon": -108.5944,
@@ -1333,6 +2209,274 @@
     "last": "2026-09-12T04:23:33Z",
     "packets": 1249
    },
+   "still_on_board": {
+    "bytes": [
+     219152,
+     263222
+    ],
+    "byte_ranges": [
+     [
+      0,
+      390
+     ],
+     [
+      13065,
+      13455
+     ],
+     [
+      57525,
+      57915
+     ],
+     [
+      58305,
+      58695
+     ],
+     [
+      59085,
+      59280
+     ],
+     [
+      59865,
+      60255
+     ],
+     [
+      60840,
+      61425
+     ],
+     [
+      65520,
+      66105
+     ],
+     [
+      66300,
+      66690
+     ],
+     [
+      67080,
+      67470
+     ],
+     [
+      67860,
+      68055
+     ],
+     [
+      68640,
+      69030
+     ],
+     [
+      69615,
+      74490
+     ],
+     [
+      76635,
+      78585
+     ],
+     [
+      78780,
+      79170
+     ],
+     [
+      79365,
+      80145
+     ],
+     [
+      80340,
+      80535
+     ],
+     [
+      84825,
+      86385
+     ],
+     [
+      91065,
+      91260
+     ],
+     [
+      91650,
+      91845
+     ],
+     [
+      92430,
+      92820
+     ],
+     [
+      97890,
+      98475
+     ],
+     [
+      98670,
+      99060
+     ],
+     [
+      99450,
+      99840
+     ],
+     [
+      100230,
+      100425
+     ],
+     [
+      118950,
+      119340
+     ],
+     [
+      119730,
+      120120
+     ],
+     [
+      120510,
+      120900
+     ],
+     [
+      121290,
+      121680
+     ],
+     [
+      122265,
+      122460
+     ],
+     [
+      126750,
+      128115
+     ],
+     [
+      128310,
+      128700
+     ],
+     [
+      129090,
+      129480
+     ],
+     [
+      129870,
+      130065
+     ],
+     [
+      130650,
+      130845
+     ],
+     [
+      150345,
+      150540
+     ],
+     [
+      151710,
+      152100
+     ],
+     [
+      152490,
+      152685
+     ],
+     [
+      153270,
+      153465
+     ],
+     [
+      154050,
+      154245
+     ],
+     [
+      165360,
+      165555
+     ],
+     [
+      168870,
+      169065
+     ],
+     [
+      173940,
+      174135
+     ],
+     [
+      174525,
+      174915
+     ],
+     [
+      177450,
+      178815
+     ],
+     [
+      180765,
+      180960
+     ],
+     [
+      182130,
+      182325
+     ],
+     [
+      183105,
+      183300
+     ],
+     [
+      183885,
+      184080
+     ],
+     [
+      185640,
+      186030
+     ],
+     [
+      188955,
+      189345
+     ],
+     [
+      189735,
+      190125
+     ],
+     [
+      190515,
+      190905
+     ],
+     [
+      198315,
+      198510
+     ],
+     [
+      198900,
+      199095
+     ],
+     [
+      200460,
+      200850
+     ],
+     [
+      205140,
+      205725
+     ],
+     [
+      205920,
+      206115
+     ],
+     [
+      206700,
+      207090
+     ],
+     [
+      207480,
+      207870
+     ],
+     [
+      208260,
+      208455
+     ],
+     [
+      208845,
+      209820
+     ],
+     [
+      210015,
+      210990
+     ],
+     [
+      211185,
+      211380
+     ]
+    ],
+    "byte_range_count": 86,
+    "last_try": null,
+    "last_packet": "2026-09-12T04:23:33Z"
+   },
+   "full_copy": false,
    "position": null,
    "unnamed": false
   },
@@ -1361,6 +2505,8 @@
     "last": "2026-09-11T23:35:05Z",
     "packets": 6533
    },
+   "still_on_board": null,
+   "full_copy": false,
    "position": null,
    "unnamed": false
   },
@@ -1391,6 +2537,8 @@
     "last": "2026-09-10T23:56:29Z",
     "packets": 4829
    },
+   "still_on_board": null,
+   "full_copy": false,
    "position": {
     "lat": 2.1275,
     "lon": -125.6439,
@@ -1431,6 +2579,8 @@
     "last": "2026-09-05T18:50:08Z",
     "packets": 118
    },
+   "still_on_board": null,
+   "full_copy": false,
    "position": null,
    "unnamed": false
   },
@@ -1459,6 +2609,8 @@
     "last": "2026-09-05T00:26:10Z",
     "packets": 503
    },
+   "still_on_board": null,
+   "full_copy": false,
    "position": {
     "lat": 48.9644,
     "lon": 30.6187,
@@ -1499,6 +2651,8 @@
     "last": "2026-09-06T10:43:31Z",
     "packets": 1438
    },
+   "still_on_board": null,
+   "full_copy": false,
    "position": null,
    "unnamed": false
   },
@@ -1527,6 +2681,8 @@
     "last": "2026-09-01T23:54:23Z",
     "packets": 1934
    },
+   "still_on_board": null,
+   "full_copy": false,
    "position": null,
    "unnamed": false
   },
@@ -1555,6 +2711,8 @@
     "last": "2026-08-29T21:43:36Z",
     "packets": 1348
    },
+   "still_on_board": null,
+   "full_copy": false,
    "position": null,
    "unnamed": false
   },
@@ -1585,6 +2743,8 @@
     "last": "2026-08-27T22:29:18Z",
     "packets": 2523
    },
+   "still_on_board": null,
+   "full_copy": false,
    "position": {
     "lat": 31.1755,
     "lon": -126.1034,
@@ -1625,6 +2785,8 @@
     "last": "2026-08-27T15:44:22Z",
     "packets": 905
    },
+   "still_on_board": null,
+   "full_copy": false,
    "position": null,
    "unnamed": false
   },
@@ -1653,6 +2815,8 @@
     "last": "2026-08-23T15:33:04Z",
     "packets": 268
    },
+   "still_on_board": null,
+   "full_copy": false,
    "position": null,
    "unnamed": false
   },
@@ -1681,6 +2845,8 @@
     "last": "2026-08-20T10:17:54Z",
     "packets": 1545
    },
+   "still_on_board": null,
+   "full_copy": false,
    "position": null,
    "unnamed": false
   },
@@ -1711,6 +2877,8 @@
     "last": "2026-08-09T10:48:28Z",
     "packets": 88
    },
+   "still_on_board": null,
+   "full_copy": false,
    "position": {
     "lat": 30.9524,
     "lon": -112.9311,
@@ -1751,6 +2919,8 @@
     "last": "2026-08-06T23:16:14Z",
     "packets": 374
    },
+   "still_on_board": null,
+   "full_copy": false,
    "position": null,
    "unnamed": false
   },
@@ -1763,9 +2933,9 @@
    "thumb": "images/thumbs/2026-08-04.jpg",
    "width": 640,
    "height": 480,
-   "status": "partial",
-   "status_note": "571 of 589 lines arrived, but line 110 did not, and the camera's JPEGs can't be decoded past a gap: the picture is shown down to it. The JPEG header was restored from the camera's standard header, which every complete capture shares.",
-   "completeness": 0.1667,
+   "status": "complete",
+   "status_note": "The whole picture, from a full copy the team has. The packets here are short of 18 of its 589 lines.",
+   "completeness": 1.0,
    "dark": false,
    "file_size": 39541,
    "sha256": "2749b4c087a1e4dc68e39d47f87684a542a1673ef74c69e1b59923634cfeb8ad",
@@ -1779,6 +2949,8 @@
     "last": "2026-08-04T20:48:20Z",
     "packets": 313
    },
+   "still_on_board": null,
+   "full_copy": true,
    "position": null,
    "unnamed": false
   },
@@ -1809,6 +2981,8 @@
     "last": "2026-07-23T23:15:34Z",
     "packets": 301
    },
+   "still_on_board": null,
+   "full_copy": false,
    "position": {
     "lat": 43.1003,
     "lon": 22.383,
@@ -1849,6 +3023,8 @@
     "last": "2026-07-21T00:12:00Z",
     "packets": 1028
    },
+   "still_on_board": null,
+   "full_copy": false,
    "position": null,
    "unnamed": false
   },
@@ -1877,6 +3053,8 @@
     "last": "2026-07-13T04:36:45Z",
     "packets": 2203
    },
+   "still_on_board": null,
+   "full_copy": false,
    "position": null,
    "unnamed": false
   },
@@ -1907,6 +3085,8 @@
     "last": "2026-06-29T06:00:40Z",
     "packets": 132
    },
+   "still_on_board": null,
+   "full_copy": false,
    "position": {
     "lat": -46.8121,
     "lon": 71.9992,
@@ -1926,27 +3106,565 @@
  "skipped": [
   {
    "file": "camera/unnamed_2026-11-08_00c9.img",
-   "reason": "the start of the file never arrived, and the picture can't be decoded without it"
+   "reason": "the start of the file never arrived, and the picture can't be decoded without it",
+   "still_on_board": {
+    "bytes": [
+     90,
+     13545
+    ],
+    "byte_ranges": [
+     [
+      0,
+      13455
+     ]
+    ],
+    "byte_range_count": 1,
+    "last_try": null,
+    "last_packet": "2026-11-08T02:44:06Z",
+    "lines": [
+     0,
+     201,
+     201
+    ],
+    "line_ranges": [
+     [
+      0,
+      200
+     ]
+    ],
+    "line_range_count": 1
+   }
   },
   {
    "file": "camera/2026-10-11_095500Z.img",
-   "reason": "the start of the file never arrived, and the picture can't be decoded without it"
+   "reason": "the start of the file never arrived, and the picture can't be decoded without it",
+   "still_on_board": {
+    "bytes": [
+     4252,
+     13612
+    ],
+    "byte_ranges": [
+     [
+      0,
+      1560
+     ],
+     [
+      1755,
+      1950
+     ],
+     [
+      2340,
+      2535
+     ],
+     [
+      2925,
+      3510
+     ],
+     [
+      3705,
+      3900
+     ],
+     [
+      4290,
+      7995
+     ],
+     [
+      8190,
+      8385
+     ],
+     [
+      8580,
+      8970
+     ],
+     [
+      9750,
+      11700
+     ],
+     [
+      11895,
+      12090
+     ],
+     [
+      13260,
+      13455
+     ]
+    ],
+    "byte_range_count": 11,
+    "last_try": null,
+    "last_packet": "2026-10-12T03:19:46Z",
+    "lines": [
+     54,
+     202,
+     202
+    ],
+    "line_ranges": [
+     [
+      0,
+      22
+     ],
+     [
+      26,
+      28
+     ],
+     [
+      34,
+      37
+     ],
+     [
+      43,
+      52
+     ],
+     [
+      55,
+      57
+     ],
+     [
+      63,
+      119
+     ],
+     [
+      122,
+      124
+     ],
+     [
+      127,
+      133
+     ],
+     [
+      145,
+      174
+     ],
+     [
+      177,
+      180
+     ],
+     [
+      197,
+      200
+     ]
+    ],
+    "line_range_count": 11
+   }
   },
   {
    "file": "camera/2026-10-25173606z.img",
-   "reason": "the start of the file never arrived, and the picture can't be decoded without it"
+   "reason": "the start of the file never arrived, and the picture can't be decoded without it",
+   "still_on_board": {
+    "bytes": [
+     7721,
+     23126
+    ],
+    "byte_ranges": [
+     [
+      0,
+      1950
+     ],
+     [
+      3705,
+      16770
+     ],
+     [
+      19305,
+      19695
+     ]
+    ],
+    "byte_range_count": 3,
+    "last_try": null,
+    "last_packet": "2026-10-25T18:47:06Z",
+    "lines": [
+     114,
+     344,
+     344
+    ],
+    "line_ranges": [
+     [
+      0,
+      28
+     ],
+     [
+      55,
+      249
+     ],
+     [
+      288,
+      293
+     ]
+    ],
+    "line_range_count": 3
+   }
   },
   {
    "file": "camera/2026-10-31_134855Z.img",
-   "reason": "not enough of the file arrived to show any of the picture"
+   "reason": "not enough of the file arrived to show any of the picture",
+   "still_on_board": {
+    "bytes": [
+     25032,
+     26007
+    ],
+    "byte_ranges": [
+     [
+      1170,
+      2145
+     ]
+    ],
+    "byte_range_count": 1,
+    "last_try": "2026-11-02T05:20:29Z",
+    "last_packet": "2026-11-02T05:21:03Z",
+    "lines": [
+     372,
+     387,
+     387
+    ],
+    "line_ranges": [
+     [
+      17,
+      31
+     ]
+    ],
+    "line_range_count": 1
+   }
   },
   {
    "file": "camera/unnamed_2026-11-11_034a.img",
-   "reason": "the start of the file never arrived, and the picture can't be decoded without it"
+   "reason": "the start of the file never arrived, and the picture can't be decoded without it",
+   "still_on_board": {
+    "bytes": [
+     23790,
+     56492
+    ],
+    "byte_ranges": [
+     [
+      0,
+      11700
+     ],
+     [
+      11895,
+      12090
+     ],
+     [
+      19305,
+      19500
+     ],
+     [
+      19890,
+      26130
+     ],
+     [
+      26910,
+      37245
+     ],
+     [
+      39195,
+      39390
+     ],
+     [
+      49920,
+      50115
+     ],
+     [
+      50310,
+      50505
+     ],
+     [
+      50700,
+      51675
+     ],
+     [
+      52065,
+      52260
+     ],
+     [
+      52455,
+      52650
+     ],
+     [
+      53040,
+      53235
+     ],
+     [
+      54405,
+      55380
+     ],
+     [
+      55575,
+      56492
+     ]
+    ],
+    "byte_range_count": 14,
+    "last_try": null,
+    "last_packet": "2026-11-11T14:51:13Z",
+    "lines": [
+     343,
+     842,
+     842
+    ],
+    "line_ranges": [
+     [
+      0,
+      174
+     ],
+     [
+      177,
+      180
+     ],
+     [
+      288,
+      290
+     ],
+     [
+      296,
+      389
+     ],
+     [
+      401,
+      555
+     ],
+     [
+      584,
+      587
+     ],
+     [
+      744,
+      747
+     ],
+     [
+      750,
+      753
+     ],
+     [
+      756,
+      770
+     ],
+     [
+      776,
+      779
+     ],
+     [
+      782,
+      785
+     ],
+     [
+      791,
+      794
+     ],
+     [
+      811,
+      826
+     ],
+     [
+      829,
+      841
+     ]
+    ],
+    "line_range_count": 14
+   }
   },
   {
    "file": "camera/2026-10-16.img",
-   "reason": "the start of the file never arrived, and the picture can't be decoded without it"
+   "reason": "the start of the file never arrived, and the picture can't be decoded without it",
+   "still_on_board": {
+    "bytes": [
+     46913,
+     68753
+    ],
+    "byte_ranges": [
+     [
+      0,
+      3900
+     ],
+     [
+      4680,
+      5070
+     ],
+     [
+      5460,
+      6825
+     ],
+     [
+      7800,
+      7995
+     ],
+     [
+      8775,
+      8970
+     ],
+     [
+      9360,
+      9555
+     ],
+     [
+      11310,
+      11505
+     ],
+     [
+      12285,
+      12480
+     ],
+     [
+      12870,
+      13065
+     ],
+     [
+      14235,
+      14430
+     ],
+     [
+      14820,
+      15210
+     ],
+     [
+      16185,
+      16380
+     ],
+     [
+      16575,
+      16770
+     ],
+     [
+      24960,
+      25155
+     ],
+     [
+      27105,
+      27300
+     ],
+     [
+      46800,
+      51480
+     ],
+     [
+      53235,
+      53430
+     ],
+     [
+      53625,
+      53820
+     ],
+     [
+      54405,
+      61425
+     ],
+     [
+      62010,
+      62205
+     ],
+     [
+      62400,
+      62790
+     ],
+     [
+      62985,
+      63765
+     ],
+     [
+      65715,
+      65910
+     ]
+    ],
+    "byte_range_count": 23,
+    "last_try": null,
+    "last_packet": "2026-10-16T03:30:07Z",
+    "lines": [
+     680,
+     1025,
+     1025
+    ],
+    "line_ranges": [
+     [
+      0,
+      57
+     ],
+     [
+      69,
+      75
+     ],
+     [
+      81,
+      101
+     ],
+     [
+      116,
+      119
+     ],
+     [
+      130,
+      133
+     ],
+     [
+      139,
+      142
+     ],
+     [
+      168,
+      171
+     ],
+     [
+      183,
+      185
+     ],
+     [
+      191,
+      194
+     ],
+     [
+      212,
+      215
+     ],
+     [
+      221,
+      226
+     ],
+     [
+      241,
+      244
+     ],
+     [
+      247,
+      249
+     ],
+     [
+      372,
+      375
+     ],
+     [
+      404,
+      407
+     ],
+     [
+      698,
+      768
+     ],
+     [
+      794,
+      797
+     ],
+     [
+      800,
+      802
+     ],
+     [
+      811,
+      916
+     ],
+     [
+      925,
+      928
+     ],
+     [
+      931,
+      936
+     ],
+     [
+      939,
+      951
+     ],
+     [
+      980,
+      983
+     ]
+    ],
+    "line_range_count": 23
+   }
   },
   {
    "file": "camera/2026-07-04_cam.img",
@@ -1978,7 +3696,21 @@
   },
   {
    "file": "camera/2026-10-31_090655Z.img",
-   "reason": "a download was started, but no packets of it were received"
+   "reason": "a download was started, but no packets of it were received",
+   "still_on_board": {
+    "bytes": [
+     0,
+     23796
+    ],
+    "byte_ranges": [
+     [
+      0,
+      23796
+     ]
+    ],
+    "byte_range_count": 1,
+    "last_try": "2026-10-31T10:20:36Z"
+   }
   },
   {
    "file": "camera/2026-10-31_104039Z.img",
