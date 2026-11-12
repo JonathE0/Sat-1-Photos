@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-11T16:29:58Z",
+ "generated_at": "2026-11-12T02:30:05Z",
  "satellite": {
   "name": "FrontierSat",
   "norad_id": 69015,
@@ -34,8 +34,8 @@
     "packets": 1142
    },
    "position": {
-    "lat": 44.8195,
-    "lon": 32.0431,
+    "lat": 44.8259,
+    "lon": 32.0416,
     "alt_km": 505.7,
     "place": "Black Sea",
     "ground_sunlit": true,
@@ -43,7 +43,7 @@
     "satellite_sunlit": true,
     "satellite_light": "sunlit",
     "sun_above_limb_deg": 46.5,
-    "tle_epoch": "2026-11-09T22:45:46Z",
+    "tle_epoch": "2026-11-10T16:06:05Z",
     "basis": "SGP4 from the most recent TLE before capture"
    },
    "unnamed": false
