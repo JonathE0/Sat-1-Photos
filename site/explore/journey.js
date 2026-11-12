@@ -397,6 +397,7 @@ function template(id, siteRoot) {
       </div>
       <div class="jy-card" data-ref="card" hidden></div>
       <div class="jy-sky-label" data-ref="skyLabel" aria-hidden="true"></div>
+      <div class="jy-part-label" data-ref="partLabel" aria-hidden="true"><span class="jy-part-name" data-ref="partName"></span><span class="jy-part-note" data-ref="partNote"></span></div>
 
       <!-- a phone: how far through the story, along the foot of the screen while it plays -->
       <span class="jy-progress" aria-hidden="true"></span>
@@ -2425,7 +2426,11 @@ export function mountJourney(container, options = {}) {
     else openPanel();
   }
 
-  listen(ref.sat, 'click', (e) => satelliteClicked(e.detail));
+  listen(ref.sat, 'click', (e) => {
+    // close up, the button's middle is still the model: a finger's tap there names the part under it
+    if (e.pointerType && e.pointerType !== 'mouse' && e.detail < 2 && namePartAt(e)) return;
+    satelliteClicked(e.detail);
+  });
   listen(ref.close, 'click', () => closePanel({ restoreFocus: true }));
   listen(ref.follow, 'click', () => setFollow(!state.follow));
   listen(ref.followBar, 'click', () => setFollow(!state.follow));
@@ -3032,10 +3037,79 @@ export function mountJourney(container, options = {}) {
     if (!skyTapUntil) skyPointer = null;
   });
 
+  // ---- close up, the satellite's parts say what they are: under a resting mouse, or for a moment after a tap ----
+  /** The satellite's length on screen from which its parts can be told apart, px. */
+  const PART_MIN_PX = 150;
+  /** A mouse is at rest after this long still; what's under it is looked up again this often, as the satellite turns. */
+  const PART_REST_MS = 110;
+  const PART_AGAIN_MS = 600;
+  const PART_TAP_MS = 4000;
+  let satLengthPx = 0;
+  let partPointer = null; // the mouse over the globe: { x, y, clientX, clientY, moved }
+  let partFound = null; // what it rests on: { part, moved, at }
+  let partTap = null; // { part, x, y, until }
+  const partLabelSize = { w: 0, h: 0 };
+
+  function partAt(clientX, clientY) {
+    if (!satellite?.partAt || !satHolder.visible || !interactive() || satLengthPx < PART_MIN_PX * frame.ui) return null;
+    const r = canvas.getBoundingClientRect();
+    pointerNdc.set(((clientX - r.left) / r.width) * 2 - 1, -((clientY - r.top) / r.height) * 2 + 1);
+    raycaster.setFromCamera(pointerNdc, camera);
+    return satellite.partAt(raycaster);
+  }
+
+  /** No hover on touch: a tap on a part names it for a moment. True when there was a part to name. */
+  function namePartAt(e) {
+    const part = partAt(e.clientX, e.clientY);
+    if (!part) return false;
+    partTap = { part, ...stagePoint(e), until: performance.now() + PART_TAP_MS };
+    return true;
+  }
+
+  function partPointerMoved(e) {
+    if (e.pointerType !== 'mouse' || pointers.size) return;
+    partPointer = { ...stagePoint(e), clientX: e.clientX, clientY: e.clientY, moved: performance.now() };
+  }
+  // the satellite's own button lies over its middle: the mouse is still over the model there
+  listen(ref.sat, 'pointermove', partPointerMoved);
+  listen(ref.sat, 'pointerleave', (e) => {
+    if (e.relatedTarget !== canvas) partPointer = null;
+  });
+  listen(canvas, 'pointerleave', (e) => {
+    if (!ref.sat.contains(e.relatedTarget)) partPointer = null;
+  });
+
+  function paintPartLabel() {
+    const now = performance.now();
+    if (partTap && now > partTap.until) partTap = null;
+    let shown = partTap;
+    if (!shown && partPointer && !pointers.size && now - partPointer.moved >= PART_REST_MS) {
+      if (!partFound || partFound.moved !== partPointer.moved || now - partFound.at >= PART_AGAIN_MS) {
+        partFound = { part: partAt(partPointer.clientX, partPointer.clientY), moved: partPointer.moved, at: now };
+      }
+      if (partFound.part) shown = { part: partFound.part, x: partPointer.x, y: partPointer.y };
+    }
+    ref.partLabel.classList.toggle('is-on', Boolean(shown));
+    if (!shown) return;
+    if (ref.partName.textContent !== shown.part.name) {
+      ref.partName.textContent = shown.part.name;
+      ref.partNote.textContent = shown.part.note;
+      partLabelSize.w = ref.partLabel.offsetWidth;
+      partLabelSize.h = ref.partLabel.offsetHeight;
+    }
+    // below and right of the pointer; on its other side where the stage ends
+    const { w, h } = partLabelSize;
+    const x = shown.x + 16 + w <= W - 8 ? shown.x + 16 : Math.max(8, shown.x - 16 - w);
+    const y = shown.y + 20 + h <= H - 8 ? shown.y + 20 : Math.max(8, shown.y - 14 - h);
+    ref.partLabel.style.transform = `translate(${Math.round(x)}px, ${Math.round(y)}px)`;
+  }
+
   const dragClass = (on) => document.documentElement.classList.toggle('jy-dragging', on);
   listen(canvas, 'pointerdown', (e) => {
     skyPointer = null;
     skyTapUntil = 0;
+    partPointer = null;
+    partTap = null;
     if (!interactive()) return;
     if (e.pointerType === 'mouse' && e.button !== 0) return;
     // a drag that starts on the globe never selects the text it passes over
@@ -3050,6 +3124,7 @@ export function mountJourney(container, options = {}) {
   });
   listen(canvas, 'pointermove', (e) => {
     if (e.pointerType === 'mouse' && !pointers.size) skyPointer = stagePoint(e);
+    partPointerMoved(e);
     const p = pointers.get(e.pointerId);
     if (!p || p.pageSwipe) return;
     const dx = e.clientX - p.x;
@@ -3092,7 +3167,10 @@ export function mountJourney(container, options = {}) {
         const now = performance.now();
         const second = now - lastSatTap < 400;
         lastSatTap = second ? 0 : now;
-        satelliteClicked(second ? 2 : 1);
+        // close up, a finger's first tap names the part under it and leaves the panel as it is
+        if (e.pointerType === 'mouse' || second || !namePartAt(e)) satelliteClicked(second ? 2 : 1);
+      } else if (e.pointerType !== 'mouse' && namePartAt(e)) {
+        // an antenna or the magnetometer's arm, out beyond the body
       } else {
         // a click on empty space
         dismissHint();
@@ -3312,6 +3390,7 @@ export function mountJourney(container, options = {}) {
       // SAT_MIN_PX, where it would otherwise be lost
       const distance = Math.max(1e-6, camera.position.distanceTo(sat.S));
       lengthPx = Math.max(SAT_MIN_PX * frame.ui, (frame.satPx * zoomLimits().def) / distance);
+      satLengthPx = satAlpha > 0.5 ? lengthPx : 0;
       const unitsPerPx = (2 * frame.tanHalf * distance) / H;
       const length = satellite.bodyBounds ? satellite.bodyBounds.max.z - satellite.bodyBounds.min.z : 0.34;
       satScale = (lengthPx * unitsPerPx) / Math.max(0.05, length);
@@ -3342,6 +3421,7 @@ export function mountJourney(container, options = {}) {
     overRenderer?.render(overScene, camera);
     updateMarks(theta, satAlpha, lengthPx);
     paintSkyLabel();
+    paintPartLabel();
   }
 
   function startLoop() {

@@ -1408,6 +1408,28 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
 }
 .jy-sky-label.is-on { opacity: 1; }
 
+/* close up, the satellite's parts say what they are, by the pointer (journey.js, paintPartLabel) */
+.jy-part-label {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 6; /* over the panels too: it goes where the pointer is */
+  box-sizing: border-box;
+  width: max-content;
+  max-width: min(280px, calc(100% - 16px));
+  padding: 8px 12px;
+  background: color-mix(in srgb, var(--jy-panel) 94%, transparent);
+  box-shadow: 0 0 0 1px var(--jy-raised);
+  font-size: var(--jy-small);
+  line-height: 1.4;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 150ms var(--jy-ease-out);
+}
+.jy-part-label.is-on { opacity: 1; }
+.jy-part-name { display: block; color: var(--jy-ink); font-weight: 600; letter-spacing: 0.01em; }
+.jy-part-note { display: block; color: var(--jy-muted); }
+
 /* [Stats] [Pictures] [Facts] [Controls], from the story's end. A flat Panel strip across
    the bottom edge; what's open has the Ink line, at the top because the bar is at the bottom. */
 .jy-tabbar { display: none; }

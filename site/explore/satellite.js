@@ -49,6 +49,74 @@ const MATERIAL_PRESETS = [
 const HIGHLIGHT_EMISSIVE = new THREE.Color(0x182030);
 
 /**
+ * What the satellite's parts are, for the page to say by the pointer close up: [the model's
+ * node name, part], first match wins. A part is { name, note }, or a function of where the
+ * pointer's ray met it (metres, in the frame at the top of this file) that gives one. A node
+ * that matches nothing (screws, connectors) is looked through to whatever is behind it.
+ * `shown` adds how the model draws a part that unfolds, by its node's "(deployed)" or "(stowed)".
+ * The words follow the About page's (index.html), so the site says one thing about each.
+ */
+const ATTITUDE_NOTE = 'It helps the satellite tell which way it faces.';
+const PARTS = [
+  [/gnss|gps/i, {
+    name: 'GNSS antenna',
+    note: 'The patch on the back. It listens to navigation satellites, such as GPS, for position and time.',
+  }],
+  [/antenna/i, {
+    name: 'UHF antennas',
+    note: 'Four tapes: the satellite’s radio link with the ground.',
+    shown: { deployed: 'Shown unrolled.', stowed: 'Shown rolled away, as at launch.' },
+  }],
+  [/boom/i, {
+    name: 'Deployable boom',
+    note: 'A new boom of 3D-printed carbon fibre, designed to reach 1 143 mm when it opens.',
+    shown: { stowed: 'Shown rolled up in its mount.' },
+  }],
+  [/magnetometer/i, {
+    name: 'Magnetometer',
+    note: `Measures the Earth’s magnetic field. ${ATTITUDE_NOTE}`,
+    shown: { deployed: 'Shown swung out on its arm.', stowed: 'Shown folded against the body, as at launch.' },
+  }],
+  [/coarse.sun/i, {
+    name: 'Coarse sun sensor',
+    note: 'A small light sensor. Several around the body tell roughly where the Sun is.',
+  }],
+  // the two attitude cameras: the nadir camera on the face that looks down (-Y), and on the face
+  // that looks up the zenith camera, which is the team's fine sun sensor
+  [/sun.sensor/i, (p) => (p.y < 0
+    ? { name: 'Nadir camera', note: `An attitude camera on the side that faces the Earth. ${ATTITUDE_NOTE}` }
+    : {
+      name: 'Fine sun sensor',
+      note: `The zenith camera, on the side that faces away from the Earth. It finds just where the Sun is. ${ATTITUDE_NOTE}`,
+    })],
+  [/camera/i, {
+    name: 'Main camera',
+    note: 'Takes the pictures on this site. It is there mostly to watch the boom unfold.',
+  }],
+  [/switch/i, {
+    name: 'Deployment switch',
+    note: 'Pressed in while the satellite sat in its launcher, and released when it was let go.',
+  }],
+  [/solar/i, {
+    name: 'Solar panels',
+    note: 'Turn sunlight into the satellite’s electricity.',
+  }],
+  [/^structure$|frame|chassis/i, { name: 'Frame', note: 'Aluminium, 10 × 10 × 34 cm: the size called a 3U CubeSat.' }],
+];
+/**
+ * The plasma imager is inside, behind its faceplate: the body's end face at +Z, which looks
+ * the way the satellite flies. It has no mesh of its own (the model is the outside only, and
+ * the face has an opening a ray goes straight through), so a ray that enters the body through
+ * that face names it, unless it meets something standing on the face first.
+ */
+const MPI = {
+  name: 'Mini Plasma Imager (MPI)',
+  note: 'The main instrument. It measures winds of charged gas high above the Earth, '
+    + 'through this face, which looks the way the satellite flies.',
+};
+const MPI_FACE = { inset: 0.007, half: 0.049 }; // metres: the plate lies this far in from the rails' ends, and is this wide either way
+
+/**
  * @param {object}  [opts]
  * @param {string|null} [opts.modelUrl]   GLB/glTF URL; null skips loading and uses the stand-in.
  * @param {number[]} [opts.rotation]      extra Euler XYZ rotation in degrees, applied to the
@@ -177,6 +245,57 @@ function assemble(model, source, error, earthshine) {
   hit.userData.satellite = true;
   scaler.add(hit);
 
+  // The parts a pointer can name (PARTS), and a box around all of them, deployables too: a
+  // ray that misses it meets no part, which saves trying every triangle.
+  const partMeshes = [];
+  const partTmp = new THREE.Vector3();
+  model.traverse((o) => {
+    if (!o.isMesh) return;
+    for (let p = o; p && p !== model.parent; p = p.parent) {
+      const part = PARTS.find(([re]) => re.test(p.name || ''));
+      if (!part) continue;
+      const how = part[1].shown?.[/deployed/i.test(p.name) ? 'deployed' : /stow/i.test(p.name) ? 'stowed' : ''];
+      o.userData.part = how ? { name: part[1].name, note: `${part[1].note} ${how}` } : part[1];
+      partMeshes.push(o);
+      return;
+    }
+  });
+  // The antenna's tapes are a few millimetres wide, a pixel or two on screen: each gets an
+  // unseen box around it to point at, one per side of the body they run out from.
+  const unseen = new THREE.MeshBasicMaterial({ visible: false });
+  const tapeBoxes = [0, 1, 2, 3].map(() => new THREE.Box3());
+  for (const o of [...partMeshes]) {
+    if (!/tape/i.test(o.name) && !/tape/i.test(o.parent?.name || '')) continue;
+    const at = o.geometry.attributes.position;
+    for (let i = 0; i < at.count; i++) {
+      partTmp.fromBufferAttribute(at, i).applyMatrix4(o.matrixWorld);
+      const side = Math.abs(partTmp.x) > Math.abs(partTmp.y) ? (partTmp.x > 0 ? 0 : 1) : (partTmp.y > 0 ? 2 : 3);
+      tapeBoxes[side].expandByPoint(partTmp);
+    }
+    for (const b of tapeBoxes) {
+      if (b.isEmpty()) continue;
+      b.expandByScalar(0.004);
+      const proxy = new THREE.Mesh(new THREE.BoxGeometry(...b.getSize(new THREE.Vector3()).toArray()), unseen);
+      b.getCenter(proxy.position);
+      proxy.name = 'satellite-tape-reach';
+      proxy.userData.part = o.userData.part;
+      scaler.add(proxy);
+      partMeshes.push(proxy);
+      b.makeEmpty();
+    }
+  }
+  const reach = new THREE.Mesh(
+    new THREE.BoxGeometry(...fullBox.getSize(new THREE.Vector3()).addScalar(pad).toArray()),
+    new THREE.MeshBasicMaterial({ visible: false }),
+  );
+  fullBox.getCenter(reach.position);
+  reach.name = 'satellite-reach';
+  scaler.add(reach);
+  const partPoint = new THREE.Vector3();
+  const partRay = new THREE.Ray();
+  const toLocal = new THREE.Matrix4();
+  const isFrame = (part) => typeof part === 'object' && part.name === 'Frame';
+
   // Highlight: thin corner brackets around the bounds plus a slight brighten.
   const outline = makeCornerBrackets(box.clone().expandByScalar(pad * 0.6));
   outline.visible = false;
@@ -208,6 +327,30 @@ function assemble(model, source, error, earthshine) {
         m.emissive.copy(base);
         if (on) m.emissive.add(HIGHLIGHT_EMISSIVE);
       }
+    },
+    /**
+     * The part a ray meets first, as { name, note }, or null. It tries the model's triangles,
+     * so it's for a pointer at rest or a tap, not for every frame.
+     */
+    partAt(raycaster) {
+      if (disposed || !partMeshes.length || !raycaster.intersectObject(reach, false).length) return null;
+      // how far along the ray (metres, in the satellite's frame) it goes in through the +Z face, if it does
+      partRay.copy(raycaster.ray).applyMatrix4(toLocal.copy(scaler.matrixWorld).invert());
+      let face = Infinity;
+      if (source === 'model' && partRay.direction.z < -1e-6) {
+        const t = (box.max.z - MPI_FACE.inset - partRay.origin.z) / partRay.direction.z;
+        partRay.at(t, partPoint);
+        if (t > 0 && Math.abs(partPoint.x) < MPI_FACE.half && Math.abs(partPoint.y) < MPI_FACE.half) face = t;
+      }
+      for (const h of raycaster.intersectObjects(partMeshes, false)) {
+        const part = h.object.userData.part;
+        const at = scaler.worldToLocal(partPoint.copy(h.point));
+        // past the face, or the face's own metal: it's the imager's faceplate
+        if (face < Infinity && (isFrame(part) || at.distanceTo(partRay.origin) > face)) return MPI;
+        const found = typeof part === 'function' ? part(at) : part;
+        if (found) return found;
+      }
+      return face < Infinity ? MPI : null;
     },
     /** 0..1+, e.g. fade to 0 when the ground below is in night. */
     setEarthshine(k) {
