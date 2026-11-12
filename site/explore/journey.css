@@ -1651,25 +1651,26 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
 }
 
 /* ---- a screen nobody touches (setUpTv in journey.js: explore/?tv, which tv/ opens) ----------
-   Read from across a room: about a third bigger at 1920 x 1080, and growing with the screen.
+   Read from across a room, but the satellite comes first: the words a little bigger than on a
+   desktop (about a tenth at 1920 x 1080, growing with the screen), the satellite drawn bigger.
    Once nobody has used the mouse or the keyboard for a few seconds (.jy-tv-idle), the
    controls go and only what's worth reading stays; using either brings them back. They keep
    their places, so nothing moves when they come and go. */
 .jy-root.jy-tv {
-  --jy-statement: clamp(32px, 2.4vw, 72px);
-  --jy-lead: clamp(24px, 1.45vw, 44px);
-  --jy-body: clamp(20px, 1.15vw, 34px);
-  --jy-small: clamp(16px, 0.95vw, 28px);
-  --jy-ctl: 48px;
-  --jy-row: 56px;
+  --jy-statement: clamp(28px, 1.9vw, 60px);
+  --jy-lead: clamp(20px, 1.15vw, 36px);
+  --jy-body: clamp(17px, 0.95vw, 30px);
+  --jy-small: clamp(14px, 0.78vw, 24px);
+  --jy-ctl: 44px;
+  --jy-row: 52px;
 }
 /* nobody can click: the how-to lines go */
 .jy-tv :is(.jy-tip, .jy-hint) { display: none; }
-.jy-tv .jy-qr-code { width: calc(150px * var(--jy-ui, 1)); }
-.jy-tv .cf { max-width: 30em; font-size: var(--jy-body); }
+.jy-tv .jy-qr-code { width: calc(144px * var(--jy-ui, 1)); }
+.jy-tv .cf { max-width: 28em; font-size: var(--jy-body); }
 .jy-tv .cf-meta { font-size: var(--jy-small); }
 @media (min-width: 1360px) and (min-height: 760px) and (min-aspect-ratio: 4/5) {
-  .jy-tv .jy-dock { --vf-band-top: 60px; --vf-band-bottom: 40px; --vf-caption: 132px; }
+  .jy-tv .jy-dock { --vf-band-top: 50px; --vf-band-bottom: 32px; --vf-caption: 104px; }
 }
 .jy-tv.jy-tv-idle,
 .jy-tv.jy-tv-idle * { cursor: none !important; }

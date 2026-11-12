@@ -967,8 +967,8 @@ export function mountJourney(container, options = {}) {
     const sheetUp = narrow && state.panel;
     const sideColumn = narrow && W > H && Boolean(state.panel || state.phoneExtra);
     const textAway = sheetUp || sideColumn;
-    // a TV is read from across a room: pins, the satellite and the QR code a third bigger again
-    frame.ui = opts.tv ? clamp((1.35 * W) / 1920, 1, 2.4) : clamp(1 + ((W - 1920) / 1920) * 0.3, 1, 1.2);
+    // a TV is read from across a room: pins and the QR code a little bigger again
+    frame.ui = opts.tv ? clamp((1.15 * W) / 1920, 1, 2.2) : clamp(1 + ((W - 1920) / 1920) * 0.3, 1, 1.2);
     // landscape: 35 degrees tall; portrait: hold 35 degrees across
     const vfov = W >= H ? 35 : (2 * Math.atan(Math.tan(17.5 * DEG) * (H / W))) / DEG;
     frame.vfov = vfov;
@@ -1036,7 +1036,9 @@ export function mountJourney(container, options = {}) {
     // ... and under the summary bar, with the picture viewfinder below it on big
     // screens (the bar isn't laid out on a phone, nor the viewfinder off big screens)
     const dock = union([boxOf(ref.summary, s), slot]);
-    if (dock) limbY = Math.max(limbY, dock.bottom / H + LIMB_UNDER_TEXT);
+    // (on a TV the viewfinder's black box can stand over the limb: the satellite goes up the
+    // screen, toward the middle, rather than down under the box)
+    if (dock && !(opts.tv && slot)) limbY = Math.max(limbY, dock.bottom / H + LIMB_UNDER_TEXT);
     satY = clamp(Math.max(satY, limbY + 0.12), 0, narrow ? 0.8 : 0.86);
     if (room) satY = Math.max(limbY + SAT_UNDER_LIMB, Math.min(satY, room.satMax));
     if (sheetUp && W <= H) {
@@ -1055,7 +1057,10 @@ export function mountJourney(container, options = {}) {
     // where the satellite goes: then the satellite goes to its left
     const dockFoot = Math.max(dock?.bottom || 0, boxOf(ref.dockMeta, s)?.bottom || 0);
     if (dock && !narrow && satY * H < dockFoot + SAT_CLEAR_PX) {
-      satX = Math.min(satX, Math.max(0.3, (dock.left - 104 * frame.ui) / W));
+      // room for the label to the model's right (updateMarks): its gap, its width, a margin
+      const satLen = (opts.tv ? 72 : 44) * frame.ui;
+      const labelRoom = Math.max(20 * frame.ui, satLen * 0.42) + 12 + (satLabelPx || 80 * frame.ui) + 24;
+      satX = Math.min(satX, Math.max(0.3, (dock.left - labelRoom) / W));
     }
     if (state.panel && (!narrow || W > H) && !slot) {
       // keep the satellite clear of the details on narrower desktops (with the
@@ -1068,7 +1073,8 @@ export function mountJourney(container, options = {}) {
     const delta = Math.atan(2 * Math.max(0.02, satY - limbY) * frame.tanHalf);
     const h = sat.state ? sat.state.altKm / EARTH_RADIUS_KM : 500 / EARTH_RADIUS_KM;
     frame.a = solveChaseHeight(delta, frame.b, h);
-    frame.satPx = (narrow ? 36 : 44) * frame.ui;
+    // on a TV the satellite is what the screen is for: drawn half as big again
+    frame.satPx = (narrow ? 36 : opts.tv ? 72 : 44) * frame.ui;
     frame.pinHalf = narrow ? { x: 14, y: 11 } : { x: 16 * frame.ui + 2, y: 12 * frame.ui + 2 };
     stage.style.setProperty('--jy-ui', String(frame.ui));
     measureText();
