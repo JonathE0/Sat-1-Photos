@@ -1,11 +1,53 @@
 {
- "generated_at": "2026-11-12T02:30:05Z",
+ "generated_at": "2026-11-12T09:54:31Z",
  "satellite": {
   "name": "FrontierSat",
   "norad_id": 69015,
   "launched_at": "2026-05-03T06:59:00Z"
  },
  "images": [
+  {
+   "id": "2026-11-11-094420z",
+   "file": "camera/2026-11-11_094420Z.img",
+   "camera": "picam",
+   "title": "Nov 11, 2026, 09:44 UTC",
+   "src": "images/2026-11-11-094420z.jpg",
+   "thumb": "images/thumbs/2026-11-11-094420z.jpg",
+   "width": 640,
+   "height": 480,
+   "status": "partial",
+   "status_note": "1071 of 1100 lines arrived, but line 157 did not, and the camera's JPEGs can't be decoded past a gap: the picture is shown down to it.",
+   "completeness": 0.1333,
+   "dark": false,
+   "file_size": 73778,
+   "sha256": "104522c7984c56f237e462b1b2f4e81749983637e2f79dc75f751c4009b1add3",
+   "sha256_expected": null,
+   "captured_at": "2026-11-11T09:44:20Z",
+   "capture_date": "2026-11-11",
+   "capture_basis": "filename",
+   "satellite_clock": {
+    "correction_s": 0.0
+   },
+   "downlink": {
+    "first": "2026-11-11T11:10:15Z",
+    "last": "2026-11-12T09:16:34Z",
+    "packets": 442
+   },
+   "position": {
+    "lat": 67.2938,
+    "lon": -3.7035,
+    "alt_km": 510.7,
+    "place": "Arctic Ocean",
+    "ground_sunlit": true,
+    "sun_elevation_deg": 1.7,
+    "satellite_sunlit": true,
+    "satellite_light": "sunlit",
+    "sun_above_limb_deg": 23.8,
+    "tle_epoch": "2026-11-10T16:06:05Z",
+    "basis": "SGP4 from the most recent TLE before capture"
+   },
+   "unnamed": false
+  },
   {
    "id": "2026-11-11-080340z",
    "file": "camera/2026-11-11_080340Z.img",
@@ -1904,10 +1946,6 @@
   },
   {
    "file": "camera/2026-10-16.img",
-   "reason": "the start of the file never arrived, and the picture can't be decoded without it"
-  },
-  {
-   "file": "camera/unnamed_2026-11-11_044c.img",
    "reason": "the start of the file never arrived, and the picture can't be decoded without it"
   },
   {
