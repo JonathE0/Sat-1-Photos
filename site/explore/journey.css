@@ -142,6 +142,30 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
 /* the globe couldn't start: the notice clears the nav laid over this view */
 #journey > .notice { padding-top: calc(var(--jy-nav) + 32px); }
 
+/* While the Earth's maps download (on a phone's connection that can take a while): a quiet
+   line where the Earth will be, after a moment, so a quick load never shows it. */
+.jy-loading {
+  position: absolute;
+  left: 70%;
+  top: 60%;
+  z-index: 1;
+  margin: 0;
+  transform: translate(-50%, -50%);
+  color: var(--jy-muted);
+  font-size: var(--jy-small);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  animation: jy-loading-in 400ms ease 1.2s forwards;
+}
+.jy-loading.is-now { animation: none; opacity: 1; }
+.jy-earth-ready .jy-loading,
+.jy-root[data-mode="still"] .jy-loading { display: none; }
+.jy-root.jy-narrow:not(.jy-wide-phone) .jy-loading { left: 50%; top: 72%; }
+@media (max-width: 599px), (max-aspect-ratio: 4/5) { .jy-shell .jy-loading { left: 50%; top: 72%; } }
+@keyframes jy-loading-in { to { opacity: 1; } }
+
 /* ---- text: one anchor on the left margin ------------------------------------- */
 
 /* Only the words and the buttons take the pointer; the space around and

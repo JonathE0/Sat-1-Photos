@@ -110,6 +110,29 @@ export function createCatalogue(root, {
   let stripKey = '';
   let announceTimer = 0;
   const thumbs = new Map();
+  // Pictures is built while the home page's globe loads, out of sight. Its pictures wait until it
+  // shows (Chrome fetches even lazy images in a hidden view), so a phone gets the Earth first.
+  const onScreen = () => root.offsetParent !== null;
+  const waiting = new Set();
+  function setSrc(image, src) {
+    if (onScreen()) {
+      waiting.delete(image);
+      image.src = src;
+      return;
+    }
+    image.dataset.src = src;
+    waiting.add(image);
+  }
+  function loadWaiting() {
+    if (!waiting.size || !onScreen()) return;
+    for (const image of waiting) {
+      image.src = image.dataset.src;
+      delete image.dataset.src;
+    }
+    waiting.clear();
+  }
+  // when the view appears (show() below says so too, in case the page shows it a moment later)
+  new ResizeObserver(loadWaiting).observe(root);
 
   /* The way back */
 
@@ -817,6 +840,7 @@ export function createCatalogue(root, {
   }
 
   function preload(...list) {
+    if (!onScreen()) return;
     for (const p of list) {
       if (!p) continue;
       const image = new Image();
@@ -828,10 +852,10 @@ export function createCatalogue(root, {
   function updateSingle() {
     const p = byId.get(currentId);
     if (!p) return;
-    if (img.getAttribute('src') !== p.src) {
+    if ((img.getAttribute('src') || img.dataset.src) !== p.src) {
       fail.hidden = true;
       frame.classList.remove('is-failed');
-      img.src = p.src;
+      setSrc(img, p.src);
     }
     img.width = p.width;
     img.height = p.height;
@@ -939,7 +963,6 @@ export function createCatalogue(root, {
       tabindex: '-1',
     },
     h('img', {
-      src: p.thumb,
       alt: '',
       width: p.width,
       height: p.height,
@@ -947,6 +970,7 @@ export function createCatalogue(root, {
       decoding: 'async',
       onerror: () => button.classList.add('is-failed'),
     }));
+    setSrc(button.firstChild, p.thumb);
     button.addEventListener('click', () => onThumb(p.id));
     thumbs.set(p.id, button);
     return button;
@@ -1141,6 +1165,8 @@ export function createCatalogue(root, {
     // show over the pictures, if any.
     show(params, { note = '' } = {}) {
       pageNote = note;
+      loadWaiting();
+      setTimeout(loadWaiting, 0);
       if (!ready) {
         pending = params;
         // The way back works before the pictures arrive.

@@ -78,7 +78,7 @@
           <h1 class="jy-h1"><span class="jy-words">FrontierSat</span></h1>
           <p class="jy-sub"><span class="jy-words">NORAD ID 69015</span></p>
           <p class="jy-sub"><span class="jy-words">Interactive picture visualizer</span></p>
-        </div></div></div></div></div>
+        </div></div><p class="jy-loading" aria-hidden="true">Loading the Earth…</p></div></div></div>
       </div>
     </section>
     <section class="view view-pictures" id="view-pictures" aria-label="Pictures" hidden><p class="notice" role="status">Loading the pictures…</p></section>
@@ -144,6 +144,14 @@
       });
       // the globe's code is only wanted on Explore; there, it needn't wait for app.js to ask for it
       if (view !== 'explore') return;
+      // and what it asks for next (three.js, the Earth, the sky), fetched alongside it rather
+      // than one after another: on a phone's connection that's the wait before the Earth shows
+      ['globe/vendor/three.module.min.js', 'explore/earth.js', 'explore/sky.js'].forEach(function (href) {
+        var link = document.createElement('link');
+        link.rel = 'modulepreload';
+        link.href = href;
+        document.head.appendChild(link);
+      });
       window.CTS1_JOURNEY_LOADING = import('./explore/journey.js');
       window.CTS1_JOURNEY_LOADING.catch(function () { /* app.js says so on the page */ });
     })();

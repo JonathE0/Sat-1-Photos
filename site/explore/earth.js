@@ -21,6 +21,7 @@
  *   scene.add(earth.group);
  *   earth.setTime(gmst(ms), sunPosition(ms), ms);   // site/globe/astro.js; ms places the Moon
  *   // each frame: earth.update(dt, camera); renderer.render(scene, camera);
+ *   await earth.previewReady;                     // the 1024 previews in
  *   await earth.ready;                            // full-resolution maps in
  *
  * Night side: Black Marble city lights (calibrated against FrontierSat's own
@@ -656,9 +657,10 @@ export function createEarth(renderer, { quality = 'high', textureBase } = {}) {
     );
   }
 
+  let previews = null;
   function loadAll() {
     // previews first: small and quick, so the globe looks right within moments
-    const previews = Promise.all([
+    previews = Promise.all([
       load('day', 'earth-day-1024.webp', PREVIEW, 'high'),
       load('clouds', 'earth-clouds-1024.jpg', PREVIEW, 'high'),
       load('lights', 'earth-lights-1024.jpg', PREVIEW, 'high'),
@@ -676,6 +678,8 @@ export function createEarth(renderer, { quality = 'high', textureBase } = {}) {
   }
 
   const ready = loadAll().then(() => undefined);
+  /** The 1024 previews in: the globe already looks right (a phone fades it in here). */
+  const previewReady = previews.then(() => undefined);
 
   // a lost-and-restored WebGL context drops every texture: fetch them again
   const canvas = renderer.domElement;
@@ -744,5 +748,5 @@ export function createEarth(renderer, { quality = 'high', textureBase } = {}) {
     atmosphereMaterial.dispose();
   }
 
-  return { group, setTime, update, ready, dispose };
+  return { group, setTime, update, ready, previewReady, dispose };
 }

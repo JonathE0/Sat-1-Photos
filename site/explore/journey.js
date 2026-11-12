@@ -388,6 +388,7 @@ function template(id, siteRoot) {
       <canvas class="jy-canvas" tabindex="-1" role="application" aria-roledescription="3D globe"
         aria-label="The Earth and FrontierSat. Drag or use the arrow keys to look around; plus and minus zoom."></canvas>
       <canvas class="jy-still" hidden aria-hidden="true"></canvas>
+      <p class="jy-loading" data-ref="loading" aria-hidden="true">Loading the Earth…</p>
       <div class="jy-marks"></div>
       <canvas class="jy-over-canvas" aria-hidden="true"></canvas>
       <div class="jy-marks jy-marks-sat" data-ref="satMarks">
@@ -498,6 +499,8 @@ export function mountJourney(container, options = {}) {
   const still = root.querySelector('.jy-still');
   const marks = root.querySelector('.jy-marks'); // the pins; the satellite's button is in ref.satMarks
   const overCanvas = root.querySelector('.jy-over-canvas');
+  // the page's own line (index.html) has been up a while: this one takes over without a gap
+  if (performance.now() > 1200) root.querySelector('.jy-loading').classList.add('is-now');
 
   const cleanups = [];
   const listen = (target, type, fn, o) => {
@@ -661,8 +664,10 @@ export function mountJourney(container, options = {}) {
       needsFrame = true;
     };
     // fade in once the full maps are uploaded (the upload itself can stall a
-    // frame, so not mid-fade); on a very slow line, show the previews anyway
-    Promise.resolve(earth.ready).then(reveal, reveal);
+    // frame, so not mid-fade); on a very slow line, show the previews anyway. A phone
+    // fades in with the previews: its full maps are another 0.9 MB on a phone's connection,
+    // and its smaller uploads hardly stall
+    Promise.resolve(quality === 'phone' && earth.previewReady ? earth.previewReady : earth.ready).then(reveal, reveal);
     setTimeout(reveal, 10_000);
     loadAurora();
   }
