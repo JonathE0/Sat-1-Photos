@@ -91,7 +91,7 @@ html.credits-open.credits-gutter { scrollbar-gutter: stable; }
   margin: 0;
   padding: 0;
   list-style: none;
-  animation: credits-sponsors 45s linear infinite;
+  animation: credits-sponsors var(--sp-time, 60s) linear infinite; /* --sp-time: credits.js, from how long the row is */
 }
 .credits-sponsors:hover .credits-sponsors-row,
 .credits-sponsors.is-paused .credits-sponsors-row { animation-play-state: paused; }
@@ -106,6 +106,18 @@ html.credits-open.credits-gutter { scrollbar-gutter: stable; }
   background: #fff;
 }
 .credits-sponsor img { display: block; }
+/* a programme or product named under its maker's logo (Fly Your Satellite!, NX) */
+.credits-sponsor-under {
+  display: block;
+  margin-top: 4px;
+  color: #10151B;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+  text-align: center;
+  white-space: nowrap;
+}
 @keyframes credits-sponsors {
   to { transform: translateX(calc(-50% - var(--sp-gap) / 2)); }
 }
