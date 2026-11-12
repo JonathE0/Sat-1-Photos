@@ -21,14 +21,14 @@ from pathlib import Path
 import numpy as np
 from PIL import Image, ImageFile
 
-from . import capture, picam
+from . import capture, picam, resync
 from .orbit import Orbit
 from .places import Places
 from .reassemble import Assembled, reassemble
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
-RENDER_VERSION = 4  # bump to re-render every image after changing how
+RENDER_VERSION = 5  # bump to re-render every image after changing how
 THUMB_WIDTH = 480
 SATELLITE = {
     "name": "FrontierSat",
@@ -46,6 +46,7 @@ class Rendered:
     note: str
     completeness: float
     repaired_header: bool
+    pieces: int = 0  # main camera: pieces past a gap drawn in (resync.py)
 
 
 #: Whole pictures the team has from somewhere these packets don't reach (a later downlink, a
@@ -168,6 +169,7 @@ def build(paths: dict[str, Path], site: Path, cache_dir: Path, *, log=print, for
                 "status": info["status"],
                 "status_note": info["note"],
                 "completeness": info["completeness"],
+                "pieces_past_gaps": info.get("pieces", 0),
                 "dark": info["dark"],
                 "file_size": a.size,
                 "sha256": a.sha256,
@@ -243,6 +245,13 @@ def _render_picam(a: Assembled, template: bytes | None) -> Rendered | None:
         return None
     # The first missing line past the header: a decoder stops there.
     gap = d.first_missing(from_byte=len(template) if template else 0)
+    # What came down past it, decoded on its own and placed (resync.py)
+    pieced = None
+    if gap is not None and not d.complete:
+        received = np.zeros(len(d.jpeg), dtype=bool)
+        for n in d.lines:
+            received[n * picam.DATA_PER_LINE : (n + 1) * picam.DATA_PER_LINE] = True
+        pieced = resync.piece_together(bytes(d.jpeg), received, template)
     if d.truncated_on_board:
         # Checked before `verified`: a shortened file can match the sha256 the
         # satellite sent for it and still hold only part of the picture.
@@ -283,10 +292,16 @@ def _render_picam(a: Assembled, template: bytes | None) -> Rendered | None:
             f"{len(d.lines)} of {d.line_total} lines arrived, but line {gap} did not, and the camera's "
             "JPEGs can't be decoded past a gap: the picture is shown down to it."
         )
+    if pieced is not None:
+        note += _pieced_note(pieced)
     if repaired:
         note += " The JPEG header was restored from the camera's standard header, which every complete capture shares."
     if status in ("verified", "complete"):
         return Rendered(jpeg, "jpg", status, note, 1.0, repaired)
+    if pieced is not None:
+        buf = io.BytesIO()
+        pieced.image.save(buf, "JPEG", quality=92)
+        return Rendered(buf.getvalue(), "jpg", status, note, pieced.shown, repaired, pieced.pieces)
     with Image.open(io.BytesIO(jpeg)) as im:
         im.load()
         rgb = im.convert("RGB")
@@ -295,6 +310,20 @@ def _render_picam(a: Assembled, template: bytes | None) -> Rendered | None:
     # Bytes before the gap aren't the share of the picture drawn (the header
     # and how well each row compresses skew it): count the rows instead.
     return Rendered(buf.getvalue(), "jpg", status, note, _shown_share(rgb), repaired)
+
+
+def _pieced_note(p: resync.Pieced) -> str:
+    n = p.pieces
+    note = (
+        f" A JPEG decoder stops at a gap, so {'the piece' if n == 1 else f'the {n} pieces'} that came down past "
+        f"{'it was' if n == 1 else 'the gaps were'} decoded on {'its' if n == 1 else 'their'} own, placed where "
+        f"{'it continues' if n == 1 else 'each continues'} the picture above and matched to its brightness. "
+        "Grey is what never arrived."
+    )
+    if p.left_out:
+        k = p.left_out
+        note += f" {k} smaller piece{'' if k == 1 else 's'} couldn't be placed and {'is' if k == 1 else 'are'} left grey."
+    return note
 
 
 def _shown_share(im: Image.Image) -> float:
@@ -437,6 +466,7 @@ def _write_image(image_id: str, r: Rendered, images_dir: Path, site: Path) -> di
         "note": r.note,
         "completeness": round(r.completeness, 4),
         "dark": dark,
+        "pieces": r.pieces,
     }
 
 
