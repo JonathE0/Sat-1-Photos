@@ -303,6 +303,7 @@ function rebuild() {
   state.photos = mergeAll(state.data.images, state.annotations);
   state.byId = new Map(state.photos.map((p) => [p.id, p]));
   gallery.setData(state.photos);
+  gallery.setOps(state.data);
   journey?.setPhotos(state.photos);
   updateCounts();
   renderSkipped();

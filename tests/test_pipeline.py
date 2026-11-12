@@ -339,6 +339,36 @@ class Truncated(unittest.TestCase):
         self.assertAlmostEqual(r.completeness, 16 / 64)  # rows drawn, not bytes
 
 
+class StillOnBoard(unittest.TestCase):
+    """The mission ops list on Pictures: what of a file hasn't come down yet."""
+
+    def test_runs(self):
+        self.assertEqual(build._runs([3, 4, 5, 9]), [[3, 5], [9, 9]])
+        self.assertEqual(build._runs([]), [])
+
+    def test_a_whole_file_has_nothing_left_on_board(self):
+        f = picam_file(fake_jpeg(28 * 20, 2))
+        e = Evidence("camera/x.img", size=len(f))
+        t = datetime(2026, 11, 1, tzinfo=UTC)
+        a = R.Assembled(e.path, "picam", len(f), f, np.ones(len(f), dtype=bool), 1, 0, t, t, e, line_total=20)
+        self.assertIsNone(build._still_on_board(a))
+
+    def test_missing_lines_and_bytes_are_listed(self):
+        f = picam_file(fake_jpeg(28 * 20, 3))
+        have = np.ones(len(f), dtype=bool)
+        start = len(picam.HEADER) + 5 * picam.LINE_LEN  # lines 5 and 6 never came down
+        have[start : start + 2 * picam.LINE_LEN] = False
+        t = datetime(2026, 11, 1, tzinfo=UTC)
+        e = Evidence("camera/x.img", size=len(f), starts=[t])
+        a = R.Assembled(e.path, "picam", len(f), f, have, 1, 0, t, t, e, line_total=20)
+        s = build._still_on_board(a)
+        self.assertEqual(s["bytes"], [len(f) - 2 * picam.LINE_LEN, len(f)])
+        self.assertEqual(s["byte_ranges"], [[start, start + 2 * picam.LINE_LEN]])
+        self.assertEqual(s["lines"], [18, 20, 20])
+        self.assertEqual(s["line_ranges"], [[5, 6]])
+        self.assertEqual(s["last_try"], "2026-11-01T00:00:00Z")
+
+
 class Ids(unittest.TestCase):
     def test_clashing_slugs_get_distinct_ids_and_the_first_keeps_its_own(self):
         t = datetime(2026, 10, 24, tzinfo=UTC)

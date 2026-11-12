@@ -27,6 +27,7 @@ import { OPENING_PHOTO_ID } from './opening-photo.js';
 import { CAMERAS, plural } from './format.js';
 import { applyFilters, FILTER_KEYS, readFilters } from './data.js';
 import { createFilterForm, describeFilters } from './filters.js';
+import { createOpsPanel } from './ops.js';
 import {
   isDark, isMostlyMissing, headline, whenShort, nameAndWhen, statusShort, placeName, photoAlt, capitalize,
   whenBlock, statusBlock, creditLine, createPhotoActions, photoFacts, technicalDetails, photoNotes,
@@ -229,10 +230,16 @@ export function createCatalogue(root, {
     type: 'button', class: 'cat-text-btn cat-filter-toggle', 'aria-expanded': 'false', 'aria-controls': 'cat-filters',
   }, 'Filters');
   filterToggle.addEventListener('click', () => setFiltersOpen(filterUi.form.hidden));
-  // Controls on one row (Filters at its right), the count on its own row under it
-  // (on the narrowest phones, beside Filters on the second row).
+  // Mission ops (ops.js): what the satellite still holds of each picture, beside Filters.
+  // Its own media query, as the sheet's below.
+  const ops = createOpsPanel({
+    photoHref: (id) => `#/photo/${encodeURIComponent(id)}`,
+    sheet: window.matchMedia('(max-width: 599px), (max-height: 500px) and (orientation: landscape)'),
+  });
+  // Controls on one row (Mission ops and Filters at its right), the count on its own row under
+  // it (on the narrowest phones, beside Filters on the second row).
   const dockEnd = h('div', { class: 'cat-dock-end' }, count);
-  const dockRow = h('div', { class: 'cat-dock-row' }, modes, steps, filterToggle, dockEnd);
+  const dockRow = h('div', { class: 'cat-dock-row' }, modes, steps, ops.toggle, filterToggle, dockEnd, ops.panel);
 
   const filterUi = createFilterForm({
     onChange: (key, value) => setFilter(key, value),
@@ -1119,6 +1126,11 @@ export function createCatalogue(root, {
   document.addEventListener('keydown', onKey);
 
   return {
+    /** images.json as loaded: its still_on_board, for Mission ops. */
+    setOps(data) {
+      ops.setData(data);
+    },
+
     // New or changed data: rebuilds the menus and the strip.
     setData(nextPhotos) {
       photos = Array.isArray(nextPhotos) ? nextPhotos : [];

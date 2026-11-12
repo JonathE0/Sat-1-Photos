@@ -86,7 +86,10 @@ def build(paths: dict[str, Path], site: Path, cache_dir: Path, *, log=print, for
         else:
             r = _render(a, jpeg_template, bmp_template)
             if r is None:
-                skipped.append({"file": a.path, "reason": _unreadable_reason(a)})
+                entry = {"file": a.path, "reason": _unreadable_reason(a)}
+                if a.kind != "picam" or a.line_total is not None:  # a failed capture holds no picture to fetch
+                    entry["still_on_board"] = _still_on_board(a)
+                skipped.append({k: v for k, v in entry.items() if v is not None})
                 continue
             info = _write_image(image_id, r, images_dir, site)
             info["key"] = key
@@ -141,6 +144,7 @@ def build(paths: dict[str, Path], site: Path, cache_dir: Path, *, log=print, for
                 "capture_basis": basis,
                 "satellite_clock": {"correction_s": cap.correction_s} if cap.on_board_clock and captured_at else None,
                 "downlink": {"first": _iso(a.first_rx), "last": _iso(a.last_rx), "packets": a.packets},
+                "still_on_board": _still_on_board(a),
                 "position": position,
                 "unnamed": a.unnamed,
             }
@@ -150,7 +154,13 @@ def build(paths: dict[str, Path], site: Path, cache_dir: Path, *, log=print, for
     received = {a.path for a in result.files}
     for path, e in sorted(result.evidence.items()):
         if path not in received and (e.starts or e.refused):
-            skipped.append({"file": path, "reason": _never_received_reason(e)})
+            reason = _never_received_reason(e)
+            entry = {"file": path, "reason": reason}
+            if reason.startswith("a download was started") and e.size:
+                # none of it came down, so all of it is still up there
+                entry["still_on_board"] = {"bytes": [0, e.size], "byte_ranges": [[0, e.size]], "byte_range_count": 1,
+                                           "last_try": _iso(max(e.starts)) if e.starts else None}
+            skipped.append(entry)
 
     records.sort(key=_sort_key, reverse=True)
     doc = {
@@ -322,6 +332,45 @@ def _template_size(template: bytes, fallback: int) -> int:
         return fallback
     row = (width * bpp + 31) // 32 * 4
     return len(template) + row * height
+
+
+#: How many missing ranges a file's record lists (the count says how many there are in all).
+MAX_RANGES = 64
+
+
+def _runs(values) -> list[list[int]]:
+    """Sorted integers as [first, last] runs: [3, 4, 5, 9] -> [[3, 5], [9, 9]]."""
+    runs: list[list[int]] = []
+    for v in values:
+        if runs and v == runs[-1][1] + 1:
+            runs[-1][1] = v
+        else:
+            runs.append([v, v])
+    return runs
+
+
+def _still_on_board(a: Assembled) -> dict | None:
+    """What of a file hasn't come down yet, for the mission ops list on Pictures: the bytes
+    received of the file's size, the missing byte ranges ([start, end), offsets in the file on
+    board), and for the main camera the lines (the downlink's packets of the picture) the
+    file holds and the missing ones ([first, last]). None when every byte has arrived."""
+    if not a.size or bool(a.have.all()):
+        return None
+    missing = np.flatnonzero(np.diff(np.concatenate([[0], (~a.have).astype(np.int8), [0]]))).reshape(-1, 2)
+    out = {
+        "bytes": [int(a.have.sum()), int(a.size)],
+        "byte_ranges": missing[:MAX_RANGES].tolist(),
+        "byte_range_count": len(missing),
+        "last_try": _iso(max(a.evidence.starts)) if a.evidence.starts else None,
+        "last_packet": _iso(a.last_rx),
+    }
+    if a.kind == "picam" and a.line_total:
+        d = _decode(a)
+        held = d.stored_lines
+        got = sum(1 for n in d.lines if n < held)
+        gaps = _runs(n for n in range(held) if n not in d.lines)
+        out.update({"lines": [got, held, d.line_total], "line_ranges": gaps[:MAX_RANGES], "line_range_count": len(gaps)})
+    return out
 
 
 def _unreadable_reason(a: Assembled) -> str:
