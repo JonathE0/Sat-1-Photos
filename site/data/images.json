@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-13T03:30:05Z",
+ "generated_at": "2026-11-13T16:29:58Z",
  "satellite": {
   "name": "FrontierSat",
   "norad_id": 69015,
@@ -222,12 +222,12 @@
    "width": 640,
    "height": 480,
    "status": "partial",
-   "status_note": "1071 of 1100 lines arrived, but line 157 did not. A JPEG decoder stops at a gap, so the 8 pieces that came down past the gaps were decoded on their own, put back where they belong and matched to the brightness of the picture above. Grey is what never arrived.",
-   "completeness": 0.9217,
-   "pieces_past_gaps": 8,
+   "status_note": "1086 of 1100 lines arrived, but line 727 did not. A JPEG decoder stops at a gap, so the 4 pieces that came down past the gaps were decoded on their own, put back where they belong and matched to the brightness of the picture above. Grey is what never arrived.",
+   "completeness": 0.9633,
+   "pieces_past_gaps": 4,
    "dark": false,
    "file_size": 73778,
-   "sha256": "104522c7984c56f237e462b1b2f4e81749983637e2f79dc75f751c4009b1add3",
+   "sha256": "8637a1f60b4f621e601d2806823114bece8547ac0e7595d5568d2fa2206b6f1b",
    "sha256_expected": null,
    "captured_at": "2026-11-11T09:44:20Z",
    "capture_date": "2026-11-11",
@@ -237,31 +237,15 @@
    },
    "downlink": {
     "first": "2026-11-11T11:10:15Z",
-    "last": "2026-11-12T09:16:34Z",
-    "packets": 442
+    "last": "2026-11-13T15:16:37Z",
+    "packets": 965
    },
    "still_on_board": {
     "bytes": [
-     72218,
+     72998,
      73778
     ],
     "byte_ranges": [
-     [
-      10530,
-      10725
-     ],
-     [
-      18330,
-      18525
-     ],
-     [
-      25935,
-      26130
-     ],
-     [
-      41145,
-      41340
-     ],
      [
       48750,
       48945
@@ -279,31 +263,15 @@
       71370
      ]
     ],
-    "byte_range_count": 8,
-    "last_try": "2026-11-12T09:14:57Z",
-    "last_packet": "2026-11-12T09:16:34Z",
+    "byte_range_count": 4,
+    "last_try": "2026-11-13T15:15:01Z",
+    "last_packet": "2026-11-13T15:16:37Z",
     "lines": [
-     1071,
+     1086,
      1100,
      1100
     ],
     "line_ranges": [
-     [
-      157,
-      159
-     ],
-     [
-      273,
-      276
-     ],
-     [
-      386,
-      389
-     ],
-     [
-      613,
-      616
-     ],
      [
       727,
       730
@@ -321,7 +289,7 @@
       1064
      ]
     ],
-    "line_range_count": 8
+    "line_range_count": 4
    },
    "full_copy": false,
    "position": {
@@ -502,6 +470,183 @@
      ]
     ],
     "line_range_count": 6
+   },
+   "full_copy": false,
+   "position": null,
+   "unnamed": true
+  },
+  {
+   "id": "unnamed-2026-11-11-034a",
+   "file": "camera/unnamed_2026-11-11_034a.img",
+   "camera": "picam",
+   "title": "Unnamed capture, received Nov 11, 2026",
+   "src": "images/unnamed-2026-11-11-034a.jpg",
+   "thumb": "images/thumbs/unnamed-2026-11-11-034a.jpg",
+   "width": 640,
+   "height": 480,
+   "status": "partial",
+   "status_note": "642 of 842 lines arrived, but line 157 did not. A JPEG decoder stops at a gap, so the 3 pieces that came down past the gaps were decoded on their own, put back where they belong and matched to the brightness of the picture above. Grey is what never arrived. 11 more pieces came down but couldn't be placed for certain, and are left grey too. The JPEG header was restored from the camera's standard header, which every complete capture shares.",
+   "completeness": 0.3875,
+   "pieces_past_gaps": 3,
+   "dark": false,
+   "file_size": 56492,
+   "sha256": "4d5c0dd0291133444e81bb1ac40a69426ccd5fdac4914cce51dc02d204679172",
+   "sha256_expected": null,
+   "captured_at": null,
+   "capture_date": "2026-11-11",
+   "capture_basis": "date only",
+   "satellite_clock": null,
+   "downlink": {
+    "first": "2026-11-11T14:49:29Z",
+    "last": "2026-11-13T15:49:25Z",
+    "packets": 250
+   },
+   "still_on_board": {
+    "bytes": [
+     43875,
+     56492
+    ],
+    "byte_ranges": [
+     [
+      0,
+      195
+     ],
+     [
+      10530,
+      10725
+     ],
+     [
+      19305,
+      19500
+     ],
+     [
+      22035,
+      22425
+     ],
+     [
+      26910,
+      27300
+     ],
+     [
+      27495,
+      27690
+     ],
+     [
+      30225,
+      37245
+     ],
+     [
+      39195,
+      39390
+     ],
+     [
+      49920,
+      50115
+     ],
+     [
+      50310,
+      50505
+     ],
+     [
+      50700,
+      51675
+     ],
+     [
+      52065,
+      52260
+     ],
+     [
+      52455,
+      52650
+     ],
+     [
+      53040,
+      53235
+     ],
+     [
+      54405,
+      55380
+     ],
+     [
+      55575,
+      56492
+     ]
+    ],
+    "byte_range_count": 16,
+    "last_try": null,
+    "last_packet": "2026-11-13T15:49:25Z",
+    "lines": [
+     642,
+     842,
+     842
+    ],
+    "line_ranges": [
+     [
+      0,
+      2
+     ],
+     [
+      157,
+      159
+     ],
+     [
+      288,
+      290
+     ],
+     [
+      328,
+      334
+     ],
+     [
+      401,
+      407
+     ],
+     [
+      410,
+      412
+     ],
+     [
+      450,
+      555
+     ],
+     [
+      584,
+      587
+     ],
+     [
+      744,
+      747
+     ],
+     [
+      750,
+      753
+     ],
+     [
+      756,
+      770
+     ],
+     [
+      776,
+      779
+     ],
+     [
+      782,
+      785
+     ],
+     [
+      791,
+      794
+     ],
+     [
+      811,
+      826
+     ],
+     [
+      829,
+      841
+     ]
+    ],
+    "line_range_count": 16
    },
    "full_copy": false,
    "position": null,
@@ -3580,141 +3725,6 @@
      ]
     ],
     "line_range_count": 1
-   }
-  },
-  {
-   "file": "camera/unnamed_2026-11-11_034a.img",
-   "reason": "the start of the file never arrived, and the picture can't be decoded without it",
-   "still_on_board": {
-    "bytes": [
-     23790,
-     56492
-    ],
-    "byte_ranges": [
-     [
-      0,
-      11700
-     ],
-     [
-      11895,
-      12090
-     ],
-     [
-      19305,
-      19500
-     ],
-     [
-      19890,
-      26130
-     ],
-     [
-      26910,
-      37245
-     ],
-     [
-      39195,
-      39390
-     ],
-     [
-      49920,
-      50115
-     ],
-     [
-      50310,
-      50505
-     ],
-     [
-      50700,
-      51675
-     ],
-     [
-      52065,
-      52260
-     ],
-     [
-      52455,
-      52650
-     ],
-     [
-      53040,
-      53235
-     ],
-     [
-      54405,
-      55380
-     ],
-     [
-      55575,
-      56492
-     ]
-    ],
-    "byte_range_count": 14,
-    "last_try": null,
-    "last_packet": "2026-11-11T14:51:13Z",
-    "lines": [
-     343,
-     842,
-     842
-    ],
-    "line_ranges": [
-     [
-      0,
-      174
-     ],
-     [
-      177,
-      180
-     ],
-     [
-      288,
-      290
-     ],
-     [
-      296,
-      389
-     ],
-     [
-      401,
-      555
-     ],
-     [
-      584,
-      587
-     ],
-     [
-      744,
-      747
-     ],
-     [
-      750,
-      753
-     ],
-     [
-      756,
-      770
-     ],
-     [
-      776,
-      779
-     ],
-     [
-      782,
-      785
-     ],
-     [
-      791,
-      794
-     ],
-     [
-      811,
-      826
-     ],
-     [
-      829,
-      841
-     ]
-    ],
-    "line_range_count": 14
    }
   },
   {
