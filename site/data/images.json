@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-13T19:29:49Z",
+ "generated_at": "2026-11-13T21:29:50Z",
  "satellite": {
   "name": "FrontierSat",
   "norad_id": 69015,
@@ -127,16 +127,16 @@
    },
    "full_copy": false,
    "position": {
-    "lat": 35.3035,
-    "lon": 140.0796,
-    "alt_km": 503.5,
+    "lat": 35.2849,
+    "lon": 140.0834,
+    "alt_km": 503.7,
     "place": "Chiba Prefecture, Japan",
     "ground_sunlit": true,
     "sun_elevation_deg": 33.2,
     "satellite_sunlit": true,
     "satellite_light": "sunlit",
     "sun_above_limb_deg": 55.4,
-    "tle_epoch": "2026-11-11T23:37:32Z",
+    "tle_epoch": "2026-11-12T15:23:15Z",
     "basis": "SGP4 from the most recent TLE before capture"
    },
    "unnamed": false
@@ -198,16 +198,16 @@
    },
    "full_copy": false,
    "position": {
-    "lat": -27.2118,
-    "lon": 153.2396,
-    "alt_km": 505.7,
+    "lat": -27.2285,
+    "lon": 153.2423,
+    "alt_km": 505.8,
     "place": "Queensland, Australia",
     "ground_sunlit": true,
     "sun_elevation_deg": 75.6,
     "satellite_sunlit": true,
     "satellite_light": "sunlit",
     "sun_above_limb_deg": 97.8,
-    "tle_epoch": "2026-11-11T23:37:32Z",
+    "tle_epoch": "2026-11-12T15:23:15Z",
     "basis": "SGP4 from the most recent TLE before capture"
    },
    "unnamed": false
