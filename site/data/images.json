@@ -1,11 +1,217 @@
 {
- "generated_at": "2026-11-12T17:50:41Z",
+ "generated_at": "2026-11-13T03:30:05Z",
  "satellite": {
   "name": "FrontierSat",
   "norad_id": 69015,
   "launched_at": "2026-05-03T06:59:00Z"
  },
  "images": [
+  {
+   "id": "2026-11-13-010000z",
+   "file": "camera/2026-11-13_010000Z.img",
+   "camera": "picam",
+   "title": "Nov 13, 2026, 01:00 UTC",
+   "src": "images/2026-11-13-010000z.jpg",
+   "thumb": "images/thumbs/2026-11-13-010000z.jpg",
+   "width": 640,
+   "height": 480,
+   "status": "partial",
+   "status_note": "243 of 871 lines arrived, but line 63 did not, and the camera's JPEGs can't be decoded past a gap: the picture is shown down to it.",
+   "completeness": 0.0667,
+   "pieces_past_gaps": 0,
+   "dark": false,
+   "file_size": 58435,
+   "sha256": "8b2eb3e36bddfe19f3897078211ec9142a1604426cd8ea778c1db839309b00f1",
+   "sha256_expected": null,
+   "captured_at": "2026-11-13T01:00:00Z",
+   "capture_date": "2026-11-13",
+   "capture_basis": "filename",
+   "satellite_clock": {
+    "correction_s": 0.0
+   },
+   "downlink": {
+    "first": "2026-11-13T03:01:33Z",
+    "last": "2026-11-13T03:04:22Z",
+    "packets": 144
+   },
+   "still_on_board": {
+    "bytes": [
+     16770,
+     58435
+    ],
+    "byte_ranges": [
+     [
+      4290,
+      4485
+     ],
+     [
+      4680,
+      5070
+     ],
+     [
+      5265,
+      7215
+     ],
+     [
+      7410,
+      10920
+     ],
+     [
+      12285,
+      21450
+     ],
+     [
+      25545,
+      28080
+     ],
+     [
+      33150,
+      35490
+     ],
+     [
+      35685,
+      35880
+     ],
+     [
+      37050,
+      58435
+     ]
+    ],
+    "byte_range_count": 9,
+    "last_try": "2026-11-13T03:01:32Z",
+    "last_packet": "2026-11-13T03:04:22Z",
+    "lines": [
+     243,
+     871,
+     871
+    ],
+    "line_ranges": [
+     [
+      63,
+      66
+     ],
+     [
+      69,
+      75
+     ],
+     [
+      78,
+      107
+     ],
+     [
+      110,
+      162
+     ],
+     [
+      183,
+      319
+     ],
+     [
+      381,
+      418
+     ],
+     [
+      494,
+      529
+     ],
+     [
+      532,
+      535
+     ],
+     [
+      552,
+      870
+     ]
+    ],
+    "line_range_count": 9
+   },
+   "full_copy": false,
+   "position": {
+    "lat": 35.3035,
+    "lon": 140.0796,
+    "alt_km": 503.5,
+    "place": "Chiba Prefecture, Japan",
+    "ground_sunlit": true,
+    "sun_elevation_deg": 33.2,
+    "satellite_sunlit": true,
+    "satellite_light": "sunlit",
+    "sun_above_limb_deg": 55.4,
+    "tle_epoch": "2026-11-11T23:37:32Z",
+    "basis": "SGP4 from the most recent TLE before capture"
+   },
+   "unnamed": false
+  },
+  {
+   "id": "2026-11-13-004330z",
+   "file": "camera/2026-11-13_004330Z.img",
+   "camera": "picam",
+   "title": "Nov 13, 2026, 00:43 UTC",
+   "src": "images/2026-11-13-004330z.jpg",
+   "thumb": "images/thumbs/2026-11-13-004330z.jpg",
+   "width": 640,
+   "height": 480,
+   "status": "truncated",
+   "status_note": "The capture was cut short on board: the file holds only lines 0–254 of the 1102 the camera announced, and 122 of those arrived.",
+   "completeness": 0.1,
+   "pieces_past_gaps": 0,
+   "dark": false,
+   "file_size": 17151,
+   "sha256": "94abab7b630d5fa12ad7d6629fb8d45658320ad7cdbaf19f6f98137d57c805bb",
+   "sha256_expected": null,
+   "captured_at": "2026-11-13T00:43:30Z",
+   "capture_date": "2026-11-13",
+   "capture_basis": "filename",
+   "satellite_clock": {
+    "correction_s": 0.0
+   },
+   "downlink": {
+    "first": "2026-11-13T02:30:45Z",
+    "last": "2026-11-13T02:32:04Z",
+    "packets": 64
+   },
+   "still_on_board": {
+    "bytes": [
+     8190,
+     17151
+    ],
+    "byte_ranges": [
+     [
+      8190,
+      17151
+     ]
+    ],
+    "byte_range_count": 1,
+    "last_try": "2026-11-13T02:30:42Z",
+    "last_packet": "2026-11-13T02:32:04Z",
+    "lines": [
+     122,
+     255,
+     1102
+    ],
+    "line_ranges": [
+     [
+      122,
+      254
+     ]
+    ],
+    "line_range_count": 1
+   },
+   "full_copy": false,
+   "position": {
+    "lat": -27.2118,
+    "lon": 153.2396,
+    "alt_km": 505.7,
+    "place": "Queensland, Australia",
+    "ground_sunlit": true,
+    "sun_elevation_deg": 75.6,
+    "satellite_sunlit": true,
+    "satellite_light": "sunlit",
+    "sun_above_limb_deg": 97.8,
+    "tle_epoch": "2026-11-11T23:37:32Z",
+    "basis": "SGP4 from the most recent TLE before capture"
+   },
+   "unnamed": false
+  },
   {
    "id": "2026-11-11-094420z",
    "file": "camera/2026-11-11_094420Z.img",
