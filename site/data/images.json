@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-15T21:53:21Z",
+ "generated_at": "2026-11-15T23:29:52Z",
  "satellite": {
   "name": "FrontierSat",
   "norad_id": 69015,
@@ -37,16 +37,16 @@
    "still_on_board": null,
    "full_copy": false,
    "position": {
-    "lat": 50.9439,
-    "lon": -114.2178,
-    "alt_km": 507.2,
+    "lat": 50.9748,
+    "lon": -114.228,
+    "alt_km": 507.3,
     "place": "Alberta, Canada",
     "ground_sunlit": true,
-    "sun_elevation_deg": 17.1,
+    "sun_elevation_deg": 17.0,
     "satellite_sunlit": true,
     "satellite_light": "sunlit",
     "sun_above_limb_deg": 39.2,
-    "tle_epoch": "2026-11-13T16:36:23Z",
+    "tle_epoch": "2026-11-14T16:14:57Z",
     "basis": "SGP4 from the most recent TLE before capture"
    },
    "unnamed": false
