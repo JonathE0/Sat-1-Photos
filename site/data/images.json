@@ -1,11 +1,56 @@
 {
- "generated_at": "2026-11-15T18:29:49Z",
+ "generated_at": "2026-11-15T21:29:53Z",
  "satellite": {
   "name": "FrontierSat",
   "norad_id": 69015,
   "launched_at": "2026-05-03T06:59:00Z"
  },
  "images": [
+  {
+   "id": "2026-11-15-174134z",
+   "file": "camera/2026-11-15_174134Z.img",
+   "camera": "picam",
+   "title": "Nov 15, 2026, 17:41 UTC",
+   "src": "images/2026-11-15-174134z.jpg",
+   "thumb": "images/thumbs/2026-11-15-174134z.jpg",
+   "width": 640,
+   "height": 480,
+   "status": "complete",
+   "status_note": "Every line of the picture arrived. The satellite never sent a hash for this file.",
+   "completeness": 1.0,
+   "pieces_past_gaps": 0,
+   "dark": false,
+   "file_size": 18302,
+   "sha256": "8071f5a3d8cc6988abf1441070aed80c04d86092bd01c136a15eeb8a8e86cddc",
+   "sha256_expected": null,
+   "captured_at": "2026-11-15T17:41:34Z",
+   "capture_date": "2026-11-15",
+   "capture_basis": "filename",
+   "satellite_clock": {
+    "correction_s": 0.0
+   },
+   "downlink": {
+    "first": "2026-11-15T21:07:16Z",
+    "last": "2026-11-15T21:10:41Z",
+    "packets": 94
+   },
+   "still_on_board": null,
+   "full_copy": false,
+   "position": {
+    "lat": 50.9439,
+    "lon": -114.2178,
+    "alt_km": 507.2,
+    "place": "Alberta, Canada",
+    "ground_sunlit": true,
+    "sun_elevation_deg": 17.1,
+    "satellite_sunlit": true,
+    "satellite_light": "sunlit",
+    "sun_above_limb_deg": 39.2,
+    "tle_epoch": "2026-11-13T16:36:23Z",
+    "basis": "SGP4 from the most recent TLE before capture"
+   },
+   "unnamed": false
+  },
   {
    "id": "2026-11-13-010000z",
    "file": "camera/2026-11-13_010000Z.img",
