@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-15T15:29:51Z",
+ "generated_at": "2026-11-15T16:30:15Z",
  "satellite": {
   "name": "FrontierSat",
   "norad_id": 69015,
@@ -208,6 +208,133 @@
     "satellite_light": "sunlit",
     "sun_above_limb_deg": 97.8,
     "tle_epoch": "2026-11-12T15:23:15Z",
+    "basis": "SGP4 from the most recent TLE before capture"
+   },
+   "unnamed": false
+  },
+  {
+   "id": "2026-11-11-123200z",
+   "file": "camera/2026-11-11_123200Z.img",
+   "camera": "picam",
+   "title": "Nov 11, 2026, 12:32 UTC",
+   "src": "images/2026-11-11-123200z.jpg",
+   "thumb": "images/thumbs/2026-11-11-123200z.jpg",
+   "width": 640,
+   "height": 480,
+   "status": "partial",
+   "status_note": "778 of 842 lines arrived, but line 744 did not, and the camera's JPEGs can't be decoded past a gap: the picture is shown down to it.",
+   "completeness": 0.9,
+   "pieces_past_gaps": 0,
+   "dark": false,
+   "file_size": 56492,
+   "sha256": "9a4bfb3e09f57b8c446df7697161cbb754d1b08b4b21cec9c00671d2c63b8fba",
+   "sha256_expected": null,
+   "captured_at": "2026-11-11T12:32:00Z",
+   "capture_date": "2026-11-11",
+   "capture_basis": "filename",
+   "satellite_clock": {
+    "correction_s": 0.0
+   },
+   "downlink": {
+    "first": "2026-11-11T14:49:29Z",
+    "last": "2026-11-15T16:04:09Z",
+    "packets": 638
+   },
+   "still_on_board": {
+    "bytes": [
+     52650,
+     56492
+    ],
+    "byte_ranges": [
+     [
+      49920,
+      50115
+     ],
+     [
+      50310,
+      50505
+     ],
+     [
+      50700,
+      51675
+     ],
+     [
+      52065,
+      52260
+     ],
+     [
+      52455,
+      52650
+     ],
+     [
+      53040,
+      53235
+     ],
+     [
+      54405,
+      55380
+     ],
+     [
+      55575,
+      56492
+     ]
+    ],
+    "byte_range_count": 8,
+    "last_try": "2026-11-15T16:03:49Z",
+    "last_packet": "2026-11-15T16:04:09Z",
+    "lines": [
+     778,
+     842,
+     842
+    ],
+    "line_ranges": [
+     [
+      744,
+      747
+     ],
+     [
+      750,
+      753
+     ],
+     [
+      756,
+      770
+     ],
+     [
+      776,
+      779
+     ],
+     [
+      782,
+      785
+     ],
+     [
+      791,
+      794
+     ],
+     [
+      811,
+      826
+     ],
+     [
+      829,
+      841
+     ]
+    ],
+    "line_range_count": 8
+   },
+   "full_copy": false,
+   "position": {
+    "lat": -13.3972,
+    "lon": -25.924,
+    "alt_km": 501.8,
+    "place": "South Atlantic Ocean",
+    "ground_sunlit": true,
+    "sun_elevation_deg": 76.0,
+    "satellite_sunlit": true,
+    "satellite_light": "sunlit",
+    "sun_above_limb_deg": 98.1,
+    "tle_epoch": "2026-11-10T16:06:05Z",
     "basis": "SGP4 from the most recent TLE before capture"
    },
    "unnamed": false
@@ -470,183 +597,6 @@
      ]
     ],
     "line_range_count": 6
-   },
-   "full_copy": false,
-   "position": null,
-   "unnamed": true
-  },
-  {
-   "id": "unnamed-2026-11-11-034a",
-   "file": "camera/unnamed_2026-11-11_034a.img",
-   "camera": "picam",
-   "title": "Unnamed capture, received Nov 11, 2026",
-   "src": "images/unnamed-2026-11-11-034a.jpg",
-   "thumb": "images/thumbs/unnamed-2026-11-11-034a.jpg",
-   "width": 640,
-   "height": 480,
-   "status": "partial",
-   "status_note": "642 of 842 lines arrived, but line 157 did not. A JPEG decoder stops at a gap, so the 3 pieces that came down past the gaps were decoded on their own, put back where they belong and matched to the brightness of the picture above. Grey is what never arrived. 11 more pieces came down but couldn't be placed for certain, and are left grey too. The JPEG header was restored from the camera's standard header, which every complete capture shares.",
-   "completeness": 0.3875,
-   "pieces_past_gaps": 3,
-   "dark": false,
-   "file_size": 56492,
-   "sha256": "4d5c0dd0291133444e81bb1ac40a69426ccd5fdac4914cce51dc02d204679172",
-   "sha256_expected": null,
-   "captured_at": null,
-   "capture_date": "2026-11-11",
-   "capture_basis": "date only",
-   "satellite_clock": null,
-   "downlink": {
-    "first": "2026-11-11T14:49:29Z",
-    "last": "2026-11-13T15:49:25Z",
-    "packets": 250
-   },
-   "still_on_board": {
-    "bytes": [
-     43875,
-     56492
-    ],
-    "byte_ranges": [
-     [
-      0,
-      195
-     ],
-     [
-      10530,
-      10725
-     ],
-     [
-      19305,
-      19500
-     ],
-     [
-      22035,
-      22425
-     ],
-     [
-      26910,
-      27300
-     ],
-     [
-      27495,
-      27690
-     ],
-     [
-      30225,
-      37245
-     ],
-     [
-      39195,
-      39390
-     ],
-     [
-      49920,
-      50115
-     ],
-     [
-      50310,
-      50505
-     ],
-     [
-      50700,
-      51675
-     ],
-     [
-      52065,
-      52260
-     ],
-     [
-      52455,
-      52650
-     ],
-     [
-      53040,
-      53235
-     ],
-     [
-      54405,
-      55380
-     ],
-     [
-      55575,
-      56492
-     ]
-    ],
-    "byte_range_count": 16,
-    "last_try": null,
-    "last_packet": "2026-11-13T15:49:25Z",
-    "lines": [
-     642,
-     842,
-     842
-    ],
-    "line_ranges": [
-     [
-      0,
-      2
-     ],
-     [
-      157,
-      159
-     ],
-     [
-      288,
-      290
-     ],
-     [
-      328,
-      334
-     ],
-     [
-      401,
-      407
-     ],
-     [
-      410,
-      412
-     ],
-     [
-      450,
-      555
-     ],
-     [
-      584,
-      587
-     ],
-     [
-      744,
-      747
-     ],
-     [
-      750,
-      753
-     ],
-     [
-      756,
-      770
-     ],
-     [
-      776,
-      779
-     ],
-     [
-      782,
-      785
-     ],
-     [
-      791,
-      794
-     ],
-     [
-      811,
-      826
-     ],
-     [
-      829,
-      841
-     ]
-    ],
-    "line_range_count": 16
    },
    "full_copy": false,
    "position": null,
