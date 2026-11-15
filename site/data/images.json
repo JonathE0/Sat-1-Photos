@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-13T21:29:50Z",
+ "generated_at": "2026-11-15T10:30:01Z",
  "satellite": {
   "name": "FrontierSat",
   "norad_id": 69015,
@@ -2057,7 +2057,7 @@
    "capture_date": "2026-10-22",
    "capture_basis": "filename",
    "satellite_clock": {
-    "correction_s": -6.6
+    "correction_s": -6.7
    },
    "downlink": {
     "first": "2026-10-22T16:37:51Z",
