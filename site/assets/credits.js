@@ -120,7 +120,9 @@ function build() {
       <p>Satellite model: CalgaryToSpace's own CAD of FrontierSat (the V11 frame), outside only and
         simplified for the web, with the sun sensors, magnetometer and UHF antenna as their makers' CAD
         draws them (CubeSpace, ISISPACE), the antenna's four tapes and the magnetometer's arm shown
-        deployed and the boom rolled up in its mount; drawn far larger than life.</p>
+        deployed and the boom rolled up in its mount; drawn far larger than life. The team's own
+        interactive 3D model of the satellite is on the CalgaryToSpace website:
+        <a href="https://www.calgarytospace.ca/cts-sat-1">FrontierSat Interactive 3D Model</a>.</p>
     </section>
     <div class="credits-news"></div>`;
   return dialog;
