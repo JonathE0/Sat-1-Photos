@@ -183,6 +183,7 @@ a:hover { color: var(--bright); }
 .ex-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
 .ex-tags:empty { display: none; }
 .ex-tag { padding: 1px 6px; border: 1px solid currentColor; font-size: 13px; line-height: 1.4; }
+.ex-tag.is-latest { color: var(--bright); }
 .ex-tag.is-added { color: var(--added); }
 .ex-tag.is-out { color: var(--out); }
 .ex-tag.is-unsaved { color: var(--accent); }

@@ -135,9 +135,9 @@
         remember();
         location.href = photoUrl(id);
       },
-      onOpenCatalogue() {
+      onOpenCatalogue(href) {
         remember();
-        location.href = picturesUrl;
+        location.href = href || picturesUrl;
       },
     });
     // for checking things from the console (journey.getState(), journey.live())

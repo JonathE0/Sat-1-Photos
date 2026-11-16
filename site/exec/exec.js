@@ -409,6 +409,7 @@ function paint() {
     box.checked = on;
     const rule = isNearlyWhole(p);
     const list = [];
+    if (p.latest) list.push(h('span', { class: 'ex-tag is-latest' }, 'Latest picture'));
     if (on && !rule) list.push(h('span', { class: 'ex-tag is-added' }, 'Added by hand'));
     if (!on && rule) list.push(h('span', { class: 'ex-tag is-out' }, 'Taken out by hand'));
     if (wants.has(p.id)) list.push(h('span', { class: 'ex-tag is-unsaved' }, 'Not saved yet'));

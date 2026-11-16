@@ -11,6 +11,7 @@ import { applyAnnotations, comparePhotos, launchTime, toIsoUtc, toPhotos, whenKn
 import { bytes, calgary, grouped, monthDayYear, plural, utcLong } from '../../assets/format.js';
 import { statusShort } from '../../assets/photo-info.js';
 import { applyChoices, changeChoices, choicesText, inCarousel, readChoices } from '../../assets/carousel.js';
+import { latestOf, mergeAll } from '../../assets/data.js';
 import { calgaryTime, launchDate, statusLine, utcLong as exploreLong, utcShort as exploreShort } from '../../explore/journey-parts.js';
 import * as astro from '../astro.js';
 import { auroraNote, parseForecast, turnSince } from '../aurora.js';
@@ -823,6 +824,25 @@ check('compass points', astro.compassPoint(0) === 'N' && astro.compassPoint(355)
   const again = readChoices(JSON.parse(text));
   check('carousel: the file reads back as it was written, log and all',
     text.endsWith('}\n') && again.add.join() === 'b' && again.remove.join() === 'a' && again.log[0].note === 'For the open house');
+}
+
+// ---- the latest picture (assets/data.js): what every page tags "Latest picture" -----------
+{
+  const img = (id, at, extra = {}) => ({ id, camera: 'picam', title: id, captured_at: at, completeness: 1, ...extra });
+  const marked = (images) => mergeAll(images, {}).filter((p) => p.latest).map((p) => p.id).join();
+  check('latest: the most recently taken picture',
+    marked([img('b', '2026-11-15T17:41:34Z'), img('a', '2026-11-13T01:00:00Z')]) === 'b');
+  check('latest: not a dark frame, nor one mostly missing, nor one with no known time',
+    marked([
+      img('dark', '2026-11-16T00:00:00Z', { dark: true }),
+      img('scrap', '2026-11-15T23:00:00Z', { completeness: 0.07 }),
+      img('nameless', null, { capture_date: null }),
+      img('whole', '2026-11-11T09:44:20Z', { completeness: 0.96 }),
+    ]) === 'whole');
+  check('latest: a picture under 95% there can be it (it needn’t be in the carousel)',
+    marked([img('part', '2026-11-15T00:00:00Z', { completeness: 0.6 }), img('old', '2026-11-01T00:00:00Z')]) === 'part');
+  check('latest: none when nothing qualifies', marked([img('d', '2026-11-16T00:00:00Z', { dark: true })]) === '');
+  check('latest: latestOf on an empty list is null', latestOf([]) === null);
 }
 
 console.log(`\n${passed} passed, ${failures} failed`);

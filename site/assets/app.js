@@ -89,7 +89,8 @@ function startJourney({ mountJourney }) {
       // ?motion=full or ?motion=reduced overrides prefers-reduced-motion (for testing)
       motion: new URLSearchParams(location.search).get('motion'),
       onOpenPhoto(id) { location.hash = `#/pictures?id=${encodeURIComponent(id)}&from=globe`; },
-      onOpenCatalogue() { location.hash = '#/pictures?from=globe'; },
+      // "See all n pictures" also asks for the tucked-away ones (journey.js everyPicture)
+      onOpenCatalogue(href) { location.hash = href ? new URL(href, location.href).hash : '#/pictures?from=globe'; },
     });
   } catch (err) {
     const noop = () => {};

@@ -574,6 +574,20 @@ body[data-view="explore"] .name-ctl { display: none; }
   .panel-links a { display: inline-flex; align-items: center; min-height: 44px; }
 }
 
+/* "Latest picture" after a picture's name (Pictures, its details): a small framed tag. */
+.pi-tag {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 0 8px;
+  border: 1px solid currentColor;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.6;
+  letter-spacing: 0;
+  vertical-align: 0.3em;
+  white-space: nowrap;
+}
+
 .detail-title {
   margin: 24px 0 0;
   color: var(--fg);

@@ -55,6 +55,11 @@ function isWorthOpening(p) {
   return !isDark(p) && (!Number.isFinite(c) || c >= 0.5);
 }
 
+// After a heading: a small "Latest picture" tag on the newest picture (p.latest, from mergeAll).
+function latestTag(p) {
+  return p.latest ? [' ', h('span', { class: 'pi-tag' }, 'Latest picture')] : [];
+}
+
 // "Hong Kong, Oct 29, 2026, 20:45 Calgary time, main camera, checked"
 function thumbLabel(p) {
   const parts = [];
@@ -941,7 +946,7 @@ export function createCatalogue(root, {
       cell.image.height = p.height;
       cell.image.alt = photoAlt(p);
       cell.pick.setAttribute('aria-label', `Cell ${i + 1}: ${nameAndWhen(p)}`);
-      cell.place.textContent = headline(p);
+      cell.place.replaceChildren(headline(p), ...latestTag(p));
       cell.place.title = headline(p);
       cell.time.textContent = whenShort(p);
       const word = p.status === 'verified' ? '' : capitalize(statusShort(p));
@@ -960,7 +965,7 @@ export function createCatalogue(root, {
   function fillInfo(p) {
     emptyNote.hidden = true;
     for (const part of [lead, facts, notes, actions]) part.hidden = false;
-    title.textContent = headline(p);
+    title.replaceChildren(headline(p), ...latestTag(p));
     lead.replaceChildren(...[creditLine(p), whenBlock(p), statusBlock(p)].filter(Boolean));
     photoActions.set(p, { globeHref });
     compareBtn.hidden = size > 1;
@@ -1085,7 +1090,8 @@ export function createCatalogue(root, {
       // in cells get it at 40%.
       button.classList.toggle('is-target', size > 1 && cell >= 0 && cell === active);
       button.tabIndex = p.id === focusId ? 0 : -1;
-      button.setAttribute('aria-label', `${thumbLabel(p)}${cell >= 0 ? `. In cell ${cell + 1}` : ''}`);
+      button.classList.toggle('is-latest', Boolean(p.latest)); // "Latest" on its corner (catalogue.css)
+      button.setAttribute('aria-label', `${thumbLabel(p)}${p.latest ? ', the latest picture' : ''}${cell >= 0 ? `. In cell ${cell + 1}` : ''}`);
     }
   }
 

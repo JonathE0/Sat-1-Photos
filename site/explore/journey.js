@@ -8,7 +8,7 @@
  *     photos,                       // mergeAll() output from assets/data.js
  *     tleUrl: 'data/tle.json',
  *     onOpenPhoto(id) {},           // the preview's picture; on a phone, a pin or a card
- *     onOpenCatalogue() {},         // "See the pictures", "See all n pictures"
+ *     onOpenCatalogue(href) {},     // "See the pictures", "See all n pictures" (href: where it goes)
  *   });
  *   journey.setPhotos(photos); journey.hide(); journey.show(); journey.getState();
  *   journey.openCredits(navButton); journey.live(); journey.playIntroAgain();
@@ -79,10 +79,16 @@ import {
 import { loadCountries, placeAt, placeInSentence } from './journey-region.js';
 import { OPENING_PHOTO_ID } from '../assets/opening-photo.js';
 
-/** Pictures shows it without being asked: not dark, and at least a fifth there (as isDark and
-    isMostlyMissing in assets/catalogue.js). */
-const inPictures = (p) => !(p.dark === true || p.raw?.dark === true)
-  && !(typeof p.mostlyMissing === 'boolean' ? p.mostlyMissing : Number(p.raw?.completeness) < 0.2);
+/** A link to Pictures with every picture shown: dark frames and mostly missing ones too, which it
+    otherwise tucks away (dark=1, missing=1: readFilters in assets/data.js). */
+function everyPicture(href) {
+  const at = href.indexOf('#');
+  const [path, query = ''] = (at < 0 ? '' : href.slice(at + 1)).split('?');
+  const params = new URLSearchParams(query);
+  params.set('dark', '1');
+  params.set('missing', '1');
+  return `${at < 0 ? href : href.slice(0, at)}#${path || '/pictures'}?${params}`;
+}
 
 const MODULE_BASE = new URL('./', import.meta.url);
 const SITE_ROOT = new URL('../', import.meta.url);
@@ -2727,7 +2733,9 @@ export function mountJourney(container, options = {}) {
       const place = placeOf(pic);
       ref.latestImg.alt = place ? `Picture over ${place}` : 'The latest picture';
       if (pic !== latest) ref.latestTitle.textContent = 'Selected picture';
-      else ref.latestTitle.textContent = pic.id === OPENING_PHOTO_ID ? 'Featured picture' : 'Latest picture';
+      // "Latest" only for the picture that really is (photo.latest, assets/data.js): the carousel's
+      // newest may not be, when the latest isn't whole or the executives took it out
+      else ref.latestTitle.textContent = pic.id === OPENING_PHOTO_ID ? 'Featured picture' : pic.latest ? 'Latest picture' : 'Recent picture';
       put(ref.latestPlace, place || photoTime(pic));
       put(ref.latestTime, place ? photoTime(pic) : '');
       const status = statusLine(pic);
@@ -2890,13 +2898,17 @@ export function mountJourney(container, options = {}) {
     uiDirty = true;
   });
 
+  // "See all n pictures" counts every picture there is, so it opens Pictures with the dark frames
+  // and mostly missing ones shown too (dark=1&missing=1); "See the pictures" opens it as it starts
+  ref.introPictures.href = opts.catalogueHref;
+  ref.all.href = everyPicture(opts.catalogueHref);
+  ref.latestAll.href = ref.all.href;
   for (const a of [ref.all, ref.latestAll, ref.introPictures]) {
     listen(a, 'click', (e) => {
       if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
       e.preventDefault();
-      opts.onOpenCatalogue();
+      opts.onOpenCatalogue(a.href);
     });
-    a.href = opts.catalogueHref;
   }
   listen(ref.again, 'click', () => playAgain());
   // straight to the end, as a visitor coming back finds it, and on to its first control
@@ -4211,8 +4223,8 @@ export function mountJourney(container, options = {}) {
     latest = shown.find((p) => p.id === OPENING_PHOTO_ID)
       || (shown.length ? shown : photos).reduce((best, p) => (!best || (p.sortTime || 0) > (best.sortTime || 0) ? p : best), null);
     ref.latest.dataset.id = '';
-    // as many as Pictures shows, which leaves out dark frames and mostly missing pictures
-    const n = photos.filter(inPictures).length;
+    // every picture there is: the link opens Pictures with dark frames and mostly missing ones shown
+    const n = photos.length;
     ref.allText.textContent = n ? `See all ${grouped(n)} pictures` : 'See the pictures';
     ref.latestAll.textContent = ref.allText.textContent;
     ref.viewfinderSlot.hidden = !photos.some(inCarousel);

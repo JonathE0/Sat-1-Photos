@@ -710,6 +710,21 @@
   bottom: 0;
   height: 3px;
 }
+/* The newest picture: "Latest" on its top-left corner (the button's label says it). */
+.cat-thumb.is-latest::before {
+  content: "Latest" / "";
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  z-index: 1;
+  padding: 0 5px;
+  background: color-mix(in srgb, var(--c-ground) 82%, transparent);
+  color: var(--c-ink);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+  pointer-events: none;
+}
 .cat-thumb:hover::after { background: var(--c-under); }
 .cat-thumb[aria-current="true"]::after { background: var(--c-ink); }
 

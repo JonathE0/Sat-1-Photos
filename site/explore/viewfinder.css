@@ -108,6 +108,15 @@ a.vf-pic[href] { cursor: pointer; }
   font-weight: 400;
   white-space: nowrap;
 }
+/* The newest picture: a small framed tag, so it reads on a TV across a room. */
+.vf-tag-latest {
+  display: inline-block;
+  padding: 0 6px;
+  border: 1px solid currentColor;
+  color: var(--jy-ink, #E6EBF0);
+  font-weight: 500;
+  line-height: 1.5;
+}
 .vf-place {
   min-width: 0;
   overflow-wrap: break-word;

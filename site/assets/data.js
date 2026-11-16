@@ -250,7 +250,29 @@ export function mergeAll(images, annotations) {
   if (photos.some((p) => p.edited.captured_at)) {
     photos.sort((a, b) => b.sortTime - a.sortTime);
   }
+  // the one every page tags "Latest picture" (Pictures, the carousel, its details)
+  const newest = latestOf(photos);
+  for (const p of photos) p.latest = p === newest;
   return photos;
+}
+
+/**
+ * The latest picture: the one taken most recently, among those Pictures shows at first (not a
+ * dark frame, at least a fifth there) whose capture time is known, so a frame that came down
+ * without its name never claims it. null when there is none.
+ */
+export function latestOf(photos) {
+  let best = null;
+  let bestTime = -Infinity;
+  for (const p of photos) {
+    if (p.dark || p.mostlyMissing) continue;
+    const t = toDate(p.capturedAt)?.getTime();
+    if (Number.isFinite(t) && t > bestTime) {
+      best = p;
+      bestTime = t;
+    }
+  }
+  return best;
 }
 
 /* Filters. They live in the URL, e.g. #/?camera=picam&month=2026-09&q=clouds

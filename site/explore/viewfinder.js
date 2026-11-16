@@ -296,8 +296,11 @@ export function createViewfinder(container, {
     setLines(whereEl, data.where);
     heightEl.textContent = data.height;
     sunEl.textContent = data.sun;
-    // the picture the site opens on is chosen, not the newest: it says so
-    placeEl.replaceChildren(name, ...(photo.id === OPENING_PHOTO_ID ? [' ', el('span', 'vf-tag', 'Featured picture')] : []));
+    // the picture the site opens on is chosen, not the newest: it says so; the newest says that
+    // (photo.latest, from mergeAll in assets/data.js)
+    placeEl.replaceChildren(name,
+      ...(photo.id === OPENING_PHOTO_ID ? [' ', el('span', 'vf-tag', 'Featured picture')] : []),
+      ...(photo.latest ? [' ', el('span', 'vf-tag vf-tag-latest', 'Latest picture')] : []));
     downEl.textContent = downlinkLine(photo);
     noteEl.textContent = honestNote(photo);
   }

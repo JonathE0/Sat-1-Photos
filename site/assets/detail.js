@@ -576,7 +576,8 @@ export function createDetail(root, ctx) {
           }, globe ? 'All pictures' : '← All pictures')),
         // "4 of 35", or "2 of 14 hidden" for one of the pictures Pictures tucks away
         index >= 0 && h('span', { class: 'panel-count' }, `${index + 1} of ${list.length}${hidden ? ' hidden' : ''}`)),
-      h('h1', { class: 'pi-title detail-title', id: 'detail-title', tabindex: '-1' }, headline(p)),
+      h('h1', { class: 'pi-title detail-title', id: 'detail-title', tabindex: '-1' }, headline(p),
+        p.latest ? [' ', h('span', { class: 'pi-tag' }, 'Latest picture')] : null),
       h('div', { class: 'pi-lead' }, creditLine(p), whenBlock(p), statusBlock(p)),
       actions.el,
       photoFacts(p, { listLink }),
