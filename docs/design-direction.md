@@ -330,6 +330,11 @@ state and one set of details. Closes with the same control, Esc, or a click on e
   while the pointer or keyboard focus is on what's showing, and on a picture chosen on the globe. Choosing
   a tab or the satellite stops it for the visit; turning it off with the button is remembered.
   `?motion=reduced` starts with it off.
+- **Which pictures take turns (the user's request, 16 Nov 2026):** every picture at least 95% there, unless
+  the team's executives changed that on `exec/` (not linked from the site): signed in with their own
+  GitHub accounts, they tick pictures in or out, and each save is logged with who, when, what and an
+  optional note (`site/data/carousel.json`, docs/DATA.md). The live view, the TV, Orbit's Pictures panel
+  and the end of the story all follow it.
 - **Laptops and smaller desktops:** the same bar top right under the nav, 380px wide, the tabs on a second
   row. Nothing is open at first: "Stats" drops the details down, "Pictures" drops down "Latest picture",
   and pressing the open one folds it up.

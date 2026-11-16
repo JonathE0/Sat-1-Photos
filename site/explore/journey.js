@@ -67,7 +67,7 @@ import {
   fmtLatShort,
   fmtLon,
   fmtLonShort,
-  isNearlyWhole,
+  inCarousel,
   isSquare,
   launchDate,
   photoTime,
@@ -4206,8 +4206,8 @@ export function mountJourney(container, options = {}) {
   // ---- photos ---------------------------------------------------------------------------
   function setPhotos(list) {
     photos = Array.isArray(list) ? list.filter((p) => p && p.id) : [];
-    // the one the viewfinder opens on: the opening picture, else the newest nearly whole
-    const shown = photos.filter(isNearlyWhole);
+    // the one the viewfinder opens on: the opening picture, else the carousel's newest
+    const shown = photos.filter(inCarousel);
     latest = shown.find((p) => p.id === OPENING_PHOTO_ID)
       || (shown.length ? shown : photos).reduce((best, p) => (!best || (p.sortTime || 0) > (best.sortTime || 0) ? p : best), null);
     ref.latest.dataset.id = '';
@@ -4215,7 +4215,7 @@ export function mountJourney(container, options = {}) {
     const n = photos.filter(inPictures).length;
     ref.allText.textContent = n ? `See all ${grouped(n)} pictures` : 'See the pictures';
     ref.latestAll.textContent = ref.allText.textContent;
-    ref.viewfinderSlot.hidden = !photos.some(isNearlyWhole);
+    ref.viewfinderSlot.hidden = !photos.some(inCarousel);
     paintTabs();
     viewfinder?.setPhotos(photos);
     if (webgl) buildPins();
@@ -4278,9 +4278,14 @@ export function mountJourney(container, options = {}) {
     };
     async function look() {
       try {
-        const [tle, images] = await Promise.all([text(opts.tleUrl), text(new URL('data/images.json', siteRoot).href)]);
+        const [tle, images, carousel] = await Promise.all([
+          text(opts.tleUrl),
+          text(new URL('data/images.json', siteRoot).href),
+          // the executives' choice of pictures (exec/); none yet is no change
+          text(new URL('data/carousel.json', siteRoot).href).catch(() => ''),
+        ]);
         // the list itself, not the stamp of when it was written
-        const key = `${tle}\n${JSON.stringify(JSON.parse(images).images)}`;
+        const key = `${tle}\n${JSON.stringify(JSON.parse(images).images)}\n${carousel}`;
         if (seen === null) seen = key;
         else if (key !== seen || Date.now() - startedAt > DAY_MS) location.reload();
       } catch {

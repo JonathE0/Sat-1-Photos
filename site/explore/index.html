@@ -107,6 +107,7 @@
   <script type="module">
     import { mountJourney } from './journey.js';
     import { mergeAll } from '../assets/data.js';
+    import { applyChoices, loadChoices } from '../assets/carousel.js';
 
     const SITE = new URL('../', location.href);
     const photoUrl = (id) => new URL(`index.html#/photo/${encodeURIComponent(id)}`, SITE).href;
@@ -168,9 +169,13 @@
       return {};
     }
     try {
-      const [images, anns] = await Promise.all([json(new URL('data/images.json', SITE).href), annotations()]);
+      const [images, anns, choices] = await Promise.all([
+        json(new URL('data/images.json', SITE).href),
+        annotations(),
+        loadChoices(SITE.href), // which pictures take turns (exec/)
+      ]);
       const list = Array.isArray(images?.images) ? images.images.filter((i) => i && typeof i.id === 'string') : [];
-      journey.setPhotos(mergeAll(list, anns));
+      journey.setPhotos(applyChoices(mergeAll(list, anns), choices));
     } catch (err) {
       console.warn('Explore: no picture list', err);
     }

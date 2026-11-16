@@ -6,6 +6,7 @@
 
 import { h, append, mono, announce, store } from './dom.js';
 import { loadImages, loadAnnotations, mergeAll, readFilters, applyFilters } from './data.js';
+import { applyChoices, loadChoices } from './carousel.js';
 import { createCatalogue } from './catalogue.js';
 import { createDetail, NAME_KEY } from './detail.js';
 import { mountCredits } from './credits.js';
@@ -18,6 +19,7 @@ const config = { repoUrl: '', ...(window.CTS1_CONFIG || {}) };
 const state = {
   data: null,
   annotations: {},
+  carousel: null, // data/carousel.json: which pictures take turns in the viewfinder (exec/)
   editable: false,
   server: false,
   photos: [],
@@ -300,7 +302,8 @@ function route() {
 /* Data */
 
 function rebuild() {
-  state.photos = mergeAll(state.data.images, state.annotations);
+  // which pictures take turns in the story's viewfinder (exec/); the catalogue shows them all
+  state.photos = applyChoices(mergeAll(state.data.images, state.annotations), state.carousel);
   state.byId = new Map(state.photos.map((p) => [p.id, p]));
   gallery.setData(state.photos);
   gallery.setOps(state.data);
@@ -363,7 +366,8 @@ let retryTimer = 0;
 window.addEventListener('online', () => { if (!state.loaded) loadData(); });
 
 async function loadData() {
-  const [images, annotations] = await Promise.allSettled([loadImages(), loadAnnotations()]);
+  const [images, annotations, choices] = await Promise.allSettled([loadImages(), loadAnnotations(), loadChoices()]);
+  if (choices.status === 'fulfilled') state.carousel = choices.value;
   if (annotations.status === 'fulfilled') {
     state.annotations = annotations.value.annotations;
     state.editable = annotations.value.editable;

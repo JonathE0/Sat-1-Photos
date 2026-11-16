@@ -6,8 +6,9 @@
  *   createViewfinder(container, { photos, siteRoot, photoHref, onOpen, reducedMotion, firstMs, takeTurn })
  *     -> { setPhotos(photos), show(photo), next(), start(), stop(), dispose() }
  *
- * `photos` is mergeAll() output; only pictures that are at least 95% there run
- * here, newest first in a loop. The catalogue keeps everything else. show() puts
+ * `photos` is mergeAll() output; only the carousel's pictures run here, newest first
+ * in a loop: those at least 95% there, unless the executives changed that on exec/
+ * (inCarousel, assets/carousel.js). The catalogue keeps everything else. show() puts
  * up any picture, whole or not, and it stays until the visitor steps on with
  * Newer or Older, which also starts the rotation again.
  *
@@ -35,7 +36,7 @@ import {
   calgaryTime,
   fmtLat,
   fmtLon,
-  isNearlyWhole,
+  inCarousel,
   photoTime,
   placeOf,
   rowsWithData,
@@ -494,7 +495,7 @@ export function createViewfinder(container, {
     const at = deck[index]?.id;
     const all = Array.isArray(list) ? list : [];
     deck = all
-      .filter(isNearlyWhole)
+      .filter(inCarousel)
       .sort((a, b) => (b.sortTime || 0) - (a.sortTime || 0));
     index = deck.findIndex((p) => p.id === at);
     // nothing up yet: the first step lands on the opening picture, and the run goes on from there

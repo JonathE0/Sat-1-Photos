@@ -1,6 +1,6 @@
 # Data files
 
-The site is static: everything it shows comes from five JSON files in
+The site is static: everything it shows comes from six JSON files in
 `site/data/`, plus member edits served by `serve.py`.
 
 | File | Written by | Committed |
@@ -8,6 +8,7 @@ The site is static: everything it shows comes from five JSON files in
 | `site/data/images.json` | `python -m cts1_gallery update` | yes |
 | `site/data/tle.json` | `python -m cts1_gallery update` | yes |
 | `site/data/annotations.json` | `serve.py`, when members save edits | yes |
+| `site/data/carousel.json` | `site/exec/`, when an executive saves, as a commit under their own GitHub account | yes |
 | `site/data/watchlist.json` | `python -m cts1_gallery watch` | no: each publish run writes it |
 | `site/data/updated.json` | `python -m cts1_gallery update` (not `--offline`) | no: each publish run writes it |
 | `site/images/*.jpg` (main camera), `site/images/*.png` (attitude camera), `site/images/thumbs/*.jpg` | `python -m cts1_gallery update` | yes |
@@ -120,6 +121,49 @@ by their downlink time.
 
 An array of `{ "epoch", "line1", "line2" }` (two-line elements, oldest
 first), used by the orbit globe.
+
+## `carousel.json`
+
+Which pictures take turns in the viewfinder: the live view (and a TV, `tv/`),
+the end of the home page's story on big screens, and Orbit's Pictures panel.
+By default that is every picture at least 95% there that isn't a dark frame,
+so a new picture joins by itself; this file holds the exceptions the team's
+executives chose on `site/exec/`, and who chose what.
+
+```json
+{
+  "add": ["2026-11-11-123200z"],
+  "remove": ["2026-11-15-174134z"],
+  "log": [
+    {
+      "at": "2026-11-16T18:02:11Z",
+      "by": "github-login",
+      "name": "Their GitHub display name",
+      "added": ["2026-11-11-123200z"],
+      "removed": ["2026-11-15-174134z"],
+      "note": "Optional, up to 300 characters"
+    }
+  ]
+}
+```
+
+- `add`: pictures shown although the rule would leave them out.
+- `remove`: pictures left out although the rule would show them. An id in
+  both lists is left out. A picture set back to what the rule says leaves
+  both lists, so it follows the rule again.
+- `log`: every save, newest first: when (UTC), the GitHub account that saved
+  (`by`, from GitHub, never typed in), the pictures that went in and out, and
+  an optional note. Each save is also a commit under that account, so the
+  repository's history backs up the log.
+
+`site/exec/` signs in with an access key from the executive's own GitHub
+account (a classic key with `public_repo`; GitHub's fine-grained keys don't
+work for collaborators on a personal repository), checks with GitHub that the
+account can change the repository, and saves with GitHub's contents API. A
+save that meets someone else's newer one starts again from theirs. The push
+runs `publish.yml`, so the change is live a few minutes later; a TV notices
+within 10 minutes and reloads. No file, or one that doesn't read, leaves the
+rule as it is (`site/assets/carousel.js`).
 
 ## `updated.json`
 

@@ -107,8 +107,11 @@ export function placeOf(photo) {
   return photo.place || photo.computedPlace || null;
 }
 
-/** For the viewfinder and the latest picture: not a dark frame, and at least 95% of the picture can be shown. */
-export const isNearlyWhole = (photo) => !photo.dark && !((photo.raw?.completeness ?? photo.completeness) < 0.95);
+/**
+ * isNearlyWhole: not a dark frame, and at least 95% of the picture can be shown. inCarousel: in the
+ * viewfinder's turns, which is that rule unless the executives changed it (assets/carousel.js, exec/).
+ */
+export { inCarousel, isNearlyWhole } from '../assets/carousel.js';
 
 /**
  * How many rows of a loaded picture to show: all, or for one that never fully

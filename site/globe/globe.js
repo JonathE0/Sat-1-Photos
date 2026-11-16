@@ -1224,9 +1224,11 @@ export function mountGlobe(container, options = {}) {
   async function loadViewfinder(images, annotations) {
     if (!full || !images?.length) return;
     try {
-      const [{ createViewfinder }, { mergeAll }] = await Promise.all([import('../explore/viewfinder.js'), import('../assets/data.js')]);
+      const [{ createViewfinder }, { mergeAll }, { applyChoices, loadChoices }] = await Promise.all([
+        import('../explore/viewfinder.js'), import('../assets/data.js'), import('../assets/carousel.js')]);
+      const choices = await loadChoices(opts.siteRoot); // which pictures take turns (exec/)
       if (destroyed) return;
-      finderPhotos = mergeAll(images, annotations);
+      finderPhotos = applyChoices(mergeAll(images, annotations), choices);
       el.vfSlot.hidden = !finderPhotos.length;
       viewfinder = createViewfinder(el.vfSlot, {
         photos: finderPhotos,

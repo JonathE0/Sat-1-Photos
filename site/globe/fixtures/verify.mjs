@@ -10,6 +10,7 @@ import { fileURLToPath } from 'node:url';
 import { applyAnnotations, comparePhotos, launchTime, toIsoUtc, toPhotos, whenKnown } from '../adapter.js';
 import { bytes, calgary, grouped, monthDayYear, plural, utcLong } from '../../assets/format.js';
 import { statusShort } from '../../assets/photo-info.js';
+import { applyChoices, changeChoices, choicesText, inCarousel, readChoices } from '../../assets/carousel.js';
 import { calgaryTime, launchDate, statusLine, utcLong as exploreLong, utcShort as exploreShort } from '../../explore/journey-parts.js';
 import * as astro from '../astro.js';
 import { auroraNote, parseForecast, turnSince } from '../aurora.js';
@@ -785,6 +786,43 @@ check('compass points', astro.compassPoint(0) === 'N' && astro.compassPoint(355)
     && statusShort(partial({ pieces_past_gaps: 2 })) === 'partly missing: 72% of it is shown');
   check('gaps: so does one the satellite cut short',
     /72% of the frame is shown/.test(statusLine(cut)) && statusShort(cut) === 'cut short on board, and 72% of the frame is shown');
+}
+
+// ---- the carousel: the executives' choices (assets/carousel.js, exec/) ----------------
+{
+  const whole = { id: 'a', raw: { completeness: 1 } };
+  const part = { id: 'b', raw: { completeness: 0.4 } };
+  const dark = { id: 'c', dark: true, raw: { completeness: 1 } };
+  const byId = new Map([whole, part, dark].map((p) => [p.id, p]));
+  const fresh = () => [whole, part, dark].map((p) => ({ ...p }));
+  const none = readChoices(null);
+  check('carousel: no file is no choices', !none.add.length && !none.remove.length && !none.log.length);
+  const junk = readChoices({ add: 'a', remove: [1, null, ''], log: 'all of it' });
+  check('carousel: a file that doesn’t read is no choices', !junk.add.length && !junk.remove.length && !junk.log.length);
+  check('carousel: with no choices, the rule (95% there, not dark) decides',
+    applyChoices(fresh(), none).map(inCarousel).join() === 'true,false,false'
+    && inCarousel(whole) && !inCarousel(part) && !inCarousel(dark));
+  check('carousel: add puts a partial picture in, remove takes a whole one out',
+    applyChoices(fresh(), readChoices({ add: ['b'], remove: ['a'] })).map(inCarousel).join() === 'false,true,false');
+  check('carousel: an id in both lists is left out',
+    applyChoices(fresh(), readChoices({ add: ['a'], remove: ['a'] }))[0].carousel === false);
+
+  const one = changeChoices(none, new Map([['a', false], ['b', true]]), byId);
+  check('carousel: a change lists the picture taken out and the one put in',
+    one.choices.remove.join() === 'a' && one.choices.add.join() === 'b' && one.removed.join() === 'a' && one.added.join() === 'b');
+  const back = changeChoices(one.choices, new Map([['a', true]]), byId);
+  check('carousel: put back, a picture leaves both lists and follows the rule again',
+    !back.choices.remove.length && back.choices.add.join() === 'b' && back.added.join() === 'a' && !back.removed.length);
+  const same = changeChoices(one.choices, new Map([['b', true], ['c', false]]), byId);
+  check('carousel: a choice that changes nothing logs nothing', !same.added.length && !same.removed.length);
+  const gone = changeChoices(none, new Map([['zz', true]]), byId);
+  check('carousel: a picture the list doesn’t have can still be added', gone.choices.add.join() === 'zz' && gone.added.join() === 'zz');
+
+  const log = [{ at: '2026-11-16T18:02:11Z', by: 'someone', added: ['b'], removed: ['a'], note: 'For the open house' }];
+  const text = choicesText({ ...one.choices, log });
+  const again = readChoices(JSON.parse(text));
+  check('carousel: the file reads back as it was written, log and all',
+    text.endsWith('}\n') && again.add.join() === 'b' && again.remove.join() === 'a' && again.log[0].note === 'For the open house');
 }
 
 console.log(`\n${passed} passed, ${failures} failed`);
