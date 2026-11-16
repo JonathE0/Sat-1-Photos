@@ -52,9 +52,11 @@ import {
   makeObserver,
   satelliteLight,
   subsolarPoint,
+  sunAboveLimbDeg,
   sunElevationDeg,
   sunPosition,
 } from '../globe/astro.js';
+import { moonIlluminated, moonPosition } from './sky/moon.js';
 import { grouped, toDate } from '../assets/format.js';
 import { createScreenLine } from './journey-line.js';
 import {
@@ -136,8 +138,17 @@ const SHEET_OPEN_SHARE = 0.45; // of the stage, as a phone's new sheet's max-hei
 const FIT_NO_FACTS = 2;
 const FIT_MOST = 4;
 /** The satellite's light in the Earth's shadow: enough to find it, well under the Sun's 3.2. */
-const SAT_SHADOW_AMBIENT = 0.8;
-const SAT_SHADOW_FILL = 0.2;
+const SAT_SHADOW_AMBIENT = 0.85;
+/** In the Earth's shadow, a cool light from just above the viewer, so the side in view keeps its
+    shape and the metal (the antenna tapes most of all) a sheen. */
+const SAT_NIGHT_FILL = 0.7;
+/** In the Earth's shadow, moonlight on the satellite from a new to a full Moon, when the Moon is
+    above its horizon (all still plainly under the Sun's 3.2). */
+const SAT_MOON_LIGHT = [0.25, 0.9];
+/** Night's light and ambient: the cool white of moonlight. */
+const NIGHT_LIGHT = new THREE.Color(0xd2ddff);
+const NIGHT_AMBIENT = new THREE.Color(0xdde5f5);
+const WHITE = new THREE.Color(0xffffff);
 /** The satellite's parts shade one another once it is drawn at least this long, px; smaller, they
     couldn't be seen to, so the shadow's depth pass is skipped (phones especially). */
 const SAT_SELF_SHADOW_PX = 160;
@@ -594,6 +605,7 @@ export function mountJourney(container, options = {}) {
   // near 0.005 (about 32 km) at every zoom: the satellite never gets nearer than that, see zoomLimits
   const camera = new THREE.PerspectiveCamera(35, 1, 0.005, 60);
   const sunLight = new THREE.DirectionalLight(0xffffff, 3.2);
+  const nightFill = new THREE.DirectionalLight(0xd2ddff, 0); // in the Earth's shadow only
   const ambient = new THREE.AmbientLight(0xffffff, 0.05);
   const satHolder = new THREE.Group();
   satHolder.visible = false;
@@ -601,7 +613,7 @@ export function mountJourney(container, options = {}) {
   orbitLine.setOpacity(0);
   const occluder = new THREE.Mesh(new THREE.SphereGeometry(OCCLUDER_RADIUS, 128, 64), new THREE.MeshBasicMaterial({ colorWrite: false }));
   occluder.renderOrder = -1;
-  overScene.add(occluder, sunLight, sunLight.target, ambient, satHolder, orbitLine.mesh);
+  overScene.add(occluder, sunLight, sunLight.target, nightFill, nightFill.target, ambient, satHolder, orbitLine.mesh);
 
   let earth = null;
   let earthReady = false;
@@ -3331,6 +3343,9 @@ export function mountJourney(container, options = {}) {
   const qSat = new THREE.Quaternion();
   const mSat = new THREE.Matrix4();
   const sunDir = new THREE.Vector3();
+  const moonDir = new THREE.Vector3();
+  const fillDir = new THREE.Vector3();
+  const camUp = new THREE.Vector3();
 
   function frameLoop(now) {
     raf = requestAnimationFrame(frameLoop);
@@ -3427,12 +3442,31 @@ export function mountJourney(container, options = {}) {
       sunDir.set(sun.x, sun.z, -sun.y).normalize();
       const s = sat.state;
       const light = s ? satelliteLight(s.eci, sun) : 'sunlit';
-      sunLight.intensity = light === 'sunlit' ? 3.2 : light === 'terminator' ? 1.6 : SAT_SHADOW_FILL;
       sunLight.position.copy(sat.S);
-      // in the Earth's shadow there is no Sun to place: a dim light from the viewer's side
-      // keeps its shape findable while the line says to click it, plainly dimmer than daylight
-      if (light === 'shadow') sunLight.position.add(tmpA.copy(camera.position).sub(sat.S).normalize().multiplyScalar(5));
-      else sunLight.position.addScaledVector(sunDir, 5);
+      if (light === 'shadow') {
+        // in the Earth's shadow there is no Sun. A cool light from just above the viewer keeps the
+        // side in view findable, with a sheen on its metal; the Moon, when it's above the
+        // satellite's horizon, lights it from where it is, brighter the fuller it is (eased in and
+        // out as it rises and sets). All plainly dimmer than daylight.
+        const moon = moonPosition(ms);
+        const moonUp = s ? smoothstep(0, 4, sunAboveLimbDeg(s.eci, moon)) : 0;
+        moonDir.set(moon.x, moon.z, -moon.y).normalize();
+        sunLight.position.addScaledVector(moonDir, 5);
+        sunLight.intensity = moonUp * lerp(SAT_MOON_LIGHT[0], SAT_MOON_LIGHT[1], moonIlluminated(moon, sun));
+        sunLight.color.copy(NIGHT_LIGHT);
+        camUp.set(0, 1, 0).applyQuaternion(camera.quaternion);
+        fillDir.copy(camera.position).sub(sat.S).normalize().addScaledVector(camUp, 0.5).normalize();
+        nightFill.position.copy(sat.S).addScaledVector(fillDir, 5);
+        nightFill.target.position.copy(sat.S);
+        nightFill.intensity = SAT_NIGHT_FILL;
+        ambient.color.copy(NIGHT_AMBIENT);
+      } else {
+        sunLight.position.addScaledVector(sunDir, 5);
+        sunLight.intensity = light === 'sunlit' ? 3.2 : 1.6;
+        sunLight.color.copy(WHITE);
+        nightFill.intensity = 0;
+        ambient.color.copy(WHITE);
+      }
       sunLight.target.position.copy(sat.S);
       // the Sun's shadow fitted round the satellite at its size now, so its parts shade one another;
       // drawn small, or lit only by the fill in the Earth's shadow, it skips the depth pass, and the
@@ -3442,11 +3476,12 @@ export function mountJourney(container, options = {}) {
       if (satRenderer) satRenderer.shadowMap.autoUpdate = selfShadow;
       sunLight.shadow.intensity = selfShadow ? 1 : 0;
       ambient.intensity = light === 'shadow' ? SAT_SHADOW_AMBIENT : 0.05;
-      if (s && satellite.setEarthshine) {
+      if (s && (satellite.setSky || satellite.setEarthshine)) {
         const ground = sunElevationDeg(s.latDeg, s.lonDeg, ms);
-        // the Earth it reflects is sunlit (satellite.js makeEarthshineCube): over the night
-        // side, where the ground below is dark, little of it is left
-        satellite.setEarthshine(lerp(0.12, 1, smoothstep(-8, 4, ground)));
+        // what its shiny parts reflect: the sunlit Earth by day, the night Earth (towns, airglow,
+        // stars) once the ground below is dark (satellite.js setSky)
+        if (satellite.setSky) satellite.setSky(ground);
+        else satellite.setEarthshine(lerp(0.12, 1, smoothstep(-8, 4, ground)));
       }
     }
 

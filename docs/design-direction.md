@@ -272,7 +272,11 @@ The only loud motion on the site.
 - **Looks like hardware, not CAD (the user's request, 16 Nov 2026):** each material says what it is
   (satin aluminium, glossy lacquered boards, solar cells under cover glass with their blue-violet
   sheen, gold alodine, black anodising: models/CREDITS.md), and the shiny parts reflect the sunlit
-  Earth below and black space above, dimmed over the night side. Drawn at least 160px long, its
+  Earth below and black space above. In the Earth's shadow (the user's request, 16 Nov 2026) a cool
+  light from just above the viewer keeps the side in view readable, the Moon lights it from where it
+  is when it's up (brighter the fuller), the metal reflects the night Earth (towns, moonlit cloud,
+  the green airglow along the limb, stars), and the UHF antenna's tapes glow faintly cool so they
+  read as silver lines rather than vanishing; all plainly dimmer than day. Drawn at least 160px long, its
   parts shade one another in the Sun. Its round parts were measured at the closest zoom: their
   facets stay under half a pixel, so the shapes were left as the CAD has them.
 - Drawn at a fixed screen size, about 44px long (36px on a phone), far larger than life; the

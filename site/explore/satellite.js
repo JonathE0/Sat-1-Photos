@@ -49,6 +49,12 @@ const MATERIAL_PRESETS = [
 ];
 
 const HIGHLIGHT_EMISSIVE = new THREE.Color(0x182030);
+/**
+ * At night the UHF antenna's tapes glow faintly cool, so they read as thin silver lines against
+ * black space: 3 mm of mirror-like metal would otherwise vanish there. Linear RGB. (setSky)
+ */
+const NIGHT_TAPE_SHEEN = new THREE.Color().setRGB(0.13, 0.15, 0.2);
+const NIGHT_SHEEN_PARTS = /antenna tape|antenna hinge/i;
 
 /**
  * What the satellite's parts are, for the page to say by the pointer close up: [the model's
@@ -200,6 +206,7 @@ function assemble(model, source, error, earthshine) {
   // Earth-reflected light. A tiny cube map in the satellite's own frame (Earth below -Y),
   // re-oriented every frame so it follows the nadir face wherever the page points it.
   const envMap = makeEarthshineCube();
+  let nightEnv = null; // the night Earth's, made the first time it's needed (setSky)
   const envRotation = new THREE.Euler(0, 0, 0, 'ZYX');
   const materials = collectMaterials(model);
   const baseEmissive = new Map();
@@ -377,6 +384,31 @@ function assemble(model, source, error, earthshine) {
     setEarthshine(k) {
       for (const m of materials) if (m.isMeshStandardMaterial) m.envMapIntensity = Math.max(0, k);
     },
+    /**
+     * What the shiny parts reflect, by the Sun's height over the ground below (degrees): the
+     * sunlit Earth by day, dimming through twilight to 12%, and once the ground is dark (the Sun
+     * 8 degrees down) the night Earth: its towns' lights, the airglow along the limb, stars.
+     */
+    setSky(groundSunDeg) {
+      if (!envMap) return;
+      const g = Number(groundSunDeg) || 0;
+      const night = g < -8;
+      const map = night ? (nightEnv ||= makeEarthshineCube(128, true)) : envMap;
+      const t = Math.min(1, Math.max(0, (g + 8) / 12));
+      const k = night ? 1 : 0.12 + 0.88 * t * t * (3 - 2 * t);
+      for (const m of materials) {
+        if (!m.isMeshStandardMaterial) continue;
+        if (m.envMap !== map) m.envMap = map; // the same kind of map: no shader change
+        m.envMapIntensity = k;
+        if (NIGHT_SHEEN_PARTS.test(m.name || '') && baseEmissive.has(m)) {
+          const base = baseEmissive.get(m);
+          base.setRGB(0, 0, 0);
+          if (night) base.copy(NIGHT_TAPE_SHEEN);
+          m.emissive.copy(base);
+          if (highlighted) m.emissive.add(HIGHLIGHT_EMISSIVE);
+        }
+      }
+    },
     dispose() {
       if (disposed) return;
       disposed = true;
@@ -387,6 +419,7 @@ function assemble(model, source, error, earthshine) {
         for (const m of mats) disposeMaterial(m);
       });
       if (envMap) envMap.dispose();
+      if (nightEnv) nightEnv.dispose();
     },
   };
   return api;
@@ -497,7 +530,7 @@ function disposeTree(root) {
  * where a 0.3-albedo Earth would beside the scene's sun (3.2): ocean about 0.1, cloud about 0.6.
  * setEarthshine dims it all over the night side.
  */
-function makeEarthshineCube(size = 128) {
+function makeEarthshineCube(size = 128, night = false) {
   if (typeof document === 'undefined') return null;
   const R = 6371;
   const H = 500;
@@ -508,6 +541,13 @@ function makeEarthshineCube(size = 128) {
   const cloud = [0.60, 0.62, 0.66];
   const haze = [0.16, 0.26, 0.50];
   const glow = [0.22, 0.36, 0.75];
+  // night: the ground nearly black under its city lights, and just above the limb the thin band
+  // of airglow (green, about 100 km up) that orbit photographs show; stars above
+  const nightGround = [0.006, 0.009, 0.018];
+  const moonlitCloud = [0.035, 0.042, 0.06]; // cloud tops under a part-lit Moon, so metal facing down keeps a sheen
+  const cityLight = [1.0, 0.62, 0.28];
+  const airglow = [0.08, 0.22, 0.11];
+  const AIRGLOW_UP = 0.02; // radians above the limb
   const mix = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
   const smooth = (e0, e1, x) => {
     const t = Math.min(1, Math.max(0, (x - e0) / (e1 - e0)));
@@ -546,9 +586,21 @@ function makeEarthshineCube(size = 128) {
           const pz = (d * z) / R;
           const isLand = smooth(0.56, 0.60, fbm(px * 2.2 + 11.3, py * 2.2, pz * 2.2 - 4.1));
           const isCloud = smooth(0.50, 0.66, fbm(px * 7 - 3.7, py * 7 + 1.9, pz * 7 + 8.2));
-          rgb = mix(mix(ocean, land, isLand), cloud, isCloud);
-          // the view grazes more air towards the limb
-          rgb = mix(rgb, haze, 0.6 * (1 - smooth(0, 0.25, dip - elev)));
+          if (night) {
+            // towns: specks on land, in clusters, dimmed where cloud lies over them
+            const town = smooth(0.66, 0.74, fbm(px * 40 + 2.1, py * 40 - 7.3, pz * 40 + 5.9)) * isLand * (1 - 0.7 * isCloud);
+            rgb = mix(mix(nightGround, moonlitCloud, isCloud), cityLight.map((v) => v * 0.5), town);
+          } else {
+            rgb = mix(mix(ocean, land, isLand), cloud, isCloud);
+            // the view grazes more air towards the limb
+            rgb = mix(rgb, haze, 0.6 * (1 - smooth(0, 0.25, dip - elev)));
+          }
+        } else if (night) {
+          const a = (elev - dip - AIRGLOW_UP) / 0.012;
+          rgb = airglow.map((v) => v * Math.exp(-a * a));
+          // a sparse field of stars, fixed by the direction's own cell
+          const star = valueNoise(x * 300 + 0.5, y * 300 + 0.5, z * 300 + 0.5);
+          if (elev > dip + 0.05 && star > 0.985) rgb = rgb.map((v) => v + (star - 0.985) * 40);
         } else if (elev < dip + GLOW) {
           rgb = glow.map((v) => v * (1 - (elev - dip) / GLOW) ** 1.5);
         }
