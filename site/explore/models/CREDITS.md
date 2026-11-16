@@ -11,14 +11,23 @@ the UHF antenna's tapes and the magnetometer's arm deployed, and the boom rolled
 | Kept | everything that shows from outside: the frame and walls, the five solar panels and their cells, the sun sensors (CubeSpace CubeSense) and coarse sun sensors, the magnetometer (CubeSpace CubeMag Deployable), the UHF antenna (ISISPACE), the GNSS antenna, the camera, the screws, nuts, studs and standoffs, the deployment switches and the connectors on the outside |
 | Deployed | the CAD has both deployables stowed; the team's published Fusion model, which uses the makers' deployed CAD, is the reference, measured in its viewer. The CubeMag is split into its base (left on the nadir face) and its arm (the outer board and the sensor block), and the arm turns 90 degrees about its hinge pin to stand 82 mm out of the face. The antenna's four tapes are drawn in, 200 x 3 x 0.2 mm and curved across like a tape measure, each from a C-shaped hinge channel (47 x 6 x 4 mm) at the plate's edge, 20 mm off the centre, in a pinwheel. The boom is drawn rolled up in its mount behind the nadir face's window, as it still is in orbit (the CAD's boom part only has it out): a roll 25 mm across and 35 mm long with a basket weave in its surface, after the Fusion model's stowed boom |
 | Left out | everything inside (the boards of the main stack, the MPI's body, the burn-wire board and its parts, the connectors on the backs of the panels) |
-| Size | `frontiersat.glb` 305,016 triangles, 4,968,748 bytes, sha256 `8a1ef2df30bd59068259c8e1211ec2d6341d78b4f36dded026652e9eb004315b`; `frontiersat-lite.glb` 177,381 triangles, 2,761,224 bytes, sha256 `37975cb37faf7988085da30fd12889f364649b7e82afa881af3f5b05f7164c15` |
+| Size | `frontiersat.glb` 305,016 triangles, 4,969,724 bytes, sha256 `aa51ec888f1bcc7147b48c9253e338cc142941ea715824239c1e6ebaf12ad4b3`; `frontiersat-lite.glb` 177,381 triangles, 2,762,200 bytes, sha256 `c69c766c5f039d9777620e99271769c47c20254076eb37c47a175f2a25928341` |
 | Credit line to show | Satellite model: CalgaryToSpace's own CAD of FrontierSat (the V11 frame), outside only and simplified for the web, with the sun sensors, magnetometer and UHF antenna as their makers' CAD draws them (CubeSpace, ISISPACE), the antenna's four tapes and the magnetometer's arm shown deployed and the boom rolled up in its mount |
 
 The SolidWorks files, and the scripts that turn them into these files, stay off GitHub:
 only these meshes are published. Each part's colour is its appearance in the team's Fusion
 model (the anodised blue of the coarse sun sensors, the black boards and dark cells of the
 panels, the dark grey GNSS radome, steel screws, the CubeMag's blue board), so no part looks
-unlike the rest. Aluminium, black and white parts take `../satellite.js`'s space materials.
+unlike the rest.
+
+Since 2026-11-16 each material says what it is made of, so the model looks like hardware rather
+than CAD (the meshes are unchanged): satin aluminium (mostly metal), steel screws, glossy
+clear-coated solder mask on the boards (`KHR_materials_clearcoat`), solar cells as deep navy
+under smooth cover glass with their coating's blue-violet sheen (clearcoat and
+`KHR_materials_iridescence`), alodine-gold on the camera mount, satin black anodising, matte
+plastics and the boom's matte printed carbon fibre. `../satellite.js` gives these parts the
+sunlit Earth below and black space above to reflect, and keeps its own material table for a
+swapped-in model whose materials are left at glTF's defaults.
 
 ## How it was made
 

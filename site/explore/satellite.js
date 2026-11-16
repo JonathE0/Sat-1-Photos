@@ -29,8 +29,10 @@ const U3 = { w: 0.1, l: 0.3405, rail: 0.0085 };
 /**
  * PBR looks for materials, picked by keyword in the material name (first match wins).
  * Values are tuned for one directional "sun" plus a faint ambient. Colours are sRGB.
- * The bundled GLB already carries the same values; this table makes a swapped-in model
- * with sensibly named materials ("Solar cell", "Al 6061 rail", "Kapton", ...) look right.
+ * Only for a material the model left at glTF's defaults: the bundled GLB carries its own,
+ * fuller looks (clear-coated boards and cover glass, iridescent cells: models/CREDITS.md),
+ * and this table makes a swapped-in model with sensibly named materials ("Solar cell",
+ * "Al 6061 rail", "Kapton", ...) look right.
  */
 const MATERIAL_PRESETS = [
   [/interconnect|busbar|copper/i, { color: 0xc4945c, metalness: 0.9, roughness: 0.35 }],
@@ -212,6 +214,7 @@ function assemble(model, source, error, earthshine) {
   const q = new THREE.Quaternion();
   const e = new THREE.Euler();
   const tmpP = new THREE.Vector3();
+  const tmpSize = new THREE.Vector3(); // fitShadow's
   const tmpS = new THREE.Vector3();
   const syncEnv = () => {
     object3d.matrixWorld.decompose(tmpP, q, tmpS);
@@ -317,6 +320,24 @@ function assemble(model, source, error, earthshine) {
     setScale(unitsPerMetre) {
       const s = Number(unitsPerMetre);
       if (Number.isFinite(s) && s > 0) scaler.scale.setScalar(s);
+    },
+    /**
+     * Fits a directional light's shadow tightly round the whole satellite (deployables and all)
+     * at its current scale, so its parts shade one another: the antennas, the magnetometer's arm,
+     * the GNSS puck and the camera on the body. Call it after placing the light and its target
+     * (on the satellite) each frame; the renderer needs shadowMap.enabled and the light castShadow.
+     */
+    fitShadow(light) {
+      const r = 0.5 * fullBox.getSize(tmpSize).length() * scaler.scale.x * 1.05;
+      const d = light.position.distanceTo(light.target.position);
+      const cam = light.shadow.camera;
+      cam.left = -r; cam.right = r; cam.top = r; cam.bottom = -r;
+      cam.near = Math.max(d * 1e-3, d - r);
+      cam.far = d + r;
+      cam.updateProjectionMatrix();
+      // biases in the satellite's own size, so they hold at every zoom
+      light.shadow.bias = -0.0004;
+      light.shadow.normalBias = r * 0.004;
     },
     setHighlight(on) {
       on = Boolean(on);
@@ -424,9 +445,13 @@ function bodyBounds(root) {
   return box;
 }
 
+/** A material left at glTF's defaults (white, fully metallic, fully rough, no maps): no look chosen. */
+const unstyled = (m) => !m.map && !m.metalnessMap && !m.roughnessMap && m.metalness === 1 && m.roughness === 1
+  && m.color.r > 0.999 && m.color.g > 0.999 && m.color.b > 0.999;
+
 function applyPresets(root) {
   for (const m of collectMaterials(root)) {
-    if (!m.isMeshStandardMaterial) continue;
+    if (!m.isMeshStandardMaterial || !unstyled(m)) continue; // the model chose its own look
     const hit = MATERIAL_PRESETS.find(([re]) => re.test(m.name || ''));
     if (!hit) continue;
     const p = hit[1];
@@ -463,14 +488,31 @@ function disposeTree(root) {
   });
 }
 
-/** Cube map of the sky seen from low Earth orbit, in the satellite's frame: the Earth fills
- *  everything more than ~20 deg below the horizon (-Y), with a thin bright limb, and space
- *  above is black. Mean radiance is roughly the sunlit Earth's (albedo ~0.3). */
-function makeEarthshineCube(size = 32) {
+/**
+ * What the satellite's shiny parts reflect, in its own frame (the Earth below, -Y; assemble()
+ * turns it with the satellite): the sunlit Earth filling the sky more than 22 deg below the
+ * horizon (at 500 km), ocean and some land under drifting cloud, hazier towards the limb, a thin
+ * blue glow along the limb, and black space above. The cloud is noise on the Earth's surface
+ * where each direction meets it, so it is continuous across the cube's faces. Linear values sit
+ * where a 0.3-albedo Earth would beside the scene's sun (3.2): ocean about 0.1, cloud about 0.6.
+ * setEarthshine dims it all over the night side.
+ */
+function makeEarthshineCube(size = 128) {
   if (typeof document === 'undefined') return null;
-  const dip = THREE.MathUtils.degToRad(-20);          // horizon dip at ~500 km
-  const earth = [0.10, 0.15, 0.24];                   // linear RGB
-  const limb = [0.20, 0.30, 0.50];
+  const R = 6371;
+  const H = 500;
+  const dip = -Math.acos(R / (R + H)); // the horizon, 22 deg down
+  const GLOW = 0.06; // the limb glow's height, radians
+  const ocean = [0.030, 0.060, 0.140];
+  const land = [0.085, 0.080, 0.055];
+  const cloud = [0.60, 0.62, 0.66];
+  const haze = [0.16, 0.26, 0.50];
+  const glow = [0.22, 0.36, 0.75];
+  const mix = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+  const smooth = (e0, e1, x) => {
+    const t = Math.min(1, Math.max(0, (x - e0) / (e1 - e0)));
+    return t * t * (3 - 2 * t);
+  };
   const faces = [];
   for (let f = 0; f < 6; f++) {
     const c = document.createElement('canvas');
@@ -479,20 +521,36 @@ function makeEarthshineCube(size = 32) {
     const img = ctx.createImageData(size, size);
     for (let j = 0; j < size; j++) {
       for (let i = 0; i < size; i++) {
-        const u = (2 * (i + 0.5)) / size - 1;
-        const v = (2 * (j + 0.5)) / size - 1;
-        // Only the elevation matters, so only the y component of the face direction
-        // (faces in +X, -X, +Y, -Y, +Z, -Z order; v runs top to bottom).
-        const dy = f === 2 ? 1 : f === 3 ? -1 : -v;
-        const elev = Math.asin(dy / Math.hypot(1, u, v));
+        const s = (2 * (i + 0.5)) / size - 1;
+        const t = (2 * (j + 0.5)) / size - 1;
+        // the cube map's own face layout (+X, -X, +Y, -Y, +Z, -Z), t running top to bottom
+        let x; let y; let z;
+        switch (f) {
+          case 0: x = 1; y = -t; z = -s; break;
+          case 1: x = -1; y = -t; z = s; break;
+          case 2: x = s; y = 1; z = t; break;
+          case 3: x = s; y = -1; z = -t; break;
+          case 4: x = s; y = -t; z = 1; break;
+          default: x = -s; y = -t; z = -1;
+        }
+        const len = Math.hypot(x, y, z);
+        x /= len; y /= len; z /= len;
+        const elev = Math.asin(y);
         let rgb = [0, 0, 0];
         if (elev < dip) {
-          // a little brighter towards nadir (less limb darkening / more cloud seen face-on)
-          const t = Math.min(1, (dip - elev) / (Math.PI / 2 + dip));
-          const k = 0.75 + 0.25 * t;
-          rgb = earth.map((x) => x * k);
-        } else if (elev < dip + 0.05) {
-          rgb = limb;
+          // where this direction meets the Earth (centre R + H below), as a point on the unit sphere
+          const b = -(R + H) * y;
+          const d = b - Math.sqrt(Math.max(0, b * b - ((R + H) ** 2 - R * R)));
+          const px = (d * x) / R;
+          const py = (d * y + R + H) / R;
+          const pz = (d * z) / R;
+          const isLand = smooth(0.56, 0.60, fbm(px * 2.2 + 11.3, py * 2.2, pz * 2.2 - 4.1));
+          const isCloud = smooth(0.50, 0.66, fbm(px * 7 - 3.7, py * 7 + 1.9, pz * 7 + 8.2));
+          rgb = mix(mix(ocean, land, isLand), cloud, isCloud);
+          // the view grazes more air towards the limb
+          rgb = mix(rgb, haze, 0.6 * (1 - smooth(0, 0.25, dip - elev)));
+        } else if (elev < dip + GLOW) {
+          rgb = glow.map((v) => v * (1 - (elev - dip) / GLOW) ** 1.5);
         }
         const o = (j * size + i) * 4;
         img.data[o] = Math.round(linearToSrgb(rgb[0]) * 255);
@@ -508,6 +566,35 @@ function makeEarthshineCube(size = 32) {
   tex.colorSpace = THREE.SRGBColorSpace;
   tex.needsUpdate = true;
   return tex;
+}
+
+/** Smooth value noise in 3D, 0..1, from a fixed hash: the same clouds on every visit. */
+function valueNoise(x, y, z) {
+  const xi = Math.floor(x); const yi = Math.floor(y); const zi = Math.floor(z);
+  const fx = x - xi; const fy = y - yi; const fz = z - zi;
+  const u = fx * fx * (3 - 2 * fx); const v = fy * fy * (3 - 2 * fy); const w = fz * fz * (3 - 2 * fz);
+  const h = (a, b, c) => {
+    let k = Math.imul(a, 374761393) ^ Math.imul(b, 668265263) ^ Math.imul(c, 1440662683);
+    k = Math.imul(k ^ (k >>> 13), 1274126177);
+    return ((k ^ (k >>> 16)) >>> 0) / 4294967296;
+  };
+  const lerp = (a, b, t) => a + (b - a) * t;
+  return lerp(
+    lerp(lerp(h(xi, yi, zi), h(xi + 1, yi, zi), u), lerp(h(xi, yi + 1, zi), h(xi + 1, yi + 1, zi), u), v),
+    lerp(lerp(h(xi, yi, zi + 1), h(xi + 1, yi, zi + 1), u), lerp(h(xi, yi + 1, zi + 1), h(xi + 1, yi + 1, zi + 1), u), v),
+    w);
+}
+
+/** Four octaves of valueNoise, 0..1. */
+function fbm(x, y, z) {
+  let sum = 0; let amp = 0.5; let norm = 0;
+  for (let o = 0; o < 4; o++) {
+    sum += amp * valueNoise(x, y, z);
+    norm += amp;
+    x *= 2.03; y *= 2.03; z *= 2.03;
+    amp *= 0.5;
+  }
+  return sum / norm;
 }
 
 function linearToSrgb(x) {

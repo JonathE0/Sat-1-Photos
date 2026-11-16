@@ -44,6 +44,11 @@ renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.0;
 
+// the parts shade one another, as on the live view (?shadows=0 turns that off)
+const shadows = q.get('shadows') !== '0';
+renderer.shadowMap.enabled = shadows;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x000000);
 const camera = new THREE.PerspectiveCamera(30, 1, 0.01, 100);
@@ -53,6 +58,8 @@ camera.lookAt(0, 0, 0);
 // One sun, faint ambient, nothing else.
 const sun = new THREE.DirectionalLight(0xfff6ea, 3.2);
 sun.position.set(4, 3, 5);
+sun.castShadow = shadows;
+sun.shadow.mapSize.set(2048, 2048);
 scene.add(sun, new THREE.AmbientLight(0xffffff, 0.05));
 
 const t0 = performance.now();
@@ -61,6 +68,7 @@ const loadMs = performance.now() - t0;
 const SCALE = num('scale', 10);
 sat.setScale(SCALE);
 scene.add(sat.object3d);
+sat.fitShadow?.(sun);
 
 // The page frame: spin about world Y; yaw/pitch/roll give fixed starting angles.
 const base = new THREE.Euler(

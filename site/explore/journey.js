@@ -138,6 +138,9 @@ const FIT_MOST = 4;
 /** The satellite's light in the Earth's shadow: enough to find it, well under the Sun's 3.2. */
 const SAT_SHADOW_AMBIENT = 0.8;
 const SAT_SHADOW_FILL = 0.2;
+/** The satellite's parts shade one another once it is drawn at least this long, px; smaller, they
+    couldn't be seen to, so the shadow's depth pass is skipped (phones especially). */
+const SAT_SELF_SHADOW_PX = 160;
 /** Set in this tab once the story has been finished, so coming back doesn't mean scrolling it again. */
 const STORY_FINISHED_KEY = 'cts-story-finished';
 const storyFinished = {
@@ -585,6 +588,7 @@ export function mountJourney(container, options = {}) {
   // ran down to the solid ground would look as if it entered the Earth.
   let renderer = null;
   let overRenderer = null;
+  let satRenderer = null; // the one that draws the satellite, and its shadow
   const scene = new THREE.Scene();
   const overScene = new THREE.Scene();
   // near 0.005 (about 32 km) at every zoom: the satellite never gets nearer than that, see zoomLimits
@@ -643,6 +647,14 @@ export function mountJourney(container, options = {}) {
       occluder.removeFromParent();
       scene.add(...overScene.children);
     }
+    // the satellite's parts shade one another in sunlight (satellite.fitShadow keeps the shadow
+    // tight round it); only its meshes cast or take shadows, so this costs one small depth pass
+    satRenderer = overRenderer || renderer;
+    satRenderer.shadowMap.enabled = true;
+    satRenderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    sunLight.castShadow = true;
+    const shadowPx = quality === 'phone' ? 1024 : 2048;
+    sunLight.shadow.mapSize.set(shadowPx, shadowPx);
   }
   if (!overRenderer) overCanvas.hidden = true;
 
@@ -3422,10 +3434,19 @@ export function mountJourney(container, options = {}) {
       if (light === 'shadow') sunLight.position.add(tmpA.copy(camera.position).sub(sat.S).normalize().multiplyScalar(5));
       else sunLight.position.addScaledVector(sunDir, 5);
       sunLight.target.position.copy(sat.S);
+      // the Sun's shadow fitted round the satellite at its size now, so its parts shade one another;
+      // drawn small, or lit only by the fill in the Earth's shadow, it skips the depth pass, and the
+      // last one is given no effect (shadow.intensity: no shader change, so no stall either way)
+      satellite.fitShadow?.(sunLight);
+      const selfShadow = light !== 'shadow' && lengthPx >= SAT_SELF_SHADOW_PX * frame.ui;
+      if (satRenderer) satRenderer.shadowMap.autoUpdate = selfShadow;
+      sunLight.shadow.intensity = selfShadow ? 1 : 0;
       ambient.intensity = light === 'shadow' ? SAT_SHADOW_AMBIENT : 0.05;
       if (s && satellite.setEarthshine) {
         const ground = sunElevationDeg(s.latDeg, s.lonDeg, ms);
-        satellite.setEarthshine(lerp(0.9, 1, smoothstep(-8, 4, ground)));
+        // the Earth it reflects is sunlit (satellite.js makeEarthshineCube): over the night
+        // side, where the ground below is dark, little of it is left
+        satellite.setEarthshine(lerp(0.12, 1, smoothstep(-8, 4, ground)));
       }
     }
 

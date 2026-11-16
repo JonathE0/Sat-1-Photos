@@ -269,6 +269,12 @@ The only loud motion on the site.
 - A free 3U CubeSat model: one 10 × 10 × 34 cm body with body-mounted cells. No large solar wings,
   no generic satellite icon. Lit by the real sun, dark in the Earth's shadow but with enough
   earthshine to stay visible.
+- **Looks like hardware, not CAD (the user's request, 16 Nov 2026):** each material says what it is
+  (satin aluminium, glossy lacquered boards, solar cells under cover glass with their blue-violet
+  sheen, gold alodine, black anodising: models/CREDITS.md), and the shiny parts reflect the sunlit
+  Earth below and black space above, dimmed over the night side. Drawn at least 160px long, its
+  parts shade one another in the Sun. Its round parts were measured at the closest zoom: their
+  facets stay under half a pixel, so the shapes were left as the CAD has them.
 - Drawn at a fixed screen size, about 44px long (36px on a phone), far larger than life; the
   footer credit says so.
 - Label "FrontierSat" (Small 13/500, Ink) 12px to its right, no box. Model and label are one button,
