@@ -22,7 +22,7 @@
 // With no id in the URL it opens on the newest picture that isn't dark and
 // is at least half there; the strip still starts with the newest.
 
-import { h, append, announce, onSwipe } from './dom.js';
+import { h, append, announce, onSwipe, store } from './dom.js';
 import { OPENING_PHOTO_ID } from './opening-photo.js';
 import { CAMERAS, plural } from './format.js';
 import { applyFilters, FILTER_KEYS, readFilters } from './data.js';
@@ -297,10 +297,22 @@ export function createCatalogue(root, {
   compareBtn.addEventListener('click', () => setSize(2, { user: true }));
   const detailsName = h('span', { class: 'vh' });
   const detailsLink = h('a', { class: 'cat-text-btn' }, 'All details', detailsName);
-  // Show on the globe, Download and Copy link as on the picture's page, then Pictures' own two.
+  // Beside the facts column One draws the picture as large as its stage allows, up to twice
+  // its own size (catalogue.css). "Actual size" puts it back at its own size and "Fit to
+  // frame" undoes that, remembered on this device; offered only where the two differ (fitSize).
+  const FIT_KEY = 'cts-picture-actual-size';
+  let actualSize = store.get(FIT_KEY) === '1';
+  const fitBtn = h('button', { type: 'button', class: 'cat-text-btn', hidden: true });
+  fitBtn.addEventListener('click', () => {
+    actualSize = !actualSize;
+    store.set(FIT_KEY, actualSize ? '1' : '');
+    applyFit();
+  });
+  const fitQuery = window.matchMedia('(min-width: 900px)');
+  // Show on the globe, Download and Copy link as on the picture's page, then Pictures' own three.
   const actions = h('div', { class: 'cat-actions' },
     photoActions.el,
-    h('div', { class: 'cat-actions-row' }, compareBtn, detailsLink));
+    h('div', { class: 'cat-actions-row' }, compareBtn, detailsLink, fitBtn));
   const facts = h('div', { class: 'cat-facts-slot' });
   let tech = null; // Technical details: kept from picture to picture, so it stays open or closed
   const notes = h('div', { class: 'cat-notes-slot' });
@@ -317,7 +329,21 @@ export function createCatalogue(root, {
   const inner = h('div', { class: 'cat-in' }, backRow, pageTitle, missing, notice, grid, loadingText);
   const el = h('div', { class: 'cat', 'data-size': '1', 'data-state': 'loading' }, inner);
   root.append(el);
+  applyFit();
   drawLoading();
+
+  function applyFit() {
+    el.dataset.fit = actualSize ? 'actual' : 'fill';
+    fitBtn.textContent = actualSize ? 'Fit to frame' : 'Actual size';
+  }
+
+  // The button only where filling the stage would draw this picture larger than its own size.
+  // It sits in the facts column, so showing or hiding it never changes the stage's size.
+  function fitSize() {
+    const p = size === 1 && !frame.hidden ? byId.get(currentId) : null;
+    const box = frame.getBoundingClientRect();
+    fitBtn.hidden = !(p && fitQuery.matches && box.width && Math.min(box.width / p.width, box.height / p.height) > 1.02);
+  }
 
   // The stage is as tall as fits above the dock, whatever the dock holds
   // (filters open, a count that wraps, a contact sheet on a big screen), and
@@ -334,6 +360,7 @@ export function createCatalogue(root, {
     if (el.style.getPropertyValue('--dock-h') !== dockH) el.style.setProperty('--dock-h', dockH);
     if (el.style.getPropertyValue('--dock-top-h') !== dockTopH) el.style.setProperty('--dock-top-h', dockTopH);
     if (el.style.getPropertyValue('--stage-w') !== stageW) el.style.setProperty('--stage-w', stageW);
+    fitSize();
   }
   const sizer = new ResizeObserver(() => measure());
   sizer.observe(dock);
@@ -874,6 +901,7 @@ export function createCatalogue(root, {
     // its own size, for how far a big stage may enlarge it (catalogue.css)
     img.style.setProperty('--nat-w', `${p.width}px`);
     img.style.setProperty('--nat-h', `${p.height}px`);
+    fitSize();
     img.alt = photoAlt(p);
     frame.dataset.ratio = p.width === p.height ? 'square' : 'wide';
     fillInfo(p);

@@ -213,7 +213,7 @@
   object-fit: contain;
 }
 @media (min-width: 900px) {
-  .cat-img {
+  .cat:not([data-fit="actual"]) .cat-img { /* "Actual size" (catalogue.js) keeps it at 1x */
     width: min(100%, var(--nat-w, 640px) * 2);
     height: min(100%, var(--nat-h, 480px) * 2);
   }

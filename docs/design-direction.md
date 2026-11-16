@@ -440,7 +440,8 @@ was it taken?** So the picture is the largest thing, and its place is the larges
 - **Viewer.** (Updated at checkpoint 1, and on 2026-11-12.) In One, beside the facts column, a picture
   fills its stage up to twice its own size (640 × 480, attitude camera 512 × 512), so a big screen
   isn't mostly empty Panel; in Two and Four, and on phones, it is never drawn larger than its own
-  size. The viewer is a Panel stage, as tall as fits above the browse dock (up to 720px), with the
+  size. Where filling would enlarge it, "Actual size" (beside Compare and All details) puts it back
+  at its own size and "Fit to frame" undoes that, remembered on the device. The viewer is a Panel stage, as tall as fits above the browse dock (up to 720px), with the
   picture centred on it, never cropped. On a tall, wide screen the dock stays under the stage in the
   picture's column, however long the facts run. The stage keeps the edges of night and black-edged frames visible. Two and Four use the
   same stage at the same height, with their pictures centred on it as a group and each caption
