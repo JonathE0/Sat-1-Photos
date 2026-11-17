@@ -540,6 +540,9 @@ class CaptureTimes(unittest.TestCase):
             # 'L' names are UTC too: read as Calgary time this capture would
             # come an hour after its own download began.
             "camera/2026-10-24_173732L.img": datetime(2026, 10, 24, 17, 37, 32, tzinfo=UTC),
+            # No letter at all, UTC as well: the team asked for it as "..._183100Z",
+            # a minute after the night picture "2026-11-09_183000Z.img".
+            "camera/2026-11-09_183100.img": datetime(2026, 11, 9, 18, 31, 0, tzinfo=UTC),
         }
         for name, expected in cases.items():
             self.assertEqual(capture.from_name(name)[0], expected, name)

@@ -6,8 +6,10 @@ In order of preference:
    command was scheduled for, in a few styles ("2026-09-17_071148Z.img",
    "2026-10-25005433z.img", "2026-07-15-T17-49-30Z.img"), and one with an
    'L' suffix ("2026-10-24_173732L.img"), which is also UTC: read as Calgary
-   time it would come after its own downlink began. A name known to be wrong
-   is corrected first (MISNAMED, with the evidence).
+   time it would come after its own downlink began, and one with no letter
+   at all ("2026-11-09_183100.img"), also UTC: a minute after the
+   "..._183000Z" picture, and the team asked for it as "..._183100Z". A name
+   known to be wrong is corrected first (MISNAMED, with the evidence).
 2. The camera's own log line, "Opened image file: <file>", written as the
    capture starts.
 3. The camera_capture command's own record (a .run file that came down in
@@ -42,7 +44,7 @@ import polars as pl
 
 _NAME_RE = re.compile(
     r"(\d{4})-(\d{2})-(\d{2})"  # date
-    r"(?:[_-]?T?(\d{2})-?(\d{2})-?(\d{2})([ZzLl]))?"  # optional time + zone letter
+    r"(?:[_-]?T?(\d{2})-?(\d{2})-?(\d{2})([ZzLl])?)?"  # optional time, its zone letter optional too
 )
 _REPLY_WINDOW = timedelta(days=2)
 _SAME_CAPTURE = timedelta(minutes=10)  # a log line and a reply this close describe one capture
@@ -97,7 +99,7 @@ class Clues:
 
 def from_name(path: str) -> tuple[datetime | None, date | None]:
     """The capture time (if the name has one) and date (if it has one).
-    Every time-bearing name is UTC, whatever its zone letter."""
+    Every time-bearing name is UTC, whatever its zone letter, or with none."""
     m = _NAME_RE.search(path.rsplit("/", 1)[-1])
     if not m:
         return None, None
