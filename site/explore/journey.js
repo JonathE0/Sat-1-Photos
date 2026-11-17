@@ -80,7 +80,7 @@ import {
 } from './journey-parts.js';
 import { loadCountries, placeAt, placeInSentence } from './journey-region.js';
 import { OPENING_PHOTO_ID } from '../assets/opening-photo.js';
-import { SPONSORS, sponsorLoopSeconds, sponsorSrc } from '../assets/sponsors.js';
+import { SPONSORS, sponsorLoopSeconds, sponsorSrc, sponsorsRow } from '../assets/sponsors.js';
 
 /** A link to Pictures with every picture shown: dark frames and mostly missing ones too, which it
     otherwise tucks away (dark=1, missing=1: readFilters in assets/data.js). */
@@ -459,15 +459,11 @@ function template(id, siteRoot) {
           <span class="jy-qr-sub">Scan for the CalgaryToSpace website,<br>the dashboard, Instagram and LinkedIn</span>
           <span class="jy-qr-site">Also visit this website for yourself:<br><span class="jy-qr-url">${SITE_TEXT}</span></span></span>
       </div>
-      <!-- the sponsors, in the corner's row in place of its controls when asked for (and on a TV
-           nobody is using); placeSponsors lays them over the row. Credits has them too. -->
+      <!-- the sponsors, in the corner's row in place of its controls when chosen in Credits (and on
+           a TV nobody is using); placeSponsors lays them over the row. Credits has them too. -->
       <div class="jy-sponsors" data-ref="sponsors">
         <p class="jy-sponsors-title">Thank you to our sponsors</p>
         <div class="jy-sponsors-strip">${sponsorStrip(sponsors)}</div>
-      </div>
-      <div class="jy-swap" data-ref="swap" role="group" aria-label="The bottom row shows">
-        <button type="button" class="jy-swap-btn" data-ref="swapControls" aria-pressed="true">Controls</button>
-        <button type="button" class="jy-swap-btn" data-ref="swapSponsors" aria-pressed="false">Sponsors</button>
       </div>
 
       <div class="jy-corner" data-ref="corner">
@@ -1705,7 +1701,6 @@ export function mountJourney(container, options = {}) {
       root.classList.toggle('jy-ui-on', ui);
       ref.time.inert = !ui || still;
       ref.corner.inert = !ui || root.classList.contains('jy-sponsors-on');
-      ref.swap.inert = !ui;
       ref.summary.inert = !ui || still;
       marks.inert = !ui || still;
       ref.satMarks.inert = !ui || still;
@@ -2450,7 +2445,7 @@ export function mountJourney(container, options = {}) {
   }
 
   /**
-   * The sponsors' logos, the first time they're wanted: the switch under the corner's row, or a TV
+   * The sponsors' logos, the first time they're wanted: chosen for the corner's row in Credits, or a TV
    * (once the Earth is up), whose row shows them while nobody is using it. The strip shows when
    * every one has come, so none passes by empty.
    */
@@ -2465,16 +2460,20 @@ export function mountJourney(container, options = {}) {
     return sponsorsLoaded;
   }
 
-  /** Where the switch shows (journey.css: a wide enough screen, not a phone). */
+  /** Where the corner's row can show the sponsors (journey.css: a wide enough screen, not a phone). */
   function sponsorsHere() {
-    return getComputedStyle(ref.swap).display !== 'none';
+    return getComputedStyle(ref.sponsors).display !== 'none';
+  }
+
+  /** The corner's row as chosen in Credits (assets/sponsors.js), where it can show them. */
+  function syncSponsors() {
+    const want = sponsorsRow.on && sponsorsHere();
+    if (want !== state.sponsorsOn) setSponsors(want);
   }
 
   /** The corner's row: its controls, or the sponsors (once their logos are in). */
   function setSponsors(on) {
     state.sponsorsOn = on;
-    ref.swapControls.setAttribute('aria-pressed', String(!on));
-    ref.swapSponsors.setAttribute('aria-pressed', String(on));
     const show = () => {
       if (destroyed || state.sponsorsOn !== on) return;
       root.classList.toggle('jy-sponsors-on', on);
@@ -2486,12 +2485,12 @@ export function mountJourney(container, options = {}) {
     else show();
   }
 
-  /** The strip over the corner's row, as big as it, and the switch just under the row's right end. */
+  /** The strip over the corner's row, as big as it (and, for Credits, whether it can show here). */
   function placeSponsors(s) {
-    if (!sponsorsHere()) {
-      if (state.sponsorsOn) setSponsors(false);
-      return;
-    }
+    const here = sponsorsHere();
+    sponsorsRow.available = here;
+    syncSponsors();
+    if (!here) return;
     const row = boxOf(ref.corner, s);
     if (!row) return;
     const st = ref.sponsors.style;
@@ -2501,8 +2500,6 @@ export function mountJourney(container, options = {}) {
     st.height = `${row.bottom - row.top}px`;
     // the tiles a little shorter than the row's buttons: Credits' are 72px
     st.setProperty('--sp-k', String((row.bottom - row.top - 8) / 72));
-    ref.swap.style.right = `${s.right - s.left - row.right}px`;
-    ref.swap.style.top = `${row.bottom + 4}px`;
   }
 
   /** "Last updated Nov 3, 22:00 in Calgary", from the stamp each publish leaves; nothing without one. */
@@ -3855,8 +3852,8 @@ export function mountJourney(container, options = {}) {
     measureSettled();
   }
 
-  listen(ref.swapControls, 'click', () => setSponsors(false));
-  listen(ref.swapSponsors, 'click', () => setSponsors(true));
+  // Credits' choice for the corner's row
+  cleanups.push(sponsorsRow.listen(syncSponsors), () => { sponsorsRow.available = false; });
   listen(ref.factsShow, 'click', () => {
     setFactsHidden(false);
     ticker?.reveal?.();

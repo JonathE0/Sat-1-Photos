@@ -133,6 +133,35 @@ html.credits-open.credits-gutter { scrollbar-gutter: stable; }
   cursor: pointer;
 }
 .credits-sponsors-pause:hover { color: var(--cr-ink); }
+/* Explore's bottom-right row: Controls | Sponsors (credits.js) */
+.credits-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px 12px;
+  margin: 0 0 8px;
+  color: var(--cr-muted);
+  font-size: 14px;
+}
+.credits-row[hidden] { display: none; }
+.credits-row-switch { display: inline-flex; gap: 2px; }
+.credits-row-switch button {
+  min-height: 32px;
+  border: 0;
+  padding: 0 8px;
+  background: none;
+  color: var(--cr-muted);
+  font: inherit;
+  cursor: pointer;
+}
+.credits-row-switch button:hover { color: var(--cr-ink); }
+.credits-row-switch button[aria-pressed="true"] {
+  color: var(--cr-ink);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+}
 /* kept still (?motion=reduced, app.js): every logo at once, in rows, nothing to pause */
 html[data-motion="reduced"] .credits-sponsors { margin: 4px 0 12px; -webkit-mask-image: none; mask-image: none; }
 html[data-motion="reduced"] .credits-sponsors-row { flex-wrap: wrap; width: auto; animation: none; }

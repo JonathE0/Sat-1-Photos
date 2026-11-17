@@ -16,7 +16,7 @@
   --jy-ease-exit: cubic-bezier(.55, .055, .675, .19);
 
   /* Five sizes. Body and below grow a little on very wide screens and stop. */
-  --jy-display: clamp(38px, 11.5vw, 116px);
+  --jy-display: clamp(34px, 10.35vw, 104px); /* a tenth under the first size, at the owner's ask (16 Nov 2026) */
   --jy-statement: clamp(24px, 1rem + 1.2vw, 32px);
   --jy-lead: clamp(20px, 0.52vw + 10px, 24px);
   --jy-body: clamp(16px, 0.42vw + 8px, 19px);
@@ -593,8 +593,8 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
 /* this site's own address, for anyone who would rather type it than scan */
 .jy-qr-site { margin-top: calc(8px * var(--jy-ui, 1)); }
 .jy-qr-url { color: var(--jy-ink); font-weight: 500; white-space: nowrap; } /* never "Sat-1-" / "Photos" */
-/* The sponsors, in the corner's row in place of its controls: asked for with the switch under
-   the row, and on a TV whenever nobody is using it (its controls go then anyway). Credits' row
+/* The sponsors, in the corner's row in place of its controls: chosen in Credits (assets/credits.js),
+   and on a TV whenever nobody is using it (its controls go then anyway). Credits' row
    (assets/credits.css) drawn a little shorter than the row (placeSponsors in journey.js lays it
    over the row and sets --sp-k), each logo on its white tile (they're drawn for white). It shows once every
    logo is in (loadSponsorLogos); a pointer resting on it stops it. */
@@ -688,48 +688,11 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
   to { transform: translateX(calc(-50% - var(--sp-gap) / 2)); }
 }
 
-/* The switch just under the corner's row, in the margin below it: Controls | Sponsors */
-.jy-swap {
-  position: absolute;
-  z-index: 2;
-  display: none;
-  gap: 2px;
-  background: var(--jy-panel);
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 150ms var(--jy-ease-exit), visibility 0s linear 150ms;
-}
-.jy-ui-on .jy-swap {
-  opacity: 1;
-  visibility: visible;
-  transition: opacity 240ms var(--jy-ease-out), visibility 0s;
-}
-.jy-swap-btn {
-  min-height: 24px;
-  border: 0;
-  padding: 0 10px;
-  background: none;
-  color: var(--jy-muted);
-  font: 500 var(--jy-small) / 1 var(--jy-font);
-  letter-spacing: 0.01em;
-  cursor: pointer;
-  pointer-events: auto;
-}
-.jy-swap-btn:hover { color: var(--jy-ink); }
-.jy-swap-btn[aria-pressed="true"] {
-  color: var(--jy-ink);
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 4px;
-}
-.jy-swap-btn:focus-visible { outline: 2px solid var(--jy-blue); outline-offset: -2px; }
-/* where the margin under the row has room for it (32px from 1100px wide), and not on a phone,
-   the still picture or with motion kept still (?motion=reduced, app.js): Credits has them all */
+/* on a wide enough screen, and not on a phone, the still picture or with motion kept still
+   (?motion=reduced, app.js): Credits has them all */
 @media (min-width: 1100px) and (min-height: 700px) {
-  .jy-root:not(.jy-narrow):not([data-mode="still"]) .jy-swap { display: flex; }
   .jy-root:not(.jy-narrow):not([data-mode="still"]) .jy-sponsors { display: flex; }
 }
-html[data-motion="reduced"] .jy-root.jy-root .jy-swap,
 html[data-motion="reduced"] .jy-root.jy-root .jy-sponsors { display: none; }
 
 /* phones have the tab bar down there, and Credits says the same */
@@ -1800,7 +1763,7 @@ html[data-motion="reduced"] .jy-root.jy-root .jy-sponsors { display: none; }
 /* ---- short screens (laptops with a small window, phones on their side) ------------------ */
 
 @media (max-height: 640px) and (min-width: 600px) {
-  .jy-root { --jy-display: clamp(48px, 12svh, 96px); }
+  .jy-root { --jy-display: clamp(43px, 10.8svh, 86px); }
   .jy-text { top: max(16vh, calc(var(--jy-nav) + 16px)); top: max(16svh, calc(var(--jy-nav) + 16px)); }
   .jy-tagline,
   .jy-sub { margin-top: 10px; }
@@ -1847,7 +1810,7 @@ html[data-motion="reduced"] .jy-root.jy-root .jy-sponsors { display: none; }
 }
 .jy-tv.jy-tv-idle,
 .jy-tv.jy-tv-idle * { cursor: none !important; }
-.jy-tv.jy-tv-idle :is(.jy-corner, .jy-swap, .jy-speed, .jy-now, .jy-summary-tools, .jy-facts-show, .cf-btn, .vf-nav, .jy-dock-grip) {
+.jy-tv.jy-tv-idle :is(.jy-corner, .jy-speed, .jy-now, .jy-summary-tools, .jy-facts-show, .cf-btn, .vf-nav, .jy-dock-grip) {
   visibility: hidden;
 }
 

@@ -725,7 +725,8 @@ The user's choice (31 Oct 2026): the big title reads FRONTIER SAT in capitals, w
 it, then "Calgary's first student-built satellite. In orbit since May 3, 2026." The size is set so the
 longer name still fits a 320px phone. On 16 Nov 2026 the user asked for "Calgary's first student-built
 satellite" as a subheader right under the name, at the opening and the end alike; the opening's sentence
-keeps "In orbit since May 3, 2026." so it isn't said twice. On 3 Nov 2026 the smaller labels and the other pages changed to FrontierSat too.
+keeps "In orbit since May 3, 2026." so it isn't said twice. The same day the title came down a tenth
+in size, at the user's ask. On 3 Nov 2026 the smaller labels and the other pages changed to FrontierSat too.
 
 ### Hide photo previews
 

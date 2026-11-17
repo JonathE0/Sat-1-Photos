@@ -1,4 +1,5 @@
-// The sponsors, for Credits' row (credits.js) and Explore's strip in the corner's row (explore/journey.js).
+// The sponsors, for Credits' row (credits.js) and Explore's strip in the corner's row (explore/journey.js),
+// and the choice between that strip and the row's controls, made in Credits.
 
 const SITE = new URL('../', import.meta.url);
 
@@ -6,7 +7,7 @@ const SITE = new URL('../', import.meta.url);
 // the logo's width and height as shown, and for two of them a line under the logo]. Ten are on
 // calgarytospace.ca/sponsorships; the shirt adds ABB, Calian, Valley Metal, Siemens NX, Garmin,
 // ESA's Fly Your Satellite! and Lockheed Martin, and Ansys came after it. They pass by in a row
-// under "Thank you" in Credits (credits.js), and in Explore's corner row when asked for (explore/journey.js).
+// under "Thank you" in Credits (credits.js), and in Explore's corner row when chosen there (explore/journey.js).
 // A file is a PNG unless its name says otherwise.
 // ESA allows only its own logo, with none for a programme (brand.esa.int), so the programme
 // is written under it; Siemens has no NX logo of its own either.
@@ -39,3 +40,31 @@ export const sponsorSrc = (file) => new URL(`assets/sponsors/${file.includes('.'
 /** How long one set takes to pass, s: at Credits' size each logo, its tile's padding either side (16 px)
     and the gap after it (12 px). A row drawn smaller with the same time shows as many logos a second. */
 export const sponsorLoopSeconds = (list) => Math.round(list.reduce((sum, [, , w]) => sum + w + 32 + 12, 0) / SPONSOR_SPEED);
+
+/**
+ * Whether Explore's bottom-right row shows the sponsors instead of its controls: chosen in Credits
+ * (credits.js), shown by Explore (explore/journey.js), kept for this tab (reloads too). `available`
+ * is Explore saying its row can show them here (a wide enough screen); Credits offers it only then.
+ */
+const ROW_KEY = 'cts-sponsors-row';
+const rowListeners = new Set();
+let rowOn = false;
+try {
+  rowOn = sessionStorage.getItem(ROW_KEY) === '1';
+} catch { /* no storage: the controls */ }
+export const sponsorsRow = {
+  available: false,
+  get on() { return rowOn; },
+  set(on) {
+    rowOn = on;
+    try {
+      if (on) sessionStorage.setItem(ROW_KEY, '1');
+      else sessionStorage.removeItem(ROW_KEY);
+    } catch { /* for this page only */ }
+    for (const fn of rowListeners) fn(on);
+  },
+  listen(fn) {
+    rowListeners.add(fn);
+    return () => rowListeners.delete(fn);
+  },
+};

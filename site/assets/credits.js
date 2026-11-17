@@ -14,7 +14,7 @@
 // data/updated.json, fetched again each time it opens.
 
 import { calgary, plural, toDate } from './format.js';
-import { SPONSORS, sponsorLoopSeconds, sponsorSrc } from './sponsors.js';
+import { SPONSORS, sponsorLoopSeconds, sponsorSrc, sponsorsRow } from './sponsors.js';
 
 const SITE = new URL('../', import.meta.url);
 
@@ -75,6 +75,14 @@ function build() {
         ${sponsorRow()}
       </div>
       <p class="credits-sponsors-foot"><button type="button" class="credits-sponsors-pause" aria-pressed="false">Pause</button></p>
+      <!-- where Explore's bottom-right row can show them instead of its controls (assets/sponsors.js) -->
+      <div class="credits-row" hidden>
+        <span class="credits-row-label" id="credits-row-label">Explore's bottom-right row shows</span>
+        <span class="credits-row-switch" role="group" aria-labelledby="credits-row-label">
+          <button type="button" data-row="controls" aria-pressed="true">Controls</button>
+          <button type="button" data-row="sponsors" aria-pressed="false">Sponsors</button>
+        </span>
+      </div>
     </section>
     <section class="credits-section">
       <h3>Sources</h3>
@@ -169,6 +177,7 @@ export function mountCredits(button) {
     const page = document.documentElement;
     page.classList.toggle('credits-gutter', window.innerWidth > page.clientWidth);
     page.classList.add('credits-open');
+    showRowChoice();
     dialog.showModal();
     button?.setAttribute('aria-expanded', 'true');
     // the sponsors' logos wait until Credits is first opened, then all load, so none passes by empty
@@ -203,6 +212,18 @@ export function mountCredits(button) {
     pause.setAttribute('aria-pressed', String(paused));
     pause.textContent = paused ? 'Play' : 'Pause';
   });
+  // Explore's bottom-right row: its controls or the sponsors, offered where Explore can show them
+  const rowChoice = dialog.querySelector('.credits-row');
+  const showRowChoice = () => {
+    rowChoice.hidden = !sponsorsRow.available;
+    for (const b of rowChoice.querySelectorAll('[data-row]')) {
+      b.setAttribute('aria-pressed', String((b.dataset.row === 'sponsors') === sponsorsRow.on));
+    }
+  };
+  for (const b of rowChoice.querySelectorAll('[data-row]')) {
+    b.addEventListener('click', () => sponsorsRow.set(b.dataset.row === 'sponsors'));
+  }
+  sponsorsRow.listen(showRowChoice);
   // keys pressed in the pop-up are its own: the page's shortcuts (the Orbit
   // page's Space and arrows, a picture's Newer/Older) don't see them
   dialog.addEventListener('keydown', (e) => e.stopPropagation());
