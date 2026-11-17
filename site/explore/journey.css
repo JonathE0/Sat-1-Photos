@@ -595,8 +595,8 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
 .jy-qr-url { color: var(--jy-ink); font-weight: 500; white-space: nowrap; } /* never "Sat-1-" / "Photos" */
 /* The sponsors, in the corner's row in place of its controls: chosen in Credits (assets/credits.js),
    and on a TV whenever nobody is using it (its controls go then anyway). Credits' row
-   (assets/credits.css) drawn a little shorter than the row (placeSponsors in journey.js lays it
-   over the row and sets --sp-k), each logo on its white tile (they're drawn for white). It shows once every
+   (assets/credits.css) drawn as tall as the row, in line with the clock's box on the left
+   (placeSponsors in journey.js lays it over the row and sets --sp-k), each logo on its white tile (they're drawn for white). It shows once every
    logo is in (loadSponsorLogos); a pointer resting on it stops it. */
 .jy-sponsors {
   --sp-k: 0.61;
@@ -623,27 +623,20 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
   visibility: hidden;
   transition: opacity 150ms var(--jy-ease-exit), visibility 0s linear 150ms;
 }
-/* the thank-you line above the logos, on no card: a shadow keeps it apart from the Earth, and over
-   a bright one (sunlit cloud, ice, desert) a card comes until it darkens again (journey.js) */
+/* the thank-you line above the logos (the owner's words), on no card: a shadow keeps it apart
+   from the Earth */
 .jy-sponsors-title {
   position: absolute;
   right: 0;
   bottom: calc(100% + 4px);
   margin: 0;
-  padding: 3px 8px;
-  border-radius: 2px;
-  background: transparent;
+  padding: 3px 0;
   color: var(--jy-ink);
   font-size: var(--jy-small);
   font-weight: 500;
   line-height: 1.3;
   white-space: nowrap;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9), 0 0 8px rgba(0, 0, 0, 0.6);
-  transition: background-color 300ms var(--jy-ease-out), text-shadow 300ms var(--jy-ease-out);
-}
-.jy-sponsors.is-bright .jy-sponsors-title {
-  background: var(--jy-panel);
-  text-shadow: none;
 }
 .jy-sponsors-strip {
   flex: 0 1 calc(380px * var(--jy-ui, 1));

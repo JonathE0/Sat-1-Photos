@@ -156,11 +156,6 @@ const SAT_SELF_SHADOW_PX = 160;
 /** Zoomed in until the satellite is drawn this long or longer, px, its "FrontierSat" label goes:
     the model plainly is the satellite by then. Further out it's how to find it. */
 const SAT_LABEL_MAX_PX = 120;
-/** The sponsors' thank-you line gets a card while what's behind it is this bright (0 to 1, its
-    brightest fifth), and loses it again under the second level; looked at this often, ms. */
-const THANKS_CARD_ON = 0.55;
-const THANKS_CARD_OFF = 0.42;
-const THANKS_CHECK_MS = 1000;
 /** Set in this tab once the story has been finished, so coming back doesn't mean scrolling it again. */
 const STORY_FINISHED_KEY = 'cts-story-finished';
 const storyFinished = {
@@ -467,7 +462,7 @@ function template(id, siteRoot) {
       <!-- the sponsors, in the corner's row in place of its controls when chosen in Credits (and on
            a TV nobody is using); placeSponsors lays them over the row. Credits has them too. -->
       <div class="jy-sponsors" data-ref="sponsors">
-        <p class="jy-sponsors-title" data-ref="sponsorsTitle">Thank you to all of our sponsors who made this possible.</p>
+        <p class="jy-sponsors-title" data-ref="sponsorsTitle">Huge Thank you to all our sponsors who made this possible!</p>
         <div class="jy-sponsors-strip">${sponsorStrip(sponsors)}</div>
       </div>
 
@@ -2493,47 +2488,6 @@ export function mountJourney(container, options = {}) {
     else show();
   }
 
-  /**
-   * The sponsors' thank-you line has no card of its own. Over a bright Earth (sunlit cloud, ice,
-   * desert) it gets one, until what's behind it darkens again: about once a second the Earth's
-   * pixels behind the words are read back just after they're drawn (one small rectangle), and the
-   * bright end of them decides. The card comes at one level and goes at a lower one, so it doesn't
-   * flicker at the edge.
-   */
-  let thanksAt = 0;
-  let thanksPixels = null;
-  function checkThanksBackdrop(now) {
-    if (now - thanksAt < THANKS_CHECK_MS) return;
-    thanksAt = now;
-    if (!renderer || getComputedStyle(ref.sponsors).visibility !== 'visible') return;
-    const gl = renderer.getContext();
-    const c = canvas.getBoundingClientRect();
-    const t = ref.sponsorsTitle.getBoundingClientRect();
-    if (!c.width || !c.height || !t.width) return;
-    const sx = gl.drawingBufferWidth / c.width;
-    const sy = gl.drawingBufferHeight / c.height;
-    // the GL's rows count up from the bottom
-    const x0 = Math.max(0, Math.floor((t.left - c.left) * sx));
-    const x1 = Math.min(gl.drawingBufferWidth, Math.ceil((t.right - c.left) * sx));
-    const y0 = Math.max(0, Math.floor((c.bottom - t.bottom) * sy));
-    const y1 = Math.min(gl.drawingBufferHeight, Math.ceil((c.bottom - t.top) * sy));
-    const w = x1 - x0;
-    const h = y1 - y0;
-    if (w <= 0 || h <= 0) return;
-    if (!thanksPixels || thanksPixels.length < w * h * 4) thanksPixels = new Uint8Array(w * h * 4);
-    gl.readPixels(x0, y0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, thanksPixels);
-    const levels = [];
-    for (let i = 0; i < w * h; i += 5) {
-      const k = i * 4;
-      levels.push((0.2126 * thanksPixels[k] + 0.7152 * thanksPixels[k + 1] + 0.0722 * thanksPixels[k + 2]) / 255);
-    }
-    levels.sort((a, b) => a - b);
-    const bright = levels[Math.floor(levels.length * 0.8)] || 0;
-    const carded = ref.sponsors.classList.contains('is-bright');
-    if (!carded && bright >= THANKS_CARD_ON) ref.sponsors.classList.add('is-bright');
-    else if (carded && bright <= THANKS_CARD_OFF) ref.sponsors.classList.remove('is-bright');
-  }
-
   /** The strip over the corner's row, as big as it (and, for Credits, whether it can show here). */
   function placeSponsors(s) {
     const here = sponsorsHere();
@@ -2547,8 +2501,9 @@ export function mountJourney(container, options = {}) {
     st.top = `${row.top}px`;
     st.width = `${row.right - row.left}px`;
     st.height = `${row.bottom - row.top}px`;
-    // the tiles a little shorter than the row's buttons: Credits' are 72px
-    st.setProperty('--sp-k', String((row.bottom - row.top - 8) / 72));
+    // the tiles as tall as the row, so the strip lines up with the clock's box across the screen
+    // (Credits' are 72px)
+    st.setProperty('--sp-k', String((row.bottom - row.top) / 72));
   }
 
   /** "Last updated Nov 3, 22:00 in Calgary", from the stamp each publish leaves; nothing without one. */
@@ -3652,7 +3607,6 @@ export function mountJourney(container, options = {}) {
     if (satAlpha > 0.002) orbitLine.update(camera, W, H);
 
     renderer.render(scene, camera);
-    checkThanksBackdrop(now);
     overRenderer?.render(overScene, camera);
     updateMarks(theta, satAlpha, lengthPx);
     paintSkyLabel();
