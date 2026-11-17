@@ -126,8 +126,16 @@ a.vf-pic[href] { cursor: pointer; }
   letter-spacing: 0;
 }
 .vf-down,
-.vf-note { grid-column: 1 / -1; }
+.vf-note,
+.vf-updated { grid-column: 1 / -1; }
 .vf-down { color: var(--vf-muted); }
+/* when the newest picture came down, the same under every picture */
+.vf-updated {
+  margin-top: 4px;
+  color: var(--vf-muted);
+  font-size: var(--vf-small);
+}
+.vf-updated[hidden] { display: none; }
 
 .vf-nav {
   display: flex;

@@ -116,6 +116,18 @@ function downlinkLine(p) {
   return packets ? `Came down in ${packets}` : '';
 }
 
+/** "Pictures last updated Nov 15, 14:15 in Calgary": when the newest of any picture came down, or ''. */
+function updatedLine(list) {
+  let newest = 0;
+  for (const p of list) {
+    const t = Date.parse(p.raw?.downlink?.last);
+    if (t > newest) newest = t;
+  }
+  if (!newest) return '';
+  const c = calgaryTime(newest);
+  return `Pictures last updated ${c.date}, ${c.time} in Calgary`;
+}
+
 /** What the caption owes the visitor about a picture that isn't whole, or ''. */
 function honestNote(p) {
   return p.status === 'partial' || p.status === 'truncated' ? statusLine(p) : '';
@@ -182,6 +194,8 @@ export function createViewfinder(container, {
   const placeEl = el('p', 'vf-place vf-words');
   const downEl = el('p', 'vf-down vf-words');
   const noteEl = el('p', 'vf-note vf-words');
+  // the same for every picture, so it stays through each change
+  const updatedEl = el('p', 'vf-updated');
 
   const nav = el('div', 'vf-nav');
   // newest first, so a step back is to a newer picture: the words Pictures uses
@@ -192,7 +206,7 @@ export function createViewfinder(container, {
   nextBtn.type = 'button';
   nextBtn.setAttribute('aria-label', 'Older picture');
   nav.append(prevBtn, nextBtn);
-  caption.append(placeEl, nav, downEl, noteEl);
+  caption.append(placeEl, nav, downEl, noteEl, updatedEl);
 
   // announces only what the visitor steps to
   const announcer = el('p', 'vf-sr');
@@ -524,6 +538,8 @@ export function createViewfinder(container, {
       openingFirst = opening > 0;
     }
     if (held) held = all.find((p) => p.id === held.id) || null;
+    updatedEl.textContent = updatedLine(all);
+    updatedEl.hidden = !updatedEl.textContent;
     next = null;
     misses = 0;
     root.hidden = false;

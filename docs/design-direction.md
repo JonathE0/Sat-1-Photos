@@ -738,9 +738,11 @@ only an eye, struck through while they're hidden.
 
 ### The opening picture
 
-The user's choice (1 Nov 2026), for now: the viewfinder, a phone's picture section and the Pictures page
-open on the complete Hong Kong frame, because the newer ones are mostly flashes of light
-(`site/assets/opening-photo.js`; '' goes back to the newest). On a phone its heading says "Featured picture",
+The user's choice (1 Nov 2026), for now: the viewfinder and a phone's picture section open on the
+complete Hong Kong frame, because the newer ones are mostly flashes of light
+(`site/assets/opening-photo.js`; '' goes back to the newest). The Pictures page opened on it too until
+17 Nov, when the user asked for it to open on the latest picture instead. Under the viewfinder's caption,
+"Pictures last updated" gives when the newest of any picture came down, in Calgary time. On a phone its heading says "Featured picture",
 since it isn't the latest. Lists stay newest first, and the viewfinder carries on from there through older
 pictures, wrapping round to the newest.
 
