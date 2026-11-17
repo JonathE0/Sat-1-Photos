@@ -18,6 +18,16 @@ import { SPONSORS, sponsorLoopSeconds, sponsorSrc, sponsorsRow } from './sponsor
 
 const SITE = new URL('../', import.meta.url);
 
+// "just now", "12 minutes ago", "3 hours ago", "2 days ago"
+function ago(ms) {
+  const minutes = Math.floor(ms / 60000);
+  if (minutes < 1) return 'just now'; // also a viewer whose clock runs a little behind
+  if (minutes < 60) return `${plural(minutes, 'minute')} ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 48) return `${plural(hours, 'hour')} ago`;
+  return `${plural(Math.floor(hours / 24), 'day')} ago`;
+}
+
 // The row twice over, so it loops without a seam; the second time is for the eye only.
 function sponsorRow() {
   const item = ([file, name, w, h, under], again) => `<li class="credits-sponsor"${again ? ' aria-hidden="true"' : ''}>`
