@@ -6,7 +6,8 @@
  *   createViewfinder(container, { photos, siteRoot, photoHref, onOpen, reducedMotion, firstMs, takeTurn })
  *     -> { setPhotos(photos), show(photo), next(), start(), stop(), dispose() }
  *
- * `photos` is mergeAll() output; only the carousel's pictures run here, newest first
+ * `photos` is mergeAll() output; only the carousel's pictures run here, newest first (after the
+ * featured opening picture, the run starts at the newest)
  * in a loop: those at least 95% there, unless the executives changed that on exec/
  * (inCarousel, assets/carousel.js). The catalogue keeps everything else. show() puts
  * up any picture, whole or not, and it stays until the visitor steps on with
@@ -210,6 +211,9 @@ export function createViewfinder(container, {
   let misses = 0; // pictures in a row that wouldn't load
   let failed = false; // none would: its turn still ends, so Cycle goes on
   let pendingFrom = null; // where a step under way set out from, to go back to if stopped
+  // the run opened on the featured picture: after it, it starts again at the newest and goes back
+  // in time (the featured one comes round again in its own place)
+  let openingFirst = false;
   let running = false;
   let hovered = false;
   let focused = false;
@@ -222,9 +226,15 @@ export function createViewfinder(container, {
 
   const fetchPicture = (photo) => (next && next.id === photo.id ? next.ready : loadImage(photo, siteRoot));
 
+  /** Where the run goes after the picture at `index`: the newest after the opening one, else the next older. */
+  function afterIndex() {
+    if (openingFirst && index > 0 && deck[index]?.id === OPENING_PHOTO_ID) return 0;
+    return (index + 1) % deck.length;
+  }
+
   function fetchAhead() {
     if (deck.length < 2) return;
-    const photo = deck[(index + 1) % deck.length];
+    const photo = deck[afterIndex()];
     if (!next || next.id !== photo.id) next = { id: photo.id, ready: loadImage(photo, siteRoot) };
   }
 
@@ -343,14 +353,20 @@ export function createViewfinder(container, {
   function step(dir, manual) {
     if (disposed || !deck.length) return;
     const from = index;
+    const leavingOpening = deck[index]?.id === OPENING_PHOTO_ID;
     if (held && !deck.includes(held)) {
       // a picture from outside the run: on to its neighbours in time
       const older = deck.findIndex((p) => (p.sortTime || 0) < (held.sortTime || 0));
       const at = older < 0 ? deck.length : older;
       index = (dir > 0 ? at : at - 1 + deck.length) % deck.length;
+    } else if (dir > 0 && !manual) {
+      // on its own: the next older, or the newest after the opening picture (Older, pressed, is
+      // still the next older)
+      index = afterIndex();
     } else {
       index = (index + dir + deck.length) % deck.length;
     }
+    if (leavingOpening) openingFirst = false;
     held = null;
     const photo = deck[index];
     const mine = ++run;
@@ -501,8 +517,12 @@ export function createViewfinder(container, {
       .filter(inCarousel)
       .sort((a, b) => (b.sortTime || 0) - (a.sortTime || 0));
     index = deck.findIndex((p) => p.id === at);
-    // nothing up yet: the first step lands on the opening picture, and the run goes on from there
-    if (index < 0) index = Math.max(deck.findIndex((p) => p.id === OPENING_PHOTO_ID) - 1, -1);
+    // nothing up yet: the first step lands on the opening picture, and the run goes on from the newest
+    if (index < 0) {
+      const opening = deck.findIndex((p) => p.id === OPENING_PHOTO_ID);
+      index = Math.max(opening - 1, -1);
+      openingFirst = opening > 0;
+    }
     if (held) held = all.find((p) => p.id === held.id) || null;
     next = null;
     misses = 0;
