@@ -402,6 +402,7 @@ export function createPhotoActions({ idPrefix, copyUrl = () => location.href }) 
 // Where a capture time comes from (images.json capture_basis), for Technical details.
 const BASIS = {
   filename: 'From the file name',
+  'corrected filename': 'From the file name, corrected: it was named for the wrong time',
   'capture log': 'From the camera’s capture log',
   'capture record': 'From the capture command’s own record',
   'ADCS file list': 'From the attitude camera’s list of files',

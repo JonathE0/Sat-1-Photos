@@ -154,6 +154,7 @@ export function statusWord(status) {
 
 const BASIS = {
   filename: 'time from the filename',
+  'corrected filename': 'time from the filename, corrected',
   'capture log': 'time from the capture log',
   'capture record': 'time from the capture command’s own record',
   'ADCS file list': 'time from the attitude camera’s file list',

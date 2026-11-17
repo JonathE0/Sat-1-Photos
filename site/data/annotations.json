@@ -358,5 +358,33 @@
     "title": null,
     "updated_at": "2026-10-31T06:55:53Z",
     "updated_by": "FrontierSat team"
+  },
+  "2026-11-10-014243z": {
+    "captured_at": null,
+    "history": [
+      {
+        "at": "2026-11-17T06:37:23Z",
+        "by": "FrontierSat team",
+        "changes": {
+          "notes": [
+            null,
+            "Taken at 01:42 UTC on Nov 11, 2026 (19:42 on Nov 10 in Calgary). Its file name has the right time but gives Nov 10 as the UTC date. The camera was readied at 01:40 UTC on Nov 11, and two minutes later the satellite was over the Korea Strait, which is what the frame shows; at 01:42 UTC on Nov 10 it was south of Tasmania. Tsushima is the long island right of the middle and Iki the small one to its left; the northwest coast of Kyushu fills the left side, and the south coast of Korea is in the top right corner. Picked out by eye from the coastlines."
+          ],
+          "place": [
+            null,
+            "Tsushima and Kyushu, Japan"
+          ]
+        }
+      }
+    ],
+    "lat": null,
+    "lon": null,
+    "notes": "Taken at 01:42 UTC on Nov 11, 2026 (19:42 on Nov 10 in Calgary). Its file name has the right time but gives Nov 10 as the UTC date. The camera was readied at 01:40 UTC on Nov 11, and two minutes later the satellite was over the Korea Strait, which is what the frame shows; at 01:42 UTC on Nov 10 it was south of Tasmania. Tsushima is the long island right of the middle and Iki the small one to its left; the northwest coast of Kyushu fills the left side, and the south coast of Korea is in the top right corner. Picked out by eye from the coastlines.",
+    "people": [],
+    "place": "Tsushima and Kyushu, Japan",
+    "tags": [],
+    "title": null,
+    "updated_at": "2026-11-17T06:37:23Z",
+    "updated_by": "FrontierSat team"
   }
 }

@@ -98,6 +98,7 @@ _SEAS = (
     ("South China Sea", 10.5, 12.5, 104.8, 120.0),
     ("South China Sea", 12.5, 22.0, 104.8, 120.8),  # west of Mindoro and Luzon
     ("South China Sea", 22.0, 23.5, 104.8, 117.0),  # up to the coast of China, short of the Taiwan Strait
+    ("Korea Strait", 33.5, 35.2, 128.0, 130.5),  # Korea's south coast to Kyushu's north, Tsushima between
 )
 
 

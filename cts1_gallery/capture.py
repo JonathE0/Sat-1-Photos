@@ -6,7 +6,8 @@ In order of preference:
    command was scheduled for, in a few styles ("2026-09-17_071148Z.img",
    "2026-10-25005433z.img", "2026-07-15-T17-49-30Z.img"), and one with an
    'L' suffix ("2026-10-24_173732L.img"), which is also UTC: read as Calgary
-   time it would come after its own downlink began.
+   time it would come after its own downlink began. A name known to be wrong
+   is corrected first (MISNAMED, with the evidence).
 2. The camera's own log line, "Opened image file: <file>", written as the
    capture starts.
 3. The camera_capture command's own record (a .run file that came down in
@@ -45,6 +46,19 @@ _NAME_RE = re.compile(
 )
 _REPLY_WINDOW = timedelta(days=2)
 _SAME_CAPTURE = timedelta(minutes=10)  # a log line and a reply this close describe one capture
+
+# Files named for the wrong time, and when they were really taken (basis "corrected filename").
+# A capture's name is typed in when it's scheduled, so a slip there moves the picture in time,
+# and so in place: a day off puts it on the far side of the world.
+MISNAMED = {
+    # Named for Nov 10, taken Nov 11. The camera was readied for a capture (its baud rate set, which
+    # comes a minute or so before each one) at 01:40:54 UTC on Nov 11, and none was heard on
+    # Nov 10. The frame shows Tsushima, Iki and the northwest coast of Kyushu, with Korea's south
+    # coast in a corner: the satellite passed over them at 01:42:30 UTC on Nov 11, while at 01:42 on
+    # Nov 10 it was south of Tasmania. Its first packets came down at 05:14 UTC on Nov 11. (It was
+    # still Nov 10 in Calgary, so the name most likely took the local date with the UTC time.)
+    "camera/2026-11-10_014243Z.img": datetime(2026, 11, 11, 1, 42, 43, tzinfo=UTC),
+}
 
 # Log stamps end in the clock's sync source: G GNSS, T a ground telecommand,
 # E the EPS board's real-time clock. Beacons spell it out.
@@ -291,11 +305,15 @@ def assign(files: list, replies: list[datetime], clock: SatelliteClock | None = 
     clues = [f if isinstance(f, Clues) else _from_tuple(f) for f in files]
     for c in sorted(clues, key=lambda c: c.first_rx):
         named, day = from_name(c.path)
+        basis = "filename"
+        if c.path in MISNAMED:
+            named, basis = MISNAMED[c.path], "corrected filename"
+            day = named.date()
         if named is not None:
             t, fix = _corrected(clock, named)
             if t <= c.first_rx:
                 consume(t)
-                out[c.path] = Capture(t, t.date(), "filename", True, fix)
+                out[c.path] = Capture(t, t.date(), basis, True, fix)
                 continue
         opened = _from_log(clock, c.opens)
         if opened is not None and plausible(opened[0], day, c.first_rx):
