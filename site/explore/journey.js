@@ -291,7 +291,7 @@ function template(id, siteRoot) {
               <button type="button" class="jy-tab" data-ref="tabPictures" aria-pressed="false">Pictures</button>
               <button type="button" class="jy-tab" data-ref="tabMap" aria-pressed="false" hidden>Orbit</button>
               <button type="button" class="jy-tab jy-cycle" data-ref="cycle" aria-pressed="false" hidden
-                aria-haspopup="menu" title="Take turns showing Stats, Pictures and Orbit. Right-click to choose how long each shows.">Cycle</button>
+                aria-haspopup="menu" title="Take turns showing Stats, Pictures and Orbit (the globe, then the map). Right-click to choose how long each shows.">Cycle</button>
               <!-- how long each turn lasts, in view while Cycle runs: it opens the same menu as a right-click -->
               <button type="button" class="jy-tab jy-cycle-pace" data-ref="cyclePace" hidden aria-haspopup="menu"
                 aria-expanded="false"><span data-ref="cyclePaceText"></span> ${ICON_DOWN}</button>
@@ -3952,6 +3952,7 @@ export function mountJourney(container, options = {}) {
   try {
     if (localStorage.getItem(ORBIT_VIEW_KEY) === 'map') orbitView = 'map';
   } catch { /* no storage: the globe */ }
+  let chosenView = orbitView; // the visitor's own choice, which Cycle's switching doesn't change
   let map = null;
   let mapLoading = null;
   let globe = null;
@@ -4064,12 +4065,23 @@ export function mountJourney(container, options = {}) {
 
   function setOrbitView(view) {
     if (view === orbitView) return;
-    orbitView = view;
+    orbitView = chosenView = view;
     try {
       localStorage.setItem(ORBIT_VIEW_KEY, view);
     } catch { /* no storage: it lasts until the page closes */ }
     mapPanned = false;
+    // in Cycle's Orbit turn, the half for what they chose: the map's runs the turn out, the
+    // globe's goes on to the map
+    if (orbitHalf) orbitHalf = view;
     syncViewfinder();
+  }
+
+  /** Cycle's own switch between the two, which isn't remembered as the visitor's choice. */
+  function cycleOrbitView(view) {
+    if (view === orbitView) return;
+    orbitView = view;
+    mapPanned = false;
+    syncMap(whereOn);
   }
 
   let whereHideTimer = 0;
@@ -4217,6 +4229,8 @@ export function mountJourney(container, options = {}) {
   // holds this up too: the pointer on it, a picture chosen on the globe, a hidden tab.
   let cycleOn = opts.tv || (!cycleOffChoice.get() && motionOverride !== 'reduced');
   let cycleTimer = 0;
+  // Orbit's turn is the globe's half, then the map's: 'globe', 'map', or null outside it
+  let orbitHalf = null;
   let cycleHover = false;
   let cycleFocus = false; // keyboard focus, as in the viewfinder: a mouse click doesn't hold it forever
 
@@ -4330,15 +4344,21 @@ export function mountJourney(container, options = {}) {
   });
 
   /** Stats' turn and the map's: each runs while it's up and nobody is reading it or moving it.
-   * Pictures come next after Stats, the map after Pictures (takeTurn), then Stats. */
+   * Pictures come next after Stats, the map after Pictures (takeTurn), then Stats. Orbit's turn
+   * shows the globe for half of Cycle's time and then the map for half, each half rounded up to a
+   * whole second (5 s is 3 s and 3 s); with no globe in this browser it's the map throughout. */
   function syncCycle() {
     clearTimeout(cycleTimer);
+    if (!state.mapUp || state.panel) {
+      if (orbitHalf) orbitView = chosenView; // the turn is over: the visitor's own choice again
+      orbitHalf = null;
+    }
     const up = state.locked && state.shown && !state.creditsOpen && !state.dockHidden;
     const paused = cycleOn && up && viewfinderHere() && (cycleHover || cycleFocus);
     ref.cycle.classList.toggle('is-paused', paused);
     ref.cycle.title = paused
       ? 'Paused while the pointer or the keyboard is on the panel. Right-click to choose how long each shows.'
-      : 'Take turns showing Stats, Pictures and Orbit. Right-click to choose how long each shows.';
+      : 'Take turns showing Stats, Pictures and Orbit (the globe, then the map). Right-click to choose how long each shows.';
     if (!cycleOn || !up || cycleHover || cycleFocus || document.hidden || !viewfinderHere()) {
       runCycleBar(0);
       return;
@@ -4351,11 +4371,25 @@ export function mountJourney(container, options = {}) {
       }, cycleSeconds * 1000);
       runCycleBar(cycleSeconds * 1000);
     } else if (!state.panel && state.mapUp) {
-      cycleTimer = setTimeout(() => {
-        state.mapUp = false;
-        openPanel({ focus: false, byCycle: true });
-      }, cycleSeconds * 1000);
-      runCycleBar(cycleSeconds * 1000);
+      const half = Math.ceil(cycleSeconds / 2) * 1000;
+      if (!globeFailed && orbitHalf !== 'map') {
+        orbitHalf = 'globe';
+        cycleOrbitView('globe');
+        loadMap(); // ready for its half
+        cycleTimer = setTimeout(() => {
+          orbitHalf = 'map';
+          cycleOrbitView('map');
+          syncCycle();
+        }, half);
+        runCycleBar(half);
+      } else {
+        const ms = globeFailed ? cycleSeconds * 1000 : half;
+        cycleTimer = setTimeout(() => {
+          state.mapUp = false;
+          openPanel({ focus: false, byCycle: true });
+        }, ms);
+        runCycleBar(ms);
+      }
     } else if (picturesTurn) {
       runCycleBar(picturesTurn.total, performance.now() - picturesTurn.start); // the viewfinder keeps this one
     } else {

@@ -340,6 +340,10 @@ state and one set of details. Closes with the same control, Esc, or a click on e
   while the pointer or keyboard focus is on what's showing, and on a picture chosen on the globe. Choosing
   a tab or the satellite stops it for the visit; turning it off with the button is remembered.
   `?motion=reduced` starts with it off.
+- **Orbit's turn, the globe then the map (the user's request, 17 Nov 2026):** Cycle's time is split
+  between them, each half rounded up to a whole second: 12 s is 6 s on the globe and 6 s on the map, and
+  5 s is 3 s and 3 s. Cycle's switching isn't saved as the visitor's own Globe/Map choice; choosing one
+  during the turn moves the turn to that half. With no globe in the browser it's the map for the whole time.
 - **Which pictures take turns (the user's request, 16 Nov 2026):** every picture at least 95% there, unless
   the team's executives changed that on `exec/` (not linked from the site): signed in with their own
   GitHub accounts, they tick pictures in or out, and each save is logged with who, when, what and an
