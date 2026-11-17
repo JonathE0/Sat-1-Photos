@@ -604,9 +604,8 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
   position: absolute;
   z-index: 2;
   display: none;
-  align-items: stretch;
+  align-items: center;
   justify-content: flex-end; /* tucked against the right, a few logos at a time */
-  gap: 8px;
   pointer-events: none;
   opacity: 0;
   visibility: hidden;
@@ -624,17 +623,27 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
   visibility: hidden;
   transition: opacity 150ms var(--jy-ease-exit), visibility 0s linear 150ms;
 }
+/* the thank-you line above the logos, on no card: a shadow keeps it apart from the Earth, and over
+   a bright one (sunlit cloud, ice, desert) a card comes until it darkens again (journey.js) */
 .jy-sponsors-title {
-  flex: none;
-  display: flex;
-  align-items: center;
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 4px);
   margin: 0;
-  padding: 0 16px;
-  background: var(--jy-panel);
+  padding: 3px 8px;
+  border-radius: 2px;
+  background: transparent;
   color: var(--jy-ink);
   font-size: var(--jy-small);
   font-weight: 500;
+  line-height: 1.3;
   white-space: nowrap;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9), 0 0 8px rgba(0, 0, 0, 0.6);
+  transition: background-color 300ms var(--jy-ease-out), text-shadow 300ms var(--jy-ease-out);
+}
+.jy-sponsors.is-bright .jy-sponsors-title {
+  background: var(--jy-panel);
+  text-shadow: none;
 }
 .jy-sponsors-strip {
   flex: 0 1 calc(380px * var(--jy-ui, 1));
