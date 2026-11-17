@@ -153,6 +153,9 @@ const WHITE = new THREE.Color(0xffffff);
 /** The satellite's parts shade one another once it is drawn at least this long, px; smaller, they
     couldn't be seen to, so the shadow's depth pass is skipped (phones especially). */
 const SAT_SELF_SHADOW_PX = 160;
+/** Zoomed in until the satellite is drawn this long or longer, px, its "FrontierSat" label goes:
+    the model plainly is the satellite by then. Further out it's how to find it. */
+const SAT_LABEL_MAX_PX = 120;
 /** Set in this tab once the story has been finished, so coming back doesn't mean scrolling it again. */
 const STORY_FINISHED_KEY = 'cts-story-finished';
 const storyFinished = {
@@ -1930,9 +1933,12 @@ export function mountJourney(container, options = {}) {
         ref.sat.dataset.off = String(off);
         ref.sat.style.setProperty('--jy-sat-off', `${off}px`);
       }
-      // close in, the model is wide and its label would run off the right edge: then it goes left
+      // close in, the model speaks for itself: its label fades (journey.css), and comes back further out
+      const close = satLengthPx >= SAT_LABEL_MAX_PX * frame.ui;
+      if (close !== ref.sat.classList.contains('is-close')) ref.sat.classList.toggle('is-close', close);
+      // the model wide and its label running off the right edge: then it goes left
       satLabelPx ||= ref.sat.firstElementChild.offsetWidth;
-      const left = s.x + off + satLabelPx + 8 > W && s.x - off - satLabelPx - 8 >= 0;
+      const left = !close && s.x + off + satLabelPx + 8 > W && s.x - off - satLabelPx - 8 >= 0;
       if (left !== ref.sat.classList.contains('is-left')) ref.sat.classList.toggle('is-left', left);
       ref.sat.style.transform = `translate(${Math.round(s.x)}px, ${Math.round(s.y)}px)${left ? ' translateX(calc(44px - 100%))' : ''}`;
     } else if (!ref.sat.hidden) {

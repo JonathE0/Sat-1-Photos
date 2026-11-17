@@ -1316,7 +1316,11 @@ html[data-motion="reduced"] .jy-root.jy-root .jy-sponsors { display: none; }
   font-weight: 500;
   letter-spacing: 0.01em;
   white-space: nowrap;
+  transition: opacity 240ms var(--jy-ease-out);
 }
+/* zoomed in close, where the model plainly is the satellite, the label fades (SAT_LABEL_MAX_PX in
+   journey.js); the button stays, so a click there still opens its details */
+.jy-sat.is-close .jy-sat-label { opacity: 0; }
 
 /* hover card for a pin (or the list for a pile) */
 .jy-card {
