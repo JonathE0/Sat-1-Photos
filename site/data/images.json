@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-17T11:30:01Z",
+ "generated_at": "2026-11-17T15:30:07Z",
  "satellite": {
   "name": "FrontierSat",
   "norad_id": 69015,
@@ -520,7 +520,7 @@
    "downlink": {
     "first": "2026-11-11T05:14:41Z",
     "last": "2026-11-17T10:43:49Z",
-    "packets": 935
+    "packets": 954
    },
    "still_on_board": null,
    "full_copy": false,
@@ -703,9 +703,9 @@
    "capture_basis": "date only",
    "satellite_clock": null,
    "downlink": {
-    "first": "2026-11-17T09:01:48Z",
-    "last": "2026-11-17T09:07:01Z",
-    "packets": 97
+    "first": "2026-11-17T09:04:04Z",
+    "last": "2026-11-17T09:05:41Z",
+    "packets": 96
    },
    "still_on_board": null,
    "full_copy": false,
@@ -1982,7 +1982,7 @@
    "capture_date": "2026-10-22",
    "capture_basis": "filename",
    "satellite_clock": {
-    "correction_s": -6.4
+    "correction_s": -6.3
    },
    "downlink": {
     "first": "2026-10-22T18:14:55Z",
