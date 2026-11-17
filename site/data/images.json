@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-17T09:30:04Z",
+ "generated_at": "2026-11-17T10:29:52Z",
  "satellite": {
   "name": "FrontierSat",
   "norad_id": 69015,
@@ -704,8 +704,8 @@
    "satellite_clock": null,
    "downlink": {
     "first": "2026-11-17T09:01:48Z",
-    "last": "2026-11-17T09:04:04Z",
-    "packets": 96
+    "last": "2026-11-17T09:07:01Z",
+    "packets": 97
    },
    "still_on_board": null,
    "full_copy": false,
