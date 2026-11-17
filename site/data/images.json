@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-17T16:29:49Z",
+ "generated_at": "2026-11-17T19:06:26Z",
  "satellite": {
   "name": "FrontierSat",
   "norad_id": 69015,
@@ -547,6 +547,51 @@
    "unnamed": true
   },
   {
+   "id": "2026-11-09-183100",
+   "file": "camera/2026-11-09_183100.img",
+   "camera": "picam",
+   "title": "Nov 9, 2026, 18:31 UTC",
+   "src": "images/2026-11-09-183100.jpg",
+   "thumb": "images/thumbs/2026-11-09-183100.jpg",
+   "width": 640,
+   "height": 480,
+   "status": "complete",
+   "status_note": "Every line of the picture arrived. The satellite never sent a hash for this file.",
+   "completeness": 1.0,
+   "pieces_past_gaps": 0,
+   "dark": false,
+   "file_size": 18704,
+   "sha256": "d83900cd6b8a1d495d8d981c147a49f08d8835f1b2d1b65741de336dce5990a2",
+   "sha256_expected": null,
+   "captured_at": "2026-11-09T18:31:00Z",
+   "capture_date": "2026-11-09",
+   "capture_basis": "filename",
+   "satellite_clock": {
+    "correction_s": 0.0
+   },
+   "downlink": {
+    "first": "2026-11-17T09:04:04Z",
+    "last": "2026-11-17T09:05:41Z",
+    "packets": 96
+   },
+   "still_on_board": null,
+   "full_copy": false,
+   "position": {
+    "lat": 68.6246,
+    "lon": 81.7935,
+    "alt_km": 510.0,
+    "place": "Yamalo-Nenets Autonomous Okrug, Russia",
+    "ground_sunlit": false,
+    "sun_elevation_deg": -38.3,
+    "satellite_sunlit": false,
+    "satellite_light": "shadow",
+    "sun_above_limb_deg": -16.5,
+    "tle_epoch": "2026-11-09T07:00:01Z",
+    "basis": "SGP4 from the most recent TLE before capture"
+   },
+   "unnamed": false
+  },
+  {
    "id": "2026-11-09-183000z",
    "file": "camera/2026-11-09_183000Z.img",
    "camera": "picam",
@@ -589,37 +634,6 @@
     "tle_epoch": "2026-11-09T07:00:01Z",
     "basis": "SGP4 from the most recent TLE before capture"
    },
-   "unnamed": false
-  },
-  {
-   "id": "2026-11-09-183100",
-   "file": "camera/2026-11-09_183100.img",
-   "camera": "picam",
-   "title": "Nov 9, 2026",
-   "src": "images/2026-11-09-183100.jpg",
-   "thumb": "images/thumbs/2026-11-09-183100.jpg",
-   "width": 640,
-   "height": 480,
-   "status": "complete",
-   "status_note": "Every line of the picture arrived. The satellite never sent a hash for this file.",
-   "completeness": 1.0,
-   "pieces_past_gaps": 0,
-   "dark": false,
-   "file_size": 18704,
-   "sha256": "d83900cd6b8a1d495d8d981c147a49f08d8835f1b2d1b65741de336dce5990a2",
-   "sha256_expected": null,
-   "captured_at": null,
-   "capture_date": "2026-11-09",
-   "capture_basis": "date only",
-   "satellite_clock": null,
-   "downlink": {
-    "first": "2026-11-17T09:04:04Z",
-    "last": "2026-11-17T09:05:41Z",
-    "packets": 96
-   },
-   "still_on_board": null,
-   "full_copy": false,
-   "position": null,
    "unnamed": false
   },
   {
