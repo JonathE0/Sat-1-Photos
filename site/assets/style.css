@@ -173,6 +173,10 @@ h1, h2, h3 { font-weight: 600; }
 /* Explore, the landing globe: the nav (assets/nav.css) lies over the stage, and the page
    ends with the story, so there is no footer under it. */
 body[data-view="explore"] { --jy-nav: var(--nav-h); }
+/* where the bar grows for the bigger logos (assets/nav.css), the globe's words and picture start under it */
+@media (min-width: 1200px) and (min-height: 860px) {
+  body[data-view="explore"] .jy-root { --jy-nav: var(--nav-h); }
+}
 body[data-view="explore"] .site-head {
   position: fixed;
   top: 0;

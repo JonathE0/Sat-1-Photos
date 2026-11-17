@@ -80,6 +80,7 @@ import {
 } from './journey-parts.js';
 import { loadCountries, placeAt, placeInSentence } from './journey-region.js';
 import { OPENING_PHOTO_ID } from '../assets/opening-photo.js';
+import { SPONSORS, sponsorLoopSeconds, sponsorSrc } from '../assets/sponsors.js';
 
 /** A link to Pictures with every picture shown: dark frames and mostly missing ones too, which it
     otherwise tucks away (dark=1, missing=1: readFilters in assets/data.js). */
@@ -255,8 +256,23 @@ const META_LINES = `<span>Want to see all our photos? They’re all at
         <span class="jy-meta-updated" hidden></span>`;
 const ICON_CONTROLS = '<svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><path d="M3 6h7M14 6h3M3 14h3M10 14h7" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10 3.8h4v4.4h-4zM6 11.8h4v4.4H6z" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>';
 
+/**
+ * The sponsors' strip, which can take the place of the corner's controls (journey.css .jy-sponsors):
+ * Credits' row (assets/credits.js) drawn smaller, twice over so it loops without a seam. The logos
+ * have no src until they're first wanted (loadSponsorLogos), so they don't slow the start.
+ */
+function sponsorStrip(list) {
+  const item = ([file, name, w, h, under], again) => `<li class="jy-sponsor"${again ? ' aria-hidden="true"' : ''}>`
+    + `<img data-src="${sponsorSrc(file)}" width="${w}" height="${h}" style="--w: ${w}; --h: ${h}" alt="${again ? '' : name}" decoding="async">`
+    + `${under ? `<span class="jy-sponsor-under" aria-hidden="true">${under}</span>` : ''}</li>`;
+  return `<ul class="jy-sponsors-row" aria-label="Our sponsors" style="--sp-time: ${sponsorLoopSeconds(list)}s">`
+    + `${list.map((sp) => item(sp, false)).join('')}${list.map((sp) => item(sp, true)).join('')}</ul>`;
+}
+
 function template(id, siteRoot) {
   const logo = new URL('assets/calgarytospace-logo.png', siteRoot).href;
+  // Schulich's logo is beside the team's in the main site's bar (assets/nav.css): not twice
+  const sponsors = SPONSORS.filter(([file]) => file !== 'schulich' || !document.querySelector('.site-nav .brand-partner'));
   return `
   <section class="jy" aria-label="FrontierSat right now">
     <div class="jy-stage">
@@ -348,8 +364,6 @@ function template(id, siteRoot) {
       </aside>
         <button type="button" class="jy-dock-grip" data-ref="dockGrip" aria-label="Resize the picture and stats panel"
           title="Drag to resize. Double-click for the usual size.">${ICON_GRIP}</button>
-        <!-- under the picture where the viewfinder shows; the copy on the bottom row is for the rest -->
-        <p class="jy-meta jy-dock-meta" data-ref="dockMeta">${META_LINES}</p>
       </div>
 
       <section class="jy-credits" id="jy-credits-${id}" data-ref="credits" hidden role="dialog" aria-modal="false"
@@ -389,9 +403,10 @@ function template(id, siteRoot) {
       <div class="jy-text">
         <div class="jy-beat jy-b1" data-ref="b1">
           <h1 class="jy-h1"><span class="jy-words">FrontierSat</span></h1>
+          <p class="jy-tagline"><span class="jy-words">Calgary\u2019s first student-built satellite</span></p>
           <p class="jy-sub"><span class="jy-words">NORAD ID 69015</span></p>
           <p class="jy-sub"><span class="jy-words">Interactive picture visualizer</span></p>
-          <p class="jy-lead jy-intro-only"><span class="jy-words">Calgary\u2019s first student-built satellite. In orbit since ${launchDate}.</span></p>
+          <p class="jy-lead jy-intro-only"><span class="jy-words">In orbit since ${launchDate}.</span></p>
           <p class="jy-cue jy-intro-only" data-ref="cue" tabindex="-1"><span class="jy-words">Scroll to learn more</span> ${ICON_DOWN}</p>
           <!-- the way past the story, for a keyboard (the controls below wait for its end) and for
                anyone who came for the pictures -->
@@ -438,7 +453,18 @@ function template(id, siteRoot) {
       <div class="jy-qr" data-ref="qr" hidden>
         <span class="jy-qr-code" role="img" aria-label="QR code for ${LINKS_URL.replace(/^https:\/\//, '')}">${QR_SVG}</span>
         <span class="jy-qr-text"><span class="jy-qr-title">FrontierSat on your phone</span>
-          <span class="jy-qr-sub">Scan for the CalgaryToSpace website,<br>the dashboard, Instagram and LinkedIn</span></span>
+          <span class="jy-qr-sub">Scan for the CalgaryToSpace website,<br>the dashboard, Instagram and LinkedIn</span>
+          <span class="jy-qr-site">Also visit this website for yourself:<br><span class="jy-qr-url">${SITE_TEXT}</span></span></span>
+      </div>
+      <!-- the sponsors, in the corner's row in place of its controls when asked for (and on a TV
+           nobody is using); placeSponsors lays them over the row. Credits has them too. -->
+      <div class="jy-sponsors" data-ref="sponsors">
+        <p class="jy-sponsors-title">Thank you to our sponsors</p>
+        <div class="jy-sponsors-strip">${sponsorStrip(sponsors)}</div>
+      </div>
+      <div class="jy-swap" data-ref="swap" role="group" aria-label="The bottom row shows">
+        <button type="button" class="jy-swap-btn" data-ref="swapControls" aria-pressed="true">Controls</button>
+        <button type="button" class="jy-swap-btn" data-ref="swapSponsors" aria-pressed="false">Sponsors</button>
       </div>
 
       <div class="jy-corner" data-ref="corner">
@@ -515,6 +541,8 @@ export function mountJourney(container, options = {}) {
   container.appendChild(root);
   const ref = {};
   for (const node of root.querySelectorAll('[data-ref]')) ref[node.dataset.ref] = node;
+  // the facts banner's own place, to go back to from under the picture (placeFacts)
+  const factsHome = { parent: ref.factsSlot.parentNode, before: ref.factsShow.nextSibling };
   const section = root.querySelector('.jy');
   const stage = root.querySelector('.jy-stage');
   const canvas = root.querySelector('.jy-canvas');
@@ -563,6 +591,7 @@ export function mountJourney(container, options = {}) {
     tab: 'stats', // what the details show: 'stats', or 'pictures' where the viewfinder doesn't show
     mapUp: false, // where the viewfinder shows, the map in its place
     dockHidden: false, // the whole panel put away
+    sponsorsOn: false, // the corner's row shows the sponsors instead of its controls
     dockResume: null, // the tab that was open when it was
     factsHidden: false,
     phoneExtra: null, // what's open over a phone's bottom bar, besides the details: 'facts' or 'controls'
@@ -617,6 +646,7 @@ export function mountJourney(container, options = {}) {
 
   let earth = null;
   let earthReady = false;
+  let sponsorsLoaded = null; // loadSponsorLogos
   let aurora = null;
   let auroraNote = () => null;
   let sky = null;
@@ -691,6 +721,7 @@ export function mountJourney(container, options = {}) {
       earthReady = true;
       stage.classList.add('jy-earth-ready');
       for (const pin of pins) loadPinPicture(pin.el.querySelector('img'));
+      if (opts.tv && sponsorsHere()) loadSponsorLogos(); // its row shows them while nobody uses it
       loadPlaceNames();
       startSatellite();
       needsFrame = true;
@@ -981,13 +1012,34 @@ export function mountJourney(container, options = {}) {
     return { fits: clearOfText && satMin <= satMax, satMax, satX };
   }
 
-  /** The facts banner, or the same facts in the details when the end view has no room for it. */
+  /**
+   * The facts banner, or the same facts in the details when the end view has no room for it.
+   * Where the picture shows (a big screen), the banner hangs under it, with Show facts, while
+   * there's room above the corner's controls; elsewhere it's on the left, above the clock.
+   */
   function placeFacts() {
     const inDetails = !frame.narrow && frame.fit >= FIT_NO_FACTS;
     const home = inDetails ? ref.detailsFacts : ref.factsSlot;
     if (ticker?.element && ticker.element.parentNode !== home) home.append(ticker.element);
     // in the details the facts are out of the way already, with nothing to hide
     ref.factsShow.hidden = !state.factsHidden || inDetails;
+    const docked = !inDetails && factsFitUnderPicture();
+    frame.factsDocked = docked;
+    if (docked && ref.factsSlot.parentNode !== ref.dock) ref.dock.append(ref.factsSlot, ref.factsShow);
+    if (!docked && ref.factsSlot.parentNode !== factsHome.parent) {
+      factsHome.parent.insertBefore(ref.factsSlot, factsHome.before);
+      factsHome.parent.insertBefore(ref.factsShow, factsHome.before);
+    }
+  }
+
+  /** Room for the facts under the picture: it shows, and the banner fits above the corner's row. */
+  function factsFitUnderPicture() {
+    if (frame.narrow || state.dockHidden || !boxOf(ref.viewfinderSlot)) return false;
+    const dock = ref.dock.getBoundingClientRect();
+    const corner = ref.corner.getBoundingClientRect();
+    const floor = corner.height ? corner.top : stageRect().bottom;
+    const need = Math.max(FACTS_RESERVE_WIDE_PX * frame.ui, ref.factsSlot.offsetHeight);
+    return dock.bottom + 8 + need + 8 <= floor;
   }
 
   function computeFrame() {
@@ -1044,6 +1096,7 @@ export function mountJourney(container, options = {}) {
     placeFacts();
     placeMeta();
     placeQr(endBox, s);
+    placeSponsors(s);
 
     // beat 1: the whole Earth
     let diam;
@@ -1087,9 +1140,9 @@ export function mountJourney(container, options = {}) {
     }
     let satX = room ? room.satX : 0.62;
     if (sideColumn) satX = Math.min(satX, Math.max(0.2, (W - Math.min(440, 0.55 * W) - 104 * frame.ui) / W));
-    // a dock made big with its grip, with the site's line hanging under it, can reach down past
-    // where the satellite goes: then the satellite goes to its left
-    const dockFoot = Math.max(dock?.bottom || 0, boxOf(ref.dockMeta, s)?.bottom || 0);
+    // a dock made big with its grip, with the facts hanging under it, can reach down past where
+    // the satellite goes: then the satellite goes to its left
+    const dockFoot = Math.max(dock?.bottom || 0, frame.factsDocked ? boxOf(ref.factsSlot, s)?.bottom || 0 : 0);
     if (dock && !narrow && satY * H < dockFoot + SAT_CLEAR_PX) {
       // room for the label to the model's right (updateMarks): its gap, its width, a margin
       const satLen = (opts.tv ? 72 : 44) * frame.ui;
@@ -1146,7 +1199,7 @@ export function mountJourney(container, options = {}) {
       const b = boxOf(el, s);
       if (b && getComputedStyle(el).visibility !== 'hidden') covers.push(b);
     };
-    for (const el of [...ref.time.children, ...ref.corner.children, ...ref.factsSlot.children, ...ref.tabbar.children, ref.factsShow, ref.summary, ref.qr]) cover(el);
+    for (const el of [...ref.time.children, ...ref.corner.children, ...ref.factsSlot.children, ...ref.tabbar.children, ref.factsShow, ref.summary, ref.qr, ref.sponsors]) cover(el);
     // the viewfinder's fade out would still count as showing, so go by what took its place
     if (state.panel) cover(ref.panel);
     else if (state.creditsOpen) cover(ref.credits);
@@ -1648,7 +1701,8 @@ export function mountJourney(container, options = {}) {
       beatShown.ui = ui;
       root.classList.toggle('jy-ui-on', ui);
       ref.time.inert = !ui || still;
-      ref.corner.inert = !ui;
+      ref.corner.inert = !ui || root.classList.contains('jy-sponsors-on');
+      ref.swap.inert = !ui;
       ref.summary.inert = !ui || still;
       marks.inert = !ui || still;
       ref.satMarks.inert = !ui || still;
@@ -2163,6 +2217,7 @@ export function mountJourney(container, options = {}) {
     ref.dockToggleText.textContent = hidden ? 'Show panel' : 'Hide';
     dockHiddenChoice.set(hidden);
     syncViewfinder();
+    placeFacts(); // from under the picture to the left, and back
     measureSettled();
   }
 
@@ -2386,6 +2441,62 @@ export function mountJourney(container, options = {}) {
       card.style.top = `${top}px`;
     }
     card.hidden = !fits;
+  }
+
+  /**
+   * The sponsors' logos, the first time they're wanted: the switch under the corner's row, or a TV
+   * (once the Earth is up), whose row shows them while nobody is using it. The strip shows when
+   * every one has come, so none passes by empty.
+   */
+  function loadSponsorLogos() {
+    if (!sponsorsLoaded) {
+      const imgs = [...ref.sponsors.querySelectorAll('img[data-src]')];
+      for (const img of imgs) img.src = img.dataset.src;
+      sponsorsLoaded = Promise.allSettled(imgs.map((img) => img.decode())).then(() => {
+        if (!destroyed) ref.sponsors.classList.add('is-loaded');
+      });
+    }
+    return sponsorsLoaded;
+  }
+
+  /** Where the switch shows (journey.css: a wide enough screen, not a phone). */
+  function sponsorsHere() {
+    return getComputedStyle(ref.swap).display !== 'none';
+  }
+
+  /** The corner's row: its controls, or the sponsors (once their logos are in). */
+  function setSponsors(on) {
+    state.sponsorsOn = on;
+    ref.swapControls.setAttribute('aria-pressed', String(!on));
+    ref.swapSponsors.setAttribute('aria-pressed', String(on));
+    const show = () => {
+      if (destroyed || state.sponsorsOn !== on) return;
+      root.classList.toggle('jy-sponsors-on', on);
+      ref.corner.inert = !beatShown.ui || on;
+      measureText(); // the pins keep clear of whichever shows
+      needsFrame = true;
+    };
+    if (on) loadSponsorLogos().then(show);
+    else show();
+  }
+
+  /** The strip over the corner's row, as big as it, and the switch just under the row's right end. */
+  function placeSponsors(s) {
+    if (!sponsorsHere()) {
+      if (state.sponsorsOn) setSponsors(false);
+      return;
+    }
+    const row = boxOf(ref.corner, s);
+    if (!row) return;
+    const st = ref.sponsors.style;
+    st.left = `${row.left}px`;
+    st.top = `${row.top}px`;
+    st.width = `${row.right - row.left}px`;
+    st.height = `${row.bottom - row.top}px`;
+    // the tiles a little shorter than the row's buttons: Credits' are 72px
+    st.setProperty('--sp-k', String((row.bottom - row.top - 8) / 72));
+    ref.swap.style.right = `${s.right - s.left - row.right}px`;
+    ref.swap.style.top = `${row.bottom + 4}px`;
   }
 
   /** "Last updated Nov 3, 22:00 in Calgary", from the stamp each publish leaves; nothing without one. */
@@ -3738,6 +3849,8 @@ export function mountJourney(container, options = {}) {
     measureSettled();
   }
 
+  listen(ref.swapControls, 'click', () => setSponsors(false));
+  listen(ref.swapSponsors, 'click', () => setSponsors(true));
   listen(ref.factsShow, 'click', () => {
     setFactsHidden(false);
     ticker?.reveal?.();

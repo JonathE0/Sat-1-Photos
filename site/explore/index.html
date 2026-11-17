@@ -85,7 +85,10 @@
     .x-nav { padding: 0 max(var(--x-m, 32px), env(safe-area-inset-right)) 0 max(var(--x-m, 32px), env(safe-area-inset-left)); }
     /* ?tv, left alone for a few seconds (setUpTv in journey.js): no links nobody can click */
     html.jy-tv-idle .x-nav ul { visibility: hidden; }
-    html.jy-tv-page .x-nav img { height: 36px; }
+    /* read from across a room: the logo a good deal bigger, and the bar and the room under it with it */
+    html.jy-tv-page .x-nav { height: 96px; }
+    html.jy-tv-page .x-nav img { height: 64px; }
+    html.jy-tv-page .jy-root { --jy-nav: 96px; }
   </style>
 </head>
 <body>

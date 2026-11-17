@@ -139,6 +139,15 @@ body[data-view="explore"] .site-nav .nav-btn[aria-expanded="true"] {
 .site-nav.is-over .nav-links > a[aria-current="page"],
 body[data-view="explore"] .site-nav .nav-links > a[aria-current="page"] { text-decoration-color: currentColor; }
 
+/* Big screens (a desktop, a TV; not a 768px-tall laptop, whose picture needs the room):
+   the two logos a size up, and the bar with them.
+   assets/style.css gives Explore's globe the same room under it. */
+@media (min-width: 1200px) and (min-height: 860px) {
+  :root { --nav-bar: 88px; }
+  .brand-logo { height: 64px; }
+  .brand-partner { height: 76px; border-radius: 9px; }
+}
+
 /* Stepping down with the width */
 
 @media (max-width: 999px) {

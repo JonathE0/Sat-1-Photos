@@ -240,6 +240,14 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
   line-height: 1.3;
 }
 .jy-sub + .jy-sub { margin-top: 4px; }
+/* right under the name: what it is, a step brighter than the lines under it */
+.jy-tagline {
+  margin: 14px 0 0;
+  font-size: var(--jy-lead);
+  font-weight: 500;
+  line-height: 1.3;
+}
+.jy-tagline + .jy-sub { margin-top: 8px; }
 .jy-sub + .jy-lead { margin-top: 20px; }
 
 /* Beat 1 shows the first sentence and the cue; the end shows the live
@@ -263,12 +271,15 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
 /* Once the camera has come in, the Earth and the satellite are the point: the words step
    back a little, and a good deal on a phone. The opening keeps its full size. */
 .jy-root.jy-composed .jy-h1 { font-size: calc(var(--jy-display) * 0.8); }
+.jy-root.jy-composed .jy-tagline,
 .jy-root.jy-composed .jy-sub,
 .jy-root.jy-composed .jy-live-lead { font-size: calc(var(--jy-lead) * 0.88); }
 .jy-root.jy-composed .jy-tip,
 .jy-root.jy-composed .jy-hint { font-size: calc(var(--jy-body) * 0.94); }
 .jy-root.jy-narrow.jy-composed .jy-sub { margin-top: 6px; font-size: 15px; }
 .jy-root.jy-narrow.jy-composed .jy-sub + .jy-sub { margin-top: 2px; }
+.jy-root.jy-narrow.jy-composed .jy-tagline { margin-top: 6px; font-size: 15px; }
+.jy-root.jy-narrow.jy-composed .jy-tagline + .jy-sub { margin-top: 4px; }
 .jy-root.jy-narrow.jy-composed .jy-live-lead { margin-top: 10px; font-size: 16px; line-height: 1.35; }
 .jy-root.jy-narrow.jy-composed .jy-tip,
 .jy-root.jy-narrow.jy-composed .jy-hint { font-size: 14px; }
@@ -289,6 +300,7 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
 .jy-root[data-fit="4"] .jy-hint,
 .jy-root[data-fit="3"] .jy-lead-more,
 .jy-root[data-fit="4"] .jy-lead-more,
+.jy-root.jy-composed[data-fit="4"] .jy-tagline,
 .jy-root.jy-composed[data-fit="4"] .jy-sub { display: none; }
 
 /* "Scroll to learn more": still, quiet, gone once the visitor scrolls */
@@ -578,12 +590,152 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
 .jy-qr-svg { display: block; width: 100%; height: 100%; }
 .jy-qr-text { display: flex; flex-direction: column; gap: 2px; }
 .jy-qr-title { color: var(--jy-ink); font-size: var(--jy-body); font-weight: 500; }
+/* this site's own address, for anyone who would rather type it than scan */
+.jy-qr-site { margin-top: calc(8px * var(--jy-ui, 1)); }
+.jy-qr-url { color: var(--jy-ink); font-weight: 500; white-space: nowrap; } /* never "Sat-1-" / "Photos" */
+/* The sponsors, in the corner's row in place of its controls: asked for with the switch under
+   the row, and on a TV whenever nobody is using it (its controls go then anyway). Credits' row
+   (assets/credits.css) drawn a little shorter than the row (placeSponsors in journey.js lays it
+   over the row and sets --sp-k), each logo on its white tile (they're drawn for white). It shows once every
+   logo is in (loadSponsorLogos); a pointer resting on it stops it. */
+.jy-sponsors {
+  --sp-k: 0.61;
+  --sp-gap: calc(12px * var(--sp-k));
+  position: absolute;
+  z-index: 2;
+  display: none;
+  align-items: stretch;
+  justify-content: flex-end; /* tucked against the right, a few logos at a time */
+  gap: 8px;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 150ms var(--jy-ease-exit), visibility 0s linear 150ms;
+}
+.jy-root.jy-ui-on.jy-sponsors-on .jy-sponsors.is-loaded,
+.jy-root.jy-tv.jy-tv-idle .jy-sponsors.is-loaded {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 240ms var(--jy-ease-out), visibility 0s;
+}
+/* the controls step aside for it (kept in place, so nothing moves when they come back) */
+.jy-root.jy-sponsors-on .jy-corner {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 150ms var(--jy-ease-exit), visibility 0s linear 150ms;
+}
+.jy-sponsors-title {
+  flex: none;
+  display: flex;
+  align-items: center;
+  margin: 0;
+  padding: 0 16px;
+  background: var(--jy-panel);
+  color: var(--jy-ink);
+  font-size: var(--jy-small);
+  font-weight: 500;
+  white-space: nowrap;
+}
+.jy-sponsors-strip {
+  flex: 0 1 calc(380px * var(--jy-ui, 1));
+  align-self: center;
+  min-width: 0;
+  height: calc(72px * var(--sp-k));
+  overflow: hidden;
+  pointer-events: auto;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 16px, #000 calc(100% - 16px), transparent);
+  mask-image: linear-gradient(to right, transparent, #000 16px, #000 calc(100% - 16px), transparent);
+}
+.jy-sponsors-row {
+  display: flex;
+  gap: var(--sp-gap);
+  width: max-content;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  animation: jy-sponsors var(--sp-time, 60s) linear infinite; /* --sp-time: journey.js, from how long the row is */
+}
+.jy-sponsors-strip:hover .jy-sponsors-row { animation-play-state: paused; }
+.jy-sponsor {
+  flex: none;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  box-sizing: border-box;
+  height: 100%;
+  padding: calc(10px * var(--sp-k)) calc(16px * var(--sp-k));
+  border-radius: calc(8px * var(--sp-k));
+  background: #fff;
+}
+.jy-sponsor img {
+  display: block;
+  width: calc(var(--w) * var(--sp-k) * 1px);
+  height: calc(var(--h) * var(--sp-k) * 1px);
+}
+/* a programme or product named under its maker's logo (Fly Your Satellite!, NX) */
+.jy-sponsor-under {
+  display: block;
+  margin-top: calc(3px * var(--sp-k));
+  color: #10151B;
+  font-size: max(9px, calc(12px * var(--sp-k)));
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+@keyframes jy-sponsors {
+  to { transform: translateX(calc(-50% - var(--sp-gap) / 2)); }
+}
+
+/* The switch just under the corner's row, in the margin below it: Controls | Sponsors */
+.jy-swap {
+  position: absolute;
+  z-index: 2;
+  display: none;
+  gap: 2px;
+  background: var(--jy-panel);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 150ms var(--jy-ease-exit), visibility 0s linear 150ms;
+}
+.jy-ui-on .jy-swap {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 240ms var(--jy-ease-out), visibility 0s;
+}
+.jy-swap-btn {
+  min-height: 24px;
+  border: 0;
+  padding: 0 10px;
+  background: none;
+  color: var(--jy-muted);
+  font: 500 var(--jy-small) / 1 var(--jy-font);
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  pointer-events: auto;
+}
+.jy-swap-btn:hover { color: var(--jy-ink); }
+.jy-swap-btn[aria-pressed="true"] {
+  color: var(--jy-ink);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+}
+.jy-swap-btn:focus-visible { outline: 2px solid var(--jy-blue); outline-offset: -2px; }
+/* where the margin under the row has room for it (32px from 1100px wide), and not on a phone,
+   the still picture or with motion kept still (?motion=reduced, app.js): Credits has them all */
+@media (min-width: 1100px) and (min-height: 700px) {
+  .jy-root:not(.jy-narrow):not([data-mode="still"]) .jy-swap { display: flex; }
+  .jy-root:not(.jy-narrow):not([data-mode="still"]) .jy-sponsors { display: flex; }
+}
+html[data-motion="reduced"] .jy-root.jy-root .jy-swap,
+html[data-motion="reduced"] .jy-root.jy-root .jy-sponsors { display: none; }
+
 /* phones have the tab bar down there, and Credits says the same */
 .jy-root[data-mode="still"] .jy-meta,
 .jy-narrow .jy-meta,
 .jy-meta.is-cramped { display: none; }
-/* its copy under the picture, where the viewfinder shows (below) */
-.jy-dock-meta { display: none; }
 
 .jy-now { min-height: var(--jy-ctl); padding: 0 16px; }
 .jy-now[aria-disabled="true"] { background: none; box-shadow: inset 1px 0 0 var(--jy-raised); color: var(--jy-muted); cursor: default; }
@@ -932,34 +1084,8 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
   .jy-dock-grip:hover { color: var(--jy-ink); }
   .jy-dock-grip:focus-visible { outline: 2px solid var(--jy-blue); outline-offset: 2px; }
 
-  /* The repo and the last update, under the picture while it shows (the sized dock leaves
-     room for them above the bottom controls); the bottom row's copy gives way to it */
-  .jy-root .jy-dock-meta {
-    position: absolute;
-    top: calc(100% + 8px);
-    bottom: auto;
-    left: 0;
-    right: 0;
-    display: flex;
-    min-height: 0;
-    padding: 8px 12px;
-    pointer-events: auto;
-    opacity: 0;
-    visibility: hidden;
-  }
-  .jy-root.jy-locked .jy-dock-meta {
-    opacity: 1;
-    visibility: visible;
-    transition: opacity 240ms var(--jy-ease-out), visibility 0s;
-  }
-  .jy-root.jy-dock-hidden .jy-dock-meta,
-  .jy-root.jy-credits-open .jy-dock-meta,
-  .jy-root .jy-vf-slot[hidden] ~ .jy-dock-meta {
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 120ms var(--jy-ease-exit), visibility 0s linear 120ms;
-  }
-  .jy-root:not(.jy-dock-hidden):not(.jy-credits-open):has(.jy-vf-slot:not([hidden])) .jy-meta:not(.jy-dock-meta) { display: none; }
+  /* the bottom row's repo-and-last-update line gives way while the picture shows */
+  .jy-root:not(.jy-dock-hidden):not(.jy-credits-open):has(.jy-vf-slot:not([hidden])) .jy-meta { display: none; }
 
   /* The details take the picture's place in the same box and over it, so a switch is a
      cross-fade: the box keeps its size, nothing shows through or below them, and they don't
@@ -1046,6 +1172,25 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
 .jy-root.jy-corner-up:not(.jy-narrow) .jy-facts-slot,
 .jy-root.jy-corner-up:not(.jy-narrow) .jy-facts-show { bottom: calc(var(--jy-bottom) + 2 * var(--jy-row) + 16px); }
 .jy-root.jy-corner-up:not(.jy-narrow) .jy-dock { bottom: calc(var(--jy-bottom) + 2 * var(--jy-row) + 24px); }
+
+/* Under the picture where it shows and there's room above the corner's row (placeFacts in
+   journey.js moves them into the dock): the facts hang from its foot, as wide as it, and Show
+   facts waits at its right when they're put away. Credits takes that side while it's open. */
+.jy-root:not(.jy-narrow) .jy-dock > .jy-facts-slot {
+  top: calc(100% + 8px);
+  bottom: auto;
+  left: 0;
+  width: 100%;
+}
+.jy-root:not(.jy-narrow) .jy-dock > .jy-facts-slot .cf { max-width: none; }
+.jy-root:not(.jy-narrow) .jy-dock > .jy-facts-show {
+  top: calc(100% + 8px);
+  bottom: auto;
+  left: auto;
+  right: 0;
+  pointer-events: auto; /* the dock's box passes the pointer through */
+}
+.jy-root.jy-credits-open .jy-dock > :is(.jy-facts-slot, .jy-facts-show) { opacity: 0; visibility: hidden; }
 
 /* ---- marks over the canvas: pins and the satellite -------------------------------- */
 
@@ -1653,7 +1798,9 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
 @media (max-height: 640px) and (min-width: 600px) {
   .jy-root { --jy-display: clamp(48px, 12svh, 96px); }
   .jy-text { top: max(16vh, calc(var(--jy-nav) + 16px)); top: max(16svh, calc(var(--jy-nav) + 16px)); }
+  .jy-tagline,
   .jy-sub { margin-top: 10px; }
+  .jy-tagline + .jy-sub { margin-top: 6px; }
   .jy-sub + .jy-lead { margin-top: 12px; }
   .jy-cue { margin-top: 24px; }
 }
@@ -1696,7 +1843,7 @@ html:has(> body > main#journey)::-webkit-scrollbar { display: none; }
 }
 .jy-tv.jy-tv-idle,
 .jy-tv.jy-tv-idle * { cursor: none !important; }
-.jy-tv.jy-tv-idle :is(.jy-corner, .jy-speed, .jy-now, .jy-summary-tools, .jy-facts-show, .cf-btn, .vf-nav, .jy-dock-grip) {
+.jy-tv.jy-tv-idle :is(.jy-corner, .jy-swap, .jy-speed, .jy-now, .jy-summary-tools, .jy-facts-show, .cf-btn, .vf-nav, .jy-dock-grip) {
   visibility: hidden;
 }
 
