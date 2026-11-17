@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-17T07:30:02Z",
+ "generated_at": "2026-11-17T08:29:53Z",
  "satellite": {
   "name": "FrontierSat",
   "norad_id": 69015,
@@ -267,12 +267,12 @@
    "width": 640,
    "height": 480,
    "status": "partial",
-   "status_note": "778 of 842 lines arrived, but line 744 did not, and the camera's JPEGs can't be decoded past a gap: the picture is shown down to it.",
-   "completeness": 0.9,
-   "pieces_past_gaps": 0,
+   "status_note": "838 of 842 lines arrived, but line 814 did not. A JPEG decoder stops at a gap, so the piece that came down past it was decoded on its own, put back where it belongs and matched to the brightness of the picture above. Grey is what never arrived.",
+   "completeness": 0.9858,
+   "pieces_past_gaps": 1,
    "dark": false,
    "file_size": 56492,
-   "sha256": "9a4bfb3e09f57b8c446df7697161cbb754d1b08b4b21cec9c00671d2c63b8fba",
+   "sha256": "3b77b48670b1a3cb8fe7f03b6effa39318b76e17e9f9faa72494ddf2744bbe2c",
    "sha256_expected": null,
    "captured_at": "2026-11-11T12:32:00Z",
    "capture_date": "2026-11-11",
@@ -282,91 +282,35 @@
    },
    "downlink": {
     "first": "2026-11-11T14:49:29Z",
-    "last": "2026-11-15T16:04:09Z",
-    "packets": 638
+    "last": "2026-11-17T07:50:32Z",
+    "packets": 810
    },
    "still_on_board": {
     "bytes": [
-     52650,
+     56297,
      56492
     ],
     "byte_ranges": [
      [
-      49920,
-      50115
-     ],
-     [
-      50310,
-      50505
-     ],
-     [
-      50700,
-      51675
-     ],
-     [
-      52065,
-      52260
-     ],
-     [
-      52455,
-      52650
-     ],
-     [
-      53040,
-      53235
-     ],
-     [
-      54405,
-      55380
-     ],
-     [
-      55575,
-      56492
+      54600,
+      54795
      ]
     ],
-    "byte_range_count": 8,
-    "last_try": "2026-11-15T16:03:49Z",
-    "last_packet": "2026-11-15T16:04:09Z",
+    "byte_range_count": 1,
+    "last_try": "2026-11-17T07:49:13Z",
+    "last_packet": "2026-11-17T07:50:32Z",
     "lines": [
-     778,
+     838,
      842,
      842
     ],
     "line_ranges": [
      [
-      744,
-      747
-     ],
-     [
-      750,
-      753
-     ],
-     [
-      756,
-      770
-     ],
-     [
-      776,
-      779
-     ],
-     [
-      782,
-      785
-     ],
-     [
-      791,
-      794
-     ],
-     [
-      811,
-      826
-     ],
-     [
-      829,
-      841
+      814,
+      817
      ]
     ],
-    "line_range_count": 8
+    "line_range_count": 1
    },
    "full_copy": false,
    "position": {
@@ -409,8 +353,8 @@
    },
    "downlink": {
     "first": "2026-11-11T11:10:15Z",
-    "last": "2026-11-17T07:26:08Z",
-    "packets": 1079
+    "last": "2026-11-17T07:35:11Z",
+    "packets": 1301
    },
    "still_on_board": {
     "bytes": [
@@ -436,8 +380,8 @@
      ]
     ],
     "byte_range_count": 4,
-    "last_try": "2026-11-13T15:15:01Z",
-    "last_packet": "2026-11-17T07:26:08Z",
+    "last_try": "2026-11-17T07:34:22Z",
+    "last_packet": "2026-11-17T07:35:11Z",
     "lines": [
      1086,
      1100,
