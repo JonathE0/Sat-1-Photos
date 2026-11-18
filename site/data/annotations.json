@@ -359,6 +359,30 @@
     "updated_at": "2026-10-31T06:55:53Z",
     "updated_by": "FrontierSat team"
   },
+  "2026-11-10-014233z": {
+    "captured_at": null,
+    "history": [
+      {
+        "at": "2026-11-18T22:05:20Z",
+        "by": "FrontierSat team",
+        "changes": {
+          "notes": [
+            null,
+            "Taken at 01:42 UTC on Nov 11, 2026 (19:42 on Nov 10 in Calgary), ten seconds before the Tsushima and Kyushu frame. Its file name has the right time but gives Nov 10 as the UTC date, the same slip as that frame. At 01:42 UTC on Nov 10 the satellite was over open sea south of Tasmania, but this frame shows land with shallow water along its coast; on Nov 11 it was between Tsushima and Iki. The capture was cut short on board, so only the top third of the picture exists."
+          ]
+        }
+      }
+    ],
+    "lat": null,
+    "lon": null,
+    "notes": "Taken at 01:42 UTC on Nov 11, 2026 (19:42 on Nov 10 in Calgary), ten seconds before the Tsushima and Kyushu frame. Its file name has the right time but gives Nov 10 as the UTC date, the same slip as that frame. At 01:42 UTC on Nov 10 the satellite was over open sea south of Tasmania, but this frame shows land with shallow water along its coast; on Nov 11 it was between Tsushima and Iki. The capture was cut short on board, so only the top third of the picture exists.",
+    "people": [],
+    "place": null,
+    "tags": [],
+    "title": null,
+    "updated_at": "2026-11-18T22:05:20Z",
+    "updated_by": "FrontierSat team"
+  },
   "2026-11-10-014243z": {
     "captured_at": null,
     "history": [

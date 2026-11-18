@@ -557,6 +557,12 @@ class CaptureTimes(unittest.TestCase):
         self.assertEqual(got.at, datetime(2026, 11, 11, 1, 42, 43, tzinfo=UTC))
         self.assertEqual(str(got.day), "2026-11-11")
         self.assertEqual(got.basis, "corrected filename")
+        # its partner ten seconds earlier: the same slip, the name's own time of day
+        path = "camera/2026-11-10_014233Z.img"
+        first_rx = datetime(2026, 11, 18, 8, 39, 36, tzinfo=UTC)
+        got = capture.assign([(path, None, first_rx)], [])[path]
+        self.assertEqual(got.at, datetime(2026, 11, 11, 1, 42, 33, tzinfo=UTC))
+        self.assertEqual(got.basis, "corrected filename")
 
     def test_a_time_after_the_first_packet_is_passed_over(self):
         first_rx = datetime(2026, 10, 24, 22, 37, 41, tzinfo=UTC)

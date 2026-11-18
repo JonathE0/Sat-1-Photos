@@ -60,6 +60,12 @@ MISNAMED = {
     # Nov 10 it was south of Tasmania. Its first packets came down at 05:14 UTC on Nov 11. (It was
     # still Nov 10 in Calgary, so the name most likely took the local date with the UTC time.)
     "camera/2026-11-10_014243Z.img": datetime(2026, 11, 11, 1, 42, 43, tzinfo=UTC),
+    # Its partner from the same pass, ten seconds earlier and named with the same slip; it came
+    # down a week later (Nov 18). Only that one camera readying was heard, and at 01:42:33 UTC on
+    # Nov 10 the satellite was over open sea some 350 km south of Tasmania, yet the frame shows
+    # land with shallow water along its coast. On Nov 11 it was at 34.2N 129.7E, between
+    # Tsushima and Iki. The time of day stays the name's own.
+    "camera/2026-11-10_014233Z.img": datetime(2026, 11, 11, 1, 42, 33, tzinfo=UTC),
 }
 
 # Log stamps end in the clock's sync source: G GNSS, T a ground telecommand,
