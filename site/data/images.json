@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-18T10:30:19Z",
+ "generated_at": "2026-11-18T11:29:45Z",
  "satellite": {
   "name": "FrontierSat",
   "norad_id": 69015,
@@ -989,13 +989,13 @@
    "thumb": "images/thumbs/2026-11-05-000926z.jpg",
    "width": 640,
    "height": 480,
-   "status": "partial",
-   "status_note": "77 of 376 lines arrived, but line 31 did not, and the camera's JPEGs can't be decoded past a gap: the picture is shown down to it.",
-   "completeness": 0.0333,
+   "status": "verified",
+   "status_note": "Bit-exact: matches the sha256 the satellite sent.",
+   "completeness": 1.0,
    "pieces_past_gaps": 0,
    "dark": false,
    "file_size": 25270,
-   "sha256": "6fc8e7d5601f98b887c453e70657974ee239993be8c784ed9ae6d470470013e1",
+   "sha256": "0e9d8f3d778f1e470287b4bc623511a13a1f8ba5151c7c31d7349e8eb3d9be99",
    "sha256_expected": "0e9d8f3d778f1e470287b4bc623511a13a1f8ba5151c7c31d7349e8eb3d9be99",
    "captured_at": "2026-11-05T00:09:26Z",
    "capture_date": "2026-11-05",
@@ -1005,132 +1005,10 @@
    },
    "downlink": {
     "first": "2026-11-05T00:37:54Z",
-    "last": "2026-11-05T02:15:26Z",
-    "packets": 34
+    "last": "2026-11-18T10:35:31Z",
+    "packets": 613
    },
-   "still_on_board": {
-    "bytes": [
-     5850,
-     25270
-    ],
-    "byte_ranges": [
-     [
-      2145,
-      2925
-     ],
-     [
-      3120,
-      5850
-     ],
-     [
-      6435,
-      6825
-     ],
-     [
-      7215,
-      9555
-     ],
-     [
-      9750,
-      10140
-     ],
-     [
-      10530,
-      10920
-     ],
-     [
-      11700,
-      12480
-     ],
-     [
-      12675,
-      12870
-     ],
-     [
-      13065,
-      13260
-     ],
-     [
-      13455,
-      13845
-     ],
-     [
-      14040,
-      18330
-     ],
-     [
-      18525,
-      23400
-     ],
-     [
-      23595,
-      25270
-     ]
-    ],
-    "byte_range_count": 13,
-    "last_try": "2026-11-05T02:15:16Z",
-    "last_packet": "2026-11-05T02:15:26Z",
-    "lines": [
-     77,
-     376,
-     376
-    ],
-    "line_ranges": [
-     [
-      31,
-      43
-     ],
-     [
-      46,
-      87
-     ],
-     [
-      95,
-      101
-     ],
-     [
-      107,
-      142
-     ],
-     [
-      145,
-      151
-     ],
-     [
-      157,
-      162
-     ],
-     [
-      174,
-      185
-     ],
-     [
-      189,
-      191
-     ],
-     [
-      194,
-      197
-     ],
-     [
-      200,
-      206
-     ],
-     [
-      209,
-      273
-     ],
-     [
-      276,
-      348
-     ],
-     [
-      352,
-      375
-     ]
-    ],
-    "line_range_count": 13
-   },
+   "still_on_board": null,
    "full_copy": false,
    "position": {
     "lat": -82.2889,
