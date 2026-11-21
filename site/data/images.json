@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-21T08:29:47Z",
+ "generated_at": "2026-11-21T10:29:48Z",
  "satellite": {
   "name": "FrontierSat",
   "norad_id": 69015,
@@ -676,6 +676,51 @@
     "satellite_sunlit": true,
     "satellite_light": "sunlit",
     "sun_above_limb_deg": 83.1,
+    "tle_epoch": "2026-11-09T22:45:46Z",
+    "basis": "SGP4 from the most recent TLE before capture"
+   },
+   "unnamed": false
+  },
+  {
+   "id": "2026-11-10-014223z",
+   "file": "camera/2026-11-10_014223Z.img",
+   "camera": "picam",
+   "title": "Nov 10, 2026, 01:42 UTC",
+   "src": "images/2026-11-10-014223z.jpg",
+   "thumb": "images/thumbs/2026-11-10-014223z.jpg",
+   "width": 640,
+   "height": 480,
+   "status": "complete",
+   "status_note": "Every line of the picture arrived. The satellite never sent a hash for this file.",
+   "completeness": 1.0,
+   "pieces_past_gaps": 0,
+   "dark": false,
+   "file_size": 53477,
+   "sha256": "14eb853ee2661bc33b9c1f0a291b38c952390fbfb93ff2ca75f696c2e4b252fb",
+   "sha256_expected": null,
+   "captured_at": "2026-11-10T01:42:23Z",
+   "capture_date": "2026-11-10",
+   "capture_basis": "filename",
+   "satellite_clock": {
+    "correction_s": 0.0
+   },
+   "downlink": {
+    "first": "2026-11-21T04:49:09Z",
+    "last": "2026-11-21T09:19:00Z",
+    "packets": 1626
+   },
+   "still_on_board": null,
+   "full_copy": false,
+   "position": {
+    "lat": -47.3602,
+    "lon": 142.7683,
+    "alt_km": 511.7,
+    "place": "Indian Ocean",
+    "ground_sunlit": true,
+    "sun_elevation_deg": 59.1,
+    "satellite_sunlit": true,
+    "satellite_light": "sunlit",
+    "sun_above_limb_deg": 81.4,
     "tle_epoch": "2026-11-09T22:45:46Z",
     "basis": "SGP4 from the most recent TLE before capture"
    },
@@ -3617,117 +3662,6 @@
      ]
     ],
     "line_range_count": 1
-   }
-  },
-  {
-   "file": "camera/2026-11-10_014223Z.img",
-   "reason": "not enough of the file arrived to show any of the picture",
-   "still_on_board": {
-    "bytes": [
-     42557,
-     53477
-    ],
-    "byte_ranges": [
-     [
-      390,
-      780
-     ],
-     [
-      975,
-      2535
-     ],
-     [
-      2925,
-      3510
-     ],
-     [
-      4290,
-      6825
-     ],
-     [
-      7020,
-      8190
-     ],
-     [
-      8385,
-      8775
-     ],
-     [
-      9555,
-      11310
-     ],
-     [
-      23985,
-      24765
-     ],
-     [
-      24960,
-      25155
-     ],
-     [
-      27885,
-      28860
-     ],
-     [
-      39195,
-      39780
-     ]
-    ],
-    "byte_range_count": 11,
-    "last_try": "2026-11-21T07:57:57Z",
-    "last_packet": "2026-11-21T07:58:00Z",
-    "lines": [
-     624,
-     797,
-     797
-    ],
-    "line_ranges": [
-     [
-      5,
-      11
-     ],
-     [
-      14,
-      37
-     ],
-     [
-      43,
-      52
-     ],
-     [
-      63,
-      101
-     ],
-     [
-      104,
-      121
-     ],
-     [
-      125,
-      130
-     ],
-     [
-      142,
-      168
-     ],
-     [
-      357,
-      369
-     ],
-     [
-      372,
-      375
-     ],
-     [
-      416,
-      430
-     ],
-     [
-      584,
-      593
-     ]
-    ],
-    "line_range_count": 11
    }
   },
   {
