@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-21T02:26:07Z",
+ "generated_at": "2026-11-21T06:38:24Z",
  "satellite": {
   "name": "FrontierSat",
   "norad_id": 69015,
@@ -679,6 +679,63 @@
     "tle_epoch": "2026-11-09T22:45:46Z",
     "basis": "SGP4 from the most recent TLE before capture"
    },
+   "unnamed": false
+  },
+  {
+   "id": "2026-11-10-014263z",
+   "file": "camera/2026-11-10_014263Z.img",
+   "camera": "picam",
+   "title": "Nov 10, 2026",
+   "src": "images/2026-11-10-014263z.jpg",
+   "thumb": "images/thumbs/2026-11-10-014263z.jpg",
+   "width": 640,
+   "height": 480,
+   "status": "partial",
+   "status_note": "635 of 639 lines arrived, but line 491 did not. A JPEG decoder stops at a gap, so the piece that came down past it was decoded on its own, put back where it belongs and matched to the brightness of the picture above. Grey is what never arrived.",
+   "completeness": 0.9892,
+   "pieces_past_gaps": 1,
+   "dark": false,
+   "file_size": 42891,
+   "sha256": "663146dd00390f0d65a0ad5f0dc7d7ebe8f377bd35e640c389e441a716d8ea79",
+   "sha256_expected": null,
+   "captured_at": null,
+   "capture_date": "2026-11-10",
+   "capture_basis": "date only",
+   "satellite_clock": null,
+   "downlink": {
+    "first": "2026-11-21T01:15:43Z",
+    "last": "2026-11-21T03:22:33Z",
+    "packets": 603
+   },
+   "still_on_board": {
+    "bytes": [
+     42696,
+     42891
+    ],
+    "byte_ranges": [
+     [
+      32955,
+      33150
+     ]
+    ],
+    "byte_range_count": 1,
+    "last_try": "2026-11-21T03:21:41Z",
+    "last_packet": "2026-11-21T03:22:33Z",
+    "lines": [
+     635,
+     639,
+     639
+    ],
+    "line_ranges": [
+     [
+      491,
+      494
+     ]
+    ],
+    "line_range_count": 1
+   },
+   "full_copy": false,
+   "position": null,
    "unnamed": false
   },
   {
@@ -3589,50 +3646,106 @@
    }
   },
   {
-   "file": "camera/unnamed_2026-11-21_027f.img",
+   "file": "camera/unnamed_2026-11-21_031d.img",
    "reason": "the start of the file never arrived, and the picture can't be decoded without it",
    "still_on_board": {
     "bytes": [
-     2145,
-     42891
+     41972,
+     53477
     ],
     "byte_ranges": [
      [
       0,
-      33735
+      2535
      ],
      [
-      35685,
-      36855
+      2925,
+      3510
      ],
      [
-      37050,
-      42891
+      4290,
+      6825
+     ],
+     [
+      7020,
+      8190
+     ],
+     [
+      8385,
+      8775
+     ],
+     [
+      9555,
+      11310
+     ],
+     [
+      23985,
+      24765
+     ],
+     [
+      24960,
+      25155
+     ],
+     [
+      27885,
+      28860
+     ],
+     [
+      39195,
+      39780
      ]
     ],
-    "byte_range_count": 3,
+    "byte_range_count": 10,
     "last_try": null,
-    "last_packet": "2026-11-21T01:15:46Z",
+    "last_packet": "2026-11-21T04:55:45Z",
     "lines": [
-     30,
-     639,
-     639
+     617,
+     797,
+     797
     ],
     "line_ranges": [
      [
       0,
-      503
+      37
      ],
      [
-      532,
-      549
+      43,
+      52
      ],
      [
-      552,
-      638
+      63,
+      101
+     ],
+     [
+      104,
+      121
+     ],
+     [
+      125,
+      130
+     ],
+     [
+      142,
+      168
+     ],
+     [
+      357,
+      369
+     ],
+     [
+      372,
+      375
+     ],
+     [
+      416,
+      430
+     ],
+     [
+      584,
+      593
      ]
     ],
-    "line_range_count": 3
+    "line_range_count": 10
    }
   },
   {
