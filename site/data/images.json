@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-21T16:30:02Z",
+ "generated_at": "2026-11-21T17:31:08Z",
  "satellite": {
   "name": "FrontierSat",
   "norad_id": 69015,
@@ -724,6 +724,79 @@
     "tle_epoch": "2026-11-09T22:45:46Z",
     "basis": "SGP4 from the most recent TLE before capture"
    },
+   "unnamed": false
+  },
+  {
+   "id": "2026-11-10-014273z",
+   "file": "camera/2026-11-10_014273Z.img",
+   "camera": "picam",
+   "title": "Nov 10, 2026",
+   "src": "images/2026-11-10-014273z.jpg",
+   "thumb": "images/thumbs/2026-11-10-014273z.jpg",
+   "width": 640,
+   "height": 480,
+   "status": "partial",
+   "status_note": "537 of 549 lines arrived, but line 34 did not. A JPEG decoder stops at a gap, so the 3 pieces that came down past the gaps were decoded on their own, put back where they belong and matched to the brightness of the picture above. Grey is what never arrived.",
+   "completeness": 0.9575,
+   "pieces_past_gaps": 3,
+   "dark": false,
+   "file_size": 36861,
+   "sha256": "c03b18eeafe9044c357eb78f123f756e8467dfbcbeee02d9f3db75c04fad7bda",
+   "sha256_expected": null,
+   "captured_at": null,
+   "capture_date": "2026-11-10",
+   "capture_basis": "date only",
+   "satellite_clock": null,
+   "downlink": {
+    "first": "2026-11-21T17:00:49Z",
+    "last": "2026-11-21T17:04:32Z",
+    "packets": 187
+   },
+   "still_on_board": {
+    "bytes": [
+     36276,
+     36861
+    ],
+    "byte_ranges": [
+     [
+      2340,
+      2535
+     ],
+     [
+      13065,
+      13260
+     ],
+     [
+      20280,
+      20475
+     ]
+    ],
+    "byte_range_count": 3,
+    "last_try": "2026-11-21T17:02:30Z",
+    "last_packet": "2026-11-21T17:04:32Z",
+    "lines": [
+     537,
+     549,
+     549
+    ],
+    "line_ranges": [
+     [
+      34,
+      37
+     ],
+     [
+      194,
+      197
+     ],
+     [
+      302,
+      305
+     ]
+    ],
+    "line_range_count": 3
+   },
+   "full_copy": false,
+   "position": null,
    "unnamed": false
   },
   {
