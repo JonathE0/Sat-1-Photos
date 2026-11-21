@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-21T17:31:08Z",
+ "generated_at": "2026-11-21T18:03:30Z",
  "satellite": {
   "name": "FrontierSat",
   "norad_id": 69015,
@@ -736,12 +736,12 @@
    "width": 640,
    "height": 480,
    "status": "partial",
-   "status_note": "537 of 549 lines arrived, but line 34 did not. A JPEG decoder stops at a gap, so the 3 pieces that came down past the gaps were decoded on their own, put back where they belong and matched to the brightness of the picture above. Grey is what never arrived.",
-   "completeness": 0.9575,
-   "pieces_past_gaps": 3,
+   "status_note": "545 of 549 lines arrived, but line 302 did not. A JPEG decoder stops at a gap, so the piece that came down past it was decoded on its own, put back where it belongs and matched to the brightness of the picture above. Grey is what never arrived.",
+   "completeness": 0.9833,
+   "pieces_past_gaps": 1,
    "dark": false,
    "file_size": 36861,
-   "sha256": "c03b18eeafe9044c357eb78f123f756e8467dfbcbeee02d9f3db75c04fad7bda",
+   "sha256": "6322daec7b8a76e2a57c61c105c766449f90144950bef06cb5948420389fefc6",
    "sha256_expected": null,
    "captured_at": null,
    "capture_date": "2026-11-10",
@@ -750,50 +750,34 @@
    "downlink": {
     "first": "2026-11-21T17:00:49Z",
     "last": "2026-11-21T17:04:32Z",
-    "packets": 187
+    "packets": 232
    },
    "still_on_board": {
     "bytes": [
-     36276,
+     36666,
      36861
     ],
     "byte_ranges": [
-     [
-      2340,
-      2535
-     ],
-     [
-      13065,
-      13260
-     ],
      [
       20280,
       20475
      ]
     ],
-    "byte_range_count": 3,
+    "byte_range_count": 1,
     "last_try": "2026-11-21T17:02:30Z",
     "last_packet": "2026-11-21T17:04:32Z",
     "lines": [
-     537,
+     545,
      549,
      549
     ],
     "line_ranges": [
      [
-      34,
-      37
-     ],
-     [
-      194,
-      197
-     ],
-     [
       302,
       305
      ]
     ],
-    "line_range_count": 3
+    "line_range_count": 1
    },
    "full_copy": false,
    "position": null,
