@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-20T21:15:35Z",
+ "generated_at": "2026-11-21T02:26:07Z",
  "satellite": {
   "name": "FrontierSat",
   "norad_id": 69015,
@@ -635,6 +635,51 @@
    "full_copy": false,
    "position": null,
    "unnamed": true
+  },
+  {
+   "id": "2026-11-10-014253z",
+   "file": "camera/2026-11-10_014253Z.img",
+   "camera": "picam",
+   "title": "Nov 10, 2026, 01:42 UTC",
+   "src": "images/2026-11-10-014253z.jpg",
+   "thumb": "images/thumbs/2026-11-10-014253z.jpg",
+   "width": 640,
+   "height": 480,
+   "status": "truncated",
+   "status_note": "The capture was cut short on board: the file holds only lines 0–499 of the 797 the camera announced (then it skips to line 750), and 500 of those arrived.",
+   "completeness": 0.6667,
+   "pieces_past_gaps": 0,
+   "dark": false,
+   "file_size": 33862,
+   "sha256": "1b7aa1fb4d814366ffcb4f02e33d86b93c4cbb001d930daf13b30f9d43e2ad92",
+   "sha256_expected": null,
+   "captured_at": "2026-11-10T01:42:53Z",
+   "capture_date": "2026-11-10",
+   "capture_basis": "filename",
+   "satellite_clock": {
+    "correction_s": 0.0
+   },
+   "downlink": {
+    "first": "2026-11-20T22:27:42Z",
+    "last": "2026-11-21T00:10:00Z",
+    "packets": 1006
+   },
+   "still_on_board": null,
+   "full_copy": false,
+   "position": {
+    "lat": -45.4928,
+    "lon": 142.1319,
+    "alt_km": 511.0,
+    "place": "Indian Ocean",
+    "ground_sunlit": true,
+    "sun_elevation_deg": 60.8,
+    "satellite_sunlit": true,
+    "satellite_light": "sunlit",
+    "sun_above_limb_deg": 83.1,
+    "tle_epoch": "2026-11-09T22:45:46Z",
+    "basis": "SGP4 from the most recent TLE before capture"
+   },
+   "unnamed": false
   },
   {
    "id": "2026-11-09-183100",
@@ -3541,6 +3586,53 @@
      ]
     ],
     "line_range_count": 1
+   }
+  },
+  {
+   "file": "camera/unnamed_2026-11-21_027f.img",
+   "reason": "the start of the file never arrived, and the picture can't be decoded without it",
+   "still_on_board": {
+    "bytes": [
+     2145,
+     42891
+    ],
+    "byte_ranges": [
+     [
+      0,
+      33735
+     ],
+     [
+      35685,
+      36855
+     ],
+     [
+      37050,
+      42891
+     ]
+    ],
+    "byte_range_count": 3,
+    "last_try": null,
+    "last_packet": "2026-11-21T01:15:46Z",
+    "lines": [
+     30,
+     639,
+     639
+    ],
+    "line_ranges": [
+     [
+      0,
+      503
+     ],
+     [
+      532,
+      549
+     ],
+     [
+      552,
+      638
+     ]
+    ],
+    "line_range_count": 3
    }
   },
   {
