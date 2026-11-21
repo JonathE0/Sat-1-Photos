@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-21T10:29:48Z",
+ "generated_at": "2026-11-21T16:30:02Z",
  "satellite": {
   "name": "FrontierSat",
   "norad_id": 69015,
@@ -3663,6 +3663,10 @@
     ],
     "line_range_count": 1
    }
+  },
+  {
+   "file": "camera/2026-11-10_014213Z.img",
+   "reason": "not enough of the file arrived to show any of the picture"
   },
   {
    "file": "camera/2026-10-16.img",
