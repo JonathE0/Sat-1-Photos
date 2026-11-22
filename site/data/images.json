@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-22T05:30:22Z",
+ "generated_at": "2026-11-22T07:29:49Z",
  "satellite": {
   "name": "FrontierSat",
   "norad_id": 69015,
@@ -4034,6 +4034,69 @@
   {
    "file": "camera/2026-11-03_012100Z.img",
    "reason": "the capture failed on board: the file holds no picture"
+  },
+  {
+   "file": "camera/2026-11/2026-11-22_065831.jpg",
+   "reason": "not enough of the file arrived to show any of the picture",
+   "still_on_board": {
+    "bytes": [
+     9360,
+     25928
+    ],
+    "byte_ranges": [
+     [
+      585,
+      1560
+     ],
+     [
+      2925,
+      4485
+     ],
+     [
+      4680,
+      4875
+     ],
+     [
+      7605,
+      7995
+     ],
+     [
+      8190,
+      8385
+     ],
+     [
+      8775,
+      8970
+     ],
+     [
+      9360,
+      12090
+     ],
+     [
+      12285,
+      15405
+     ],
+     [
+      15600,
+      16380
+     ],
+     [
+      17550,
+      18525
+     ],
+     [
+      18720,
+      19305
+     ],
+     [
+      21060,
+      25928
+     ]
+    ],
+    "byte_range_count": 12,
+    "last_try": "2026-11-22T07:10:45Z",
+    "last_packet": "2026-11-22T07:11:26Z"
+   }
   },
   {
    "file": "camera/2026-07-15-T17-49-30Z.img",
