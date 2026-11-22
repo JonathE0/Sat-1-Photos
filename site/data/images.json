@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-22T19:30:05Z",
+ "generated_at": "2026-11-22T22:29:55Z",
  "satellite": {
   "name": "FrontierSat",
   "norad_id": 69015,
@@ -21,7 +21,7 @@
    "pieces_past_gaps": 0,
    "dark": false,
    "file_size": 27889,
-   "sha256": "19b7b7fcda77c808c5d4262b43a590d34d69651e2a5d887f870850e4ea8455dd",
+   "sha256": "cdec8e9bdb680aa190d87b1cb349bfc208098585d66526c76b2f58e297ab67f8",
    "sha256_expected": null,
    "captured_at": "2026-11-22T07:00:49Z",
    "capture_date": "2026-11-22",
@@ -30,9 +30,9 @@
     "correction_s": 0.0
    },
    "downlink": {
-    "first": "2026-11-22T08:55:21Z",
-    "last": "2026-11-22T10:30:47Z",
-    "packets": 261
+    "first": "2026-11-22T08:55:19Z",
+    "last": "2026-11-22T10:30:48Z",
+    "packets": 874
    },
    "still_on_board": {
     "bytes": [
@@ -47,7 +47,7 @@
     ],
     "byte_range_count": 1,
     "last_try": "2026-11-22T10:30:47Z",
-    "last_packet": "2026-11-22T10:30:47Z"
+    "last_packet": "2026-11-22T10:30:48Z"
    },
    "full_copy": false,
    "position": {
@@ -89,9 +89,9 @@
     "correction_s": 0.0
    },
    "downlink": {
-    "first": "2026-11-22T08:53:04Z",
-    "last": "2026-11-22T10:30:47Z",
-    "packets": 340
+    "first": "2026-11-22T08:52:56Z",
+    "last": "2026-11-22T10:30:48Z",
+    "packets": 1235
    },
    "still_on_board": {
     "bytes": [
@@ -106,7 +106,7 @@
     ],
     "byte_range_count": 1,
     "last_try": "2026-11-22T10:30:00Z",
-    "last_packet": "2026-11-22T10:30:47Z"
+    "last_packet": "2026-11-22T10:30:48Z"
    },
    "full_copy": false,
    "position": {
@@ -139,7 +139,7 @@
    "pieces_past_gaps": 0,
    "dark": false,
    "file_size": 21952,
-   "sha256": "b2ec46037184b79ddd5447f740f8adf70941dda61129da63f00497e8c1926742",
+   "sha256": "c799653b224e9dd74adc8df9eb0b81ece4a04589ca9ec6cf907b730c0b88fa3d",
    "sha256_expected": null,
    "captured_at": "2026-11-22T06:59:17Z",
    "capture_date": "2026-11-22",
@@ -150,7 +150,7 @@
    "downlink": {
     "first": "2026-11-22T07:10:46Z",
     "last": "2026-11-22T10:30:00Z",
-    "packets": 738
+    "packets": 2627
    },
    "still_on_board": {
     "bytes": [
@@ -198,7 +198,7 @@
    "pieces_past_gaps": 0,
    "dark": false,
    "file_size": 25928,
-   "sha256": "d89a730233889e091506c9f7b12a813dcc6d73fcd2bc728e7bbf151c9a2d6abb",
+   "sha256": "4564c43ff4ab3d4420fce2a06333f04cc4643179beaf71a1335671d4147a7b66",
    "sha256_expected": null,
    "captured_at": "2026-11-22T06:58:31Z",
    "capture_date": "2026-11-22",
@@ -209,7 +209,7 @@
    "downlink": {
     "first": "2026-11-22T07:08:41Z",
     "last": "2026-11-22T10:25:44Z",
-    "packets": 489
+    "packets": 1733
    },
    "still_on_board": {
     "bytes": [
@@ -237,6 +237,65 @@
     "satellite_sunlit": true,
     "satellite_light": "sunlit",
     "sun_above_limb_deg": 99.7,
+    "tle_epoch": "2026-11-20T12:31:25Z",
+    "basis": "SGP4 from the most recent TLE before capture"
+   },
+   "unnamed": false
+  },
+  {
+   "id": "2026-11-2026-11-22-065745",
+   "file": "camera/2026-11/2026-11-22_065745.jpg",
+   "camera": "picam",
+   "title": "Nov 22, 2026, 06:57 UTC",
+   "src": "images/2026-11-2026-11-22-065745.png",
+   "thumb": "images/thumbs/2026-11-2026-11-22-065745.jpg",
+   "width": 640,
+   "height": 480,
+   "status": "partial",
+   "status_note": "73% of the picture arrived; the grey bands never did.",
+   "completeness": 0.7304,
+   "pieces_past_gaps": 0,
+   "dark": false,
+   "file_size": 28701,
+   "sha256": "ea35dc0c6dc0186d473b1b398360c29c6aa73608938450f8a6dd99f51ce60253",
+   "sha256_expected": null,
+   "captured_at": "2026-11-22T06:57:45Z",
+   "capture_date": "2026-11-22",
+   "capture_basis": "filename",
+   "satellite_clock": {
+    "correction_s": 0.0
+   },
+   "downlink": {
+    "first": "2026-11-22T08:46:54Z",
+    "last": "2026-11-22T08:49:40Z",
+    "packets": 399
+   },
+   "still_on_board": {
+    "bytes": [
+     21255,
+     28701
+    ],
+    "byte_ranges": [
+     [
+      21255,
+      28701
+     ]
+    ],
+    "byte_range_count": 1,
+    "last_try": "2026-11-22T08:47:54Z",
+    "last_packet": "2026-11-22T08:49:40Z"
+   },
+   "full_copy": false,
+   "position": {
+    "lat": -26.0536,
+    "lon": 59.4774,
+    "alt_km": 507.8,
+    "place": "Indian Ocean",
+    "ground_sunlit": true,
+    "sun_elevation_deg": 77.0,
+    "satellite_sunlit": true,
+    "satellite_light": "sunlit",
+    "sun_above_limb_deg": 99.3,
     "tle_epoch": "2026-11-20T12:31:25Z",
     "basis": "SGP4 from the most recent TLE before capture"
    },
@@ -387,9 +446,9 @@
     "correction_s": null
    },
    "downlink": {
-    "first": "2026-11-20T09:33:57Z",
-    "last": "2026-11-20T09:36:19Z",
-    "packets": 60
+    "first": "2026-11-20T09:33:53Z",
+    "last": "2026-11-20T09:37:09Z",
+    "packets": 234
    },
    "still_on_board": null,
    "full_copy": false,
@@ -550,7 +609,7 @@
    "downlink": {
     "first": "2026-11-13T02:30:45Z",
     "last": "2026-11-17T16:00:51Z",
-    "packets": 152
+    "packets": 283
    },
    "still_on_board": null,
    "full_copy": false,
@@ -595,7 +654,7 @@
    "downlink": {
     "first": "2026-11-11T14:49:29Z",
     "last": "2026-11-17T07:50:32Z",
-    "packets": 810
+    "packets": 966
    },
    "still_on_board": {
     "bytes": [
@@ -666,7 +725,7 @@
    "downlink": {
     "first": "2026-11-11T11:10:15Z",
     "last": "2026-11-17T07:35:11Z",
-    "packets": 1301
+    "packets": 3152
    },
    "still_on_board": {
     "bytes": [
@@ -831,8 +890,8 @@
    },
    "downlink": {
     "first": "2026-11-11T05:14:41Z",
-    "last": "2026-11-17T10:43:49Z",
-    "packets": 954
+    "last": "2026-11-17T10:43:51Z",
+    "packets": 1660
    },
    "still_on_board": null,
    "full_copy": false,
@@ -877,7 +936,7 @@
    "downlink": {
     "first": "2026-11-18T08:39:36Z",
     "last": "2026-11-18T08:44:34Z",
-    "packets": 299
+    "packets": 382
    },
    "still_on_board": null,
    "full_copy": false,
@@ -1137,8 +1196,8 @@
    "satellite_clock": null,
    "downlink": {
     "first": "2026-11-21T01:15:43Z",
-    "last": "2026-11-21T07:38:32Z",
-    "packets": 604
+    "last": "2026-11-21T07:40:33Z",
+    "packets": 610
    },
    "still_on_board": null,
    "full_copy": false,
@@ -1169,9 +1228,9 @@
     "correction_s": 0.0
    },
    "downlink": {
-    "first": "2026-11-17T09:04:04Z",
-    "last": "2026-11-17T09:05:41Z",
-    "packets": 96
+    "first": "2026-11-17T08:59:06Z",
+    "last": "2026-11-17T09:09:44Z",
+    "packets": 1537
    },
    "still_on_board": null,
    "full_copy": false,
@@ -1214,9 +1273,9 @@
     "correction_s": 0.0
    },
    "downlink": {
-    "first": "2026-11-10T05:38:42Z",
+    "first": "2026-11-10T05:38:36Z",
     "last": "2026-11-10T05:41:55Z",
-    "packets": 180
+    "packets": 312
    },
    "still_on_board": null,
    "full_copy": false,
@@ -1380,7 +1439,7 @@
    "downlink": {
     "first": "2026-11-08T01:09:07Z",
     "last": "2026-11-10T04:10:48Z",
-    "packets": 210
+    "packets": 526
    },
    "still_on_board": null,
    "full_copy": false,
@@ -1425,7 +1484,7 @@
    "downlink": {
     "first": "2026-11-10T02:00:09Z",
     "last": "2026-11-11T15:58:37Z",
-    "packets": 284
+    "packets": 337
    },
    "still_on_board": null,
    "full_copy": false,
@@ -1559,8 +1618,8 @@
    },
    "downlink": {
     "first": "2026-11-05T00:37:54Z",
-    "last": "2026-11-20T15:53:06Z",
-    "packets": 1068
+    "last": "2026-11-20T15:53:42Z",
+    "packets": 1506
    },
    "still_on_board": null,
    "full_copy": false,
@@ -1605,7 +1664,7 @@
    "downlink": {
     "first": "2026-11-01T07:16:01Z",
     "last": "2026-11-01T23:06:18Z",
-    "packets": 341
+    "packets": 599
    },
    "still_on_board": null,
    "full_copy": false,
@@ -1649,8 +1708,8 @@
    },
    "downlink": {
     "first": "2026-11-01T06:47:21Z",
-    "last": "2026-11-01T21:30:22Z",
-    "packets": 441
+    "last": "2026-11-01T21:30:27Z",
+    "packets": 610
    },
    "still_on_board": null,
    "full_copy": false,
@@ -1695,7 +1754,7 @@
    "downlink": {
     "first": "2026-11-01T05:38:27Z",
     "last": "2026-11-02T03:51:12Z",
-    "packets": 770
+    "packets": 1168
    },
    "still_on_board": null,
    "full_copy": false,
@@ -1740,7 +1799,7 @@
    "downlink": {
     "first": "2026-11-01T02:03:37Z",
     "last": "2026-11-01T02:05:18Z",
-    "packets": 78
+    "packets": 87
    },
    "still_on_board": {
     "bytes": [
@@ -1870,8 +1929,8 @@
    },
    "downlink": {
     "first": "2026-10-31T14:43:55Z",
-    "last": "2026-10-31T23:28:09Z",
-    "packets": 383
+    "last": "2026-10-31T23:28:24Z",
+    "packets": 1561
    },
    "still_on_board": null,
    "full_copy": false,
@@ -1915,8 +1974,8 @@
    },
    "downlink": {
     "first": "2026-10-31T13:56:42Z",
-    "last": "2026-10-31T21:51:21Z",
-    "packets": 312
+    "last": "2026-10-31T21:51:35Z",
+    "packets": 679
    },
    "still_on_board": null,
    "full_copy": false,
@@ -1960,8 +2019,8 @@
    },
    "downlink": {
     "first": "2026-10-31T10:20:55Z",
-    "last": "2026-10-31T10:24:22Z",
-    "packets": 246
+    "last": "2026-10-31T10:26:08Z",
+    "packets": 854
    },
    "still_on_board": null,
    "full_copy": false,
@@ -1975,6 +2034,101 @@
     "satellite_sunlit": true,
     "satellite_light": "sunlit",
     "sun_above_limb_deg": 12.6,
+    "tle_epoch": "2026-10-31T05:27:57Z",
+    "basis": "SGP4 from the most recent TLE before capture"
+   },
+   "unnamed": false
+  },
+  {
+   "id": "2026-10-31-090655z",
+   "file": "camera/2026-10-31_090655Z.img",
+   "camera": "picam",
+   "title": "Oct 31, 2026, 09:06 UTC",
+   "src": "images/2026-10-31-090655z.jpg",
+   "thumb": "images/thumbs/2026-10-31-090655z.jpg",
+   "width": 640,
+   "height": 480,
+   "status": "partial",
+   "status_note": "321 of 354 lines arrived, but line 87 did not, and the camera's JPEGs can't be decoded past a gap: the picture is shown down to it.",
+   "completeness": 0.2,
+   "pieces_past_gaps": 0,
+   "dark": true,
+   "file_size": 23796,
+   "sha256": "a2de83d589a45313da72a7ae3cdf6b6c7bda28a7a1e1220e25845e906db47557",
+   "sha256_expected": "9c85730aa38b49b8bb78b4a59d8edcf36eec28394db70a768ddbdfbf7f7a5b26",
+   "captured_at": "2026-10-31T09:06:55Z",
+   "capture_date": "2026-10-31",
+   "capture_basis": "filename",
+   "satellite_clock": {
+    "correction_s": 0.0
+   },
+   "downlink": {
+    "first": "2026-10-31T10:18:46Z",
+    "last": "2026-10-31T10:20:52Z",
+    "packets": 252
+   },
+   "still_on_board": {
+    "bytes": [
+     21651,
+     23796
+    ],
+    "byte_ranges": [
+     [
+      5850,
+      6045
+     ],
+     [
+      6240,
+      6435
+     ],
+     [
+      16380,
+      16575
+     ],
+     [
+      22230,
+      23790
+     ]
+    ],
+    "byte_range_count": 4,
+    "last_try": "2026-10-31T10:20:36Z",
+    "last_packet": "2026-10-31T10:20:52Z",
+    "lines": [
+     321,
+     354,
+     354
+    ],
+    "line_ranges": [
+     [
+      87,
+      89
+     ],
+     [
+      93,
+      95
+     ],
+     [
+      244,
+      247
+     ],
+     [
+      331,
+      353
+     ]
+    ],
+    "line_range_count": 4
+   },
+   "full_copy": false,
+   "position": {
+    "lat": 65.5557,
+    "lon": -139.9252,
+    "alt_km": 511.1,
+    "place": "Yukon, Canada",
+    "ground_sunlit": false,
+    "sun_elevation_deg": -38.6,
+    "satellite_sunlit": false,
+    "satellite_light": "shadow",
+    "sun_above_limb_deg": -16.7,
     "tle_epoch": "2026-10-31T05:27:57Z",
     "basis": "SGP4 from the most recent TLE before capture"
    },
@@ -2004,9 +2158,9 @@
     "correction_s": null
    },
    "downlink": {
-    "first": "2026-10-31T08:48:34Z",
-    "last": "2026-10-31T08:50:19Z",
-    "packets": 118
+    "first": "2026-10-31T08:44:07Z",
+    "last": "2026-10-31T08:55:25Z",
+    "packets": 1996
    },
    "still_on_board": null,
    "full_copy": false,
@@ -2024,87 +2178,6 @@
     "basis": "SGP4 from the most recent TLE before capture"
    },
    "unnamed": false
-  },
-  {
-   "id": "unnamed-2026-10-31-0162",
-   "file": "camera/unnamed_2026-10-31_0162.img",
-   "camera": "picam",
-   "title": "Unnamed capture, received Oct 31, 2026",
-   "src": "images/unnamed-2026-10-31-0162.jpg",
-   "thumb": "images/thumbs/unnamed-2026-10-31-0162.jpg",
-   "width": 640,
-   "height": 480,
-   "status": "partial",
-   "status_note": "321 of 354 lines arrived, but line 87 did not, and the camera's JPEGs can't be decoded past a gap: the picture is shown down to it.",
-   "completeness": 0.2,
-   "pieces_past_gaps": 0,
-   "dark": true,
-   "file_size": 23796,
-   "sha256": "a2de83d589a45313da72a7ae3cdf6b6c7bda28a7a1e1220e25845e906db47557",
-   "sha256_expected": null,
-   "captured_at": null,
-   "capture_date": "2026-10-31",
-   "capture_basis": "date only",
-   "satellite_clock": null,
-   "downlink": {
-    "first": "2026-10-31T10:19:16Z",
-    "last": "2026-10-31T10:20:37Z",
-    "packets": 114
-   },
-   "still_on_board": {
-    "bytes": [
-     21651,
-     23796
-    ],
-    "byte_ranges": [
-     [
-      5850,
-      6045
-     ],
-     [
-      6240,
-      6435
-     ],
-     [
-      16380,
-      16575
-     ],
-     [
-      22230,
-      23790
-     ]
-    ],
-    "byte_range_count": 4,
-    "last_try": null,
-    "last_packet": "2026-10-31T10:20:37Z",
-    "lines": [
-     321,
-     354,
-     354
-    ],
-    "line_ranges": [
-     [
-      87,
-      89
-     ],
-     [
-      93,
-      95
-     ],
-     [
-      244,
-      247
-     ],
-     [
-      331,
-      353
-     ]
-    ],
-    "line_range_count": 4
-   },
-   "full_copy": false,
-   "position": null,
-   "unnamed": true
   },
   {
    "id": "2026-10-30-024800z",
@@ -2312,7 +2385,7 @@
    "downlink": {
     "first": "2026-10-24T22:36:51Z",
     "last": "2026-10-25T00:14:00Z",
-    "packets": 1124
+    "packets": 1135
    },
    "still_on_board": null,
    "full_copy": false,
@@ -2428,7 +2501,7 @@
    "capture_date": "2026-10-22",
    "capture_basis": "filename",
    "satellite_clock": {
-    "correction_s": -6.6
+    "correction_s": -6.7
    },
    "downlink": {
     "first": "2026-10-22T16:37:51Z",
@@ -3288,9 +3361,9 @@
    "capture_basis": "date only",
    "satellite_clock": null,
    "downlink": {
-    "first": "2026-09-05T07:50:41Z",
+    "first": "2026-09-05T07:50:37Z",
     "last": "2026-09-05T18:50:08Z",
-    "packets": 118
+    "packets": 573
    },
    "still_on_board": null,
    "full_copy": false,
@@ -3364,7 +3437,7 @@
    "downlink": {
     "first": "2026-09-04T03:51:10Z",
     "last": "2026-09-06T10:43:31Z",
-    "packets": 1438
+    "packets": 2636
    },
    "still_on_board": null,
    "full_copy": false,
@@ -3424,9 +3497,9 @@
    "capture_basis": "date only",
    "satellite_clock": null,
    "downlink": {
-    "first": "2026-08-28T15:17:51Z",
+    "first": "2026-08-28T15:17:22Z",
     "last": "2026-08-29T21:43:36Z",
-    "packets": 1348
+    "packets": 3201
    },
    "still_on_board": null,
    "full_copy": false,
@@ -3533,7 +3606,7 @@
    "downlink": {
     "first": "2026-08-23T02:30:17Z",
     "last": "2026-08-23T15:33:04Z",
-    "packets": 268
+    "packets": 376
    },
    "still_on_board": null,
    "full_copy": false,
@@ -3778,7 +3851,7 @@
    "downlink": {
     "first": "2026-07-09T21:31:28Z",
     "last": "2026-07-13T04:36:45Z",
-    "packets": 2203
+    "packets": 4433
    },
    "still_on_board": null,
    "full_copy": false,
@@ -3810,8 +3883,8 @@
    },
    "downlink": {
     "first": "2026-06-27T17:14:22Z",
-    "last": "2026-06-29T06:00:40Z",
-    "packets": 132
+    "last": "2026-06-29T06:00:45Z",
+    "packets": 135
    },
    "still_on_board": null,
    "full_copy": false,
@@ -4272,61 +4345,6 @@
    "reason": "the capture failed on board: the file holds no picture"
   },
   {
-   "file": "camera/2026-11/2026-11-22_065745.jpg",
-   "reason": "not enough of the file arrived to show any of the picture",
-   "still_on_board": {
-    "bytes": [
-     19110,
-     28701
-    ],
-    "byte_ranges": [
-     [
-      0,
-      195
-     ],
-     [
-      585,
-      975
-     ],
-     [
-      3705,
-      3900
-     ],
-     [
-      4680,
-      5070
-     ],
-     [
-      5265,
-      5460
-     ],
-     [
-      5850,
-      6045
-     ],
-     [
-      6435,
-      6630
-     ],
-     [
-      11700,
-      11895
-     ],
-     [
-      12675,
-      12870
-     ],
-     [
-      21255,
-      28701
-     ]
-    ],
-    "byte_range_count": 10,
-    "last_try": "2026-11-22T08:47:54Z",
-    "last_packet": "2026-11-22T08:49:41Z"
-   }
-  },
-  {
    "file": "camera/2026-07-15-T17-49-30Z.img",
    "reason": "the satellite refused the download: no such file on board"
   },
@@ -4345,24 +4363,6 @@
   {
    "file": "camera/2026-10-23.img",
    "reason": "the satellite refused the download: no such file on board"
-  },
-  {
-   "file": "camera/2026-10-31_090655Z.img",
-   "reason": "a download was started, but no packets of it were received",
-   "still_on_board": {
-    "bytes": [
-     0,
-     23796
-    ],
-    "byte_ranges": [
-     [
-      0,
-      23796
-     ]
-    ],
-    "byte_range_count": 1,
-    "last_try": "2026-10-31T10:20:36Z"
-   }
   },
   {
    "file": "camera/2026-10-31_104039Z.img",
