@@ -1,11 +1,70 @@
 {
- "generated_at": "2026-11-22T10:29:49Z",
+ "generated_at": "2026-11-22T11:29:58Z",
  "satellite": {
   "name": "FrontierSat",
   "norad_id": 69015,
   "launched_at": "2026-05-03T06:59:00Z"
  },
  "images": [
+  {
+   "id": "2026-11-2026-11-22-070049",
+   "file": "camera/2026-11/2026-11-22_070049.jpg",
+   "camera": "picam",
+   "title": "Nov 22, 2026, 07:00 UTC",
+   "src": "images/2026-11-2026-11-22-070049.png",
+   "thumb": "images/thumbs/2026-11-2026-11-22-070049.jpg",
+   "width": 640,
+   "height": 480,
+   "status": "partial",
+   "status_note": "75% of the picture arrived; the grey bands never did.",
+   "completeness": 0.7453,
+   "pieces_past_gaps": 0,
+   "dark": false,
+   "file_size": 27889,
+   "sha256": "19b7b7fcda77c808c5d4262b43a590d34d69651e2a5d887f870850e4ea8455dd",
+   "sha256_expected": null,
+   "captured_at": "2026-11-22T07:00:49Z",
+   "capture_date": "2026-11-22",
+   "capture_basis": "filename",
+   "satellite_clock": {
+    "correction_s": 0.0
+   },
+   "downlink": {
+    "first": "2026-11-22T08:55:21Z",
+    "last": "2026-11-22T10:30:47Z",
+    "packets": 261
+   },
+   "still_on_board": {
+    "bytes": [
+     21060,
+     27889
+    ],
+    "byte_ranges": [
+     [
+      21060,
+      27889
+     ]
+    ],
+    "byte_range_count": 1,
+    "last_try": "2026-11-22T10:30:47Z",
+    "last_packet": "2026-11-22T10:30:47Z"
+   },
+   "full_copy": false,
+   "position": {
+    "lat": -14.4543,
+    "lon": 57.0022,
+    "alt_km": 504.6,
+    "place": "Indian Ocean",
+    "ground_sunlit": true,
+    "sun_elevation_deg": 75.2,
+    "satellite_sunlit": true,
+    "satellite_light": "sunlit",
+    "sun_above_limb_deg": 97.4,
+    "tle_epoch": "2026-11-20T12:31:25Z",
+    "basis": "SGP4 from the most recent TLE before capture"
+   },
+   "unnamed": false
+  },
   {
    "id": "2026-11-2026-11-22-070003",
    "file": "camera/2026-11/2026-11-22_070003.jpg",
@@ -21,7 +80,7 @@
    "pieces_past_gaps": 0,
    "dark": false,
    "file_size": 27189,
-   "sha256": "a029f4a0f53dd4fc2d28e3f7fd68d8294417e9a5e8590f23b2681f91c783568b",
+   "sha256": "4f4efb3dd357ae04ba100379d0865a033bf9c4874cc8d55d712620cfcc75de39",
    "sha256_expected": null,
    "captured_at": "2026-11-22T07:00:03Z",
    "capture_date": "2026-11-22",
@@ -31,8 +90,8 @@
    },
    "downlink": {
     "first": "2026-11-22T08:53:04Z",
-    "last": "2026-11-22T08:57:12Z",
-    "packets": 168
+    "last": "2026-11-22T10:30:47Z",
+    "packets": 340
    },
    "still_on_board": {
     "bytes": [
@@ -46,8 +105,8 @@
      ]
     ],
     "byte_range_count": 1,
-    "last_try": "2026-11-22T08:55:52Z",
-    "last_packet": "2026-11-22T08:57:12Z"
+    "last_try": "2026-11-22T10:30:00Z",
+    "last_packet": "2026-11-22T10:30:47Z"
    },
    "full_copy": false,
    "position": {
@@ -80,7 +139,7 @@
    "pieces_past_gaps": 0,
    "dark": false,
    "file_size": 21952,
-   "sha256": "74712b7cabaa91d2c7e468229d11c711749597ee07a156dbfc3fe278226b8741",
+   "sha256": "b2ec46037184b79ddd5447f740f8adf70941dda61129da63f00497e8c1926742",
    "sha256_expected": null,
    "captured_at": "2026-11-22T06:59:17Z",
    "capture_date": "2026-11-22",
@@ -90,8 +149,8 @@
    },
    "downlink": {
     "first": "2026-11-22T07:10:46Z",
-    "last": "2026-11-22T08:54:06Z",
-    "packets": 500
+    "last": "2026-11-22T10:30:00Z",
+    "packets": 738
    },
    "still_on_board": {
     "bytes": [
@@ -105,8 +164,8 @@
      ]
     ],
     "byte_range_count": 1,
-    "last_try": "2026-11-22T08:53:24Z",
-    "last_packet": "2026-11-22T08:54:06Z"
+    "last_try": "2026-11-22T10:27:42Z",
+    "last_packet": "2026-11-22T10:30:00Z"
    },
    "full_copy": false,
    "position": {
@@ -139,7 +198,7 @@
    "pieces_past_gaps": 0,
    "dark": false,
    "file_size": 25928,
-   "sha256": "e22a177c048bd011e621bb33da4865a66edd4a0a63e5fbe24491813f7f8a5c49",
+   "sha256": "d89a730233889e091506c9f7b12a813dcc6d73fcd2bc728e7bbf151c9a2d6abb",
    "sha256_expected": null,
    "captured_at": "2026-11-22T06:58:31Z",
    "capture_date": "2026-11-22",
@@ -149,8 +208,8 @@
    },
    "downlink": {
     "first": "2026-11-22T07:08:41Z",
-    "last": "2026-11-22T08:50:39Z",
-    "packets": 376
+    "last": "2026-11-22T10:25:44Z",
+    "packets": 489
    },
    "still_on_board": {
     "bytes": [
@@ -164,8 +223,8 @@
      ]
     ],
     "byte_range_count": 1,
-    "last_try": "2026-11-22T08:50:40Z",
-    "last_packet": "2026-11-22T08:50:39Z"
+    "last_try": "2026-11-22T10:24:56Z",
+    "last_packet": "2026-11-22T10:25:44Z"
    },
    "full_copy": false,
    "position": {
@@ -4265,45 +4324,6 @@
     "byte_range_count": 10,
     "last_try": "2026-11-22T08:47:54Z",
     "last_packet": "2026-11-22T08:49:41Z"
-   }
-  },
-  {
-   "file": "camera/2026-11/2026-11-22_070049.jpg",
-   "reason": "not enough of the file arrived to show any of the picture",
-   "still_on_board": {
-    "bytes": [
-     12870,
-     27889
-    ],
-    "byte_ranges": [
-     [
-      0,
-      195
-     ],
-     [
-      585,
-      975
-     ],
-     [
-      7410,
-      7995
-     ],
-     [
-      10140,
-      12480
-     ],
-     [
-      15600,
-      20280
-     ],
-     [
-      21060,
-      27889
-     ]
-    ],
-    "byte_range_count": 6,
-    "last_try": "2026-11-22T08:57:13Z",
-    "last_packet": "2026-11-22T08:57:12Z"
    }
   },
   {
