@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-22T22:29:55Z",
+ "generated_at": "2026-11-22T23:30:02Z",
  "satellite": {
   "name": "FrontierSat",
   "norad_id": 69015,
@@ -51,16 +51,16 @@
    },
    "full_copy": false,
    "position": {
-    "lat": -14.4543,
-    "lon": 57.0022,
-    "alt_km": 504.6,
+    "lat": -14.4709,
+    "lon": 57.0048,
+    "alt_km": 504.7,
     "place": "Indian Ocean",
     "ground_sunlit": true,
     "sun_elevation_deg": 75.2,
     "satellite_sunlit": true,
     "satellite_light": "sunlit",
     "sun_above_limb_deg": 97.4,
-    "tle_epoch": "2026-11-20T12:31:25Z",
+    "tle_epoch": "2026-11-21T23:11:49Z",
     "basis": "SGP4 from the most recent TLE before capture"
    },
    "unnamed": false
@@ -110,16 +110,16 @@
    },
    "full_copy": false,
    "position": {
-    "lat": -17.3576,
-    "lon": 57.5988,
-    "alt_km": 505.3,
+    "lat": -17.3741,
+    "lon": 57.6014,
+    "alt_km": 505.4,
     "place": "Indian Ocean",
     "ground_sunlit": true,
-    "sun_elevation_deg": 76.5,
+    "sun_elevation_deg": 76.6,
     "satellite_sunlit": true,
     "satellite_light": "sunlit",
     "sun_above_limb_deg": 98.7,
-    "tle_epoch": "2026-11-20T12:31:25Z",
+    "tle_epoch": "2026-11-21T23:11:49Z",
     "basis": "SGP4 from the most recent TLE before capture"
    },
    "unnamed": false
@@ -169,16 +169,16 @@
    },
    "full_copy": false,
    "position": {
-    "lat": -20.2588,
-    "lon": 58.2082,
-    "alt_km": 506.1,
+    "lat": -20.2752,
+    "lon": 58.2109,
+    "alt_km": 506.2,
     "place": "Indian Ocean",
     "ground_sunlit": true,
-    "sun_elevation_deg": 77.3,
+    "sun_elevation_deg": 77.4,
     "satellite_sunlit": true,
     "satellite_light": "sunlit",
     "sun_above_limb_deg": 99.6,
-    "tle_epoch": "2026-11-20T12:31:25Z",
+    "tle_epoch": "2026-11-21T23:11:49Z",
     "basis": "SGP4 from the most recent TLE before capture"
    },
    "unnamed": false
@@ -228,16 +228,16 @@
    },
    "full_copy": false,
    "position": {
-    "lat": -23.1576,
-    "lon": 58.8333,
-    "alt_km": 506.9,
+    "lat": -23.1739,
+    "lon": 58.8361,
+    "alt_km": 507.0,
     "place": "Indian Ocean",
     "ground_sunlit": true,
     "sun_elevation_deg": 77.5,
     "satellite_sunlit": true,
     "satellite_light": "sunlit",
     "sun_above_limb_deg": 99.7,
-    "tle_epoch": "2026-11-20T12:31:25Z",
+    "tle_epoch": "2026-11-21T23:11:49Z",
     "basis": "SGP4 from the most recent TLE before capture"
    },
    "unnamed": false
@@ -287,16 +287,16 @@
    },
    "full_copy": false,
    "position": {
-    "lat": -26.0536,
-    "lon": 59.4774,
-    "alt_km": 507.8,
+    "lat": -26.0698,
+    "lon": 59.4803,
+    "alt_km": 507.9,
     "place": "Indian Ocean",
     "ground_sunlit": true,
     "sun_elevation_deg": 77.0,
     "satellite_sunlit": true,
     "satellite_light": "sunlit",
     "sun_above_limb_deg": 99.3,
-    "tle_epoch": "2026-11-20T12:31:25Z",
+    "tle_epoch": "2026-11-21T23:11:49Z",
     "basis": "SGP4 from the most recent TLE before capture"
    },
    "unnamed": false
