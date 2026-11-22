@@ -1,11 +1,132 @@
 {
- "generated_at": "2026-11-21T18:03:30Z",
+ "generated_at": "2026-11-22T03:29:57Z",
  "satellite": {
   "name": "FrontierSat",
   "norad_id": 69015,
   "launched_at": "2026-05-03T06:59:00Z"
  },
  "images": [
+  {
+   "id": "unnamed-2026-11-22-0217",
+   "file": "camera/unnamed_2026-11-22_0217.img",
+   "camera": "picam",
+   "title": "Unnamed capture, received Nov 22, 2026",
+   "src": "images/unnamed-2026-11-22-0217.jpg",
+   "thumb": "images/thumbs/unnamed-2026-11-22-0217.jpg",
+   "width": 640,
+   "height": 480,
+   "status": "partial",
+   "status_note": "236 of 535 lines arrived, but line 28 did not, and the camera's JPEGs can't be decoded past a gap: the picture is shown down to it. The JPEG header was restored from the camera's standard header, which every complete capture shares.",
+   "completeness": 0.0333,
+   "pieces_past_gaps": 0,
+   "dark": false,
+   "file_size": 35923,
+   "sha256": "0897b0ecf004bc149574e9161b353114db23be422da0b93461667aa951e5c93a",
+   "sha256_expected": null,
+   "captured_at": null,
+   "capture_date": "2026-11-22",
+   "capture_basis": "date only",
+   "satellite_clock": null,
+   "downlink": {
+    "first": "2026-11-22T02:56:20Z",
+    "last": "2026-11-22T02:59:57Z",
+    "packets": 84
+   },
+   "still_on_board": {
+    "bytes": [
+     16228,
+     35923
+    ],
+    "byte_ranges": [
+     [
+      0,
+      195
+     ],
+     [
+      1950,
+      2145
+     ],
+     [
+      2535,
+      4680
+     ],
+     [
+      7215,
+      8190
+     ],
+     [
+      9360,
+      24375
+     ],
+     [
+      27690,
+      27885
+     ],
+     [
+      30030,
+      30420
+     ],
+     [
+      31980,
+      32175
+     ],
+     [
+      35295,
+      35685
+     ]
+    ],
+    "byte_range_count": 9,
+    "last_try": null,
+    "last_packet": "2026-11-22T02:59:57Z",
+    "lines": [
+     236,
+     535,
+     535
+    ],
+    "line_ranges": [
+     [
+      0,
+      2
+     ],
+     [
+      28,
+      31
+     ],
+     [
+      37,
+      69
+     ],
+     [
+      107,
+      121
+     ],
+     [
+      139,
+      363
+     ],
+     [
+      413,
+      415
+     ],
+     [
+      448,
+      453
+     ],
+     [
+      477,
+      479
+     ],
+     [
+      526,
+      532
+     ]
+    ],
+    "line_range_count": 9
+   },
+   "full_copy": false,
+   "position": null,
+   "unnamed": true
+  },
   {
    "id": "2026-11-2026-11-18-181800",
    "file": "camera/2026-11/2026-11-18_181800.jpg",
