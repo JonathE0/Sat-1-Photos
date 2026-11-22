@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-22T09:29:46Z",
+ "generated_at": "2026-11-22T10:29:49Z",
  "satellite": {
   "name": "FrontierSat",
   "norad_id": 69015,
@@ -91,7 +91,7 @@
    "downlink": {
     "first": "2026-11-22T07:10:46Z",
     "last": "2026-11-22T08:54:06Z",
-    "packets": 502
+    "packets": 500
    },
    "still_on_board": {
     "bytes": [
@@ -4217,7 +4217,7 @@
    "reason": "not enough of the file arrived to show any of the picture",
    "still_on_board": {
     "bytes": [
-     18915,
+     19110,
      28701
     ],
     "byte_ranges": [
@@ -4228,10 +4228,6 @@
      [
       585,
       975
-     ],
-     [
-      3315,
-      3510
      ],
      [
       3705,
@@ -4266,7 +4262,7 @@
       28701
      ]
     ],
-    "byte_range_count": 11,
+    "byte_range_count": 10,
     "last_try": "2026-11-22T08:47:54Z",
     "last_packet": "2026-11-22T08:49:41Z"
    }
