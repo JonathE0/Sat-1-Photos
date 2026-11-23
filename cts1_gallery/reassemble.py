@@ -129,9 +129,14 @@ class Evidence:
 
     @property
     def kind(self) -> str:
-        if self.path.lower().endswith(".img"):
+        low = self.path.lower()
+        if low.endswith(".img"):
             return "picam"
-        return "adcs" if self.path.lower().startswith("adcs/") else "other"
+        if low.startswith("adcs/"):
+            return "adcs"
+        # From Nov 18 the main camera saves "camera/2026-11/<date>_<time>.jpg": a whole JPEG with
+        # an Exif block, sent as a plain file by offset, not as the .img files' numbered lines.
+        return "jpeg" if low.endswith((".jpg", ".jpeg")) else "other"
 
     @property
     def times(self) -> list[datetime]:

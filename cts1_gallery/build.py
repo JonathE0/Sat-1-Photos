@@ -88,6 +88,7 @@ def build(paths: dict[str, Path], site: Path, cache_dir: Path, *, log=print, for
         [bytes(d.jpeg) for a in result.files if a.kind == "picam" and a.line_total and (d := _decode(a)).complete]
     )
     bmp_template = _bmp_template([a for a in result.files if a.kind == "adcs" and a.verified])
+    jpeg_core = _jpeg_core(result.files)
 
     images_dir = site / "images"
     (images_dir / "thumbs").mkdir(parents=True, exist_ok=True)
@@ -111,14 +112,14 @@ def build(paths: dict[str, Path], site: Path, cache_dir: Path, *, log=print, for
     for a in result.files:
         image_id = ids[a.path]
         full = _full_copy(site, image_id)
-        key = _render_key(a, jpeg_template, bmp_template)
+        key = _render_key(a, jpeg_template, bmp_template, jpeg_core)
         if full is not None:
             key += "|full:" + hashlib.sha256(full.read_bytes()).hexdigest()
         cached = manifest.get(image_id)
         if cached and cached.get("key") == key and (site / cached["src"]).exists() and (site / cached["thumb"]).exists():
             info = cached
         else:
-            r = _render_full_copy(a, full) if full is not None else _render(a, jpeg_template, bmp_template)
+            r = _render_full_copy(a, full) if full is not None else _render(a, jpeg_template, bmp_template, jpeg_core)
             if r is None:
                 entry = {"file": a.path, "reason": _unreadable_reason(a)}
                 if a.kind != "picam" or a.line_total is not None:  # a failed capture holds no picture to fetch
@@ -232,10 +233,103 @@ def _decode(a: Assembled) -> picam.DecodedPicam:
     return picam.decode(a.data, a.line_total, a.have.astype(np.uint8).tobytes())
 
 
-def _render(a: Assembled, jpeg_template: bytes | None, bmp_template: bytes | None) -> Rendered | None:
+def _render(
+    a: Assembled, jpeg_template: bytes | None, bmp_template: bytes | None, jpeg_core: bytes | None = None
+) -> Rendered | None:
     if a.kind == "picam":
         return _render_picam(a, jpeg_template) if a.line_total else None
+    if a.kind == "jpeg":
+        return _render_jpeg(a, jpeg_core)
     return _render_bmp(a, bmp_template)
+
+
+def _core_of(data: bytes, have: np.ndarray) -> bytes | None:
+    """What follows a whole .jpg's Exif block in its header (the quantisation and Huffman tables,
+    the frame and scan headers), or None when the header didn't all arrive."""
+    end = picam.header_length(data)
+    if not end or data[:2] != b"\xff\xd8" or not have[:end].all():
+        return None
+    i = 2
+    while i + 4 <= end and data[i] == 0xFF and 0xE0 <= data[i + 1] <= 0xEF:  # the Exif (APPn) blocks
+        i += 2 + int.from_bytes(data[i + 2 : i + 4], "big")
+    return data[i:end]
+
+
+def _jpeg_core(files: list[Assembled]) -> bytes | None:
+    """The header part every whole .jpg shares: the Exif block holds the capture's own timestamp
+    and so varies from file to file, but the rest is the camera's one setting. It repairs the
+    header of a file whose start never arrived."""
+    cores = Counter(c for a in files if a.kind == "jpeg" and (c := _core_of(a.data, a.have)))
+    return cores.most_common(1)[0][0] if cores else None
+
+
+def _render_jpeg(a: Assembled, core: bytes | None) -> Rendered | None:
+    """A camera .jpg (2026-11 on): the picture in colour, as far as it arrived. It is one JPEG
+    sent by offset, so its missing bytes are gaps in the file: a decoder stops at the first one,
+    and what came down past it is placed as for the .img files (resync.py)."""
+    data, have = bytes(a.data), a.have
+    if have.all():
+        try:
+            with Image.open(io.BytesIO(data)) as im:
+                im.load()
+        except Exception:  # noqa: BLE001
+            return None
+        if a.verified:
+            return Rendered(data, "jpg", "verified", "Bit-exact: matches the sha256 the satellite sent.", 1.0, False)
+        return Rendered(data, "jpg", "complete", "Every byte of the picture arrived; the file couldn't be hash-checked.", 1.0, False)
+
+    end = picam.header_length(data)
+    if not end or not have[end - 14 : end].all():  # no scan header: the picture can't be read
+        return None
+    repaired = False
+    if core and end >= len(core):
+        head = b"\xff\xd8" + core
+        known = have[end - len(core) : end]
+        if (np.frombuffer(data[end - len(core) : end], dtype=np.uint8)[known] != np.frombuffer(core, dtype=np.uint8)[known]).any():
+            return None  # a different header: don't guess
+        jpeg = head + data[end:]  # the Exif block (and any damaged start) goes; the picture doesn't need it
+        received = np.concatenate([np.ones(len(head), dtype=bool), have[end:]])
+        repaired = not have[:end].all()
+        head_len = len(head)
+    elif have[:end].all() and data[:2] == b"\xff\xd8":
+        jpeg, received, head, head_len = data, have, None, end
+    else:
+        return None
+    missing = np.flatnonzero(~received[head_len:])
+    gap = head_len + int(missing[0]) if len(missing) else None
+    got = int(have.sum())
+    fixed = (
+        " The start of the file never arrived, so the camera's standard JPEG header (the same in "
+        "every one of these files) was put in its place."
+        if repaired
+        else ""
+    )
+    if gap is None:  # only the start of the file (its Exif block) never came
+        note = "Every byte of the picture arrived; the file couldn't be hash-checked." + fixed
+        return Rendered(jpeg, "jpg", "complete", note, 1.0, repaired)
+    pieced = resync.piece_together(jpeg, received, head)
+    where = end + (gap - head_len)  # in the file as it is, not as rebuilt without its Exif block
+    note = f"{got:,} of {a.size:,} bytes arrived, but byte {where:,} did not"
+    note += "." if pieced is not None else ", and a JPEG can't be decoded past a gap: the picture is shown down to it."
+    if pieced is not None:
+        note += _pieced_note(pieced)
+    note += fixed
+    if pieced is not None:
+        buf = io.BytesIO()
+        pieced.image.save(buf, "JPEG", quality=92)
+        return Rendered(buf.getvalue(), "jpg", "partial", note, pieced.shown, repaired, pieced.pieces)
+    cut = jpeg[: max(gap, head_len)]
+    if len(cut) <= head_len:
+        return None
+    try:
+        with Image.open(io.BytesIO(cut)) as im:
+            im.load()
+            rgb = im.convert("RGB")
+    except Exception:  # noqa: BLE001
+        return None
+    buf = io.BytesIO()
+    rgb.save(buf, "JPEG", quality=92)
+    return Rendered(buf.getvalue(), "jpg", "partial", note, _shown_share(rgb), repaired)
 
 
 def _render_picam(a: Assembled, template: bytes | None) -> Rendered | None:
@@ -506,13 +600,17 @@ def _is_dark(im: Image.Image) -> bool:
     return True
 
 
-def _render_key(a: Assembled, jpeg_template: bytes | None, bmp_template: bytes | None) -> str:
+def _render_key(
+    a: Assembled, jpeg_template: bytes | None, bmp_template: bytes | None, jpeg_core: bytes | None = None
+) -> str:
     h = hashlib.sha256()
     h.update(f"{RENDER_VERSION}|{a.path}|{a.kind}|{a.line_total}|{a.verified}".encode())
     h.update(a.data)
     h.update(np.packbits(a.have).tobytes())
     h.update(jpeg_template or b"")
     h.update(bmp_template or b"")
+    if a.kind == "jpeg":  # only these depend on it: the other pictures keep their renders
+        h.update(jpeg_core or b"")
     return h.hexdigest()
 
 

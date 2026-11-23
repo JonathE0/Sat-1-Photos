@@ -458,6 +458,80 @@ class PastGaps(unittest.TestCase):
             self.assertEqual(im.size, (640, 480))
 
 
+def exif_jpeg(im: Image.Image, stamp: str) -> bytes:
+    """A camera JPEG with an Exif block holding `stamp`, as the .jpg files from Nov 2026 have."""
+    exif = Image.Exif()
+    exif[0x0132] = stamp  # DateTime
+    buf = io.BytesIO()
+    im.save(buf, "JPEG", quality=75, subsampling=2, exif=exif)
+    return buf.getvalue()
+
+
+def chroma(image: bytes) -> float:
+    """How far from grey a picture is: 0 for black and white."""
+    with Image.open(io.BytesIO(image)) as im:
+        px = np.asarray(im.convert("RGB"), dtype=np.int16)
+    return float((px.max(axis=2) - px.min(axis=2)).mean())
+
+
+class CameraJpegFiles(unittest.TestCase):
+    """The camera's .jpg files (camera/2026-11/ on): whole JPEGs with an Exif block, sent by offset.
+    They were once drawn through the attitude camera's greyscale path."""
+
+    T = datetime(2026, 11, 22, 7, 8, tzinfo=UTC)
+
+    def assembled(self, data: bytes, have=None, sha=()):
+        e = Evidence("camera/2026-11/2026-11-22_065831.jpg", size=len(data), sha256=set(sha))
+        have = np.ones(len(data), dtype=bool) if have is None else have
+        return R.Assembled(e.path, "jpeg", len(data), data, have, 1, 0, self.T, self.T, e)
+
+    def test_kinds(self):
+        self.assertEqual(Evidence("camera/2026-11/2026-11-22_065831.jpg").kind, "jpeg")
+        self.assertEqual(Evidence("camera/2026-10-24_173732L.img").kind, "picam")
+        self.assertEqual(Evidence("ADCS/img_1c89.bmp").kind, "adcs")
+        self.assertEqual(Evidence("logs/a.run").kind, "other")
+
+    def test_a_whole_file_is_kept_as_it_came_in_colour(self):
+        j = exif_jpeg(scene(5), "2026:11:22 06:58:31")
+        r = build._render_jpeg(self.assembled(j), None)
+        self.assertEqual((r.status, r.image, r.completeness), ("complete", j, 1.0))
+        self.assertGreater(chroma(r.image), 10)
+        self.assertEqual(build._render_jpeg(self.assembled(j, sha=[hashlib.sha256(j).hexdigest()]), None).status, "verified")
+
+    def test_the_header_core_leaves_the_exif_block_out(self):
+        a = exif_jpeg(scene(5), "2026:11:22 06:58:31")
+        b = exif_jpeg(scene(6), "2026:11:22 06:59:17 and a longer stamp")
+        self.assertNotEqual(picam.header_length(a), picam.header_length(b))
+        core = build._core_of(a, np.ones(len(a), dtype=bool))
+        self.assertEqual(core, build._core_of(b, np.ones(len(b), dtype=bool)))
+        self.assertTrue(core.startswith(b"\xff\xdb"))  # the quantisation tables, straight after the Exif
+
+    def test_a_file_whose_start_never_came_gets_the_shared_header(self):
+        a = exif_jpeg(scene(5), "2026:11:22 06:58:31")
+        b = exif_jpeg(scene(6), "2026:11:22 06:57:45")
+        core = build._core_of(a, np.ones(len(a), dtype=bool))
+        data, have = bytearray(b), np.ones(len(b), dtype=bool)
+        data[:200], have[:200] = bytes(200), False  # the Exif block and the first tables
+        r = build._render_jpeg(self.assembled(bytes(data), have), core)
+        self.assertEqual((r.status, r.repaired_header), ("complete", True))
+        self.assertIn("standard JPEG header", r.note)
+        with Image.open(io.BytesIO(r.image)) as got, Image.open(io.BytesIO(b)) as want:
+            self.assertTrue(np.array_equal(np.asarray(got.convert("RGB")), np.asarray(want.convert("RGB"))))
+        self.assertIsNone(build._render_jpeg(self.assembled(bytes(data), have), None))  # nothing to repair it from
+
+    def test_a_gap_stops_the_picture_there_and_it_stays_in_colour(self):
+        j = exif_jpeg(scene(7), "2026:11:22 07:00:03")
+        core = build._core_of(j, np.ones(len(j), dtype=bool))
+        gap = picam.header_length(j) + (len(j) - picam.header_length(j)) // 2
+        data, have = bytearray(j), np.ones(len(j), dtype=bool)
+        data[gap : gap + 300], have[gap : gap + 300] = bytes(300), False
+        r = build._render_jpeg(self.assembled(bytes(data), have), core)
+        self.assertEqual(r.status, "partial")
+        self.assertIn(f"byte {gap:,} did not", r.note)
+        self.assertTrue(0 < r.completeness < 1)
+        self.assertGreater(chroma(r.image), 10)
+
+
 class StillOnBoard(unittest.TestCase):
     """The mission ops list on Pictures: what of a file hasn't come down yet."""
 
