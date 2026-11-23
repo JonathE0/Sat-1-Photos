@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-23T03:21:01Z",
+ "generated_at": "2026-11-23T13:01:43Z",
  "satellite": {
   "name": "FrontierSat",
   "norad_id": 69015,
@@ -15,13 +15,13 @@
    "thumb": "images/thumbs/2026-11-2026-11-22-070049.jpg",
    "width": 640,
    "height": 480,
-   "status": "partial",
-   "status_note": "21,060 of 27,889 bytes arrived, but byte 21,060 did not, and a JPEG can't be decoded past a gap: the picture is shown down to it.",
-   "completeness": 0.8,
+   "status": "complete",
+   "status_note": "Every byte of the picture arrived; the file couldn't be hash-checked.",
+   "completeness": 1.0,
    "pieces_past_gaps": 0,
    "dark": false,
    "file_size": 27889,
-   "sha256": "cdec8e9bdb680aa190d87b1cb349bfc208098585d66526c76b2f58e297ab67f8",
+   "sha256": "d8adaf6cae4a7975a0cdf993b9152bb707d760c4291556549fd5ede7a8b48d7c",
    "sha256_expected": null,
    "captured_at": "2026-11-22T07:00:49Z",
    "capture_date": "2026-11-22",
@@ -31,24 +31,10 @@
    },
    "downlink": {
     "first": "2026-11-22T08:55:19Z",
-    "last": "2026-11-22T10:30:48Z",
-    "packets": 874
+    "last": "2026-11-23T10:06:52Z",
+    "packets": 1373
    },
-   "still_on_board": {
-    "bytes": [
-     21060,
-     27889
-    ],
-    "byte_ranges": [
-     [
-      21060,
-      27889
-     ]
-    ],
-    "byte_range_count": 1,
-    "last_try": "2026-11-22T10:30:47Z",
-    "last_packet": "2026-11-22T10:30:48Z"
-   },
+   "still_on_board": null,
    "full_copy": false,
    "position": {
     "lat": -14.4709,
@@ -74,13 +60,13 @@
    "thumb": "images/thumbs/2026-11-2026-11-22-070003.jpg",
    "width": 640,
    "height": 480,
-   "status": "partial",
-   "status_note": "21,060 of 27,189 bytes arrived, but byte 21,060 did not, and a JPEG can't be decoded past a gap: the picture is shown down to it.",
-   "completeness": 0.8,
+   "status": "complete",
+   "status_note": "Every byte of the picture arrived; the file couldn't be hash-checked.",
+   "completeness": 1.0,
    "pieces_past_gaps": 0,
    "dark": false,
    "file_size": 27189,
-   "sha256": "4f4efb3dd357ae04ba100379d0865a033bf9c4874cc8d55d712620cfcc75de39",
+   "sha256": "b1df0418dd7926a0f1b89c8d5045232e200eb26556eb86b7849eb17467f6fa52",
    "sha256_expected": null,
    "captured_at": "2026-11-22T07:00:03Z",
    "capture_date": "2026-11-22",
@@ -90,24 +76,10 @@
    },
    "downlink": {
     "first": "2026-11-22T08:52:56Z",
-    "last": "2026-11-22T10:30:48Z",
-    "packets": 1235
+    "last": "2026-11-23T08:30:35Z",
+    "packets": 2104
    },
-   "still_on_board": {
-    "bytes": [
-     21060,
-     27189
-    ],
-    "byte_ranges": [
-     [
-      21060,
-      27189
-     ]
-    ],
-    "byte_range_count": 1,
-    "last_try": "2026-11-22T10:30:00Z",
-    "last_packet": "2026-11-22T10:30:48Z"
-   },
+   "still_on_board": null,
    "full_copy": false,
    "position": {
     "lat": -17.3741,
@@ -133,13 +105,13 @@
    "thumb": "images/thumbs/2026-11-2026-11-22-065917.jpg",
    "width": 640,
    "height": 480,
-   "status": "partial",
-   "status_note": "21,255 of 21,952 bytes arrived, but byte 21,255 did not, and a JPEG can't be decoded past a gap: the picture is shown down to it.",
-   "completeness": 0.9667,
+   "status": "complete",
+   "status_note": "Every byte of the picture arrived; the file couldn't be hash-checked.",
+   "completeness": 1.0,
    "pieces_past_gaps": 0,
    "dark": false,
    "file_size": 21952,
-   "sha256": "c799653b224e9dd74adc8df9eb0b81ece4a04589ca9ec6cf907b730c0b88fa3d",
+   "sha256": "7c2d50c420d63317e7b1e3ad005eaad125d50d2fcec81e02c54d36d8d3d973cb",
    "sha256_expected": null,
    "captured_at": "2026-11-22T06:59:17Z",
    "capture_date": "2026-11-22",
@@ -149,24 +121,10 @@
    },
    "downlink": {
     "first": "2026-11-22T07:10:46Z",
-    "last": "2026-11-22T10:30:00Z",
-    "packets": 2627
+    "last": "2026-11-23T10:04:58Z",
+    "packets": 3133
    },
-   "still_on_board": {
-    "bytes": [
-     21255,
-     21952
-    ],
-    "byte_ranges": [
-     [
-      21255,
-      21952
-     ]
-    ],
-    "byte_range_count": 1,
-    "last_try": "2026-11-22T10:27:42Z",
-    "last_packet": "2026-11-22T10:30:00Z"
-   },
+   "still_on_board": null,
    "full_copy": false,
    "position": {
     "lat": -20.2752,
@@ -192,13 +150,13 @@
    "thumb": "images/thumbs/2026-11-2026-11-22-065831.jpg",
    "width": 640,
    "height": 480,
-   "status": "partial",
-   "status_note": "21,255 of 25,928 bytes arrived, but byte 21,255 did not, and a JPEG can't be decoded past a gap: the picture is shown down to it.",
-   "completeness": 0.9,
+   "status": "complete",
+   "status_note": "Every byte of the picture arrived; the file couldn't be hash-checked.",
+   "completeness": 1.0,
    "pieces_past_gaps": 0,
    "dark": false,
    "file_size": 25928,
-   "sha256": "4564c43ff4ab3d4420fce2a06333f04cc4643179beaf71a1335671d4147a7b66",
+   "sha256": "a7fbed19a264fa541bfd213524e39bbeb7708e12d030422295452483cdea208c",
    "sha256_expected": null,
    "captured_at": "2026-11-22T06:58:31Z",
    "capture_date": "2026-11-22",
@@ -208,24 +166,10 @@
    },
    "downlink": {
     "first": "2026-11-22T07:08:41Z",
-    "last": "2026-11-22T10:25:44Z",
-    "packets": 1733
+    "last": "2026-11-23T10:02:28Z",
+    "packets": 2011
    },
-   "still_on_board": {
-    "bytes": [
-     21255,
-     25928
-    ],
-    "byte_ranges": [
-     [
-      21255,
-      25928
-     ]
-    ],
-    "byte_range_count": 1,
-    "last_try": "2026-11-22T10:24:56Z",
-    "last_packet": "2026-11-22T10:25:44Z"
-   },
+   "still_on_board": null,
    "full_copy": false,
    "position": {
     "lat": -23.1739,
@@ -251,13 +195,13 @@
    "thumb": "images/thumbs/2026-11-2026-11-22-065745.jpg",
    "width": 640,
    "height": 480,
-   "status": "partial",
-   "status_note": "21,255 of 28,701 bytes arrived, but byte 21,255 did not, and a JPEG can't be decoded past a gap: the picture is shown down to it.",
-   "completeness": 0.9,
+   "status": "complete",
+   "status_note": "Every byte of the picture arrived; the file couldn't be hash-checked.",
+   "completeness": 1.0,
    "pieces_past_gaps": 0,
    "dark": false,
    "file_size": 28701,
-   "sha256": "ea35dc0c6dc0186d473b1b398360c29c6aa73608938450f8a6dd99f51ce60253",
+   "sha256": "cb7b75e3980536dbacd84234fd33b92047312c112a974a2c8b57b9cb60503304",
    "sha256_expected": null,
    "captured_at": "2026-11-22T06:57:45Z",
    "capture_date": "2026-11-22",
@@ -267,24 +211,10 @@
    },
    "downlink": {
     "first": "2026-11-22T08:46:54Z",
-    "last": "2026-11-22T08:49:40Z",
-    "packets": 399
+    "last": "2026-11-23T10:00:34Z",
+    "packets": 1405
    },
-   "still_on_board": {
-    "bytes": [
-     21255,
-     28701
-    ],
-    "byte_ranges": [
-     [
-      21255,
-      28701
-     ]
-    ],
-    "byte_range_count": 1,
-    "last_try": "2026-11-22T08:47:54Z",
-    "last_packet": "2026-11-22T08:49:40Z"
-   },
+   "still_on_board": null,
    "full_copy": false,
    "position": {
     "lat": -26.0698,
@@ -2501,7 +2431,7 @@
    "capture_date": "2026-10-22",
    "capture_basis": "filename",
    "satellite_clock": {
-    "correction_s": -6.6
+    "correction_s": -6.7
    },
    "downlink": {
     "first": "2026-10-22T16:37:51Z",
