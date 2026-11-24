@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-24T09:29:56Z",
+ "generated_at": "2026-11-24T10:30:41Z",
  "satellite": {
   "name": "FrontierSat",
   "norad_id": 69015,
@@ -230,127 +230,6 @@
     "basis": "SGP4 from the most recent TLE before capture"
    },
    "unnamed": false
-  },
-  {
-   "id": "unnamed-2026-11-22-0217",
-   "file": "camera/unnamed_2026-11-22_0217.img",
-   "camera": "picam",
-   "title": "Unnamed capture, received Nov 22, 2026",
-   "src": "images/unnamed-2026-11-22-0217.jpg",
-   "thumb": "images/thumbs/unnamed-2026-11-22-0217.jpg",
-   "width": 640,
-   "height": 480,
-   "status": "partial",
-   "status_note": "236 of 535 lines arrived, but line 28 did not, and the camera's JPEGs can't be decoded past a gap: the picture is shown down to it. The JPEG header was restored from the camera's standard header, which every complete capture shares.",
-   "completeness": 0.0333,
-   "pieces_past_gaps": 0,
-   "dark": false,
-   "file_size": 35923,
-   "sha256": "0897b0ecf004bc149574e9161b353114db23be422da0b93461667aa951e5c93a",
-   "sha256_expected": null,
-   "captured_at": null,
-   "capture_date": "2026-11-22",
-   "capture_basis": "date only",
-   "satellite_clock": null,
-   "downlink": {
-    "first": "2026-11-22T02:56:20Z",
-    "last": "2026-11-22T02:59:57Z",
-    "packets": 84
-   },
-   "still_on_board": {
-    "bytes": [
-     16228,
-     35923
-    ],
-    "byte_ranges": [
-     [
-      0,
-      195
-     ],
-     [
-      1950,
-      2145
-     ],
-     [
-      2535,
-      4680
-     ],
-     [
-      7215,
-      8190
-     ],
-     [
-      9360,
-      24375
-     ],
-     [
-      27690,
-      27885
-     ],
-     [
-      30030,
-      30420
-     ],
-     [
-      31980,
-      32175
-     ],
-     [
-      35295,
-      35685
-     ]
-    ],
-    "byte_range_count": 9,
-    "last_try": null,
-    "last_packet": "2026-11-22T02:59:57Z",
-    "lines": [
-     236,
-     535,
-     535
-    ],
-    "line_ranges": [
-     [
-      0,
-      2
-     ],
-     [
-      28,
-      31
-     ],
-     [
-      37,
-      69
-     ],
-     [
-      107,
-      121
-     ],
-     [
-      139,
-      363
-     ],
-     [
-      413,
-      415
-     ],
-     [
-      448,
-      453
-     ],
-     [
-      477,
-      479
-     ],
-     [
-      526,
-      532
-     ]
-    ],
-    "line_range_count": 9
-   },
-   "full_copy": false,
-   "position": null,
-   "unnamed": true
   },
   {
    "id": "2026-11-2026-11-18-181800",
@@ -1070,6 +949,37 @@
     "tle_epoch": "2026-11-09T22:45:46Z",
     "basis": "SGP4 from the most recent TLE before capture"
    },
+   "unnamed": false
+  },
+  {
+   "id": "2026-11-10-014283z",
+   "file": "camera/2026-11-10_014283Z.img",
+   "camera": "picam",
+   "title": "Nov 10, 2026",
+   "src": "images/2026-11-10-014283z.jpg",
+   "thumb": "images/thumbs/2026-11-10-014283z.jpg",
+   "width": 640,
+   "height": 480,
+   "status": "complete",
+   "status_note": "Every line of the picture arrived. The satellite never sent a hash for this file.",
+   "completeness": 1.0,
+   "pieces_past_gaps": 0,
+   "dark": false,
+   "file_size": 35923,
+   "sha256": "2aedf75140febe63d7d0d3cd9a0f598a356ffd77a3238efcc11f21134441eb65",
+   "sha256_expected": null,
+   "captured_at": null,
+   "capture_date": "2026-11-10",
+   "capture_basis": "date only",
+   "satellite_clock": null,
+   "downlink": {
+    "first": "2026-11-22T02:56:20Z",
+    "last": "2026-11-24T09:41:06Z",
+    "packets": 269
+   },
+   "still_on_board": null,
+   "full_copy": false,
+   "position": null,
    "unnamed": false
   },
   {
@@ -2386,7 +2296,7 @@
    "capture_date": "2026-10-22",
    "capture_basis": "filename",
    "satellite_clock": {
-    "correction_s": -6.3
+    "correction_s": -6.4
    },
    "downlink": {
     "first": "2026-10-22T18:14:55Z",
