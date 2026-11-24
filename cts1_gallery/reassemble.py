@@ -634,6 +634,7 @@ def _assemble_by_time(
     exclude: set[int],
 ) -> list[Assembled]:
     out = []
+    claims: dict[str, list[int]] = {}
     for e in images.values():
         if not e.size:
             continue
@@ -647,7 +648,99 @@ def _assemble_by_time(
             }
         )
         if idx:
+            claims[e.path] = idx
+    jpegs = {p: i for p, i in claims.items() if images[p].kind == "jpeg"}
+    if len(jpegs) > 1:
+        claims.update(_apportion_jpegs(jpegs, {p: images[p].size for p in jpegs}, chunks))
+    for path, idx in claims.items():
+        if idx:
+            e = images[path]
             out.append(_assemble(e, e.kind, e.size, idx, chunks))
+    return out
+
+
+_RUN_GAP = timedelta(seconds=5)
+_HEADER_BYTES = 1100  # the Exif block and tables: a few packets that pictures can share
+
+
+def _apportion_jpegs(claims: dict[str, list[int]], sizes: dict[str, int], chunks: Chunks) -> dict[str, list[int]]:
+    """Take each picture's own packets out of the ones claimed for several.
+
+    The camera's .jpg files come down by offset with no file name on the
+    packets, and several files are often on the air within the same hours, so
+    the time windows of different files overlap and each file's claim holds
+    other pictures' packets. Majority vote then mixes pictures.
+
+    Packets that arrive one after another at consecutive offsets are one
+    download of one file; chain them. Two different packets at the same offset
+    can't be the same picture, so a chain never absorbs another that overlaps
+    it at an offset. The chains that remain are pictures (or pieces of one);
+    give each to the file whose size it ends on, else the one whose claim holds
+    most of its packets, and take it from every other file.
+    """
+    pool = sorted({i for idx in claims.values() for i in idx})
+    version: dict[tuple[int, bytes], int] = {}
+    starts: list[int] = []
+    of: dict[int, int] = {}
+    for i in pool:
+        key = (chunks.offsets[i], chunks.datas[i])
+        if key not in version:
+            version[key] = len(version)
+            starts.append(chunks.offsets[i])
+        of[i] = version[key]
+    links: Counter[tuple[int, int]] = Counter()
+    for a, b in zip(pool, pool[1:]):
+        if chunks.times[b] - chunks.times[a] <= _RUN_GAP and chunks.offsets[b] == chunks.offsets[a] + len(chunks.datas[a]):
+            if of[a] != of[b]:
+                links[of[a], of[b]] += 1
+    parent = list(range(len(version)))
+    covered = [{s} for s in starts]
+
+    def find(x: int) -> int:
+        while parent[x] != x:
+            parent[x] = parent[parent[x]]
+            x = parent[x]
+        return x
+
+    for (a, b), _n in links.most_common():
+        ra, rb = find(a), find(b)
+        if ra != rb and not covered[ra] & covered[rb]:
+            parent[ra] = rb
+            covered[rb] |= covered[ra]
+
+    # chain -> end offset and how many of each file's claimed packets it holds
+    end: dict[int, int] = {}
+    held: dict[int, Counter[str]] = defaultdict(Counter)
+    for i in pool:
+        r = find(of[i])
+        end[r] = max(end.get(r, 0), chunks.offsets[i] + len(chunks.datas[i]))
+    for path, idx in claims.items():
+        for i in idx:
+            held[find(of[i])][path] += 1
+
+    owner: dict[int, str] = {}
+    taken: dict[str, set[int]] = defaultdict(set)
+    for r in sorted(held, key=lambda r: -len(covered[r])):
+        fits = [
+            p
+            for p in held[r]
+            if end[r] <= sizes[p] and not covered[r] & taken[p]
+        ]
+        if fits:
+            p = max(fits, key=lambda p: (end[r] == sizes[p], held[r][p]))
+            owner[r] = p
+            taken[p] |= covered[r]
+
+    out = {}
+    for path, idx in claims.items():
+        keep = []
+        for i in idx:
+            r = find(of[i])
+            # The leading packets are often the same bytes in several files;
+            # a file with none of its own there may use them.
+            if owner.get(r) == path or (chunks.offsets[i] < _HEADER_BYTES and chunks.offsets[i] not in taken[path]):
+                keep.append(i)
+        out[path] = keep
     return out
 
 

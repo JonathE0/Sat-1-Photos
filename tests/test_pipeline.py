@@ -532,6 +532,27 @@ class CameraJpegFiles(unittest.TestCase):
         self.assertGreater(chroma(r.image), 10)
 
 
+class ApportionedJpegs(unittest.TestCase):
+    """Two .jpg files whose download windows overlap each claim the other's packets."""
+
+    def test_each_file_keeps_only_its_own_downloads(self):
+        a, b = fake_jpeg(2500, 1), fake_jpeg(3100, 2)
+        t0 = datetime(2026, 11, 22, 7, tzinfo=UTC)
+        times, offsets, datas, mine = [], [], [], {"a": [], "b": []}
+        # a, then b, then a again and b again: each file twice, with gaps in between
+        for n, (name, data) in enumerate([("a", a), ("b", b), ("a", a), ("b", b)]):
+            for k, (o, d) in enumerate(packets(data)):
+                mine[name].append(len(times))
+                times.append(t0 + timedelta(minutes=10 * n, seconds=k))
+                offsets.append(o)
+                datas.append(d)
+        chunks = Chunks(times, offsets, datas)
+        everything = sorted(mine["a"] + mine["b"])
+        got = R._apportion_jpegs({"a.jpg": everything, "b.jpg": everything}, {"a.jpg": len(a), "b.jpg": len(b)}, chunks)
+        self.assertEqual(got["a.jpg"], mine["a"])
+        self.assertEqual(got["b.jpg"], mine["b"])
+
+
 class StillOnBoard(unittest.TestCase):
     """The mission ops list on Pictures: what of a file hasn't come down yet."""
 
