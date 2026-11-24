@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-23T13:01:43Z",
+ "generated_at": "2026-11-24T08:06:58Z",
  "satellite": {
   "name": "FrontierSat",
   "norad_id": 69015,
@@ -21,7 +21,7 @@
    "pieces_past_gaps": 0,
    "dark": false,
    "file_size": 27889,
-   "sha256": "d8adaf6cae4a7975a0cdf993b9152bb707d760c4291556549fd5ede7a8b48d7c",
+   "sha256": "bf740a6bab3e2d8a1403ef5fe6826c0f4e6d3d22a5f58acbfddecd0a759752a6",
    "sha256_expected": null,
    "captured_at": "2026-11-22T07:00:49Z",
    "capture_date": "2026-11-22",
@@ -32,7 +32,7 @@
    "downlink": {
     "first": "2026-11-22T08:55:19Z",
     "last": "2026-11-23T10:06:52Z",
-    "packets": 1373
+    "packets": 465
    },
    "still_on_board": null,
    "full_copy": false,
@@ -75,9 +75,9 @@
     "correction_s": 0.0
    },
    "downlink": {
-    "first": "2026-11-22T08:52:56Z",
-    "last": "2026-11-23T08:30:35Z",
-    "packets": 2104
+    "first": "2026-11-22T08:53:47Z",
+    "last": "2026-11-23T08:30:00Z",
+    "packets": 1635
    },
    "still_on_board": null,
    "full_copy": false,
@@ -111,7 +111,7 @@
    "pieces_past_gaps": 0,
    "dark": false,
    "file_size": 21952,
-   "sha256": "7c2d50c420d63317e7b1e3ad005eaad125d50d2fcec81e02c54d36d8d3d973cb",
+   "sha256": "f7cd454afbefcb7a8f4a7dfd9848e04e6cd49146b3193dee4cccb6c5c51a901e",
    "sha256_expected": null,
    "captured_at": "2026-11-22T06:59:17Z",
    "capture_date": "2026-11-22",
@@ -120,9 +120,9 @@
     "correction_s": 0.0
    },
    "downlink": {
-    "first": "2026-11-22T07:10:46Z",
-    "last": "2026-11-23T10:04:58Z",
-    "packets": 3133
+    "first": "2026-11-22T07:14:49Z",
+    "last": "2026-11-23T10:04:23Z",
+    "packets": 1798
    },
    "still_on_board": null,
    "full_copy": false,
@@ -165,9 +165,9 @@
     "correction_s": 0.0
    },
    "downlink": {
-    "first": "2026-11-22T07:08:41Z",
-    "last": "2026-11-23T10:02:28Z",
-    "packets": 2011
+    "first": "2026-11-22T07:10:40Z",
+    "last": "2026-11-23T10:02:01Z",
+    "packets": 1436
    },
    "still_on_board": null,
    "full_copy": false,
@@ -201,7 +201,7 @@
    "pieces_past_gaps": 0,
    "dark": false,
    "file_size": 28701,
-   "sha256": "cb7b75e3980536dbacd84234fd33b92047312c112a974a2c8b57b9cb60503304",
+   "sha256": "cf9335876558719efaf67c81fad881f9a32e7d1c2404123dfa4de43223bf9ffc",
    "sha256_expected": null,
    "captured_at": "2026-11-22T06:57:45Z",
    "capture_date": "2026-11-22",
@@ -211,8 +211,8 @@
    },
    "downlink": {
     "first": "2026-11-22T08:46:54Z",
-    "last": "2026-11-23T10:00:34Z",
-    "packets": 1405
+    "last": "2026-11-23T09:59:57Z",
+    "packets": 859
    },
    "still_on_board": null,
    "full_copy": false,
@@ -376,9 +376,9 @@
     "correction_s": null
    },
    "downlink": {
-    "first": "2026-11-20T09:33:53Z",
+    "first": "2026-11-20T09:34:59Z",
     "last": "2026-11-20T09:37:09Z",
-    "packets": 234
+    "packets": 188
    },
    "still_on_board": null,
    "full_copy": false,
