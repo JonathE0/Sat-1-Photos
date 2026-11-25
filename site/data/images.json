@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-24T12:29:56Z",
+ "generated_at": "2026-11-25T01:30:01Z",
  "satellite": {
   "name": "FrontierSat",
   "norad_id": 69015,
@@ -2036,11 +2036,11 @@
    "file_size": 17150,
    "sha256": "297375724d7ece6e253398b803e0365b4f6f034cce2fc411c86ebb0190762c99",
    "sha256_expected": "297375724d7ece6e253398b803e0365b4f6f034cce2fc411c86ebb0190762c99",
-   "captured_at": "2026-10-30T02:47:44Z",
+   "captured_at": "2026-10-30T02:47:43Z",
    "capture_date": "2026-10-30",
    "capture_basis": "filename",
    "satellite_clock": {
-    "correction_s": -16.0
+    "correction_s": -16.1
    },
    "downlink": {
     "first": "2026-10-30T22:04:06Z",
@@ -2050,15 +2050,15 @@
    "still_on_board": null,
    "full_copy": false,
    "position": {
-    "lat": 29.2736,
-    "lon": 114.2607,
-    "alt_km": 499.4,
+    "lat": 29.2106,
+    "lon": 114.2756,
+    "alt_km": 499.3,
     "place": "Jiangxi, China",
     "ground_sunlit": true,
     "sun_elevation_deg": 43.0,
     "satellite_sunlit": true,
     "satellite_light": "sunlit",
-    "sun_above_limb_deg": 65.1,
+    "sun_above_limb_deg": 65.2,
     "tle_epoch": "2026-10-29T12:28:45Z",
     "basis": "SGP4 from the most recent TLE before capture"
    },
@@ -2081,11 +2081,11 @@
    "file_size": 50462,
    "sha256": "2e022cbefeb30e251cd6d7d36835a7e560704b72283b2554beba8cacb6ec7215",
    "sha256_expected": "2e022cbefeb30e251cd6d7d36835a7e560704b72283b2554beba8cacb6ec7215",
-   "captured_at": "2026-10-30T02:45:44Z",
+   "captured_at": "2026-10-30T02:45:43Z",
    "capture_date": "2026-10-30",
    "capture_basis": "filename",
    "satellite_clock": {
-    "correction_s": -16.0
+    "correction_s": -16.1
    },
    "downlink": {
     "first": "2026-10-30T04:48:00Z",
@@ -2095,15 +2095,15 @@
    "still_on_board": null,
    "full_copy": false,
    "position": {
-    "lat": 21.7008,
-    "lon": 115.9636,
+    "lat": 21.6376,
+    "lon": 115.9772,
     "alt_km": 497.8,
     "place": "South China Sea",
     "ground_sunlit": true,
     "sun_elevation_deg": 50.2,
     "satellite_sunlit": true,
     "satellite_light": "sunlit",
-    "sun_above_limb_deg": 72.3,
+    "sun_above_limb_deg": 72.4,
     "tle_epoch": "2026-10-29T12:28:45Z",
     "basis": "SGP4 from the most recent TLE before capture"
    },
@@ -2126,11 +2126,11 @@
    "file_size": 33862,
    "sha256": "1845c8e643533e251cc67c5aea04395bfe6640a6da163ffcb9cba5d73b09133a",
    "sha256_expected": "1845c8e643533e251cc67c5aea04395bfe6640a6da163ffcb9cba5d73b09133a",
-   "captured_at": "2026-10-30T02:43:44Z",
+   "captured_at": "2026-10-30T02:43:43Z",
    "capture_date": "2026-10-30",
    "capture_basis": "filename",
    "satellite_clock": {
-    "correction_s": -16.0
+    "correction_s": -16.1
    },
    "downlink": {
     "first": "2026-10-30T03:13:08Z",
@@ -2140,15 +2140,15 @@
    "still_on_board": null,
    "full_copy": false,
    "position": {
-    "lat": 14.1121,
-    "lon": 117.5467,
+    "lat": 14.0488,
+    "lon": 117.5595,
     "alt_km": 496.8,
     "place": "South China Sea",
     "ground_sunlit": true,
-    "sun_elevation_deg": 57.2,
+    "sun_elevation_deg": 57.3,
     "satellite_sunlit": true,
     "satellite_light": "sunlit",
-    "sun_above_limb_deg": 79.3,
+    "sun_above_limb_deg": 79.4,
     "tle_epoch": "2026-10-29T12:28:45Z",
     "basis": "SGP4 from the most recent TLE before capture"
    },
