@@ -73,8 +73,7 @@ It never prints, so it works under `pythonw.exe`, which has no console window.
 
 The project venv has to exist first (Python 3.11 or newer):
 
-    python -m venv .venv
-    .venv\Scripts\python.exe -m pip install -r requirements.txt
+    uv sync --locked
 
 Then, from the repo root (no admin rights needed):
 

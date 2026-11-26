@@ -6,7 +6,7 @@ Every picture FrontierSat (NORAD 69015) has sent down since its
 launch on 3 May 2026, rebuilt from the radio packets, with where and when each
 was taken, an orbit globe, and room for team members to add what they know.
 
-FrontierSat is Calgary To Space's first student-built satellite, a 3U CubeSat
+FrontierSat is CalgaryToSpace's first student-built satellite, a 3U CubeSat
 from the University of Calgary. Its packets are heard by the SatNOGS network
 of amateur ground stations and decoded by the team's ground-station pipeline;
 this project takes it from there.
@@ -17,14 +17,16 @@ Needs Python 3.11 or newer (check with `python --version`). Ubuntu 22.04's
 `python3` (3.10) and the macOS Command Line Tools `python3` (3.9) are too old.
 
 ```powershell
-python -m venv .venv
-.venv\Scripts\python.exe -m pip install -r requirements.txt
+uv sync --locked                                     # the .venv, with the exact versions in uv.lock
 .venv\Scripts\python.exe -m cts1_gallery update     # sync packets, rebuild pictures and site data
 .venv\Scripts\python.exe serve.py                   # then open http://127.0.0.1:8000
 ```
 
-On macOS/Linux create the venv with a 3.11+ interpreter, e.g.
-`python3.12 -m venv .venv`, and use `.venv/bin/python` instead.
+Dependencies are managed with [uv](https://docs.astral.sh/uv/): `pyproject.toml`
+lists them and `uv.lock` pins every version, so a fresh install matches what
+GitHub builds. After changing a dependency run `uv lock` and commit both files.
+On macOS/Linux use `.venv/bin/python` instead. Without uv, any 3.11+ venv with the
+packages from `pyproject.toml` works too.
 
 `update` is incremental and safe to repeat: with nothing new it finishes in
 about two seconds. It does not take the scheduler's lock, though, so once the

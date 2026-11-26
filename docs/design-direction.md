@@ -15,7 +15,7 @@ Never type a count, altitude or date into the markup: compute it from `site/data
 
 ### What only this satellite has
 
-1. **The name.** FrontierSat. Calgary To Space's first satellite, a 3U
+1. **The name.** FrontierSat. CalgaryToSpace's first satellite, a 3U
    CubeSat (10 × 10 × 34 cm) built by University of Calgary students. NORAD 69015.
 2. **The date.** Launched 3 May 2026.
 3. **The orbit.** About 500 km up (498–526 km in the data), 7.6 km a second, once round the Earth
@@ -193,7 +193,7 @@ city lights show, and that is right. It turns at real speed. Nothing else is in 
 
 > **FrontierSat** (h1, Display)
 >
-> Calgary To Space's first satellite, built by University of Calgary students and in orbit since
+> CalgaryToSpace's first satellite, built by University of Calgary students and in orbit since
 > 3 May 2026. (Lead 20/400, Ink, max 40ch)
 >
 > [See the pictures] (primary button: Ink fill, Space text, Body 16/500, 44px, square)

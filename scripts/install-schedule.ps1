@@ -69,8 +69,7 @@ if ($Uninstall) {
 if (-not (Test-Path -LiteralPath $pythonw)) {
     Write-Host "Not found: $pythonw" -ForegroundColor Red
     Write-Host "Create the project's virtual environment first, from $repo :"
-    Write-Host "    python -m venv .venv"
-    Write-Host "    .venv\Scripts\python.exe -m pip install -r requirements.txt"
+    Write-Host "    uv sync --locked"
     Write-Host "then run this script again."
     exit 1
 }

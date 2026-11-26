@@ -5,7 +5,7 @@
 
 Prints the numbers behind docs/picam-calibration.md and site/globe/shotcamera.js.
 A one-off, so it needs numpy, scipy and pillow (the last two aren't in
-requirements.txt) and node on the path, which gives it the satellite's
+pyproject.toml) and node on the path, which gives it the satellite's
 velocity from the page's own site/globe/astro.js.
 
 Two independent fits:

@@ -1,0 +1,19 @@
+[project]
+name = "cts1-gallery"
+version = "0.1.0"
+description = "FrontierSat (CTS-SAT-1) picture site: rebuilds the photos and site data from the team's decoded packets."
+requires-python = ">=3.11"
+dependencies = [
+    "certifi>=2024.2",
+    "numpy>=1.26",
+    "pillow>=10.0",
+    "polars>=1.0",
+    "pyarrow>=15.0",
+    "sgp4>=2.23",
+    "tzdata>=2024.1",
+]
+
+[tool.uv]
+# An application, not a package: nothing to build or install, just the pinned
+# dependencies in uv.lock. Run it from the repository root.
+package = false
