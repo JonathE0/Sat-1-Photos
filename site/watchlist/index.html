@@ -69,6 +69,13 @@
          so it stays out of here. -->
     <p class="vh" id="announce" role="status"></p>
 
+    <form class="when" id="when" hidden aria-label="Narrow the list by time" onsubmit="return false">
+      <label>From <input type="datetime-local" id="when-from"></label>
+      <label>To <input type="datetime-local" id="when-to"></label>
+      <span class="small">Calgary time</span>
+      <button type="button" class="btn" id="when-clear">Show every pass</button>
+    </form>
+
     <div class="filters" id="filters" role="group" aria-label="Show" hidden></div>
 
     <ol class="list" id="list" aria-label="Coming passes, the next first"></ol>

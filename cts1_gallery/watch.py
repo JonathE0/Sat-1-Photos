@@ -563,7 +563,7 @@ def find_passes(orbit: Orbit, track: Track, event: Event, max_km: float) -> list
             **_when(t, track.t0 + timedelta(seconds=s_in), track.t0 + timedelta(seconds=s_out)),
             "distance_km": round(d_min),
             "off_nadir_deg": round(off_nadir, 1),
-            "target": {"lat": round(lat, 2), "lon": round(lon, 2),
+            "target": {"lat": round(lat, 3), "lon": round(lon, 3),
                        "projected_h": round(projected, 1) if projected and projected > 1 else None, "basis": basis},
             **_conditions(st, sun, age, quality),
             # 8 minutes of track around the pass, for a map
@@ -595,7 +595,7 @@ def find_aurora_passes(orbit: Orbit, track: Track, event: Event, kp: list, thres
             **_when(t, track.t0 + timedelta(seconds=float(track.s[i0])), track.t0 + timedelta(seconds=float(track.s[i1]))),
             "distance_km": None,  # it's under the satellite: the oval is wider than the view
             "off_nadir_deg": None,
-            "target": {"lat": round(st.lat, 2), "lon": round(st.lon, 2), "projected_h": None, "basis": None},
+            "target": {"lat": round(st.lat, 3), "lon": round(st.lon, 3), "projected_h": None, "basis": None},
             **_conditions(st, st.sun_elevation_deg, age, quality),
             "kp": round(k, 2),
             "magnetic_latitude_deg": round(float(mlat[mid]) * event.hemisphere, 1),

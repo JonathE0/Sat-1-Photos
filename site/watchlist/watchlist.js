@@ -87,7 +87,7 @@
   }
 
   const place = (lat, lon) =>
-    `${num(Math.abs(lat), 1)}° ${lat >= 0 ? 'N' : 'S'}, ${num(Math.abs(lon), 1)}° ${lon >= 0 ? 'E' : 'W'}`;
+    `${num(Math.abs(lat), 3)}° ${lat >= 0 ? 'N' : 'S'}, ${num(Math.abs(lon), 3)}° ${lon >= 0 ? 'E' : 'W'}`;
 
   function days(age) {
     const d = Math.round(age);
@@ -122,6 +122,44 @@
   // What render() reads from the top of the file; a list without it can't be shown.
   const readable = (d) => d != null && typeof d === 'object' && d.window != null && Array.isArray(d.events) && Array.isArray(d.sources)
     && [d.generated_at, d.tle_epoch, d.window.from, d.window.to].every((s) => !Number.isNaN(Date.parse(s)));
+
+  // The time window ("From ... To ..."): Calgary time, as everything else on the page.
+  // A pass is listed when its closest moment falls inside it; an end left empty is open.
+  const CALGARY_MS = 6 * 3600e3; // Calgary is UTC-6 all year
+  const toInput = (ms) => new Date(ms - CALGARY_MS).toISOString().slice(0, 16); // "2026-11-26T08:30"
+  const fromInput = (v) => { const ms = v ? Date.parse(`${v}:00-06:00`) : NaN; return Number.isNaN(ms) ? null : ms; };
+  const range = { from: null, to: null };
+  try {
+    const saved = JSON.parse(sessionStorage.getItem('watchlist-range') || 'null');
+    if (saved) { range.from = Number.isFinite(saved.from) ? saved.from : null; range.to = Number.isFinite(saved.to) ? saved.to : null; }
+  } catch { /* storage blocked or unreadable */ }
+  const ranged = () => range.from != null || range.to != null;
+  // the end is the whole minute it names
+  const inRange = (o) => { const t = Date.parse(o.closest_at); return (range.from == null || t >= range.from) && (range.to == null || t <= range.to + 59999); };
+  const rangeText = () => {
+    if (range.from != null && range.to != null) return `between ${calgary(range.from)} and ${calgary(range.to)}`;
+    return range.from != null ? `from ${calgary(range.from)} on` : `up to ${calgary(range.to)}`;
+  };
+
+  function setupRange() {
+    const from = $('when-from'), to = $('when-to');
+    from.min = to.min = toInput(Date.parse(data.window.from));
+    from.max = to.max = toInput(Date.parse(data.window.to));
+    from.value = range.from != null ? toInput(range.from) : '';
+    to.value = range.to != null ? toInput(range.to) : '';
+    $('when').hidden = false;
+  }
+  function rangeChanged() {
+    range.from = fromInput($('when-from').value);
+    range.to = fromInput($('when-to').value);
+    try { sessionStorage.setItem('watchlist-range', JSON.stringify(range)); } catch { /* storage blocked */ }
+    closedByHand = false;
+    if (!data) return;
+    render();
+    announce(`${ranged() ? `Passes ${rangeText()}.` : 'Showing every pass.'} ${shownCounts()}`);
+  }
+  for (const id of ['when-from', 'when-to']) $(id).addEventListener('change', rangeChanged);
+  $('when-clear').addEventListener('click', () => { $('when-from').value = ''; $('when-to').value = ''; rangeChanged(); });
 
   const leadAtFirst = [...$('lead').childNodes].map((n) => n.cloneNode(true));
 
@@ -211,6 +249,7 @@
     }
     $('notes').replaceChildren(...notes);
 
+    setupRange();
     const { withPasses, without } = split(now);
     shape = signature(withPasses);
 
@@ -237,6 +276,10 @@
         empty.textContent = "Nothing on the watchlist right now: none of the feeds lists an open event big enough to see from orbit.";
       } else if (now > windowEnd) {
         empty.textContent = `Every pass on this list is over: it was made ${span(now - generated)} ago and hasn't been rebuilt since.`;
+      } else if (range.from != null && range.to != null && range.to < range.from) {
+        empty.textContent = 'The end of the time window is before its start.';
+      } else if (ranged()) {
+        empty.textContent = `No ${filter === 'all' ? 'passes' : CATEGORIES[filter][1].toLowerCase() + ' passes'} ${rangeText()}.`;
       } else if (filter === 'all') {
         empty.textContent = `None of these events has a pass close enough, in the right light, before ${calgary(windowEnd)}.`;
       } else {
@@ -263,6 +306,10 @@
       let ops = upcoming(e, now), passed = false;
       const last = !ops.length && open ? lastPass(e, now) : null;
       if (last) { ops = [last]; passed = true; }
+      if (ranged()) {
+        ops = ops.filter(inRange); // a window narrows the list: events with no pass in it drop out
+        if (!ops.length) continue;
+      }
       (ops.length ? withPasses : without).push({ e, ops, passed });
     }
     withPasses.sort((a, b) => Date.parse(a.ops[0].closest_at) - Date.parse(b.ops[0].closest_at));
